@@ -261,7 +261,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
     // Notas clássicas que formam o acorde na teoria
     const formulaNotes = chord.notes.map(n => simplifyNote(n).replace(/\d/, ""));
     const formulaPitchClasses = formulaNotes.map(n => getPitchClass(n));
-    const chordRoot = simplifyNote(chord.aliases[0] || chord.root || chordSymbol.substring(0, 1)).replace(/\d/, "");
+    const chordRoot = simplifyNote(chord.tonic || chordSymbol.substring(0, 1)).replace(/\d/, "");
     const chordRootPC = getPitchClass(chordRoot);
 
     // Mapear intervalos do acorde

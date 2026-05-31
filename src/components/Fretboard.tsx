@@ -72,26 +72,26 @@ export default function Fretboard() {
   const fretWidth = (width - 60) / fretCount; // Espaço horizontal por traste
   const nutWidth = 40; // Largura do traste 0 / pestana
 
-  // Retorna a cor correspondente ao grau relativo de um pitch class
-  const getNoteColorClass = (notePC: number, rootPC: number) => {
-    if (notePC === rootPC) return { bg: "bg-neon-root", border: "border-[#FF4D4D]", text: "text-[#FF4D4D]", glow: "shadow-[0_0_15px_rgba(255,77,77,0.7)]" };
+  // Retorna a cor correspondente ao grau relativo de um pitch class em formato HEX para SVG Fills
+  const getNoteColor = (notePC: number, rootPC: number): string => {
+    if (notePC === rootPC) return "#FF4D4D"; // Tônica (Coral Neon)
     
     // Distância em semitons da tônica
     const intervalDist = (notePC - rootPC + 12) % 12;
     switch (intervalDist) {
       case 3: // Terça menor
       case 4: // Terça Maior
-        return { bg: "bg-neon-third", border: "border-[#00F0FF]", text: "text-[#00F0FF]", glow: "shadow-[0_0_15px_rgba(0,240,255,0.7)]" };
+        return "#00F0FF"; // Terça (Ciano Elétrico)
       case 5: // Quarta justa
       case 6: // Quinta diminuta
       case 7: // Quinta Justa
       case 8: // Quinta aumentada / sexta menor
-        return { bg: "bg-neon-fifth", border: "border-[#00FF88]", text: "text-[#00FF88]", glow: "shadow-[0_0_15px_rgba(0,255,136,0.7)]" };
+        return "#00FF88"; // Quinta (Verde Esmeralda)
       case 10: // Sétima menor
       case 11: // Sétima Maior
-        return { bg: "bg-neon-seventh", border: "border-[#BD00FF]", text: "text-[#BD00FF]", glow: "shadow-[0_0_15px_rgba(189,0,255,0.7)]" };
-      default: // Extensões / segundas / nonas / sextas
-        return { bg: "bg-neon-extension", border: "border-[#FF9900]", text: "text-[#FF9900]", glow: "shadow-[0_0_15px_rgba(255,153,0,0.7)]" };
+        return "#BD00FF"; // Sétima (Roxo/Violeta)
+      default: // Extensões
+        return "#FF9900"; // Extensões (Laranja Âmbar)
     }
   };
 
@@ -314,8 +314,6 @@ export default function Fretboard() {
 
                     // --- 1. MODO FRETBOARD EXPLORER (Highlights do acorde ativo) ---
                     if (fretboardExplorerMode && activeChord && activeChordPCs.includes(notePC)) {
-                      const cProps = getNoteColorClass(notePC, activeChordRootPC);
-                      
                       // Se além de estar no acorde, o traste está ativado, desenhamos com maior brilho
                       const opacity = isFretted ? "opacity-100" : "opacity-40 hover:opacity-90";
                       const size = isFretted ? 14 : 11;
@@ -326,8 +324,11 @@ export default function Fretboard() {
                             cx={x} 
                             cy={y} 
                             r={size} 
-                            className={`${cProps.bg} stroke-2 stroke-zinc-900 shadow-lg`}
-                            style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" }}
+                            className="stroke-2 stroke-zinc-900 shadow-lg"
+                            style={{ 
+                              fill: getNoteColor(notePC, activeChordRootPC),
+                              filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" 
+                            }}
                           />
                           <text 
                             x={x} 
@@ -346,8 +347,6 @@ export default function Fretboard() {
                     // --- 2. MODO SCALE OVERLAY (Notas da escala selecionada acesas) ---
                     if (activeScale && activeScale.notes.map(n => getPitchClass(n)).includes(notePC)) {
                       const scaleRootPC = getPitchClass(activeScale.notes[0]);
-                      const cProps = getNoteColorClass(notePC, scaleRootPC);
-
                       const opacity = isFretted ? "opacity-100" : "opacity-45 hover:opacity-95";
                       const size = isFretted ? 14 : 11;
 
@@ -357,7 +356,8 @@ export default function Fretboard() {
                             cx={x} 
                             cy={y} 
                             r={size} 
-                            className={`${cProps.bg} stroke-2 stroke-zinc-900`}
+                            className="stroke-2 stroke-zinc-900"
+                            style={{ fill: getNoteColor(notePC, scaleRootPC) }}
                           />
                           <text 
                             x={x} 
@@ -377,9 +377,9 @@ export default function Fretboard() {
                     if (isFretted) {
                       // Se houver um acorde ativo detectado, colorimos com base no intervalo harmônico do acorde principal
                       // Caso contrário, usamos cor padrão (tônica genérica vermelha)
-                      const colorProps = activeChord 
-                        ? getNoteColorClass(notePC, activeChordRootPC) 
-                        : { bg: "bg-red-500", border: "border-red-600", glow: "shadow-[0_0_12px_rgba(239,68,68,0.5)]" };
+                      const circleColor = activeChord 
+                        ? getNoteColor(notePC, activeChordRootPC) 
+                        : "#FF4D4D";
 
                       return (
                         <g 
@@ -391,8 +391,11 @@ export default function Fretboard() {
                             cx={x} 
                             cy={y} 
                             r="13.5" 
-                            className={`${colorProps.bg} stroke-2 stroke-zinc-900 animate-scale-up`}
-                            style={{ filter: "drop-shadow(0 0 8px currentColor)" }}
+                            className="stroke-2 stroke-zinc-900 animate-scale-up"
+                            style={{ 
+                              fill: circleColor,
+                              filter: `drop-shadow(0 0 8px ${circleColor})` 
+                            }}
                           />
                           <text 
                             x={x} 
