@@ -7,8 +7,15 @@ export default function ScaleOverlayPanel() {
     detectedChords,
     selectedChordIndex,
     activeScale,
-    setActiveScale
+    setActiveScale,
+    notationStyle
   } = useChordStore();
+
+  const getChordName = (chord: typeof detectedChords[0]) => {
+    if (notationStyle === "Brazilian") return chord.notationBrazilian;
+    if (notationStyle === "Academic") return chord.notationAcademic;
+    return chord.notationJazz;
+  };
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
@@ -156,7 +163,7 @@ export default function ScaleOverlayPanel() {
 
         <div className="flex flex-col gap-2 flex-1">
           <p className="text-[11px] text-zinc-400 leading-relaxed mb-1">
-            {`O acorde ${activeChord.name} pode atuar de forma funcional nas seguintes tonalidades:`}
+            {`O acorde ${getChordName(activeChord)} pode atuar de forma funcional nas seguintes tonalidades:`}
           </p>
 
           <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[180px]">

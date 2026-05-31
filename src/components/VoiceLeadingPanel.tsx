@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getDiatonicChords, getPitchClass, getNoteAt, COMMON_PROGRESSIONS } from "../utils/musicTheory";
+import { getDiatonicChords, getPitchClass, getNoteAt, COMMON_PROGRESSIONS, parseChord } from "../utils/musicTheory";
 import { generateVoicings } from "../utils/voicingGenerator";
 import { findBestVoiceLeading } from "../utils/voiceLeading";
 import type { VoiceLeadingResult } from "../utils/voiceLeading";
 import { playGuitarChord } from "../utils/audioSynth";
 import { ArrowRight, Trash2, Zap, Play, Info } from "lucide-react";
-import { Chord as TonalChord } from "tonal";
 
 export default function VoiceLeadingPanel() {
   const {
@@ -59,8 +58,8 @@ export default function VoiceLeadingPanel() {
     const isFretboardEmpty = selectedFrets.every(f => f === null);
 
     if (isFretboardEmpty) {
-      // Gera voicings temporários para A e pega o primeiro como base
-      const chordAInfo = TonalChord.get(chordAName);
+      // Gera voicings temporários para A e pega o primeiro como base com o nosso parser
+      const chordAInfo = parseChord(chordAName);
       if (!chordAInfo.empty) {
         const rootA = chordAInfo.root || "C";
         const targetPCs = chordAInfo.notes.map(n => getPitchClass(n));
@@ -71,8 +70,8 @@ export default function VoiceLeadingPanel() {
       }
     }
 
-    // Gerar voicings candidatos para o Acorde B
-    const chordBInfo = TonalChord.get(chordBName);
+    // Gerar voicings candidatos para o Acorde B com o nosso parser
+    const chordBInfo = parseChord(chordBName);
     if (chordBInfo.empty) return;
     const rootB = chordBInfo.root || "C";
     const targetPCsB = chordBInfo.notes.map(n => getPitchClass(n));

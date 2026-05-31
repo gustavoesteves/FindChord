@@ -3,7 +3,7 @@ import { useChordStore } from "../store/useChordStore";
 import { getPresetVoicingsForChord } from "../utils/presets";
 import { generateVoicings, CageShape } from "../utils/voicingGenerator";
 import type { VoicingShape } from "../utils/voicingGenerator";
-import { getPitchClass } from "../utils/musicTheory";
+import { getPitchClass, CHORD_REGISTRY } from "../utils/musicTheory";
 import { Layers } from "lucide-react";
 
 export default function VoicingSelector() {
@@ -12,8 +12,15 @@ export default function VoicingSelector() {
     selectedChordIndex,
     tuning,
     selectedVoicing,
-    setSelectedVoicing
+    setSelectedVoicing,
+    notationStyle
   } = useChordStore();
+
+  const getChordName = (chord: typeof detectedChords[0]) => {
+    if (notationStyle === "Brazilian") return chord.notationBrazilian;
+    if (notationStyle === "Academic") return chord.notationAcademic;
+    return chord.notationJazz;
+  };
 
   const [activeTab, setActiveTab] = useState<"all" | "open" | "caged" | "drop2" | "drop3" | "shell">("all");
 
@@ -28,15 +35,21 @@ export default function VoicingSelector() {
       return;
     }
 
-    // 1. Coletar os pitch classes do acorde
+    // 1. Coletar os pitch classes do acorde a partir do registro formal
     const chordRoot = activeChord.root;
-    const additions = activeChord.additions;
     const rootPC = getPitchClass(chordRoot);
-    const targetPitchClasses = additions.concat([chordRoot]).map(note => getPitchClass(note));
+    const def = CHORD_REGISTRY[activeChord.quality];
+    const targetPitchClasses = def
+      ? def.semitones.map(s => (rootPC + s) % 12)
+      : [rootPC];
+
+    // Cifragem standard de referência para busca no banco de presets (Jazz Notation)
+    const refChordName = activeChord.notationJazz;
+    const displayChordName = getChordName(activeChord);
 
     // 2. Buscar presets transpostos
-    const presets = getPresetVoicingsForChord(activeChord.name).map(p => ({
-      chordName: activeChord.name,
+    const presets = getPresetVoicingsForChord(refChordName).map(p => ({
+      chordName: displayChordName,
       frets: p.frets,
       rootString: p.frets.findIndex(f => f !== null && getPitchClass(getNoteAt(tuning[p.frets.indexOf(f) || 0], f)) === rootPC),
       cageShape: p.cageShape || CageShape.E,
@@ -45,7 +58,7 @@ export default function VoicingSelector() {
     }));
 
     // 3. Gerar dinamicamente mais opções
-    const generated = generateVoicings(activeChord.name, chordRoot, targetPitchClasses, tuning);
+    const generated = generateVoicings(displayChordName, chordRoot, targetPitchClasses, tuning);
 
     // Combinar, dando prioridade aos presets para os primeiros colocados, removendo duplicatas de trastes
     const combined: VoicingShape[] = [...presets];
@@ -58,7 +71,7 @@ export default function VoicingSelector() {
     });
 
     setVoicings(combined);
-  }, [activeChord, tuning]);
+  }, [activeChord, tuning, notationStyle]);
 
   if (!activeChord) return null;
 

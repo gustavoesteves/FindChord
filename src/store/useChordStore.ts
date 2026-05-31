@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { analyzeChords, simplifyNote, getNoteAt, getPitchClass, getOctave } from "../utils/musicTheory";
+import type { ChordQuality } from "../utils/musicTheory";
 import type { VoicingShape } from "../utils/voicingGenerator";
 
 export interface FretPosition {
@@ -11,16 +12,18 @@ export interface FretPosition {
 }
 
 export interface ChordCandidate {
-  name: string;            // ex: "Cmaj7"
-  root: string;            // ex: "C"
-  quality: string;         // ex: "major7th"
-  intervals: string[];     // ex: ["1", "3", "7"]
-  score: number;           // Pontuação absoluta
-  confidence: number;      // 0% a 100%
-  omissions: string[];     // Notas omitidas (ex: ["5"])
-  additions: string[];     // Notas estendidas extras
-  bass?: string;           // Nota de inversão no baixo
-  isIncomplete: boolean;   // Se omitiu terça ou fundamental
+  root: string;                  // ex: "C"
+  quality: ChordQuality;         // Enum de qualidade estrita
+  intervals: string[];           // ex: ["Fundamental (1)", "Terça Maior (3)"]
+  score: number;                 // Pontuação absoluta
+  confidence: number;            // 0% a 100% de confiança para UX
+  omissions: string[];           // Notas omitidas (ex: ["5"])
+  additions: string[];           // Notas estendidas extras
+  bass?: string;                 // Nota de inversão no baixo
+  notationJazz: string;          // ex: "Cmaj7"
+  notationBrazilian: string;     // ex: "C7M"
+  notationAcademic: string;      // ex: "CΔ7"
+  isIncomplete: boolean;         // Se omitiu terça ou fundamental
 }
 
 export interface TuningPreset {
@@ -40,13 +43,14 @@ export const TUNING_PRESETS: TuningPreset[] = [
 interface ChordStore {
   // --- ESTADO ---
   tuningPreset: string;
-  tuning: string[];            // 6 notas das cordas (index 0 = 1ª corda)
+  tuning: string[];                 // 6 notas das cordas (index 0 = 1ª corda)
   selectedFrets: (number | null)[]; // Traste selecionado por corda (null se mutado)
   detectedChords: ChordCandidate[];
   selectedChordIndex: number | null;
   activeScale: { name: string; notes: string[] } | null;
-  fretboardExplorerMode: boolean; // Se ativado, acende todas as notas do acorde no braço
+  fretboardExplorerMode: boolean;   // Se ativado, acende todas as notas do acorde no braço
   selectedVoicing: VoicingShape | null;
+  notationStyle: "Jazz" | "Brazilian" | "Academic"; // Estilo de notação ativo
   
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
@@ -65,6 +69,7 @@ interface ChordStore {
   setFretboardExplorerMode: (active: boolean) => void;
   setSelectedVoicing: (voicing: VoicingShape | null) => void;
   setVoiceLeadingSource: (frets: (number | null)[] | null) => void;
+  setNotationStyle: (style: "Jazz" | "Brazilian" | "Academic") => void;
   
   // Ações de Progressão
   addToProgression: (chordName: string) => void;
@@ -107,6 +112,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
     activeScale: null,
     fretboardExplorerMode: false,
     selectedVoicing: null,
+    notationStyle: "Jazz",
     
     voiceLeadingSource: null,
     
@@ -228,6 +234,14 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({ voiceLeadingSource: frets });
     },
 
+    setNotationStyle: (style) => {
+      set({ notationStyle: style });
+      // Recalcular acordes imediatamente para atualizar toda a UI com a nova notação
+      const chords = recalculateChords(get().selectedFrets, get().tuning);
+      set({ detectedChords: chords });
+    },
+
+    // Ações de Progressão
     addToProgression: (chordName) => {
       set({ progressionChords: [...get().progressionChords, chordName] });
     },

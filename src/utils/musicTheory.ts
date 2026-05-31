@@ -1,21 +1,267 @@
-import { Chord as TonalChord, Note as TonalNote, Scale as TonalScale, Interval as TonalInterval } from "tonal";
+import { Note as TonalNote, Scale as TonalScale, Interval as TonalInterval } from "tonal";
 import type { FretPosition, ChordCandidate } from "../store/useChordStore";
 
 // Dicionário de equivalências enarmônicas para simplificação visual
 const PREFERRED_SPELLINGS: Record<string, string> = {
-  "A#": "Bb",
-  "D#": "Eb",
-  "G#": "Ab",
-  "C#": "Db",
   "E#": "F",
   "B#": "C",
   "Cb": "B",
   "Fb": "E",
-  "Fx": "G", // Fá dobrado sustenido -> Sol
+  "Fx": "G",
   "Cx": "D"
 };
 
-// Escalas suportadas na biblioteca profunda
+// Qualidades de Acordes Estritas (DSL Musical)
+export type ChordQuality =
+  // Tríades Básicas
+  | "major"
+  | "minor"
+  | "diminished"
+  | "augmented"
+  | "power"
+  // Suspensos
+  | "sus4"
+  | "sus2"
+  // Sextas
+  | "major6th"
+  | "minor6th"
+  // Sétimas
+  | "dominant7th"
+  | "major7th"
+  | "minor7th"
+  | "minorMajor7th"
+  | "halfDiminished"
+  | "diminished7th"
+  | "dominant7sus4"
+  // Nonas (add9, madd9, 69 e estendidos com 7ª)
+  | "add9"
+  | "minorAdd9"
+  | "69"
+  | "dominant9th"
+  | "major9th"
+  | "minor9th"
+  // Décimas Primeiras (com 7ª e 9ª)
+  | "dominant11th"
+  | "minor11th"
+  // Décimas Terceiras (com 7ª, 9ª e 11ª)
+  | "dominant13th"
+  | "major13th"
+  | "minor13th"
+  // Tensões e Alterações Jazzísticas
+  | "dominant7b9"
+  | "dominant7#9"
+  | "dominant7#11"
+  | "dominant7b13"
+  | "major7#11";
+
+// Definição de Acorde na DSL
+export interface ChordDefinition {
+  quality: ChordQuality;
+  semitones: number[];           // Semitons em relação à tônica (0)
+  intervals: string[];           // Abreviações dos intervalos (ex: ["1P", "3M", "5P"])
+  notation: {
+    jazz: string;                // ex: "maj7"
+    brazilian: string;           // ex: "7M"
+    academic: string;            // ex: "Δ7"
+  };
+}
+
+// Registry Pattern - Fonte Única da Verdade para Fórmulas de Acordes
+export const CHORD_REGISTRY: Record<ChordQuality, ChordDefinition> = {
+  major: {
+    quality: "major",
+    semitones: [0, 4, 7],
+    intervals: ["1P", "3M", "5P"],
+    notation: { jazz: "", brazilian: "", academic: "" }
+  },
+  minor: {
+    quality: "minor",
+    semitones: [0, 3, 7],
+    intervals: ["1P", "3m", "5P"],
+    notation: { jazz: "m", brazilian: "m", academic: "-" }
+  },
+  diminished: {
+    quality: "diminished",
+    semitones: [0, 3, 6],
+    intervals: ["1P", "3m", "5d"],
+    notation: { jazz: "dim", brazilian: "dim", academic: "o" }
+  },
+  augmented: {
+    quality: "augmented",
+    semitones: [0, 4, 8],
+    intervals: ["1P", "3M", "5A"],
+    notation: { jazz: "aug", brazilian: "aug", academic: "+" }
+  },
+  power: {
+    quality: "power",
+    semitones: [0, 7],
+    intervals: ["1P", "5P"],
+    notation: { jazz: "5", brazilian: "5", academic: "5" }
+  },
+  sus4: {
+    quality: "sus4",
+    semitones: [0, 5, 7],
+    intervals: ["1P", "4P", "5P"],
+    notation: { jazz: "sus4", brazilian: "sus4", academic: "sus4" }
+  },
+  sus2: {
+    quality: "sus2",
+    semitones: [0, 2, 7],
+    intervals: ["1P", "2M", "5P"],
+    notation: { jazz: "sus2", brazilian: "sus2", academic: "sus2" }
+  },
+  major6th: {
+    quality: "major6th",
+    semitones: [0, 4, 7, 9],
+    intervals: ["1P", "3M", "5P", "6M"],
+    notation: { jazz: "6", brazilian: "6", academic: "6" }
+  },
+  minor6th: {
+    quality: "minor6th",
+    semitones: [0, 3, 7, 9],
+    intervals: ["1P", "3m", "5P", "6M"],
+    notation: { jazz: "m6", brazilian: "m6", academic: "-6" }
+  },
+  dominant7th: {
+    quality: "dominant7th",
+    semitones: [0, 4, 7, 10],
+    intervals: ["1P", "3M", "5P", "7m"],
+    notation: { jazz: "7", brazilian: "7", academic: "7" }
+  },
+  major7th: {
+    quality: "major7th",
+    semitones: [0, 4, 7, 11],
+    intervals: ["1P", "3M", "5P", "7M"],
+    notation: { jazz: "maj7", brazilian: "7M", academic: "Δ7" }
+  },
+  minor7th: {
+    quality: "minor7th",
+    semitones: [0, 3, 7, 10],
+    intervals: ["1P", "3m", "5P", "7m"],
+    notation: { jazz: "m7", brazilian: "m7", academic: "-7" }
+  },
+  minorMajor7th: {
+    quality: "minorMajor7th",
+    semitones: [0, 3, 7, 11],
+    intervals: ["1P", "3m", "5P", "7M"],
+    notation: { jazz: "minorMajor7", brazilian: "m(7M)", academic: "-Δ7" }
+  },
+  halfDiminished: {
+    quality: "halfDiminished",
+    semitones: [0, 3, 6, 10],
+    intervals: ["1P", "3m", "5d", "7m"],
+    notation: { jazz: "m7b5", brazilian: "m7(b5)", academic: "ø7" }
+  },
+  diminished7th: {
+    quality: "diminished7th",
+    semitones: [0, 3, 6, 9],
+    intervals: ["1P", "3m", "5d", "7d"],
+    notation: { jazz: "dim7", brazilian: "dim7", academic: "o7" }
+  },
+  dominant7sus4: {
+    quality: "dominant7sus4",
+    semitones: [0, 5, 7, 10],
+    intervals: ["1P", "4P", "5P", "7m"],
+    notation: { jazz: "7sus4", brazilian: "7sus4", academic: "7sus4" }
+  },
+  add9: {
+    quality: "add9",
+    semitones: [0, 4, 7, 14],
+    intervals: ["1P", "3M", "5P", "9M"],
+    notation: { jazz: "add9", brazilian: "(add9)", academic: "add9" }
+  },
+  minorAdd9: {
+    quality: "minorAdd9",
+    semitones: [0, 3, 7, 14],
+    intervals: ["1P", "3m", "5P", "9M"],
+    notation: { jazz: "madd9", brazilian: "m(add9)", academic: "-add9" }
+  },
+  69: {
+    quality: "69",
+    semitones: [0, 4, 7, 9, 14],
+    intervals: ["1P", "3M", "5P", "6M", "9M"],
+    notation: { jazz: "6/9", brazilian: "6/9", academic: "6/9" }
+  },
+  dominant9th: {
+    quality: "dominant9th",
+    semitones: [0, 4, 7, 10, 14],
+    intervals: ["1P", "3M", "5P", "7m", "9M"],
+    notation: { jazz: "9", brazilian: "7(9)", academic: "9" }
+  },
+  major9th: {
+    quality: "major9th",
+    semitones: [0, 4, 7, 11, 14],
+    intervals: ["1P", "3M", "5P", "7M", "9M"],
+    notation: { jazz: "maj9", brazilian: "7M(9)", academic: "Δ9" }
+  },
+  minor9th: {
+    quality: "minor9th",
+    semitones: [0, 3, 7, 10, 14],
+    intervals: ["1P", "3m", "5P", "7m", "9M"],
+    notation: { jazz: "m9", brazilian: "m7(9)", academic: "-9" }
+  },
+  dominant11th: {
+    quality: "dominant11th",
+    semitones: [0, 4, 7, 10, 14, 17],
+    intervals: ["1P", "3M", "5P", "7m", "9M", "11P"],
+    notation: { jazz: "11", brazilian: "7(11)", academic: "11" }
+  },
+  minor11th: {
+    quality: "minor11th",
+    semitones: [0, 3, 7, 10, 14, 17],
+    intervals: ["1P", "3m", "5P", "7m", "9M", "11P"],
+    notation: { jazz: "m11", brazilian: "m7(11)", academic: "-11" }
+  },
+  dominant13th: {
+    quality: "dominant13th",
+    semitones: [0, 4, 7, 10, 14, 17, 21],
+    intervals: ["1P", "3M", "5P", "7m", "9M", "11P", "13M"],
+    notation: { jazz: "13", brazilian: "7(13)", academic: "13" }
+  },
+  major13th: {
+    quality: "major13th",
+    semitones: [0, 4, 7, 11, 14, 17, 21],
+    intervals: ["1P", "3M", "5P", "7M", "9M", "11P", "13M"],
+    notation: { jazz: "maj13", brazilian: "7M(13)", academic: "Δ13" }
+  },
+  minor13th: {
+    quality: "minor13th",
+    semitones: [0, 3, 7, 10, 14, 17, 21],
+    intervals: ["1P", "3m", "5P", "7m", "9M", "11P", "13M"],
+    notation: { jazz: "m13", brazilian: "m7(13)", academic: "-13" }
+  },
+  dominant7b9: {
+    quality: "dominant7b9",
+    semitones: [0, 4, 7, 10, 13],
+    intervals: ["1P", "3M", "5P", "7m", "9m"],
+    notation: { jazz: "7b9", brazilian: "7(b9)", academic: "7b9" }
+  },
+  "dominant7#9": {
+    quality: "dominant7#9",
+    semitones: [0, 4, 7, 10, 15],
+    intervals: ["1P", "3M", "5P", "7m", "9A"],
+    notation: { jazz: "7#9", brazilian: "7(#9)", academic: "7#9" }
+  },
+  "dominant7#11": {
+    quality: "dominant7#11",
+    semitones: [0, 4, 7, 10, 14, 18],
+    intervals: ["1P", "3M", "5P", "7m", "9M", "11A"],
+    notation: { jazz: "7#11", brazilian: "7(#11)", academic: "7#11" }
+  },
+  dominant7b13: {
+    quality: "dominant7b13",
+    semitones: [0, 4, 7, 10, 14, 20],
+    intervals: ["1P", "3M", "5P", "7m", "9M", "13m"],
+    notation: { jazz: "7b13", brazilian: "7(b13)", academic: "7b13" }
+  },
+  "major7#11": {
+    quality: "major7#11",
+    semitones: [0, 4, 7, 11, 14, 18],
+    intervals: ["1P", "3M", "5P", "7M", "9M", "11A"],
+    notation: { jazz: "maj7#11", brazilian: "7M(#11)", academic: "Δ7#11" }
+  }
+};
+
 export interface ScaleInfo {
   name: string;
   type: string;
@@ -23,12 +269,11 @@ export interface ScaleInfo {
   notes: string[];
 }
 
-// Progressões comuns para o Progression Explorer
 export interface ProgressionTemplate {
   name: string;
   romanNumerals: string[];
   description: string;
-  degrees: number[]; // 1-based diatonic degrees, ex: [2, 5, 1] para ii-V-I
+  degrees: number[];
 }
 
 export const COMMON_PROGRESSIONS: ProgressionTemplate[] = [
@@ -54,17 +299,16 @@ export const COMMON_PROGRESSIONS: ProgressionTemplate[] = [
     name: "i - bVI - bIII - bVII (Rock/Epic)",
     romanNumerals: ["i", "VI", "III", "VII"],
     description: "Progressão menor muito comum no Rock e trilhas épicas (ex: Zombie).",
-    degrees: [1, 6, 3, 7] // No contexto menor
+    degrees: [1, 6, 3, 7]
   },
   {
     name: "ii - bII7 - I (Tritone Sub)",
     romanNumerals: ["ii", "subV", "I"],
     description: "Substituição de trítono clássica do acorde dominante (V) por um bII7.",
-    degrees: [2, 2, 1] // Trítono sub (ex: Dm7 -> Db7 -> Cmaj7)
+    degrees: [2, 2, 1]
   }
 ];
 
-// Dicionário de escalas com suporte estendido
 export const SCALE_CATEGORIES = {
   greek: [
     { name: "Jônio (Maior)", key: "major" },
@@ -96,17 +340,11 @@ export const SCALE_CATEGORIES = {
   ]
 };
 
-/**
- * Transpõe uma nota base por um número de semitons e simplifica enarmônicos bizarros.
- */
 export function getNoteAt(baseNote: string, fret: number): string {
   const transposed = TonalNote.transpose(baseNote, TonalInterval.fromSemitones(fret));
   return simplifyNote(transposed);
 }
 
-/**
- * Corrige grafias enarmônicas complexas para melhorar a legibilidade.
- */
 export function simplifyNote(noteName: string): string {
   const scientific = TonalNote.get(noteName);
   if (scientific.empty) return noteName;
@@ -118,70 +356,45 @@ export function simplifyNote(noteName: string): string {
     return PREFERRED_SPELLINGS[pitchClass] + octave;
   }
   
-  // Tonal.js simplify pode ajudar
-  const simplified = TonalNote.simplify(noteName);
-  return simplified;
+  return TonalNote.simplify(noteName);
 }
 
-/**
- * Retorna a classe de altura (Pitch Class: 0 a 11) de uma nota.
- */
 export function getPitchClass(noteName: string): number {
   const note = TonalNote.get(noteName);
   return note.empty ? -1 : note.chroma ?? -1;
 }
 
-/**
- * Retorna a oitava de uma nota.
- */
 export function getOctave(noteName: string): number {
   const note = TonalNote.get(noteName);
   return note.empty ? 4 : note.oct ?? 4;
 }
 
-/**
- * Retorna as notas absolutas de um acorde a partir de sua tônica e tipo.
- */
-export function getNotesForChord(root: string, type: string): string[] {
-  const chord = TonalChord.get(`${root}${type}`);
-  return chord.notes.map(n => simplifyNote(n));
-}
-
-/**
- * Retorna o baixo físico (a nota mais grave de menor frequência).
- */
 export function getLowestNote(positions: FretPosition[]): FretPosition | null {
   if (positions.length === 0) return null;
-  
-  // Ordena por string index descendente (cordas mais graves têm maior index físico: 5 é a 6ª corda, 0 é a 1ª)
-  // E também por nota absoluta (oitava e pitch class)
   return [...positions].reduce((lowest, current) => {
-    // Frequência física aproximada baseada na oitava e pitch class
     const currentFreq = current.octave * 12 + current.pitchClass;
     const lowestFreq = lowest.octave * 12 + lowest.pitchClass;
     return currentFreq < lowestFreq ? current : lowest;
   });
 }
 
-/**
- * Mapeia um intervalo formal (ex: "3M", "5P", "7m") para nomes amigáveis.
- */
+// Converte intervalos semitones para abreviações legíveis de UI
 export function getFriendlyInterval(interval: string): string {
   const mapping: Record<string, string> = {
     "1P": "Fundamental (1)",
     "1d": "Fundamental (1)",
-    "2m": "Segunda menor (b2)",
-    "2M": "Segunda Maior (2)",
+    "2m": "Segunda menor (b9)",
+    "2M": "Segunda Maior (9)",
     "2A": "Segunda Aumentada (#2)",
     "3m": "Terça menor (b3)",
     "3M": "Terça Maior (3)",
-    "4P": "Quarta Justa (4)",
-    "4A": "Quarta Aumentada (#4)",
+    "4P": "Quarta Justa (11)",
+    "4A": "Quarta Aumentada (#11)",
     "5d": "Quinta Diminuta (b5)",
     "5P": "Quinta Justa (5)",
     "5A": "Quinta Aumentada (#5)",
-    "6m": "Sexta menor (b6)",
-    "6M": "Sexta Maior (6)",
+    "6m": "Sexta menor (b13)",
+    "6M": "Sexta Maior (13)",
     "7d": "Sétima Diminuta (bb7)",
     "7m": "Sétima menor (b7)",
     "7M": "Sétima Maior (7)",
@@ -189,17 +402,24 @@ export function getFriendlyInterval(interval: string): string {
     "9m": "Nona menor (b9)",
     "9M": "Nona Maior (9)",
     "9A": "Nona Aumentada (#9)",
-    "11P": "Décima Primeira (11)",
-    "11A": "Décima Primeira Aumentada (#11)",
-    "13m": "Décima Terceira menor (b13)",
-    "13M": "Décima Terceira (13)"
+    "11P": "Quarta/11 (11)",
+    "11A": "Quarta Aum/#11 (#11)",
+    "13m": "Sexta menor/b13 (b13)",
+    "13M": "Sexta/13 (13)"
   };
   return mapping[interval] || interval;
 }
 
-/**
- * Converte notas em uma armadura de clave recomendada ou corrige enarmônicos do acorde
- */
+// Converte semitones do motor para formato de Tonal Interval
+export function getIntervalSymbol(semitones: number): string {
+  const mapping: Record<number, string> = {
+    0: "1P", 1: "2m", 2: "2M", 3: "3m", 4: "3M", 5: "4P", 6: "5d", 7: "5P", 
+    8: "6m", 9: "6M", 10: "7m", 11: "7M", 12: "8P", 13: "9m", 14: "9M", 
+    15: "9A", 17: "11P", 18: "11A", 20: "13m", 21: "13M"
+  };
+  return mapping[semitones] || `${semitones} semitones`;
+}
+
 export function correctChordSpelling(chordName: string, root: string): string {
   if (PREFERRED_SPELLINGS[root]) {
     const newRoot = PREFERRED_SPELLINGS[root];
@@ -208,200 +428,279 @@ export function correctChordSpelling(chordName: string, root: string): string {
   return chordName;
 }
 
-/**
- * Algoritmo robusto de detecção de acordes com Confidence Score e suporte a incompletos (no5)
- */
-export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
-  if (positions.length === 0) return [];
+// Formatador Limpo e Centralizado de Nomenclatura baseada na DSL
+export function formatChordName(
+  root: string,
+  quality: ChordQuality,
+  omissions: string[],
+  bass?: string,
+  style: "Jazz" | "Brazilian" | "Academic" = "Jazz"
+): string {
+  const def = CHORD_REGISTRY[quality];
+  if (!def) return `${root}${quality}`;
 
-  // Extrair notas únicas (classes de altura únicas) e nomes
-  const uniqueNoteNames = Array.from(new Set(positions.map(p => simplifyNote(p.noteName).replace(/\d/, ""))));
-  const uniquePitchClasses = Array.from(new Set(positions.map(p => p.pitchClass)));
-  
-  // Encontrar o baixo físico
-  const bassFret = getLowestNote(positions);
-  const bassNote = bassFret ? simplifyNote(bassFret.noteName).replace(/\d/, "") : "";
+  let qualityString = "";
+  if (style === "Brazilian") {
+    qualityString = def.notation.brazilian;
+  } else if (style === "Academic") {
+    qualityString = def.notation.academic;
+  } else {
+    qualityString = def.notation.jazz;
+  }
 
-  // 1. Usar o Tonal.js como primeira peneira
-  let tonalCandidates = TonalChord.detect(uniqueNoteNames);
-  
-  // Se não encontrar nada e tivermos 2 ou 3 notas, tentamos forçar quintas ou tríades básicas
-  if (tonalCandidates.length === 0 && uniqueNoteNames.length > 0) {
-    // Adiciona caminhos para power chords ou intervalos simples
-    if (uniquePitchClasses.length === 2) {
-      // Ex: C e G -> C5 (power chord)
-      const p1 = uniquePitchClasses[0];
-      const p2 = uniquePitchClasses[1];
-      const dist = Math.abs(p1 - p2);
-      if (dist === 7 || dist === 5) {
-        // Quinta justa
-        const root = dist === 7 ? (p1 < p2 ? uniqueNoteNames[0] : uniqueNoteNames[1]) : (p1 < p2 ? uniqueNoteNames[1] : uniqueNoteNames[0]);
-        tonalCandidates.push(`${root}5`);
-      }
+  let finalName = `${root}${qualityString}`;
+
+  // Se houver omissão da Quinta e não for Power Chord
+  if (omissions.includes("5") && !omissions.includes("3") && !omissions.includes("1") && quality !== "power") {
+    if (!finalName.includes("(no5)")) {
+      finalName = `${finalName}(no5)`;
     }
   }
 
+  // Baixo invertido
+  if (bass) {
+    finalName = `${finalName}/${bass}`;
+  }
+
+  return correctChordSpelling(finalName, root);
+}
+
+// Parser Proprietário de Cifras
+export interface CustomChord {
+  empty: boolean;
+  root: string;
+  quality: ChordQuality;
+  notes: string[];
+  intervals: string[];
+  symbol: string;
+}
+
+export function parseChord(symbol: string): CustomChord {
+  const match = symbol.match(/^([A-G][b#]?)(.*)$/);
+  if (!match) {
+    return { empty: true, root: "", quality: "major", notes: [], intervals: [], symbol };
+  }
+  const root = simplifyNote(match[1]).replace(/\d/, "");
+  let qualityString = match[2];
+
+  // Tratar baixo invertido
+  if (qualityString.includes("/")) {
+    const parts = qualityString.split("/");
+    qualityString = parts[0];
+  }
+
+  // Remover redundância de omissão para fins de mapeamento de qualidade
+  qualityString = qualityString.replace(/\(no5\)/, "");
+
+  // Mapear aliases dinamicamente para as qualidades estritas
+  let detectedQuality: ChordQuality | null = null;
+  
+  // Buscar no registro correspondências exatas
+  for (const q in CHORD_REGISTRY) {
+    const def = CHORD_REGISTRY[q as ChordQuality];
+    if (
+      def.notation.jazz === qualityString ||
+      def.notation.brazilian === qualityString ||
+      def.notation.academic === qualityString ||
+      q === qualityString
+    ) {
+      detectedQuality = q as ChordQuality;
+      break;
+    }
+  }
+
+  // Fallback e apelidos comuns
+  if (!detectedQuality) {
+    const fallbackMap: Record<string, ChordQuality> = {
+      "": "major",
+      "major": "major",
+      "m": "minor",
+      "minor": "minor",
+      "7M": "major7th",
+      "7+": "major7th",
+      "7M(9)": "major9th",
+      "7M(#11)": "major7#11",
+      "m7(11)": "minor11th",
+      "m7(9)": "minor9th",
+      "7(9)": "dominant9th",
+      "7(11)": "dominant11th",
+      "7(13)": "dominant13th",
+      "7(b9)": "dominant7b9",
+      "7(#9)": "dominant7#9",
+      "7(#11)": "dominant7#11",
+      "7(b13)": "dominant7b13",
+      "m7(b5)": "halfDiminished",
+      "m(7M)": "minorMajor7th",
+      "M": "major",
+      "min": "minor",
+      "maj": "major",
+      "diminished": "diminished",
+      "augmented": "augmented"
+    };
+    detectedQuality = fallbackMap[qualityString] || "major";
+  }
+
+  const def = CHORD_REGISTRY[detectedQuality];
+  const notes = def.semitones.map(s => {
+    return simplifyNote(TonalNote.transpose(root, TonalInterval.fromSemitones(s))).replace(/\d/, "");
+  });
+
+  return {
+    empty: false,
+    root,
+    quality: detectedQuality,
+    notes,
+    intervals: def.intervals,
+    symbol
+  };
+}
+
+// Motor de Análise Harmônica 100% Proprietário
+export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
+  if (positions.length === 0) return [];
+
+  // 1. Obter Pitch Classes e nomes de notas ÚNICAS (removendo duplicações de oitava)
+  const uniquePitchClasses = Array.from(new Set(positions.map(p => p.pitchClass)));
+  const uniqueNoteNames = Array.from(new Set(positions.map(p => simplifyNote(p.noteName).replace(/\d/, ""))));
+
+  // 2. Localizar Baixo Físico
+  const bassFret = getLowestNote(positions);
+  const bassNote = bassFret ? simplifyNote(bassFret.noteName).replace(/\d/, "") : "";
+
   const candidates: ChordCandidate[] = [];
 
-  // 2. Avaliar todas as notas selecionadas como possíveis tônicas (especialmente para no5 e rootless)
-  const candidatePool = new Set<string>(tonalCandidates);
-  
-  // Gerar hipóteses extras a partir de cada nota ativa no braço
-  uniqueNoteNames.forEach(root => {
-    // Testamos qualidades comuns
-    ["", "m", "7", "maj7", "m7", "5", "sus4", "sus2", "add9", "madd9", "6", "m6", "dim", "aug", "m7b5", "dim7"].forEach(quality => {
-      candidatePool.add(`${root}${quality}`);
-    });
-  });
+  // 3. Testar CADA Pitch Class ativa como possível tônica
+  uniquePitchClasses.forEach(rootPC => {
+    // Transpor para o nome da nota da tônica
+    const rootFretPosition = positions.find(p => p.pitchClass === rootPC);
+    const chordRoot = rootFretPosition ? simplifyNote(rootFretPosition.noteName).replace(/\d/, "") : "";
+    if (!chordRoot) return;
 
-  candidatePool.forEach(chordSymbol => {
-    const chord = TonalChord.get(chordSymbol);
-    if (chord.empty) return;
+    // 4. Testar todas as qualidades oficiais da DSL do CHORD_REGISTRY
+    (Object.keys(CHORD_REGISTRY) as ChordQuality[]).forEach(quality => {
+      const def = CHORD_REGISTRY[quality];
+      
+      // Notas absolutas da hipótese teórica
+      const formulaPitchClasses = def.semitones.map(s => (rootPC + s) % 12);
+      
+      let score = 0;
+      const omissions: string[] = [];
+      const additions: string[] = [];
 
-    // Notas clássicas que formam o acorde na teoria
-    const formulaNotes = chord.notes.map(n => simplifyNote(n).replace(/\d/, ""));
-    const formulaPitchClasses = formulaNotes.map(n => getPitchClass(n));
-    const chordRoot = simplifyNote(chord.tonic || chordSymbol.substring(0, 1)).replace(/\d/, "");
-    const chordRootPC = getPitchClass(chordRoot);
+      // --- ALGORITMO DE SCORING PROFISSIONAL ---
 
-    // Mapear intervalos do acorde
-    const chordIntervals = chord.intervals;
+      // A. TÔNICA PRESENT (Peso: +20 ou -25)
+      const rootPresent = uniquePitchClasses.includes(rootPC);
+      if (rootPresent) {
+        score += 20;
+      } else {
+        score -= 25; // Rootless voicing (Jazz)
+        omissions.push("1");
+      }
 
-    let score = 0;
-    const omissions: string[] = [];
-    const additions: string[] = [];
+      // B. TERÇA PRESENTE (Peso: +15 ou -15)
+      const hasThird = def.semitones.some(s => s % 12 === 3 || s % 12 === 4);
+      if (hasThird) {
+        const thirdPCIndex = def.semitones.findIndex(s => s % 12 === 3 || s % 12 === 4);
+        const thirdPC = formulaPitchClasses[thirdPCIndex];
+        if (uniquePitchClasses.includes(thirdPC)) {
+          score += 15;
+        } else {
+          score -= 15; // Perde definição modal
+          omissions.push(def.semitones[thirdPCIndex] === 3 ? "b3" : "3");
+        }
+      }
 
-    // --- CRITÉRIOS DE PONTUAÇÃO ---
-    
-    // 1. Tônica (Root) Presente
-    const rootPresent = uniquePitchClasses.includes(chordRootPC);
-    if (rootPresent) {
-      score += 20;
-    } else {
-      score -= 25; // Penalidade grave: rootless voicing
-      omissions.push("1");
-    }
+      // C. SÉTIMA PRESENTE (Peso: +10 ou -5)
+      const hasSeventh = def.semitones.some(s => s % 12 === 9 || s % 12 === 10 || s % 12 === 11);
+      if (hasSeventh) {
+        const seventhPCIndex = def.semitones.findIndex(s => s % 12 === 9 || s % 12 === 10 || s % 12 === 11);
+        const seventhPC = formulaPitchClasses[seventhPCIndex];
+        if (uniquePitchClasses.includes(seventhPC)) {
+          score += 10;
+        } else {
+          score -= 5;
+          const sem = def.semitones[seventhPCIndex];
+          omissions.push(sem === 9 ? "6" : sem === 10 ? "b7" : "7");
+        }
+      }
 
-    // 2. Terça Presente (Maior ou menor)
-    const hasThird = chordIntervals.some(i => i.startsWith("3"));
-    if (hasThird) {
-      const thirdPC = formulaPitchClasses[chordIntervals.findIndex(i => i.startsWith("3"))];
-      if (uniquePitchClasses.includes(thirdPC)) {
+      // D. QUINTA PRESENTE (Peso: +0 ou -1)
+      const hasFifth = def.semitones.some(s => s % 12 === 6 || s % 12 === 7 || s % 12 === 8);
+      if (hasFifth) {
+        const fifthPCIndex = def.semitones.findIndex(s => s % 12 === 6 || s % 12 === 7 || s % 12 === 8);
+        const fifthPC = formulaPitchClasses[fifthPCIndex];
+        if (uniquePitchClasses.includes(fifthPC)) {
+          // Presente
+        } else {
+          score -= 1; // Quinta omitida tem penalidade insignificante na guitarra
+          const sem = def.semitones[fifthPCIndex];
+          omissions.push(sem === 6 ? "b5" : sem === 7 ? "5" : "#5");
+        }
+      }
+
+      // E. BAIXO (Bass Note) (Peso: +15, +5 ou -10)
+      const bassIsRoot = bassNote === chordRoot;
+      if (bassIsRoot) {
         score += 15;
       } else {
-        score -= 15; // Penalidade severa: perde definição modal
-        omissions.push(chordIntervals.find(i => i.startsWith("3")) || "3");
+        const bassPC = getPitchClass(bassNote);
+        if (formulaPitchClasses.includes(bassPC)) {
+          score += 5; // Inversão legítima (Slash chord)
+        } else {
+          score -= 10; // Baixo incoerente fora do acorde
+        }
       }
-    }
 
-    // 3. Sétima Presente
-    const hasSeventh = chordIntervals.some(i => i.startsWith("7"));
-    if (hasSeventh) {
-      const seventhPC = formulaPitchClasses[chordIntervals.findIndex(i => i.startsWith("7"))];
-      if (uniquePitchClasses.includes(seventhPC)) {
-        score += 10;
-      } else {
-        // Omitir a sétima em um acorde que a exige
-        score -= 5;
-        omissions.push(chordIntervals.find(i => i.startsWith("7")) || "7");
-      }
-    }
+      // F. PENALIDADE DE NOTAS ÓRFÃS (Notas completamente fora da fórmula e tensões) (Peso: -10 por nota)
+      let orphanCount = 0;
+      uniquePitchClasses.forEach(pc => {
+        if (!formulaPitchClasses.includes(pc)) {
+          orphanCount++;
+          score -= 10; // Penalidade estrita
+          const noteName = uniqueNoteNames[uniquePitchClasses.indexOf(pc)];
+          additions.push(noteName);
+        }
+      });
 
-    // 4. Quinta Presente / Omitida
-    const hasFifth = chordIntervals.some(i => i.startsWith("5"));
-    if (hasFifth) {
-      const fifthPC = formulaPitchClasses[chordIntervals.findIndex(i => i.startsWith("5"))];
-      if (uniquePitchClasses.includes(fifthPC)) {
-        // Quinta presente não altera positivamente, mas...
-      } else {
-        score -= 1; // Quinta omitida tem penalidade baixíssima (muito comum)
-        omissions.push("5");
-      }
-    }
+      // Ignorar ruídos absolutos
+      if (score < 5) return;
 
-    // 5. Baixo = Tônica
-    const bassIsRoot = bassNote === chordRoot;
-    if (bassIsRoot) {
-      score += 15;
-    } else {
-      // Inversão aceitável, mas pontua menos se o baixo não for a tônica
-      // Se o baixo estiver na fórmula, é uma inversão real (ex: C/E)
-      const bassPC = getPitchClass(bassNote);
-      if (formulaPitchClasses.includes(bassPC)) {
-        score += 5; // Inversão legítima
-      } else {
-        score -= 10; // Baixo estranho (nota estranha no baixo)
-      }
-    }
+      const isIncomplete = omissions.includes("3") || omissions.includes("b3") || (omissions.includes("1") && uniquePitchClasses.length < 3);
 
-    // 6. Notas selecionadas que NÃO pertencem à fórmula (Notas Órfãs)
-    let orphanNotesCount = 0;
-    uniquePitchClasses.forEach(pc => {
-      if (!formulaPitchClasses.includes(pc)) {
-        orphanNotesCount++;
-        score -= 10; // Penalidade severa por nota estranha
-        // Identificar se a nota estranha é uma extensão óbvia (ex: 9ª, 11ª)
-        const noteName = uniqueNoteNames[uniquePitchClasses.indexOf(pc)];
-        additions.push(noteName);
-      }
-    });
+      // Calcular o Baixo / Barra se for invertido
+      const bassValue = bassIsRoot ? undefined : bassNote;
 
-    // Ignorar acordes com pontuação excessivamente baixa (ruído harmônico)
-    if (score < 5) return;
-
-    // Calcular o flag de incompleto
-    const isIncomplete = omissions.includes("3") || (omissions.includes("1") && uniquePitchClasses.length < 3);
-
-    // Ajustar nome do acorde se houver omissões importantes como "no5"
-    let finalChordName = chord.name || chordSymbol;
-    // Traduzir termos do Tonal.js se necessário
-    if (finalChordName.includes("major seventh")) finalChordName = finalChordName.replace("major seventh", "maj7");
-    if (finalChordName.includes("minor seventh")) finalChordName = finalChordName.replace("minor seventh", "m7");
-    if (finalChordName.includes("dominant seventh")) finalChordName = finalChordName.replace("dominant seventh", "7");
-
-    // Adicionar sufixo no5 se a quinta foi omitida em acordes comuns (tríades/tétrades)
-    if (omissions.includes("5") && !omissions.includes("3") && !omissions.includes("1") && hasFifth && chordIntervals.length >= 3) {
-      // Evitar colocar no5 em power chords (que são apenas a tônica e a quinta)
-      if (chord.type !== "5") {
-        finalChordName = `${chordRoot}${chord.type === "major" ? "" : chord.type}7`.replace("major", "").replace("77", "7") + "(no5)";
-      }
-    }
-
-    // Adicionar baixo se for invertido
-    if (!bassIsRoot && formulaNotes.includes(bassNote) && bassNote) {
-      // Simplifica nome do acorde principal
-      let baseSymbol = chordSymbol;
-      if (omissions.includes("5") && baseSymbol.includes("7")) baseSymbol += "(no5)";
-      finalChordName = `${baseSymbol}/${bassNote}`;
-    }
-
-    candidates.push({
-      name: correctChordSpelling(finalChordName, chordRoot),
-      root: chordRoot,
-      quality: chord.type || "unknown",
-      intervals: chordIntervals.map(i => getFriendlyInterval(i)),
-      score: score,
-      confidence: 0, // Calculado posteriormente na normalização
-      omissions: omissions,
-      additions: additions,
-      bass: bassIsRoot ? undefined : bassNote,
-      isIncomplete: isIncomplete
+      candidates.push({
+        root: chordRoot,
+        quality: quality,
+        intervals: def.semitones.map(s => getFriendlyInterval(getIntervalSymbol(s))),
+        omissions,
+        additions,
+        bass: bassValue,
+        score,
+        confidence: 0, // Definido na normalização
+        notationJazz: formatChordName(chordRoot, quality, omissions, bassValue, "Jazz"),
+        notationBrazilian: formatChordName(chordRoot, quality, omissions, bassValue, "Brazilian"),
+        notationAcademic: formatChordName(chordRoot, quality, omissions, bassValue, "Academic"),
+        isIncomplete
+      });
     });
   });
 
-  // 3. Normalizar e ordenar candidatos
   if (candidates.length === 0) return [];
 
-  // Ordenar por score absoluto descendo
+  // Ordenar por score descrescente
   candidates.sort((a, b) => b.score - a.score);
 
+  // Normalização do Confidence Score (UX) separado do Score absoluto
   const bestScore = candidates[0].score;
-  
-  // Normaliza o melhor em 95-98% de confiança, e os outros proporcionalmente
   const maxConfidence = 96;
+
   const mappedCandidates = candidates.map(c => {
     let conf = Math.round((c.score / bestScore) * maxConfidence);
-    // Garantir que fique entre 5% e 98%
+    // Acordes com muitas notas órfãs ou sem terça perdem confiança rapidamente
+    if (c.isIncomplete) conf = Math.max(5, conf - 15);
     conf = Math.max(5, Math.min(98, conf));
     return {
       ...c,
@@ -409,37 +708,33 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
     };
   });
 
-  // Remover duplicatas de nomes de acordes
+  // Remover duplicatas de nomes na cifragem Jazz ativa
   const seenNames = new Set<string>();
   return mappedCandidates.filter(c => {
-    if (seenNames.has(c.name)) return false;
-    seenNames.add(c.name);
+    if (seenNames.has(c.notationJazz)) return false;
+    seenNames.add(c.notationJazz);
     return true;
-  }).slice(0, 8); // Retornar top 8 candidatos mais prováveis
+  }).slice(0, 8);
 }
 
-/**
- * Retorna uma lista de escalas compatíveis com um acorde e a categoria
- */
+// Escalas compatíveis com base em qualidade DSL proprietária
 export function getCompatibleScales(chord: ChordCandidate): ScaleInfo[] {
   const root = chord.root;
-  const quality = chord.quality.toLowerCase();
+  const quality = chord.quality;
   
   const compatibleTypes: string[] = [];
   
-  // Mapeamento simples de acordes para escalas compatíveis
-  if (quality.includes("major7") || quality.includes("maj7") || quality === "major" || quality === "") {
+  if (quality === "major" || quality === "major7th" || quality === "major6th" || quality === "major9th" || quality === "major13th") {
     compatibleTypes.push("major", "lydian", "pentatonic", "bebop major");
-  } else if (quality.includes("minor7") || quality.includes("m7") || quality === "minor" || quality === "m") {
+  } else if (quality === "minor" || quality === "minor7th" || quality === "minor6th" || quality === "minor9th" || quality === "minor11th" || quality === "minor13th") {
     compatibleTypes.push("dorian", "aeolian", "phrygian", "minor pentatonic", "blues", "melodic minor");
-  } else if (quality === "7" || quality.includes("dominant") || quality.includes("7(no5)")) {
+  } else if (quality === "dominant7th" || quality === "dominant9th" || quality === "dominant11th" || quality === "dominant13th" || quality === "dominant7sus4") {
     compatibleTypes.push("mixolydian", "blues", "bebop", "phrygian dominant", "altered", "lydian dominant");
-  } else if (quality.includes("m7b5") || quality.includes("half-diminished")) {
+  } else if (quality === "halfDiminished") {
     compatibleTypes.push("locrian", "half-whole diminished");
-  } else if (quality.includes("dim") || quality.includes("diminished")) {
+  } else if (quality === "diminished" || quality === "diminished7th") {
     compatibleTypes.push("diminished", "locrian");
   } else {
-    // Fallback padrão
     compatibleTypes.push("major", "minor pentatonic");
   }
 
@@ -460,9 +755,6 @@ export function getCompatibleScales(chord: ChordCandidate): ScaleInfo[] {
   return results;
 }
 
-/**
- * Retorna as notas diatônicas de um campo harmônico baseado em um tom (Key)
- */
 export function getDiatonicChords(keyRoot: string, isMajor: boolean = true): { degree: string; chord: string }[] {
   const mode = isMajor ? "major" : "minor";
   const scale = TonalScale.get(`${keyRoot} ${mode}`);
@@ -483,5 +775,12 @@ export function getDiatonicChords(keyRoot: string, isMajor: boolean = true): { d
       degree: degrees[index] || `${index + 1}`,
       chord: `${simplifiedNote}${suffix}`
     };
+  });
+}
+export function getNotesForChord(root: string, type: string): string[] {
+  const chordDef = CHORD_REGISTRY[type as ChordQuality];
+  if (!chordDef) return [];
+  return chordDef.semitones.map(s => {
+    return simplifyNote(TonalNote.transpose(root, TonalInterval.fromSemitones(s))).replace(/\d/, "");
   });
 }

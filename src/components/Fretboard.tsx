@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getNoteAt, getPitchClass } from "../utils/musicTheory";
+import { getNoteAt, getPitchClass, CHORD_REGISTRY } from "../utils/musicTheory";
 import { playGuitarNote } from "../utils/audioSynth";
 import { Volume2 } from "lucide-react";
 
@@ -21,12 +21,12 @@ export default function Fretboard() {
   // Acorde ativo para o Explorer Mode
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
-  // Notas e pitch classes do acorde ativo
-  const activeChordPCs = activeChord
-    ? activeChord.additions.concat([activeChord.root]).map(note => getPitchClass(note))
-    : [];
-
   const activeChordRootPC = activeChord ? getPitchClass(activeChord.root) : -1;
+
+  // Notas e pitch classes do acorde ativo usando o registro formal do motor proprietário
+  const activeChordPCs = activeChord
+    ? CHORD_REGISTRY[activeChord.quality].semitones.map(s => (activeChordRootPC + s) % 12)
+    : [];
 
   // Dispara a vibração física de uma corda ao tocar áudio
   const triggerStringPlay = (stringIndex: number, noteName: string) => {
@@ -334,9 +334,9 @@ export default function Fretboard() {
                             x={x} 
                             y={y + 3.5} 
                             textAnchor="middle" 
-                            fontSize={isFretted ? "9" : "8"} 
-                            fontWeight="bold" 
-                            fill="#0A0A0C"
+                            fontSize={isFretted ? "10" : "8.5"} 
+                            fontWeight="800" 
+                            fill="#FFFFFF"
                           >
                             {getDegreeLabel(notePC, activeChordRootPC)}
                           </text>
@@ -363,9 +363,9 @@ export default function Fretboard() {
                             x={x} 
                             y={y + 3.5} 
                             textAnchor="middle" 
-                            fontSize={isFretted ? "9" : "8"} 
-                            fontWeight="bold" 
-                            fill="#0A0A0C"
+                            fontSize={isFretted ? "10" : "8.5"} 
+                            fontWeight="800" 
+                            fill="#FFFFFF"
                           >
                             {getDegreeLabel(notePC, scaleRootPC)}
                           </text>
@@ -401,9 +401,9 @@ export default function Fretboard() {
                             x={x} 
                             y={y + 4} 
                             textAnchor="middle" 
-                            fontSize="9" 
-                            fontWeight="800" 
-                            fill="#0A0A0C"
+                            fontSize="10" 
+                            fontWeight="900" 
+                            fill="#FFFFFF"
                           >
                             {noteName.replace(/\d/, "")}
                           </text>

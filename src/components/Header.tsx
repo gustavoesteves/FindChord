@@ -40,7 +40,9 @@ export default function Header() {
     clearFretboard,
     fretboardExplorerMode,
     setFretboardExplorerMode,
-    toggleFret
+    toggleFret,
+    notationStyle,
+    setNotationStyle
   } = useChordStore();
 
   const [showTuning, setShowTuning] = useState(false);
@@ -177,6 +179,20 @@ export default function Header() {
                   <option key={p.name} value={p.name}>{p.name}</option>
                 ))}
                 <option value="Personalizado" disabled>Personalizado</option>
+              </select>
+            </div>
+
+            {/* Estilo de Cifragem */}
+            <div className="flex flex-col gap-1 md:w-1/4">
+              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Estilo de Cifragem</label>
+              <select
+                value={notationStyle}
+                onChange={(e) => setNotationStyle(e.target.value as "Jazz" | "Brazilian" | "Academic")}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-purple-500 cursor-pointer transition font-semibold"
+              >
+                <option value="Jazz">Jazz / Internacional (Cmaj7)</option>
+                <option value="Brazilian">Nacional / MPB (C7M)</option>
+                <option value="Academic">Acadêmico / Bop (CΔ7)</option>
               </select>
             </div>
 

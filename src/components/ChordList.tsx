@@ -10,8 +10,15 @@ export default function ChordList() {
     tuning,
     selectedFrets,
     addToProgression,
-    progressionChords
+    progressionChords,
+    notationStyle
   } = useChordStore();
+
+  const getChordName = (chord: typeof detectedChords[0]) => {
+    if (notationStyle === "Brazilian") return chord.notationBrazilian;
+    if (notationStyle === "Academic") return chord.notationAcademic;
+    return chord.notationJazz;
+  };
 
   if (detectedChords.length === 0) {
     return (
@@ -52,9 +59,10 @@ export default function ChordList() {
         <div className="flex flex-col gap-2 overflow-y-auto max-h-[360px] pr-1">
           {detectedChords.map((chord, idx) => {
             const isSelected = selectedChordIndex === idx;
+            const displayName = getChordName(chord);
             return (
               <button
-                key={`${chord.name}-${idx}`}
+                key={`${displayName}-${idx}`}
                 onClick={() => setSelectedChordIndex(idx)}
                 className={`w-full flex items-center justify-between p-3 rounded-lg border text-left cursor-pointer transition-all ${
                   isSelected 
@@ -66,7 +74,7 @@ export default function ChordList() {
                   <span className={`text-base font-extrabold tracking-tight ${
                     isSelected ? "text-purple-300" : "text-zinc-200"
                   }`}>
-                    {chord.name}
+                    {displayName}
                   </span>
                   
                   {/* Detalhes harmônicos rápidos */}
@@ -94,7 +102,7 @@ export default function ChordList() {
             {/* Header Acorde Selecionado */}
             <div className="flex items-center justify-between border-b border-zinc-800/40 pb-3">
               <div className="flex flex-col">
-                <span className="text-2xl font-black text-white tracking-tight">{activeChord.name}</span>
+                <span className="text-2xl font-black text-white tracking-tight">{getChordName(activeChord)}</span>
                 <span className="text-xs text-zinc-400 font-medium">
                   {`Fundamental (Tônica): ${activeChord.root} | Qualidade: ${activeChord.quality}`}
                 </span>
@@ -102,8 +110,8 @@ export default function ChordList() {
 
               {/* Botão de Progressão */}
               <button
-                onClick={() => addToProgression(activeChord.name)}
-                disabled={progressionChords.includes(activeChord.name)}
+                onClick={() => addToProgression(getChordName(activeChord))}
+                disabled={progressionChords.includes(getChordName(activeChord))}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md cursor-pointer disabled:cursor-not-allowed"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
