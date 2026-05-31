@@ -13,7 +13,9 @@ export default function VoicingSelector() {
     tuning,
     selectedVoicing,
     setSelectedVoicing,
-    notationStyle
+    notationStyle,
+    isVoicingSelectorOpen,
+    setVoicingSelectorOpen
   } = useChordStore();
 
   const getChordName = (chord: typeof detectedChords[0]) => {
@@ -22,7 +24,7 @@ export default function VoicingSelector() {
     return chord.notationJazz;
   };
 
-  const [activeTab, setActiveTab] = useState<"all" | "open" | "caged" | "drop2" | "drop3" | "shell">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "open" | "caged" | "drop2" | "shell">("all");
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
@@ -73,7 +75,7 @@ export default function VoicingSelector() {
     setVoicings(combined);
   }, [activeChord, tuning, notationStyle]);
 
-  if (!activeChord) return null;
+  if (!activeChord || !isVoicingSelectorOpen) return null;
 
   // Filtrar voicings com base na categoria
   const filteredVoicings = voicings.filter(v => {
@@ -164,74 +166,101 @@ export default function VoicingSelector() {
     );
   };
 
+  const displayChordName = getChordName(activeChord);
+
   return (
-    <div className="w-full flex flex-col gap-4 p-4 rounded-xl border border-zinc-850 glass-panel shadow-lg">
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/40 pb-3 gap-3">
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-purple-400" />
-          <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Explorar Voicings / Formas no Braço</h2>
-        </div>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in"
+      onClick={() => setVoicingSelectorOpen(false)}
+    >
+      <div 
+        className="bg-[#121216]/98 border border-zinc-800/85 rounded-2xl p-6 w-full max-w-4xl shadow-2xl flex flex-col max-h-[85vh] glass-panel relative animate-scale-up"
+        onClick={(e) => e.stopPropagation()} // Impede fechamento ao clicar dentro do modal
+      >
+        
+        {/* Botão Fechar no Canto Superior Direito */}
+        <button 
+          onClick={() => setVoicingSelectorOpen(false)}
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold bg-zinc-900 hover:bg-zinc-850 w-8 h-8 rounded-full flex items-center justify-center transition border border-zinc-800 cursor-pointer hover:scale-105 active:scale-95"
+          title="Fechar"
+        >
+          ×
+        </button>
 
-        {/* Categorias Tabs */}
-        <div className="flex flex-wrap gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-900">
-          {(["all", "open", "caged", "drop2", "shell"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded uppercase tracking-wider cursor-pointer transition ${
-                activeTab === tab 
-                  ? "bg-purple-600 text-white" 
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              {tab === "all" ? "Todos" : tab}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/40 pb-4 gap-3 pr-8">
+          <div className="flex items-center gap-2.5">
+            <Layers className="h-5 w-5 text-purple-400" />
+            <div>
+              <h2 className="text-base font-extrabold text-zinc-100 uppercase tracking-wider">Explorador de Voicings & Formas (CAGED)</h2>
+              <p className="text-[10px] text-zinc-400 font-medium">Acorde Selecionado: <span className="text-purple-300 font-bold">{displayChordName}</span></p>
+            </div>
+          </div>
 
-      {/* Grid de Voicings */}
-      {filteredVoicings.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pr-1">
-          {filteredVoicings.map((voicing, idx) => {
-            const isSelected = selectedVoicing && selectedVoicing.frets.every((f, index) => f === voicing.frets[index]);
-            
-            return (
+          {/* Categorias Tabs */}
+          <div className="flex flex-wrap gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-900">
+            {(["all", "open", "caged", "drop2", "shell"] as const).map(tab => (
               <button
-                key={`${voicing.cageShape}-${idx}`}
-                onClick={() => setSelectedVoicing(voicing)}
-                className={`flex flex-col items-center p-3 rounded-lg border transition-all cursor-pointer ${
-                  isSelected 
-                    ? "bg-purple-950/20 border-purple-500/70 shadow-lg shadow-purple-950/20 scale-[1.02]" 
-                    : "bg-zinc-950 border-zinc-850 hover:border-zinc-750 hover:bg-zinc-900/40"
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded uppercase tracking-wider cursor-pointer transition ${
+                  activeTab === tab 
+                    ? "bg-purple-600 text-white" 
+                    : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                {/* Mini Diagrama */}
-                <div className="mb-2">
-                  {renderMiniDiagram(voicing.frets)}
-                </div>
-
-                {/* CAGED classification */}
-                <div className="flex flex-col items-center gap-0.5 mt-1 border-t border-zinc-900 w-full pt-1.5">
-                  <span className="text-[10px] font-bold text-purple-300">
-                    {`Formato ${voicing.cageShape}`}
-                  </span>
-                  <span className="text-[9px] text-zinc-500 font-medium">
-                    {voicing.positionFret === 0 ? "Cordas Soltas" : `Casa Inicial: ${voicing.positionFret}`}
-                  </span>
-                </div>
+                {tab === "all" ? "Todos" : tab}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="w-full min-h-[140px] flex items-center justify-center border border-dashed border-zinc-850 rounded-lg text-zinc-500 text-xs">
-          Nenhuma forma correspondente nesta categoria.
-        </div>
-      )}
 
+        {/* Grid de Voicings com Scroll Interno */}
+        <div className="flex-1 overflow-y-auto mt-4 pr-1 scrollbar-thin">
+          {filteredVoicings.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pr-1 py-1">
+              {filteredVoicings.map((voicing, idx) => {
+                const isSelected = selectedVoicing && selectedVoicing.frets.every((f, index) => f === voicing.frets[index]);
+                
+                return (
+                  <button
+                    key={`${voicing.cageShape}-${idx}`}
+                    onClick={() => {
+                      setSelectedVoicing(voicing);
+                      setVoicingSelectorOpen(false); // Fecha o modal ao selecionar uma forma!
+                    }}
+                    className={`flex flex-col items-center p-3 rounded-lg border transition-all cursor-pointer ${
+                      isSelected 
+                        ? "bg-purple-950/20 border-purple-500/70 shadow-lg shadow-purple-950/20 scale-[1.02]" 
+                        : "bg-zinc-950 border-zinc-850 hover:border-zinc-750 hover:bg-zinc-900/40"
+                    }`}
+                  >
+                    {/* Mini Diagrama */}
+                    <div className="mb-2">
+                      {renderMiniDiagram(voicing.frets)}
+                    </div>
+
+                    {/* CAGED classification */}
+                    <div className="flex flex-col items-center gap-0.5 mt-1 border-t border-zinc-900 w-full pt-1.5">
+                      <span className="text-[10px] font-bold text-purple-300">
+                        {`Formato ${voicing.cageShape}`}
+                      </span>
+                      <span className="text-[9px] text-zinc-500 font-medium">
+                        {voicing.positionFret === 0 ? "Cordas Soltas" : `Casa Inicial: ${voicing.positionFret}`}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="w-full min-h-[180px] flex items-center justify-center border border-dashed border-zinc-850 rounded-lg text-zinc-500 text-xs">
+              Nenhuma forma correspondente nesta categoria.
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }

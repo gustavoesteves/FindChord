@@ -11,7 +11,8 @@ export default function ChordList() {
     selectedFrets,
     addToProgression,
     progressionChords,
-    notationStyle
+    notationStyle,
+    setVoicingSelectorOpen
   } = useChordStore();
 
   const getChordName = (chord: typeof detectedChords[0]) => {
@@ -108,16 +109,27 @@ export default function ChordList() {
                 </span>
               </div>
 
-              {/* Botão de Progressão */}
-              <button
-                onClick={() => addToProgression(getChordName(activeChord))}
-                disabled={progressionChords.includes(getChordName(activeChord))}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md cursor-pointer disabled:cursor-not-allowed"
-              >
+              {/* Controles de Ação */}
+              <div className="flex items-center gap-2">
+                {/* Botão de Voicings Modal */}
+                <button
+                  onClick={() => setVoicingSelectorOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-md cursor-pointer shadow-purple-900/20"
+                >
+                  📖 Explorar Voicings
+                </button>
+                
+                {/* Botão de Progressão */}
+                <button
+                  onClick={() => addToProgression(getChordName(activeChord))}
+                  disabled={progressionChords.includes(getChordName(activeChord))}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md cursor-pointer disabled:cursor-not-allowed"
+                >
                 <PlusCircle className="h-3.5 w-3.5" />
                 Adicionar à Progressão
               </button>
             </div>
+          </div>
 
             {/* Anatomia do Acorde (Notas Omitidas / Adicionadas) */}
             <div className="grid grid-cols-2 gap-3">

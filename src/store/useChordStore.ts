@@ -52,6 +52,7 @@ interface ChordStore {
   fretboardExplorerMode: boolean;   // Se ativado, acende todas as notas do acorde no braço
   selectedVoicing: VoicingShape | null;
   notationStyle: "Jazz" | "Brazilian" | "Academic"; // Estilo de notação ativo
+  isVoicingSelectorOpen: boolean;   // Se o modal de voicings está aberto
   
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
@@ -71,6 +72,7 @@ interface ChordStore {
   setSelectedVoicing: (voicing: VoicingShape | null) => void;
   setVoiceLeadingSource: (frets: (number | null)[] | null) => void;
   setNotationStyle: (style: "Jazz" | "Brazilian" | "Academic") => void;
+  setVoicingSelectorOpen: (open: boolean) => void;
   
   // Ações de Progressão
   addToProgression: (chordName: string) => void;
@@ -114,6 +116,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
     fretboardExplorerMode: false,
     selectedVoicing: null,
     notationStyle: "Jazz",
+    isVoicingSelectorOpen: false,
     
     voiceLeadingSource: null,
     
@@ -240,6 +243,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
       // Recalcular acordes imediatamente para atualizar toda a UI com a nova notação
       const chords = recalculateChords(get().selectedFrets, get().tuning);
       set({ detectedChords: chords });
+    },
+
+    setVoicingSelectorOpen: (open) => {
+      set({ isVoicingSelectorOpen: open });
     },
 
     // Ações de Progressão
