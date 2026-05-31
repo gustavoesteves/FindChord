@@ -1,111 +1,195 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --color-dark-bg: #0A0A0C;
+  --color-dark-surface: #121216;
+  --color-dark-border: rgba(255, 255, 255, 0.08);
+  
+  /* Cores de Acordes/Intervalos */
+  --color-neon-root: #FF4D4D;
+  --color-neon-third: #00F0FF;
+  --color-neon-fifth: #00FF88;
+  --color-neon-seventh: #BD00FF;
+  --color-neon-extension: #FF9900;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* --- ESTILOS BASE --- */
+html, body {
+  background-color: var(--color-dark-bg);
+  color: #E2E8F0;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-body {
-  margin: 0;
+/* Background com textura sutil e gradiente radial de iluminação de palco */
+.bg-stage-lights {
+  background-color: #050507;
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(189, 0, 255, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 10% 80%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(0, 255, 136, 0.06) 0%, transparent 40%);
+  background-attachment: fixed;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* --- ANIMAÇÕES CUSTOMIZADAS --- */
+
+/* Vibração física das cordas */
+@keyframes string-vibrate {
+  0% { transform: translateY(0); }
+  10% { transform: translateY(-3px); }
+  25% { transform: translateY(2.5px); }
+  40% { transform: translateY(-2px); }
+  55% { transform: translateY(1.5px); }
+  70% { transform: translateY(-1px); }
+  85% { transform: translateY(0.5px); }
+  100% { transform: translateY(0); }
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+.animate-vibrate {
+  animation: string-vibrate 0.6s ease-in-out;
+  transform-origin: center;
+}
+
+/* Pulsação neon suave para notas principais e tônicas */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px var(--pulse-color, #FF4D4D);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px var(--pulse-color, #FF4D4D), 0 0 8px var(--pulse-color, #FF4D4D);
+    transform: scale(1.08);
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+
+.animate-neon-pulse-root {
+  --pulse-color: rgba(255, 77, 77, 0.6);
+  animation: neon-pulse 2s infinite ease-in-out;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.animate-neon-pulse-third {
+  --pulse-color: rgba(0, 240, 255, 0.6);
+  animation: neon-pulse 2.2s infinite ease-in-out;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.animate-neon-pulse-fifth {
+  --pulse-color: rgba(0, 255, 136, 0.6);
+  animation: neon-pulse 2.4s infinite ease-in-out;
+}
+
+.animate-neon-pulse-seventh {
+  --pulse-color: rgba(189, 0, 255, 0.6);
+  animation: neon-pulse 2.6s infinite ease-in-out;
+}
+
+.animate-neon-pulse-ext {
+  --pulse-color: rgba(255, 153, 0, 0.6);
+  animation: neon-pulse 2.8s infinite ease-in-out;
+}
+
+/* --- CLASSE DE GLASSMORPHISM --- */
+.glass-panel {
+  background: rgba(18, 18, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-glow {
+  background: rgba(18, 18, 22, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    0 0 40px -10px rgba(189, 0, 255, 0.07);
+}
+
+/* --- PERSONALIZAÇÃO DE SCROLLBARS --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
+}
+
+/* --- PERSONALIZAÇÃO DE SLIDERS --- */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #27272A;
+  height: 6px;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #BD00FF;
+  border-radius: 9999px;
+  height: 16px;
+  width: 16px;
+  margin-top: -5px;
+  box-shadow: 0 0 10px rgba(189, 0, 255, 0.5);
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Estilos extras de utilidade */
+.text-glow-purple {
+  text-shadow: 0 0 8px rgba(189, 0, 255, 0.6);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* Fretboard Wood grain effect overlay */
+.fretboard-wood {
+  position: relative;
+}
+
+.fretboard-wood::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 4px);
+  opacity: 0.15;
+  pointer-events: none;
 }
