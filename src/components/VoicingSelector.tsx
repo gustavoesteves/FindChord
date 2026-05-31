@@ -181,7 +181,7 @@ export default function VoicingSelector() {
 
       {/* Grid de Voicings */}
       {filteredVoicings.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 overflow-y-auto max-h-[300px] pr-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pr-1">
           {filteredVoicings.map((voicing, idx) => {
             const isSelected = selectedVoicing && selectedVoicing.frets.every((f, index) => f === voicing.frets[index]);
             

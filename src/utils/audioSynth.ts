@@ -3,7 +3,7 @@ import { Note as TonalNote } from "tonal";
 let audioCtx: AudioContext | null = null;
 
 /**
- * Lazy initializer for AudioContext to satisfy browser security policies (requires user interaction)
+ * Lazy initializer for AudioContext
  */
 function getAudioContext(): AudioContext {
   if (!audioCtx) {
@@ -16,102 +16,94 @@ function getAudioContext(): AudioContext {
 }
 
 /**
- * Converte um nome de nota (ex: "C4", "E2") para sua frequência em Hz
+ * Converte nome de nota para frequência
  */
 export function noteToFrequency(noteName: string): number {
   const note = TonalNote.get(noteName);
   if (note.empty || note.midi === undefined || note.midi === null) return 440;
-  // Fórmula padrão de frequência MIDI: 440 * 2^((midi - 69)/12)
   return 440 * Math.pow(2, (note.midi - 69) / 12);
 }
 
 /**
- * Gera um AudioBuffer com o som sintetizado de uma corda de guitarra (Karplus-Strong)
- */
-function createStringBuffer(ctx: AudioContext, frequency: number, duration: number = 1.5): AudioBuffer {
-  const sampleRate = ctx.sampleRate;
-  const numSamples = sampleRate * duration;
-  const buffer = ctx.createBuffer(1, numSamples, sampleRate);
-  const channelData = buffer.getChannelData(0);
-
-  // O período de delay é o tamanho da "linha de retardo" em amostras
-  const period = Math.round(sampleRate / frequency);
-  
-  // 1. Alimentar o início com ruído branco de alta densidade (simulando a palhetada)
-  for (let i = 0; i < period; i++) {
-    channelData[i] = Math.random() * 2 - 1;
-  }
-
-  // 2. Loop de feedback Karplus-Strong
-  // decayFactor controla quão rápido a corda para de vibrar (notas graves sustentam mais que agudas)
-  const baseDecay = 0.993;
-  // Notas mais altas decaem um pouco mais rápido de forma natural
-  const decayFactor = Math.min(0.996, baseDecay - (frequency / 25000));
-
-  for (let i = period; i < numSamples; i++) {
-    // Filtro passa-baixas de 1 polo: média do valor atual e anterior na linha de retardo
-    const val = (channelData[i - period] + channelData[i - period - 1]) * 0.5 * decayFactor;
-    channelData[i] = val;
-  }
-
-  // 3. Suavizar o final do buffer (fade-out rápido nas últimas 1000 amostras) para evitar cliques
-  const fadeSize = Math.min(2000, numSamples * 0.1);
-  for (let i = 0; i < fadeSize; i++) {
-    const idx = numSamples - 1 - i;
-    const ratio = i / fadeSize;
-    channelData[idx] *= ratio;
-  }
-
-  return buffer;
-}
-
-/**
- * Toca uma única nota física após um delay em milissegundos
+ * Sintetizador Subtrativo de Guitarra Elétrica Clean / Jazz
+ * Utiliza osciladores combinados e varredura de filtro passa-baixas para som quente e amadeirado.
  */
 export function playGuitarNote(noteName: string, delayMs: number = 0): void {
   try {
     const ctx = getAudioContext();
     const frequency = noteToFrequency(noteName);
     
-    // Evita tentar sintetizar frequências absurdas ou inaudíveis
     if (frequency < 20 || frequency > 4000) return;
 
-    const duration = 1.8; // Duração da nota
-    const stringBuffer = createStringBuffer(ctx, frequency, duration);
+    const startTime = ctx.currentTime + delayMs / 1000;
+    const duration = 2.0;
 
-    const source = ctx.createBufferSource();
-    source.buffer = stringBuffer;
+    // 1. Oscilador Primário: Onda triangular para ressonância do corpo (fundamental)
+    const osc1 = ctx.createOscillator();
+    osc1.type = "triangle";
+    osc1.frequency.setValueAtTime(frequency, startTime);
 
-    // Criar um nó de Ganho (Volume) para controlar a dinâmica e fadeout
+    // 2. Oscilador Secundário: Onda senoidal uma oitava acima para brilho e clareza das cordas de aço
+    const osc2 = ctx.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(frequency * 2, startTime);
+
+    // Nó de mesclagem de ganho para os osciladores (70% corpo, 30% brilho)
+    const osc1Gain = ctx.createGain();
+    const osc2Gain = ctx.createGain();
+    
+    osc1Gain.gain.setValueAtTime(0.65, startTime);
+    osc2Gain.gain.setValueAtTime(0.20, startTime);
+
+    // 3. Filtro Passa-Baixas Dinâmico (BiquadFilter)
+    // Isso simula o amortecimento físico da corda, onde agudos decaem muito rápido
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    
+    // Inicia brilhante no ataque (2500Hz) e cai rapidamente para um som aveludado e amadeirado (180Hz)
+    filter.frequency.setValueAtTime(2800, startTime);
+    filter.frequency.exponentialRampToValueAtTime(140, startTime + 1.2);
+
+    // 4. Envelope de Ganho Principal (Volume)
     const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(0.6, ctx.currentTime + delayMs / 1000);
     
-    // Dinâmica de decaimento natural secundário
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delayMs / 1000 + duration);
+    // Silêncio inicial absoluto
+    gainNode.gain.setValueAtTime(0, startTime);
+    
+    // Ataque ultra rápido de 8ms para simular a palhetada sem cliques digitais
+    gainNode.gain.linearRampToValueAtTime(0.35, startTime + 0.008);
+    
+    // Decaimento natural lento e exponencial
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
-    // Conectar e tocar
-    source.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    // Conexões
+    osc1.connect(osc1Gain);
+    osc2.connect(osc2Gain);
     
-    source.start(ctx.currentTime + delayMs / 1000);
+    osc1Gain.connect(filter);
+    osc2Gain.connect(filter);
+    
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // Disparar
+    osc1.start(startTime);
+    osc2.start(startTime);
+    
+    osc1.stop(startTime + duration);
+    osc2.stop(startTime + duration);
   } catch (error) {
-    console.warn("Erro ao reproduzir áudio (Web Audio API):", error);
+    console.warn("Erro ao sintetizar áudio (Web Audio API):", error);
   }
 }
 
 /**
- * Toca um conjunto de notas simulando um arpejo dedilhado ou palhetada (strumming)
- * @param notes Array de notas ordenado da mais grave para a mais aguda
- * @param strumSpeed Atraso em ms entre cordas (ex: 45ms para strum rápido, 150ms para arpejo lento)
+ * Arpeja o acorde no braço
  */
 export function playGuitarChord(notes: string[], strumSpeed: number = 40): void {
   if (notes.length === 0) return;
-
-  // Filtrar notas repetidas adjacentes se necessário, mantendo ordem física
   const activeNotes = notes.filter(n => n !== "x" && n !== "");
-
   activeNotes.forEach((note, index) => {
-    // Strumming: atrasa a execução de cada nota progressivamente para simular a palheta passando pelas cordas
     playGuitarNote(note, index * strumSpeed);
   });
 }
