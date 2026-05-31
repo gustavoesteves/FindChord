@@ -1,6 +1,7 @@
 import React from "react";
 import { useChordStore, TUNING_PRESETS } from "../store/useChordStore";
 import { Music, RotateCcw, Search, Sparkles } from "lucide-react";
+import { getNoteAt } from "../utils/musicTheory";
 
 const NOTE_CLASSES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const OCTAVES = [1, 2, 3, 4, 5];
@@ -39,8 +40,7 @@ export default function Header() {
     clearFretboard,
     fretboardExplorerMode,
     setFretboardExplorerMode,
-    toggleFret,
-    setSelectedChordIndex
+    toggleFret
   } = useChordStore();
 
   const [reverseRoot, setReverseRoot] = React.useState("C");
@@ -57,9 +57,6 @@ export default function Header() {
   // Executa o modo Chord Construction / Reverso
   const buildChordReverse = () => {
     clearFretboard();
-    
-    // Mapeia notas da tônica escolhida na afinação e força as notas do acorde no braço
-    const chordSymbol = `${reverseRoot}${reverseQuality}`;
     
     // Ativa o Explorer Mode para acender todas as notas correspondentes
     setFretboardExplorerMode(true);

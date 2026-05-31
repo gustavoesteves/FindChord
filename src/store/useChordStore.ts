@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { analyzeChords, simplifyNote, getNoteAt, getPitchClass, getOctave } from "../utils/musicTheory";
-import { VoicingShape } from "../utils/voicingGenerator";
+import type { VoicingShape } from "../utils/voicingGenerator";
 
 export interface FretPosition {
   stringIndex: number; // 0 (1ª corda - E4) a 5 (6ª corda - E2)

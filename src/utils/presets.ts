@@ -282,7 +282,6 @@ export function getPresetVoicingsForChord(chordName: string): PresetVoicing[] {
   
   // Caso contenha (no5) removemos temporariamente para correspondência de forma
   const cleanQuality = quality.replace("(no5)", "");
-  const lookupName = `C${cleanQuality || ""}`; // Buscaremos presets mapeados em Dó (C) e transporemos!
 
   // Notas clássicas de C e do acorde atual
   const pitchClasses: Record<string, number> = {

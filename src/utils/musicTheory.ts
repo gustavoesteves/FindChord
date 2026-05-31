@@ -1,5 +1,5 @@
-import { Chord as TonalChord, Note as TonalNote, Scale as TonalScale } from "@tonaljs/tonal";
-import { FretPosition, ChordCandidate } from "../store/useChordStore";
+import { Chord as TonalChord, Note as TonalNote, Scale as TonalScale, Interval as TonalInterval } from "tonal";
+import type { FretPosition, ChordCandidate } from "../store/useChordStore";
 
 // Dicionário de equivalências enarmônicas para simplificação visual
 const PREFERRED_SPELLINGS: Record<string, string> = {
@@ -100,7 +100,7 @@ export const SCALE_CATEGORIES = {
  * Transpõe uma nota base por um número de semitons e simplifica enarmônicos bizarros.
  */
 export function getNoteAt(baseNote: string, fret: number): string {
-  const transposed = TonalNote.transpose(baseNote, TonalNote.fromSemitones(fret));
+  const transposed = TonalNote.transpose(baseNote, TonalInterval.fromSemitones(fret));
   return simplifyNote(transposed);
 }
 

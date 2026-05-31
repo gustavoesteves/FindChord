@@ -1,4 +1,3 @@
-import React from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getFriendlyInterval, getNoteAt } from "../utils/musicTheory";
 import { Music, PlusCircle, AlertCircle } from "lucide-react";
@@ -166,7 +165,6 @@ export default function ChordList() {
                       
                       const noteName = getNoteAt(tuning[stringIdx], fret);
                       const baseNote = noteName.replace(/\d/, "");
-                      const activeNotesList = activeChord.additions.concat([activeChord.root]);
 
                       // Calcular intervalo
                       // Tonal.js pode nos dar o intervalo teórico

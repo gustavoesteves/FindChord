@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getPresetVoicingsForChord } from "../utils/presets";
-import { generateVoicings, VoicingShape, CageShape } from "../utils/voicingGenerator";
+import { generateVoicings, CageShape } from "../utils/voicingGenerator";
+import type { VoicingShape } from "../utils/voicingGenerator";
 import { getPitchClass } from "../utils/musicTheory";
-import { Eye, HelpCircle, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 
 export default function VoicingSelector() {
   const {
@@ -89,7 +90,7 @@ export default function VoicingSelector() {
   }
 
   // --- RENDERIZADOR DE MINI DIAGRAMA DE ACORDE SVG ---
-  const renderMiniDiagram = (frets: (number | null)[], startFret: number) => {
+  const renderMiniDiagram = (frets: (number | null)[]) => {
     const dWidth = 90;
     const dHeight = 110;
     
@@ -196,7 +197,7 @@ export default function VoicingSelector() {
               >
                 {/* Mini Diagrama */}
                 <div className="mb-2">
-                  {renderMiniDiagram(voicing.frets, voicing.positionFret)}
+                  {renderMiniDiagram(voicing.frets)}
                 </div>
 
                 {/* CAGED classification */}

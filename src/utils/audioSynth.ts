@@ -1,4 +1,4 @@
-import { Note as TonalNote } from "@tonaljs/tonal";
+import { Note as TonalNote } from "tonal";
 
 let audioCtx: AudioContext | null = null;
 
@@ -20,7 +20,7 @@ function getAudioContext(): AudioContext {
  */
 export function noteToFrequency(noteName: string): number {
   const note = TonalNote.get(noteName);
-  if (note.empty || note.midi === undefined) return 440;
+  if (note.empty || note.midi === undefined || note.midi === null) return 440;
   // Fórmula padrão de frequência MIDI: 440 * 2^((midi - 69)/12)
   return 440 * Math.pow(2, (note.midi - 69) / 12);
 }

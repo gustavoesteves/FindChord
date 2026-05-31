@@ -1,12 +1,15 @@
 import { getPitchClass, getNoteAt } from "./musicTheory";
 
-export enum CageShape {
-  C = "C",
-  A = "A",
-  G = "G",
-  E = "E",
-  D = "D"
-}
+export type CageShape = "C" | "A" | "G" | "E" | "D";
+
+export const CageShape = {
+  C: "C" as CageShape,
+  A: "A" as CageShape,
+  G: "G" as CageShape,
+  E: "E" as CageShape,
+  D: "D" as CageShape
+};
+
 
 export interface VoicingShape {
   chordName: string;

@@ -1,4 +1,3 @@
-import React from "react";
 import Header from "./components/Header";
 import Fretboard from "./components/Fretboard";
 import ChordList from "./components/ChordList";
@@ -6,7 +5,7 @@ import VoicingSelector from "./components/VoicingSelector";
 import ScaleOverlayPanel from "./components/ScaleOverlayPanel";
 import VoiceLeadingPanel from "./components/VoiceLeadingPanel";
 import { useChordStore } from "./store/useChordStore";
-import { Music, Eye, Layers, Compass, HelpCircle } from "lucide-react";
+import { Compass, HelpCircle } from "lucide-react";
 
 export default function App() {
   const { detectedChords, selectedChordIndex } = useChordStore();

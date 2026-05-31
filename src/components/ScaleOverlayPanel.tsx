@@ -1,7 +1,6 @@
-import React from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getCompatibleScales, SCALE_CATEGORIES } from "../utils/musicTheory";
-import { Eye, EyeOff, ShieldAlert, Sparkles, BookOpen } from "lucide-react";
+import { getCompatibleScales } from "../utils/musicTheory";
+import { EyeOff, Sparkles, BookOpen } from "lucide-react";
 
 export default function ScaleOverlayPanel() {
   const {

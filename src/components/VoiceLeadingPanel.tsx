@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getDiatonicChords, getPitchClass, getNoteAt, COMMON_PROGRESSIONS } from "../utils/musicTheory";
-import { generateVoicings, VoicingShape } from "../utils/voicingGenerator";
-import { findBestVoiceLeading, VoiceLeadingResult } from "../utils/voiceLeading";
+import { generateVoicings } from "../utils/voicingGenerator";
+import { findBestVoiceLeading } from "../utils/voiceLeading";
+import type { VoiceLeadingResult } from "../utils/voiceLeading";
 import { playGuitarChord } from "../utils/audioSynth";
-import { ArrowRight, Plus, Trash2, Zap, Play, Info } from "lucide-react";
+import { ArrowRight, Trash2, Zap, Play, Info } from "lucide-react";
+import { Chord as TonalChord } from "tonal";
 
 export default function VoiceLeadingPanel() {
   const {
@@ -58,10 +60,10 @@ export default function VoiceLeadingPanel() {
 
     if (isFretboardEmpty) {
       // Gera voicings temporários para A e pega o primeiro como base
-      const matchA = chordAName.match(/^([A-G][b#]?)(.*)$/);
-      if (matchA) {
-        const rootA = matchA[1];
-        const targetPCs = matchA[2].replace("(no5)", "").concat([rootA]).split("").map(n => getPitchClass(n));
+      const chordAInfo = TonalChord.get(chordAName);
+      if (!chordAInfo.empty) {
+        const rootA = chordAInfo.root || "C";
+        const targetPCs = chordAInfo.notes.map(n => getPitchClass(n));
         const voicingsA = generateVoicings(chordAName, rootA, targetPCs, tuning);
         if (voicingsA.length > 0) {
           fretsA = voicingsA[0].frets;
@@ -70,13 +72,10 @@ export default function VoiceLeadingPanel() {
     }
 
     // Gerar voicings candidatos para o Acorde B
-    const matchB = chordBName.match(/^([A-G][b#]?)(.*)$/);
-    if (!matchB) return;
-    const rootB = matchB[1];
-    
-    // Limpa a qualidade removendo o baixo para gerar a forma
-    let cleanQualityB = matchB[2].split("/")[0].replace("(no5)", "");
-    const targetPCsB = cleanQualityB.split("").concat([rootB]).map(n => getPitchClass(n));
+    const chordBInfo = TonalChord.get(chordBName);
+    if (chordBInfo.empty) return;
+    const rootB = chordBInfo.root || "C";
+    const targetPCsB = chordBInfo.notes.map(n => getPitchClass(n));
     const candidatesB = generateVoicings(chordBName, rootB, targetPCsB, tuning);
 
     if (candidatesB.length === 0) return;

@@ -1,5 +1,5 @@
 import { getPitchClass, getOctave, getNoteAt } from "./musicTheory";
-import { VoicingShape } from "./voicingGenerator";
+import type { VoicingShape } from "./voicingGenerator";
 
 export interface VoiceLeadingPath {
   stringIndex: number;

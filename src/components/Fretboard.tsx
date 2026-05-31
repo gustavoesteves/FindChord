@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getNoteAt, getPitchClass, getFriendlyInterval } from "../utils/musicTheory";
+import { getNoteAt, getPitchClass } from "../utils/musicTheory";
 import { playGuitarNote } from "../utils/audioSynth";
 import { Volume2 } from "lucide-react";
 
@@ -314,7 +314,6 @@ export default function Fretboard() {
 
                     // --- 1. MODO FRETBOARD EXPLORER (Highlights do acorde ativo) ---
                     if (fretboardExplorerMode && activeChord && activeChordPCs.includes(notePC)) {
-                      const isRoot = notePC === activeChordRootPC;
                       const cProps = getNoteColorClass(notePC, activeChordRootPC);
                       
                       // Se além de estar no acorde, o traste está ativado, desenhamos com maior brilho
@@ -347,7 +346,6 @@ export default function Fretboard() {
                     // --- 2. MODO SCALE OVERLAY (Notas da escala selecionada acesas) ---
                     if (activeScale && activeScale.notes.map(n => getPitchClass(n)).includes(notePC)) {
                       const scaleRootPC = getPitchClass(activeScale.notes[0]);
-                      const isScaleRoot = notePC === scaleRootPC;
                       const cProps = getNoteColorClass(notePC, scaleRootPC);
 
                       const opacity = isFretted ? "opacity-100" : "opacity-45 hover:opacity-95";
@@ -379,7 +377,6 @@ export default function Fretboard() {
                     if (isFretted) {
                       // Se houver um acorde ativo detectado, colorimos com base no intervalo harmônico do acorde principal
                       // Caso contrário, usamos cor padrão (tônica genérica vermelha)
-                      const isRoot = activeChord ? notePC === activeChordRootPC : true;
                       const colorProps = activeChord 
                         ? getNoteColorClass(notePC, activeChordRootPC) 
                         : { bg: "bg-red-500", border: "border-red-600", glow: "shadow-[0_0_12px_rgba(239,68,68,0.5)]" };
@@ -425,7 +422,6 @@ export default function Fretboard() {
           {Array.from({ length: 6 }).map((_, idx) => {
             const isMuted = selectedFrets[idx] === null;
             const isOpen = selectedFrets[idx] === 0;
-            const noteName = getNoteAt(tuning[idx], 0);
 
             return (
               <div key={`nut-control-${idx}`} className="flex flex-col items-center justify-center h-9">
