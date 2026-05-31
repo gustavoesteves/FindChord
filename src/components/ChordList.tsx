@@ -200,11 +200,15 @@ export default function ChordList() {
                         11: "Sétima Maior (7)"
                       };
 
+                      const displayNoteName = activeChord
+                        ? (activeChord.notes.find(n => pitchClasses[n] === notePC) || baseNote) + noteName.replace(/^[A-G][b#]?/, "")
+                        : noteName;
+
                       return (
                         <tr key={`tbl-string-${stringIdx}`} className="border-b border-zinc-850/60 hover:bg-zinc-900/30">
                           <td className="py-2 px-3 font-bold text-zinc-500 uppercase">{`${stringIdx + 1}ª (${tuning[stringIdx].replace(/\d/, "")})`}</td>
                           <td className="py-2 px-3 text-zinc-300 font-semibold">{fret === 0 ? "Solta (0)" : `Casa ${fret}`}</td>
-                          <td className="py-2 px-3 font-bold text-purple-300">{noteName}</td>
+                          <td className="py-2 px-3 font-bold text-purple-300">{displayNoteName}</td>
                           <td className="py-2 px-3 text-zinc-400 font-medium">
                             {intervalMapping[dist] || "Extensão"}
                           </td>

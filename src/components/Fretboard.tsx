@@ -381,6 +381,10 @@ export default function Fretboard() {
                         ? getNoteColor(notePC, activeChordRootPC) 
                         : "#FF4D4D";
 
+                      const displayNoteName = activeChord
+                        ? activeChord.notes.find(n => getPitchClass(n) === notePC) || noteName.replace(/\d/, "")
+                        : noteName.replace(/\d/, "");
+
                       return (
                         <g 
                           key={`fretted-${stringIdx}-${fret}`} 
@@ -405,7 +409,7 @@ export default function Fretboard() {
                             fontWeight="900" 
                             fill="#FFFFFF"
                           >
-                            {noteName.replace(/\d/, "")}
+                            {displayNoteName}
                           </text>
                         </g>
                       );

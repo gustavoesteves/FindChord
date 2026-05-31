@@ -671,10 +671,15 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       // Calcular o Baixo / Barra se for invertido
       const bassValue = bassIsRoot ? undefined : bassNote;
 
+      const formulaNotes = def.semitones.map(s => {
+        return simplifyNote(TonalNote.transpose(chordRoot, TonalInterval.fromSemitones(s))).replace(/\d/, "");
+      });
+
       candidates.push({
         root: chordRoot,
         quality: quality,
         intervals: def.semitones.map(s => getFriendlyInterval(getIntervalSymbol(s))),
+        notes: formulaNotes,
         omissions,
         additions,
         bass: bassValue,
