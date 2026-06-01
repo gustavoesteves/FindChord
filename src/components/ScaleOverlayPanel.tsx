@@ -1,5 +1,5 @@
 import { useChordStore } from "../store/useChordStore";
-import { getCompatibleScales } from "../utils/musicTheory";
+import { getCompatibleScales } from "../utils/music/theory/musicTheory";
 import { EyeOff, Sparkles, BookOpen } from "lucide-react";
 
 export default function ScaleOverlayPanel() {

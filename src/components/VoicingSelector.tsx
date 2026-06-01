@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getPresetVoicingsForChord } from "../utils/presets";
-import { generateVoicings, CageShape } from "../utils/voicingGenerator";
-import type { VoicingShape } from "../utils/voicingGenerator";
-import { getPitchClass, CHORD_REGISTRY } from "../utils/musicTheory";
+import { getPresetVoicingsForChord } from "../utils/music/generation/shapeFinder";
+import { generateVoicings, identifyShapeFamily } from "../utils/music/generation/voicingGenerator";
+import { scoreVoicingQuality } from "../utils/music/scoring/voicingScorer";
+import { CageShape } from "../utils/music/models/VoicingShape";
+import type { VoicingShape } from "../utils/music/models/VoicingShape";
+import { getPitchClass } from "../utils/music/core/pitch";
+import { getNoteAt } from "../utils/music/core/notes";
+import { CHORD_REGISTRY } from "../utils/music/constants/chordRegistry";
 import { Layers } from "lucide-react";
 
 export default function VoicingSelector() {
@@ -50,17 +54,22 @@ export default function VoicingSelector() {
     const displayChordName = getChordName(activeChord);
 
     // 2. Buscar presets transpostos
-    const presets = getPresetVoicingsForChord(refChordName).map(p => ({
-      chordName: displayChordName,
-      frets: p.frets,
-      rootString: p.frets.findIndex(f => f !== null && getPitchClass(getNoteAt(tuning[p.frets.indexOf(f) || 0], f)) === rootPC),
-      cageShape: p.cageShape || CageShape.E,
-      positionFret: Math.min(...(p.frets.filter(f => f !== null && f > 0) as number[])),
-      notes: p.frets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x")
-    }));
+    const presets = getPresetVoicingsForChord(refChordName).map(p => {
+      const notes = p.frets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x");
+      return {
+        chordName: displayChordName,
+        frets: p.frets,
+        rootString: p.frets.findIndex(f => f !== null && getPitchClass(getNoteAt(tuning[p.frets.indexOf(f) || 0], f)) === rootPC),
+        cageShape: p.cageShape || CageShape.E,
+        positionFret: Math.min(...(p.frets.filter(f => f !== null && f > 0) as number[])),
+        notes,
+        qualityScore: scoreVoicingQuality(p.frets, notes),
+        shapeFamily: identifyShapeFamily(p.frets)
+      };
+    });
 
     // 3. Gerar dinamicamente mais opções
-    const generated = generateVoicings(displayChordName, chordRoot, targetPitchClasses, tuning);
+    const generated = generateVoicings(displayChordName, chordRoot, targetPitchClasses, tuning, activeChord.quality);
 
     // Combinar, dando prioridade aos presets para os primeiros colocados, removendo duplicatas de trastes
     const combined: VoicingShape[] = [...presets];
@@ -92,17 +101,7 @@ export default function VoicingSelector() {
     return true;
   });
 
-  // Auxiliar para pegar nota no traste
-  function getNoteAt(base: string, fret: number): string {
-    const semitones = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const baseMatch = base.match(/^([A-G][b#]?)(.*)$/);
-    if (!baseMatch) return base;
-    const basePC = semitones.indexOf(baseMatch[1]);
-    const baseOct = parseInt(baseMatch[2]);
-    const targetPCIndex = (basePC + fret) % 12;
-    const octaveShift = Math.floor((basePC + fret) / 12);
-    return `${semitones[targetPCIndex]}${baseOct + octaveShift}`;
-  }
+
 
   // --- RENDERIZADOR DE MINI DIAGRAMA DE ACORDE SVG ---
   const renderMiniDiagram = (frets: (number | null)[]) => {
@@ -240,14 +239,19 @@ export default function VoicingSelector() {
                       {renderMiniDiagram(voicing.frets)}
                     </div>
 
-                    {/* CAGED classification */}
+                     {/* CAGED/Shape Family classification */}
                     <div className="flex flex-col items-center gap-0.5 mt-1 border-t border-zinc-900 w-full pt-1.5">
                       <span className="text-[10px] font-bold text-purple-300">
-                        {`Formato ${voicing.cageShape}`}
+                        {voicing.shapeFamily && voicing.shapeFamily !== "Formato Livre" ? voicing.shapeFamily : `Formato ${voicing.cageShape}`}
                       </span>
                       <span className="text-[9px] text-zinc-500 font-medium">
                         {voicing.positionFret === 0 ? "Cordas Soltas" : `Casa Inicial: ${voicing.positionFret}`}
                       </span>
+                      {voicing.qualityScore !== undefined && (
+                        <span className="text-[9px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-1.5 py-0.5 rounded mt-1 font-extrabold uppercase tracking-wider">
+                          Qualidade: {voicing.qualityScore}
+                        </span>
+                      )}
                     </div>
                   </button>
                 );

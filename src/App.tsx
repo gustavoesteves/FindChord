@@ -20,10 +20,13 @@ export default function App() {
         {/* 1. Header (Afinador e Construtor Reverso) */}
         <Header />
 
-        {/* 2. O Braço da Guitarra Interativo */}
+        {/* 2. Sequenciador de Cadências & Progression Explorer */}
+        <VoiceLeadingPanel />
+
+        {/* 3. O Braço da Guitarra Interativo */}
         <Fretboard />
 
-        {/* 3. Seção Principal: Grid de Alta Densidade Harmônica */}
+        {/* 4. Seção Principal: Grid de Alta Densidade Harmônica */}
         <div className="w-full flex flex-col gap-6">
           
           {/* Fileiras de Detalhes Harmônicos baseados na seleção do acorde */}
@@ -38,9 +41,6 @@ export default function App() {
 
               {/* Escalas Compatíveis e Funções */}
               <ScaleOverlayPanel />
-
-              {/* Condução de Vozes & Progressões */}
-              <VoiceLeadingPanel />
 
             </div>
           ) : (
@@ -71,7 +71,7 @@ export default function App() {
                   </li>
                   <li className="flex gap-2">
                     <span className="text-purple-400 font-bold">•</span>
-                    <span>Adicione acordes aos <b>Pads Diatônicos</b> no Progression Explorer abaixo para calcular as transições físicas mais curtas para seus dedos!</span>
+                    <span>Digite uma cadência personalizada no <b>Sequenciador de Cadências</b> acima para calcular as transições físicas mais curtas para seus dedos!</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-purple-400 font-bold">•</span>

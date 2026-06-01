@@ -1,7 +1,12 @@
 import { create } from "zustand";
-import { analyzeChords, simplifyNote, getNoteAt, getPitchClass, getOctave } from "../utils/musicTheory";
-import type { ChordQuality } from "../utils/musicTheory";
-import type { VoicingShape } from "../utils/voicingGenerator";
+import { simplifyNote, getPitchClass } from "../utils/music/core/pitch";
+import { getNoteAt, getOctave } from "../utils/music/core/notes";
+import { analyzeChords } from "../utils/music/analysis/chordAnalyzer";
+import { enarmonizeChordCandidate } from "../utils/music/theory/enharmonics";
+import type { ChordQuality } from "../utils/music/constants/chordRegistry";
+import type { VoicingShape } from "../utils/music/models/VoicingShape";
+import { clearVoicingCache } from "../utils/music/generation/voicingGenerator";
+import { findAutoVoicings } from "../utils/music/voiceLeading/voiceLeading";
 
 export interface FretPosition {
   stringIndex: number; // 0 (1ª corda - E4) a 5 (6ª corda - E2)
@@ -9,6 +14,15 @@ export interface FretPosition {
   noteName: string;    // ex: "C4"
   pitchClass: number;  // 0 a 11
   octave: number;      // Oitava física
+}
+
+export interface HarmonicInterpretation {
+  notationJazz: string;
+  notationBrazilian: string;
+  notationAcademic: string;
+  score: number;
+  confidence: number;
+  category: "literal" | "inversao";
 }
 
 export interface ChordCandidate {
@@ -20,11 +34,13 @@ export interface ChordCandidate {
   confidence: number;            // 0% a 100% de confiança para UX
   omissions: string[];           // Notas omitidas (ex: ["5"])
   additions: string[];           // Notas estendidas extras
-  bass?: string;                 // Nota de inversão no baixo
+  bass?: string;                 // Nota de inversion no baixo
   notationJazz: string;          // ex: "Cmaj7"
   notationBrazilian: string;     // ex: "C7M"
   notationAcademic: string;      // ex: "CΔ7"
   isIncomplete: boolean;         // Se omitiu terça ou fundamental
+  equivalentInterpretations?: HarmonicInterpretation[];
+  intendedChord?: string;
 }
 
 export interface TuningPreset {
@@ -57,8 +73,13 @@ interface ChordStore {
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
   
-  // Progression Explorer
-  progressionChords: string[];  // Cifras da progressão atual (ex: ["Cmaj7", "Am7"])
+  // Timeline de Progressão de Acordes (Chord Timeline)
+  progressionChords: string[];  // Cifras da progressão atual
+  timelineVoicings: (VoicingShape | null)[]; // Voicings ideais calculados via DP Viterbi
+  activeTimelineIndex: number | null;        // Índice do acorde atualmente em reprodução/inspeção
+  isPlaying: boolean;
+  bpm: number;
+  userCustomVoicings: Record<number, VoicingShape>; // Dedilhados customizados salvos pelo usuário
   
   // --- AÇÕES ---
   setTuning: (presetName: string, notes: string[]) => void;
@@ -74,11 +95,16 @@ interface ChordStore {
   setNotationStyle: (style: "Jazz" | "Brazilian" | "Academic") => void;
   setVoicingSelectorOpen: (open: boolean) => void;
   
-  // Ações de Progressão
+  // Ações de Progressão e Timeline
   addToProgression: (chordName: string) => void;
   removeFromProgression: (idx: number) => void;
   clearProgression: () => void;
   setProgressionChords: (chords: string[]) => void;
+  setPlaying: (playing: boolean) => void;
+  setActiveTimelineIndex: (index: number | null) => void;
+  setBpm: (bpm: number) => void;
+  updateTimelineVoicings: () => void;
+  saveCustomVoicingToTimeline: (index: number, voicing: VoicingShape, chordName: string) => void;
 }
 
 export const useChordStore = create<ChordStore>((set, get) => {
@@ -102,7 +128,21 @@ export const useChordStore = create<ChordStore>((set, get) => {
     });
 
     const chords = analyzeChords(activePositions);
-    return chords;
+    
+    // Tentar associar o acorde intencionado da timeline (se houver)
+    const storeState = get();
+    const activeIdx = storeState ? storeState.activeTimelineIndex : null;
+    const intended = (activeIdx !== null && activeIdx !== undefined && storeState) 
+      ? storeState.progressionChords[activeIdx] 
+      : undefined;
+
+    return chords.map(c => {
+      let mapped: ChordCandidate = { ...c, intendedChord: intended };
+      if (intended) {
+        mapped = enarmonizeChordCandidate(mapped, intended);
+      }
+      return mapped;
+    });
   };
 
   return {
@@ -120,10 +160,16 @@ export const useChordStore = create<ChordStore>((set, get) => {
     
     voiceLeadingSource: null,
     
-    progressionChords: [],
+    progressionChords: ["C", "Am", "F", "G"],
+    timelineVoicings: findAutoVoicings(["C", "Am", "F", "G"], ["E4", "B3", "G3", "D3", "A2", "E2"]),
+    activeTimelineIndex: null,
+    isPlaying: false,
+    bpm: 120,
+    userCustomVoicings: {},
 
     // --- AÇÕES ---
     setTuning: (presetName, notes) => {
+      clearVoicingCache();
       set({
         tuningPreset: presetName,
         tuning: [...notes],
@@ -135,9 +181,11 @@ export const useChordStore = create<ChordStore>((set, get) => {
       const chords = recalculateChords(get().selectedFrets, notes);
       set({ detectedChords: chords });
       if (chords.length > 0) set({ selectedChordIndex: 0 });
+      get().updateTimelineVoicings();
     },
 
     updateCustomStringTuning: (stringIdx, newNote) => {
+      clearVoicingCache();
       const currentTuning = [...get().tuning];
       currentTuning[stringIdx] = simplifyNote(newNote);
       
@@ -152,6 +200,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
       const chords = recalculateChords(get().selectedFrets, currentTuning);
       set({ detectedChords: chords });
       if (chords.length > 0) set({ selectedChordIndex: 0 });
+      get().updateTimelineVoicings();
     },
 
     toggleFret: (stringIndex, fret) => {
@@ -249,23 +298,115 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({ isVoicingSelectorOpen: open });
     },
 
-    // Ações de Progressão
+    // Ações de Progressão e Timeline
     addToProgression: (chordName) => {
-      set({ progressionChords: [...get().progressionChords, chordName] });
+      const newChords = [...get().progressionChords, chordName];
+      set({ progressionChords: newChords });
+      get().updateTimelineVoicings();
     },
 
     removeFromProgression: (idx) => {
       const current = [...get().progressionChords];
       current.splice(idx, 1);
-      set({ progressionChords: current });
+      
+      // Ajustar/reordenar as customizações do usuário
+      const customVoicings = { ...get().userCustomVoicings };
+      delete customVoicings[idx];
+      
+      const adjustedCustoms: Record<number, VoicingShape> = {};
+      for (const keyStr in customVoicings) {
+        const k = parseInt(keyStr);
+        if (k > idx) {
+          adjustedCustoms[k - 1] = customVoicings[k];
+        } else {
+          adjustedCustoms[k] = customVoicings[k];
+        }
+      }
+      
+      let newActiveIndex = get().activeTimelineIndex;
+      if (newActiveIndex !== null) {
+        if (newActiveIndex === idx) {
+          newActiveIndex = null;
+        } else if (newActiveIndex > idx) {
+          newActiveIndex = newActiveIndex - 1;
+        }
+      }
+      
+      set({ 
+        progressionChords: current,
+        activeTimelineIndex: newActiveIndex,
+        userCustomVoicings: adjustedCustoms
+      });
+      get().updateTimelineVoicings();
     },
 
     clearProgression: () => {
-      set({ progressionChords: [] });
+      set({ 
+        progressionChords: [],
+        activeTimelineIndex: null,
+        isPlaying: false,
+        userCustomVoicings: {}
+      });
+      get().updateTimelineVoicings();
     },
 
     setProgressionChords: (chords) => {
       set({ progressionChords: [...chords] });
+      get().updateTimelineVoicings();
+    },
+
+    setPlaying: (playing) => {
+      set({ isPlaying: playing });
+    },
+
+    setActiveTimelineIndex: (index) => {
+      set({ activeTimelineIndex: index });
+      if (index !== null) {
+        const voicings = get().timelineVoicings;
+        const targetVoicing = voicings[index];
+        if (targetVoicing) {
+          set({ selectedVoicing: targetVoicing, selectedFrets: [...targetVoicing.frets] });
+          // Recalcular os acordes ativamente no braço
+          const chords = recalculateChords(targetVoicing.frets, get().tuning);
+          set({ detectedChords: chords });
+          if (chords.length > 0) set({ selectedChordIndex: 0 });
+        }
+      }
+    },
+
+    setBpm: (bpm) => {
+      set({ bpm });
+    },
+
+    updateTimelineVoicings: () => {
+      const chords = get().progressionChords;
+      const tuning = get().tuning;
+      const voicings = findAutoVoicings(chords, tuning);
+      
+      // Mesclar as vozes auto-calculadas com as customizadas do usuário
+      const customVoicings = get().userCustomVoicings || {};
+      const mergedVoicings = voicings.map((v, idx) => {
+        if (customVoicings[idx]) {
+          return customVoicings[idx];
+        }
+        return v;
+      });
+      
+      set({ timelineVoicings: mergedVoicings });
+    },
+
+    saveCustomVoicingToTimeline: (index, voicing, chordName) => {
+      const customVoicings = { ...get().userCustomVoicings };
+      customVoicings[index] = voicing;
+
+      const currentChords = [...get().progressionChords];
+      currentChords[index] = chordName;
+
+      set({ 
+        userCustomVoicings: customVoicings,
+        progressionChords: currentChords
+      });
+      get().updateTimelineVoicings();
     }
   };
 });

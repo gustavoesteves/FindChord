@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useChordStore } from "../store/useChordStore";
-import { getNoteAt, getPitchClass, CHORD_REGISTRY } from "../utils/musicTheory";
+import { getPitchClass } from "../utils/music/core/pitch";
+import { getNoteAt } from "../utils/music/core/notes";
+import { CHORD_REGISTRY } from "../utils/music/constants/chordRegistry";
 import { playGuitarNote } from "../utils/audioSynth";
-import { Volume2 } from "lucide-react";
+import { Volume2, Save, RotateCcw } from "lucide-react";
+import { CageShape } from "../utils/music/models/VoicingShape";
+import type { VoicingShape } from "../utils/music/models/VoicingShape";
 
 export default function Fretboard() {
   const {
@@ -13,7 +17,12 @@ export default function Fretboard() {
     detectedChords,
     selectedChordIndex,
     activeScale,
-    fretboardExplorerMode
+    fretboardExplorerMode,
+    activeTimelineIndex,
+    notationStyle,
+    saveCustomVoicingToTimeline,
+    clearFretboard,
+    setFretboardExplorerMode
   } = useChordStore();
 
   const [vibratingStrings, setVibratingStrings] = useState<boolean[]>(Array(6).fill(false));
@@ -27,6 +36,42 @@ export default function Fretboard() {
   const activeChordPCs = activeChord
     ? CHORD_REGISTRY[activeChord.quality].semitones.map(s => (activeChordRootPC + s) % 12)
     : [];
+
+  const getDrawnChordName = () => {
+    if (!activeChord) return "";
+    if (notationStyle === "Brazilian") return activeChord.notationBrazilian;
+    if (notationStyle === "Academic") return activeChord.notationAcademic;
+    return activeChord.notationJazz;
+  };
+
+  const handleSaveToTimeline = () => {
+    const chordName = getDrawnChordName();
+    if (activeTimelineIndex !== null && chordName) {
+      const activeFrets = selectedFrets.filter(f => f !== null && f > 0) as number[];
+      const minFret = activeFrets.length > 0 ? Math.min(...activeFrets) : 0;
+      
+      let rootString = -1;
+      selectedFrets.forEach((f, idx) => {
+        if (f !== null) {
+          const noteName = getNoteAt(tuning[idx], f);
+          if (getPitchClass(noteName) === activeChordRootPC) {
+            rootString = idx;
+          }
+        }
+      });
+
+      const customVoicing: VoicingShape = {
+        chordName,
+        frets: [...selectedFrets],
+        rootString,
+        cageShape: CageShape.E,
+        positionFret: minFret,
+        notes: selectedFrets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x")
+      };
+
+      saveCustomVoicingToTimeline(activeTimelineIndex, customVoicing, chordName);
+    }
+  };
 
   // Dispara a vibração física de uma corda ao tocar áudio
   const triggerStringPlay = (stringIndex: number, noteName: string) => {
@@ -114,15 +159,41 @@ export default function Fretboard() {
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
         </div>
         
-        {/* Play Button */}
-        <button
-          onClick={playCurrentFretboard}
-          disabled={selectedFrets.every(f => f === null)}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 border border-zinc-700/60 hover:bg-zinc-700 text-zinc-200 cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Volume2 className="h-3.5 w-3.5" />
-          Tocar Acorde do Braço
-        </button>
+        {/* Ações do Braço */}
+        <div className="flex items-center gap-2">
+          {activeTimelineIndex !== null && getDrawnChordName() && (
+            <button
+              onClick={handleSaveToTimeline}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-extrabold rounded-lg bg-purple-600 border border-purple-500 hover:bg-purple-500 text-white cursor-pointer transition shadow-md shadow-purple-900/20 active:scale-95 animate-fade-in"
+              title={`Salvar a digitação atual do braço no compasso ${activeTimelineIndex + 1}`}
+            >
+              <Save className="h-3.5 w-3.5" />
+              Salvar no Compasso {activeTimelineIndex + 1} ({getDrawnChordName()})
+            </button>
+          )}
+
+          {/* Play Button */}
+          <button
+            onClick={playCurrentFretboard}
+            disabled={selectedFrets.every(f => f === null)}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 border border-zinc-700/60 hover:bg-zinc-700 text-zinc-200 cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Volume2 className="h-3.5 w-3.5" />
+            Tocar Acorde do Braço
+          </button>
+
+          {/* Limpar Braço */}
+          <button
+            onClick={() => {
+              clearFretboard();
+              setFretboardExplorerMode(false);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-950 border border-zinc-900 hover:bg-zinc-900 hover:text-white text-zinc-400 cursor-pointer transition active:scale-95 shadow-sm"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Limpar Braço
+          </button>
+        </div>
       </div>
 
       {/* Container com scroll horizontal em mobile */}
@@ -264,7 +335,14 @@ export default function Fretboard() {
                     height="36" 
                     fill="transparent" 
                     className="cursor-pointer hover:fill-zinc-800/10"
-                    onClick={() => toggleFret(stringIdx, 0)}
+                    onClick={() => {
+                      const isCurrentlyFretted = selectedFrets[stringIdx] === 0;
+                      if (!isCurrentlyFretted) {
+                        const noteName = getNoteAt(tuning[stringIdx], 0);
+                        triggerStringPlay(stringIdx, noteName);
+                      }
+                      toggleFret(stringIdx, 0);
+                    }}
                   />
 
                   {/* Casas 1 a 24 (Interativas) */}
@@ -281,7 +359,14 @@ export default function Fretboard() {
                         height="36" 
                         fill="transparent" 
                         className="cursor-pointer hover:fill-zinc-400/5 transition-colors"
-                        onClick={() => toggleFret(stringIdx, fret)}
+                        onClick={() => {
+                          const isCurrentlyFretted = selectedFrets[stringIdx] === fret;
+                          if (!isCurrentlyFretted) {
+                            const noteName = getNoteAt(tuning[stringIdx], fret);
+                            triggerStringPlay(stringIdx, noteName);
+                          }
+                          toggleFret(stringIdx, fret);
+                        }}
                       >
                         <title>{`${getNoteAt(tuning[stringIdx], fret)} - Traste ${fret}`}</title>
                       </rect>
@@ -319,7 +404,7 @@ export default function Fretboard() {
                       const size = isFretted ? 14 : 11;
 
                       return (
-                        <g key={`explorer-${stringIdx}-${fret}`} className={`transition-all duration-300 ${opacity}`}>
+                        <g key={`explorer-${stringIdx}-${fret}`} className={`transition-all duration-300 pointer-events-none ${opacity}`}>
                           <circle 
                             cx={x} 
                             cy={y} 
@@ -351,7 +436,7 @@ export default function Fretboard() {
                       const size = isFretted ? 14 : 11;
 
                       return (
-                        <g key={`scale-${stringIdx}-${fret}`} className={`transition-all duration-300 ${opacity}`}>
+                        <g key={`scale-${stringIdx}-${fret}`} className={`transition-all duration-300 pointer-events-none ${opacity}`}>
                           <circle 
                             cx={x} 
                             cy={y} 
@@ -388,8 +473,7 @@ export default function Fretboard() {
                       return (
                         <g 
                           key={`fretted-${stringIdx}-${fret}`} 
-                          className="cursor-pointer"
-                          onClick={() => triggerStringPlay(stringIdx, noteName)}
+                          className="pointer-events-none"
                         >
                           <circle 
                             cx={x} 

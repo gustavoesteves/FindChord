@@ -1,6 +1,66 @@
 import { useChordStore } from "../store/useChordStore";
-import { getFriendlyInterval, getNoteAt } from "../utils/musicTheory";
+import { getPitchClass } from "../utils/music/core/pitch";
+import { getNoteAt } from "../utils/music/core/notes";
+import { getFriendlyInterval } from "../utils/music/theory/chordParser";
 import { Music, PlusCircle, AlertCircle } from "lucide-react";
+
+function parseChordNotationParts(chordName: string) {
+  const match = chordName.match(/^([A-G][b#]?)([^/]*)(?:\/([A-G][b#]?))?$/);
+  if (!match) return { rootPC: -1, quality: chordName, bassPC: -1 };
+  
+  const root = match[1];
+  const quality = match[2];
+  const bass = match[3];
+  
+  return {
+    rootPC: getPitchClass(root),
+    quality: quality.trim(),
+    bassPC: bass ? getPitchClass(bass) : -1
+  };
+}
+
+const getRealizationStatus = (intended: string, realizedName: string) => {
+  const pIntended = parseChordNotationParts(intended);
+  const pRealized = parseChordNotationParts(realizedName);
+  
+  const sameRoot = pIntended.rootPC === pRealized.rootPC;
+  const sameQuality = pIntended.quality === pRealized.quality;
+  
+  if (sameRoot && sameQuality) {
+    const intendedHasBass = pIntended.bassPC !== -1;
+    const realizedHasBass = pRealized.bassPC !== -1;
+    
+    if (!intendedHasBass && !realizedHasBass) {
+      const exactMatch = intended === realizedName;
+      return {
+        label: exactMatch ? "✓ Correspondência Exata" : "✓ Equivalência Enarmônica",
+        color: "text-emerald-400 bg-emerald-950/50 border-emerald-900/40",
+        description: "Dedilhado idêntico ao solicitado na timeline."
+      };
+    }
+    
+    if (intendedHasBass && realizedHasBass && pIntended.bassPC === pRealized.bassPC) {
+      const exactMatch = intended === realizedName;
+      return {
+        label: exactMatch ? "✓ Correspondência Exata" : "✓ Equivalência Enarmônica",
+        color: "text-emerald-400 bg-emerald-950/50 border-emerald-900/40",
+        description: "Dedilhado idêntico com baixo enarmônico equivalente."
+      };
+    }
+    
+    return {
+      label: "⚠ Inversão Detectada",
+      color: "text-blue-400 bg-blue-950/50 border-blue-900/40",
+      description: `Inversão do acorde solicitado.`
+    };
+  }
+  
+  return {
+    label: "⚠ Dedilhado Alternativo / Incompleto",
+    color: "text-amber-400 bg-amber-950/50 border-amber-900/40",
+    description: "Estrutura com omissões ou diferente do solicitado na timeline."
+  };
+};
 
 export default function ChordList() {
   const {
@@ -10,7 +70,6 @@ export default function ChordList() {
     tuning,
     selectedFrets,
     addToProgression,
-    progressionChords,
     notationStyle,
     setVoicingSelectorOpen
   } = useChordStore();
@@ -19,6 +78,12 @@ export default function ChordList() {
     if (notationStyle === "Brazilian") return chord.notationBrazilian;
     if (notationStyle === "Academic") return chord.notationAcademic;
     return chord.notationJazz;
+  };
+
+  const getInterpretationName = (interp: any) => {
+    if (notationStyle === "Brazilian") return interp.notationBrazilian;
+    if (notationStyle === "Academic") return interp.notationAcademic;
+    return interp.notationJazz;
   };
 
   if (detectedChords.length === 0) {
@@ -122,14 +187,43 @@ export default function ChordList() {
                 {/* Botão de Progressão */}
                 <button
                   onClick={() => addToProgression(getChordName(activeChord))}
-                  disabled={progressionChords.includes(getChordName(activeChord))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md cursor-pointer disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
                 >
-                <PlusCircle className="h-3.5 w-3.5" />
-                Adicionar à Progressão
-              </button>
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Adicionar à Progressão
+                </button>
+              </div>
             </div>
-          </div>
+
+            {/* Acorde Intencionado da Timeline (Chord Intended vs Chord Realized) */}
+            {activeChord.intendedChord && (() => {
+              const status = getRealizationStatus(activeChord.intendedChord, getChordName(activeChord));
+              return (
+                <div className="flex flex-col gap-2 p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-zinc-300 shadow-inner -mt-1">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black uppercase text-purple-400 tracking-wider">Solicitado na Timeline:</span>
+                      <span className="font-extrabold text-purple-300 text-sm">{activeChord.intendedChord}</span>
+                    </div>
+                    
+                    <span className={`text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-md shadow-sm border ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
+                  
+                  {/* Comparação formal de Realização */}
+                  <div className="flex items-center gap-2 mt-1 pt-1.5 border-t border-zinc-800/20 text-[11px] text-zinc-400 font-medium">
+                    <span>Dedilhado no Braço realiza:</span>
+                    <span className="font-bold text-zinc-200">{getChordName(activeChord)}</span>
+                    {activeChord.bass && (
+                      <span className="text-[9px] text-purple-300 bg-purple-950/40 border border-purple-900/30 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                        Invertido com Baixo em {activeChord.bass}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Anatomia do Acorde (Notas Omitidas / Adicionadas) */}
             <div className="grid grid-cols-2 gap-3">
@@ -167,7 +261,7 @@ export default function ChordList() {
             </div>
 
             {/* Mapeamento de Intervalos Físicos (Trastes Ativos) */}
-            <div className="flex flex-col flex-1 gap-1">
+            <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">Mapeamento de Intervalos</span>
               <div className="overflow-x-auto border border-zinc-850 rounded-lg">
                 <table className="w-full border-collapse text-left text-xs bg-zinc-950">
@@ -187,8 +281,7 @@ export default function ChordList() {
                       const baseNote = noteName.replace(/\d/, "");
 
                       // Calcular intervalo
-                      // Tonal.js pode nos dar o intervalo teórico
-                      // Faremos uma estimativa amigável baseada na distância da tônica
+                      // Distância da tônica
                       const pitchClasses: Record<string, number> = {
                         "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3, "E": 4, "F": 5,
                         "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11
@@ -231,6 +324,61 @@ export default function ChordList() {
                 </table>
               </div>
             </div>
+
+            {/* Equivalenças Harmônicas Interativas */}
+            {activeChord.equivalentInterpretations && activeChord.equivalentInterpretations.length > 0 && (
+              <div className="flex flex-col gap-3 pt-4 border-t border-zinc-800/40">
+                <span className="text-[10px] font-black tracking-widest uppercase text-zinc-400">
+                  Equivalências Harmônicas (Mesmo Dedilhado)
+                </span>
+                
+                <div className="flex flex-col gap-2.5">
+                  {(["literal", "inversao"] as const).map(cat => {
+                    const filtered = activeChord.equivalentInterpretations!.filter(e => e.category === cat);
+                    if (filtered.length === 0) return null;
+                    
+                    const catLabels = {
+                      literal: "Literais (Fundamental)",
+                      inversao: "Inversões (Slash Chords)"
+                    };
+                    
+                    const catColors = {
+                      literal: "text-emerald-400 border-emerald-950/40 bg-emerald-950/10",
+                      inversao: "text-blue-400 border-blue-950/40 bg-blue-950/10"
+                    };
+                    
+                    return (
+                      <div key={cat} className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border sm:w-[170px] text-center shrink-0 ${catColors[cat]}`}>
+                          {catLabels[cat]}
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 flex-1 sm:pl-2">
+                          {filtered.map((interp, idx) => {
+                            const displayName = getInterpretationName(interp);
+                            return (
+                              <button
+                                key={`equiv-${cat}-${displayName}-${idx}`}
+                                onClick={() => {
+                                  const targetIdx = detectedChords.findIndex(c => getChordName(c) === displayName || c.notationJazz === interp.notationJazz);
+                                  if (targetIdx !== -1) {
+                                    setSelectedChordIndex(targetIdx);
+                                  }
+                                }}
+                                className="px-2.5 py-1 text-xs rounded-lg bg-zinc-950 hover:bg-zinc-900 border border-zinc-850 hover:border-zinc-755 text-zinc-300 hover:text-purple-300 font-bold transition cursor-pointer active:scale-95 shadow-sm"
+                                title={`Analisar dedilhado sob a ótica de ${displayName}`}
+                              >
+                                {displayName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500">
