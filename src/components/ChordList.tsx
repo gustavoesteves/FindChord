@@ -4,6 +4,7 @@ import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getFriendlyInterval } from "../utils/music/theory/chordParser";
 import { Music, AlertCircle, ChevronDown, Check } from "lucide-react";
+import { Note as TonalNote } from "tonal";
 
 function parseChordNotationParts(chordName: string) {
   const match = chordName.match(/^([A-G][b#]?)([^/]*)(?:\/([A-G][b#]?))?$/);
@@ -62,6 +63,72 @@ const getRealizationStatus = (intended: string, realizedName: string) => {
     description: "Estrutura com omissões ou diferente do solicitado na timeline."
   };
 };
+
+function getChordHarmonicDegrees(root: string, quality: string): { key: string; degree: string }[] {
+  try {
+    // Escala maior/maior7
+    if (quality.includes("major") || quality === "major7th" || quality === "major6th" || quality === "major9th" || quality === "major13th") {
+      const keyIV = TonalNote.simplify(TonalNote.transpose(root, "5P")).replace(/\d/, "");
+      const keyV = TonalNote.simplify(TonalNote.transpose(root, "4P")).replace(/\d/, "");
+      const keyRel = TonalNote.simplify(TonalNote.transpose(root, "-3m")).replace(/\d/, "");
+      
+      return [
+        { key: `${root} Maior`, degree: "I" },
+        { key: `${keyIV} Maior`, degree: "IV" },
+        { key: `${keyV} Maior`, degree: "V" },
+        { key: `${keyRel} menor`, degree: "bIII" }
+      ];
+    }
+    
+    // Escala menor/menor7
+    if (quality.includes("minor") || quality === "minor7th" || quality === "minor6th" || quality === "minor9th" || quality === "minor11th") {
+      const keyVI = TonalNote.simplify(TonalNote.transpose(root, "3m")).replace(/\d/, "");
+      const keyII = TonalNote.simplify(TonalNote.transpose(root, "-2M")).replace(/\d/, "");
+      const keyIII = TonalNote.simplify(TonalNote.transpose(root, "-3M")).replace(/\d/, "");
+      
+      return [
+        { key: `${root} menor`, degree: "i" },
+        { key: `${keyVI} Maior`, degree: "vi" },
+        { key: `${keyII} Maior`, degree: "ii" },
+        { key: `${keyIII} Maior`, degree: "iii" }
+      ];
+    }
+    
+    // Dominantes
+    if (quality.includes("dominant") || quality === "dominant7th" || quality === "dominant9th") {
+      const keyV = TonalNote.simplify(TonalNote.transpose(root, "4P")).replace(/\d/, "");
+      return [
+        { key: `${keyV} Maior`, degree: "V7" },
+        { key: `${keyV} menor`, degree: "V7 (Dom)" }
+      ];
+    }
+    
+    // Meio-diminutos
+    if (quality.includes("halfDiminished") || quality === "m7b5") {
+      const keyVII = TonalNote.simplify(TonalNote.transpose(root, "2m")).replace(/\d/, "");
+      const keyII = TonalNote.simplify(TonalNote.transpose(root, "-3m")).replace(/\d/, "");
+      return [
+        { key: `${keyVII} Maior`, degree: "vii°" },
+        { key: `${keyII} menor`, degree: "ii°" }
+      ];
+    }
+    
+    // Diminutos
+    if (quality.includes("diminished") || quality === "diminished7th") {
+      const keyVII = TonalNote.simplify(TonalNote.transpose(root, "2m")).replace(/\d/, "");
+      return [
+        { key: `${keyVII} Maior/menor`, degree: "vii°" }
+      ];
+    }
+  } catch (e) {
+    // Fallback silencioso
+  }
+  
+  return [
+    { key: `${root} Maior`, degree: "I" },
+    { key: `Relativa de ${root}m`, degree: "bIII" }
+  ];
+}
 
 export default function ChordList() {
   const {
@@ -231,11 +298,11 @@ export default function ChordList() {
               );
             })()}
 
-            {/* Anatomia do Acorde (Notas Omitidas / Adicionadas) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Anatomia do Acorde (Omissões, Adições e Contexto Tonal / Campo Harmônico) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Omissões */}
-              <div className="flex flex-col p-3 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1.5">Ausente no Braço</span>
+              <div className="flex flex-col p-3.5 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-2">Ausente no Braço</span>
                 {activeChord.omissions.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {activeChord.omissions.map(o => (
@@ -245,13 +312,13 @@ export default function ChordList() {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-xs text-zinc-400 font-medium italic">Estrutura completa</span>
+                  <span className="text-xs text-zinc-400 font-medium italic mt-0.5">Estrutura completa</span>
                 )}
               </div>
 
               {/* Adições/Extensões */}
-              <div className="flex flex-col p-3 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1.5">Tensões Adicionais</span>
+              <div className="flex flex-col p-3.5 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-2">Tensões Adicionais</span>
                 {activeChord.additions.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {activeChord.additions.map(a => (
@@ -261,8 +328,24 @@ export default function ChordList() {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-xs text-zinc-400 font-medium italic">Nenhuma extensão</span>
+                  <span className="text-xs text-zinc-400 font-medium italic mt-0.5">Nenhuma extensão</span>
                 )}
+              </div>
+
+              {/* Contexto Tonal (Campo Harmônico / Graus) */}
+              <div className="flex flex-col p-3.5 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-2">Contexto Tonal (Graus)</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {getChordHarmonicDegrees(activeChord.root, activeChord.quality).map((c, idx) => (
+                    <span
+                      key={`${c.key}-${idx}`}
+                      className="text-xs px-2 py-0.5 rounded-lg bg-purple-950/30 border border-purple-500/25 text-purple-300 font-extrabold flex items-center gap-1 shadow-sm"
+                      title={`Grau ${c.degree} de ${c.key}`}
+                    >
+                      {c.key} <span className="text-[9px] bg-purple-900/60 border border-purple-800/40 px-1 py-0.2 rounded-md font-black text-purple-200">{c.degree}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
