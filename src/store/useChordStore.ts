@@ -69,6 +69,7 @@ interface ChordStore {
   selectedVoicing: VoicingShape | null;
   notationStyle: "Jazz" | "Brazilian" | "Academic"; // Estilo de notação ativo
   isVoicingSelectorOpen: boolean;   // Se o modal de voicings está aberto
+  isScaleSelectorOpen: boolean;     // Se o modal de escalas está aberto
   
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
@@ -94,6 +95,7 @@ interface ChordStore {
   setVoiceLeadingSource: (frets: (number | null)[] | null) => void;
   setNotationStyle: (style: "Jazz" | "Brazilian" | "Academic") => void;
   setVoicingSelectorOpen: (open: boolean) => void;
+  setScaleSelectorOpen: (open: boolean) => void;
   
   // Ações de Progressão e Timeline
   addToProgression: (chordName: string) => void;
@@ -157,6 +159,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
     selectedVoicing: null,
     notationStyle: "Jazz",
     isVoicingSelectorOpen: false,
+    isScaleSelectorOpen: false,
     
     voiceLeadingSource: null,
     
@@ -296,6 +299,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
 
     setVoicingSelectorOpen: (open) => {
       set({ isVoicingSelectorOpen: open });
+    },
+
+    setScaleSelectorOpen: (open) => {
+      set({ isScaleSelectorOpen: open });
     },
 
     // Ações de Progressão e Timeline
