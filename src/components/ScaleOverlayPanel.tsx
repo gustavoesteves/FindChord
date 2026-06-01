@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getCompatibleScales } from "../utils/music/theory/musicTheory";
 import { EyeOff, Sparkles, BookOpen } from "lucide-react";
@@ -102,13 +103,20 @@ export default function ScaleOverlayPanel() {
   const {
     detectedChords,
     selectedChordIndex,
-    activeScale,
-    setActiveScale,
     isScaleSelectorOpen,
     setScaleSelectorOpen,
     notationStyle,
     tuning
   } = useChordStore();
+
+  const [localActiveScale, setLocalActiveScale] = useState<{ name: string; notes: string[] } | null>(null);
+
+  // Reseta a escala localmente ao fechar o modal
+  useEffect(() => {
+    if (!isScaleSelectorOpen) {
+      setLocalActiveScale(null);
+    }
+  }, [isScaleSelectorOpen]);
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
@@ -124,18 +132,18 @@ export default function ScaleOverlayPanel() {
   };
 
   const toggleScaleOverlay = (scaleName: string, notes: string[]) => {
-    if (activeScale && activeScale.name === scaleName) {
-      setActiveScale(null); // Desativa se já estiver ativa
+    if (localActiveScale && localActiveScale.name === scaleName) {
+      setLocalActiveScale(null); // Desativa se já estiver ativa
     } else {
-      setActiveScale({ name: scaleName, notes });
+      setLocalActiveScale({ name: scaleName, notes });
     }
   };
 
   // --- RENDERIZADOR DO BRAÇO INTERATIVO DA ESCALA ---
   const renderScaleFretboard = () => {
-    if (!activeScale) return null;
+    if (!localActiveScale) return null;
 
-    const scaleRootPC = getPitchClass(activeScale.notes[0]);
+    const scaleRootPC = getPitchClass(localActiveScale.notes[0]);
 
     // Geometria compacta do Braço SVG
     const width = 1360;  
@@ -179,13 +187,13 @@ export default function ScaleOverlayPanel() {
     };
 
     return (
-      <div className="w-full flex flex-col gap-2.5 mt-3 pt-3.5 border-t border-zinc-800/40">
-        <div className="flex items-center justify-between px-1">
+      <div className="w-full flex flex-col gap-2.5 mt-3 pt-3.5 border-t border-zinc-800/40 animate-fade-in">
+        <div className="flex items-center justify-between px-1 select-none">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black tracking-widest uppercase text-purple-400">Mapa Visual da Escala (Clique nas Notas para ouvir)</span>
             <div className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping"></div>
           </div>
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">Escala: {activeScale.name}</span>
+          <span className="text-[9px] text-zinc-500 font-bold uppercase">Escala: {localActiveScale.name}</span>
         </div>
 
         <div className="w-full overflow-x-auto rounded-xl border border-zinc-800/70 p-3 bg-zinc-950/80 shadow-inner select-none scrollbar-thin">
@@ -265,7 +273,7 @@ export default function ScaleOverlayPanel() {
                       const noteName = getNoteAt(baseNote, fret);
                       const notePC = getPitchClass(noteName);
                       
-                      const isScaleNote = activeScale.notes.map(n => getPitchClass(n)).includes(notePC);
+                      const isScaleNote = localActiveScale.notes.map(n => getPitchClass(n)).includes(notePC);
                       if (!isScaleNote) return null;
 
                       const x = fret === 0 ? nutWidth / 2 : nutWidth + (fret - 0.5) * fretWidth;
@@ -338,9 +346,9 @@ export default function ScaleOverlayPanel() {
               </p>
             </div>
           </div>
-          {activeScale && (
+          {localActiveScale && (
             <button
-              onClick={() => setActiveScale(null)}
+              onClick={() => setLocalActiveScale(null)}
               className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer transition active:scale-95"
             >
               <EyeOff className="h-3 w-3" />
@@ -362,7 +370,7 @@ export default function ScaleOverlayPanel() {
                   <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider mb-1 select-none">Opções Compatíveis</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
                     {compatibleScales.map(scale => {
-                      const isActive = activeScale && activeScale.name === scale.name;
+                      const isActive = localActiveScale && localActiveScale.name === scale.name;
                       
                       return (
                         <div
@@ -408,8 +416,8 @@ export default function ScaleOverlayPanel() {
 
                 {/* Lado Direito (col-span-5): Guia do Improvisador Contextual */}
                 <div className="lg:col-span-5 h-full">
-                  {activeScale ? (() => {
-                    const scaleType = activeScale.name.replace(/^[A-G][b#]?\s+/, "").toLowerCase().trim();
+                  {localActiveScale ? (() => {
+                    const scaleType = localActiveScale.name.replace(/^[A-G][b#]?\s+/, "").toLowerCase().trim();
                     let info = SCALE_DESCRIPTIONS[scaleType];
                     
                     if (!info) {
