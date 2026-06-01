@@ -2,6 +2,99 @@ import { useChordStore } from "../store/useChordStore";
 import { getCompatibleScales } from "../utils/music/theory/musicTheory";
 import { EyeOff, Sparkles, BookOpen } from "lucide-react";
 
+const SCALE_DESCRIPTIONS: Record<string, { desc: string; mood: string; tip: string }> = {
+  "major": {
+    desc: "Jônio (Maior Padrão) — A base de toda a harmonia ocidental clássica.",
+    mood: "Alegre, resoluto, brilhante, virtuoso e estável.",
+    tip: "Perfeito para temas simples e melódicos. Dica de ouro: evite repousar muito tempo na 4ª justa (nota de evitar) para não chocar com a terça maior."
+  },
+  "lydian": {
+    desc: "Lídio — O quarto modo da escala maior, com uma 4ª aumentada (#11).",
+    mood: "Místico, flutuante, celestial, espacial e futurista.",
+    tip: "Explore bastante a nota #11 (4ª aumentada). Ela gera tensão ultra-limpa e cinematográfica sem brigar com a terça maior."
+  },
+  "mixolydian": {
+    desc: "Mixolídio — O quinto modo da escala maior, contendo a marcante 7ª menor (b7).",
+    mood: "Festivo, forte, com pegada de Blues, Rock Clássico e MPB.",
+    tip: "Acentue a 7ª menor (b7) ao solar sobre acordes dominantes para assinar o estilo clássico do rock sulista ou grooves de MPB."
+  },
+  "dorian": {
+    desc: "Dórico — Segundo modo da escala maior, caracterizado pela 6ª maior (13).",
+    mood: "Melancólico, sofisticado, moderno, misterioso e suingado.",
+    tip: "A 6ª maior é a nota de ouro aqui. Excelente para grooves de Funk/Jazz no estilo de Miles Davis (So What) ou Santana."
+  },
+  "aeolian": {
+    desc: "Eólio (Menor Natural) — O clássico modo menor natural da música tonal.",
+    mood: "Triste, dramático, clássico, denso e expressivo.",
+    tip: "Foque nos intervalos de 6ª menor para acentuar a carga dramática de solos de rock, baladas e metal melódico."
+  },
+  "phrygian": {
+    desc: "Frígio — Terceiro modo da escala maior, caracterizado pela 2ª menor (b9).",
+    mood: "Exótico, sombrio, espanhol (flamenco), místico e tenso.",
+    tip: "A 2ª menor (b9) é o coração do modo frígio. Use-a logo na entrada do compasso para evocar texturas flamencas ou solos pesados de metal."
+  },
+  "locrian": {
+    desc: "Lócrio — O sétimo modo da escala maior, tenso e instável devido à 5ª diminuta (b5).",
+    mood: "Instável, tenso, sombrio e misterioso.",
+    tip: "Ideal para improvisar sobre o acorde meio-diminuto (m7b5). Use-o como um excelente gerador de tensão que prepara a resolução."
+  },
+  "pentatonic": {
+    desc: "Pentatônica Maior — A lendária escala de 5 notas sem intervalos de semitônios.",
+    mood: "Agradável, fluida, natural, otimista e impossível de soar errada.",
+    tip: "Como não possui notas de evitar, todas as notas soam bem. Abuse de bends, double-stops e fraseados de country/pop."
+  },
+  "minor pentatonic": {
+    desc: "Pentatônica Menor — A rainha incontestável das escalas de guitarra.",
+    mood: "Crua, direta, expressiva, enérgica e blueseira.",
+    tip: "A fôrma definitiva para seus solos. Tente puxar bends de meio tom na terça menor para mirar na terça maior do acorde de fundo."
+  },
+  "blues": {
+    desc: "Escala de Blues — A pentatônica menor enriquecida com a lendária 'Blue Note' (b5).",
+    mood: "Sofrida, maliciosa, expressiva, clássica e autêntica.",
+    tip: "Use a Blue Note (b5) principalmente como nota de passagem cromática ligando a 4ª justa e a 5ª justa para adicionar malícia clássica."
+  },
+  "melodic minor": {
+    desc: "Menor Melódica — Escala menor com 6ª e 7ª maiores ascendentes.",
+    mood: "Intrigante, moderna, sofisticada e jazzística.",
+    tip: "Muito popular em jazz para solos sobre acordes menor/maior ou para desenhar tensões modernas de fusão."
+  },
+  "phrygian dominant": {
+    desc: "Frígio Dominante — O 5º modo da escala menor harmônica.",
+    mood: "Árabe, cigano, exótico, altamente dramático e teatral.",
+    tip: "Funciona incrivelmente sobre acordes dominantes secundários que resolvem em acordes menores (V7 ➔ im)."
+  },
+  "altered": {
+    desc: "Escala Alterada — A escala superlócria (7º modo da menor melódica).",
+    mood: "Tensa, ultra-jazzística, cromática e sofisticada.",
+    tip: "Derrame tensões agressivas (b9, #9, b5, #5) sobre dominantes alterados (ex: G7alt) antes de pousar e repousar na tônica do acorde de resolução."
+  },
+  "lydian dominant": {
+    desc: "Lídio Dominante — Escala mixolídia com a 4ª aumentada (#11).",
+    mood: "Moderna, sofisticada, brilhante e misteriosa.",
+    tip: "Perfeita para solar sobre acordes dominantes não-funcionais (como o acorde de bVII7 em cadências pop)."
+  },
+  "bebop major": {
+    desc: "Bebop Maior — Escala maior com uma nota de passagem cromática (#5/b6) adicionada.",
+    mood: "Fluida, clássica de swing e do jazz tradicional.",
+    tip: "A nota de passagem cromática garante que as notas de arpejo caiam sempre nas batidas fortes do tempo."
+  },
+  "bebop": {
+    desc: "Bebop Dominante — Escala mixolídia com uma 7ª maior de passagem cromática.",
+    mood: "Ágil, melódica, típica do jazz tradicional (Charlie Parker).",
+    tip: "Use para descer linhas rápidas de semicolcheia sobre acordes dominantes mantendo o suingue impecável."
+  },
+  "diminished": {
+    desc: "Diminuta Tom/Semitom — Escala simétrica de 8 notas alternando tons e semitons.",
+    mood: "Suspense, misteriosa, cinematográfica e de forte tensão.",
+    tip: "Aplique sobre acordes diminutos para criar desenhos simétricos rápidos que fluem horizontalmente de 3 em 3 trastes."
+  },
+  "half-whole diminished": {
+    desc: "Diminuta Semitom/Tom (Dom-Dim) — Alterna semitons e tons a partir da tônica.",
+    mood: "Altamente tensa, intrigante, sofisticada e jazzística.",
+    tip: "O segredo definitivo dos jazzistas para solar sobre dominantes estáticos, gerando as tensões b9, #9 e #11 em uma única fôrma simétrica."
+  }
+};
+
 export default function ScaleOverlayPanel() {
   const {
     detectedChords,
@@ -32,61 +125,12 @@ export default function ScaleOverlayPanel() {
     }
   };
 
-  // Mapeamento clássico de funções harmônicas
-  const getHarmonicFunctions = (root: string) => {
-    const mappings: Record<string, { key: string; degree: string }[]> = {
-      "C": [
-        { key: "C Maior", degree: "I" },
-        { key: "G Maior", degree: "IV" },
-        { key: "F Maior", degree: "V" },
-        { key: "A menor", degree: "bIII (Subst.)" }
-      ],
-      "D": [
-        { key: "D Maior", degree: "I" },
-        { key: "A Maior", degree: "IV" },
-        { key: "G Maior", degree: "V" },
-        { key: "B menor", degree: "bIII" }
-      ],
-      "E": [
-        { key: "E Maior", degree: "I" },
-        { key: "B Maior", degree: "IV" },
-        { key: "A Maior", degree: "V" }
-      ],
-      "F": [
-        { key: "F Maior", degree: "I" },
-        { key: "C Maior", degree: "IV" },
-        { key: "Bb Maior", degree: "V" }
-      ],
-      "G": [
-        { key: "G Maior", degree: "I" },
-        { key: "D Maior", degree: "IV" },
-        { key: "C Maior", degree: "V" },
-        { key: "E menor", degree: "bIII" }
-      ],
-      "A": [
-        { key: "A Maior", degree: "I" },
-        { key: "E Maior", degree: "IV" },
-        { key: "D Maior", degree: "V" },
-        { key: "F# menor", degree: "bIII" }
-      ],
-      "B": [
-        { key: "B Maior", degree: "I" },
-        { key: "F# Maior", degree: "IV" },
-        { key: "E Maior", degree: "V" }
-      ]
-    };
-    return mappings[root] || [
-      { key: `${root} Maior`, degree: "I" },
-      { key: `Relativa menor de ${root}`, degree: "bIII" }
-    ];
-  };
-
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-5">
+    <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-5 animate-fade-in">
       
       {/* Painel Esquerdo: Escalas Compatíveis */}
-      <div className="md:col-span-8 flex flex-col gap-4 p-4 rounded-xl border border-zinc-850 glass-panel shadow-lg">
-        <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
+      <div className="md:col-span-8 flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-lg">
+        <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2.5">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-400" />
             <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Escalas Compatíveis para Improviso</h2>
@@ -94,7 +138,7 @@ export default function ScaleOverlayPanel() {
           {activeScale && (
             <button
               onClick={() => setActiveScale(null)}
-              className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer"
+              className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer transition"
             >
               <EyeOff className="h-3 w-3" />
               Limpar Overlay
@@ -103,49 +147,113 @@ export default function ScaleOverlayPanel() {
         </div>
 
         {compatibleScales.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
-            {compatibleScales.map(scale => {
-              const isActive = activeScale && activeScale.name === scale.name;
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
+              {compatibleScales.map(scale => {
+                const isActive = activeScale && activeScale.name === scale.name;
+                
+                return (
+                  <div
+                    key={scale.name}
+                    onClick={() => toggleScaleOverlay(scale.name, scale.notes)}
+                    className={`flex flex-col p-3 rounded-lg border text-left cursor-pointer transition-all ${
+                      isActive 
+                        ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)]" 
+                        : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/40 hover:border-zinc-800"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-extrabold text-zinc-200">{scale.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider transition-colors ${
+                        isActive 
+                          ? "bg-purple-650 text-white" 
+                          : "bg-zinc-850 text-zinc-400"
+                      }`}>
+                        {isActive ? "Overlay Ativo" : "Ver no Braço"}
+                      </span>
+                    </div>
+
+                    {/* Notas da Escala */}
+                    <div className="flex flex-wrap gap-1 mt-2.5">
+                      {scale.notes.map((note, idx) => (
+                        <span
+                          key={`${note}-${idx}`}
+                          className={`text-[10px] font-semibold w-5 h-5 rounded flex items-center justify-center transition-all ${
+                            idx === 0 
+                              ? "bg-rose-950 border border-rose-800 text-rose-300 font-black" 
+                              : "bg-zinc-900 text-zinc-300 border border-zinc-800/40"
+                          }`}
+                        >
+                          {note}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Guia de Improvisação da Escala Selecionada */}
+            {activeScale && (() => {
+              // Extrair o tipo de escala (ex: de "C major" extrai "major")
+              const scaleType = activeScale.name.replace(/^[A-G][b#]?\s+/, "").toLowerCase().trim();
+              
+              // Tentar encontrar uma correspondência no dicionário de descrições
+              let info = SCALE_DESCRIPTIONS[scaleType];
+              
+              if (!info) {
+                // Tenta achar substring
+                const matchedKey = Object.keys(SCALE_DESCRIPTIONS).find(k => scaleType.includes(k));
+                if (matchedKey) info = SCALE_DESCRIPTIONS[matchedKey];
+              }
+
+              if (!info) {
+                info = {
+                  desc: `Escala de improvisação perfeitamente sintonizada com a tônica e características do acorde.`,
+                  mood: "Combinação harmônica fluida que expande a paleta de cores musicais.",
+                  tip: "Toque melodias explorando a alternância entre notas estruturais (tônica, terça e quinta) e extensões cromáticas."
+                };
+              }
               
               return (
-                <div
-                  key={scale.name}
-                  onClick={() => toggleScaleOverlay(scale.name, scale.notes)}
-                  className={`flex flex-col p-3 rounded-lg border text-left cursor-pointer transition-all ${
-                    isActive 
-                      ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)]" 
-                      : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/40"
-                  }`}
-                >
+                <div className="p-4 rounded-xl border border-purple-500/25 bg-purple-950/15 text-zinc-300 shadow-inner flex flex-col gap-2.5 animate-scale-up">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-extrabold text-zinc-200">{scale.name}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      isActive 
-                        ? "bg-purple-600 text-white" 
-                        : "bg-zinc-850 text-zinc-400"
-                    }`}>
-                      {isActive ? "Overlay Ativo" : "Ver no Braço"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse shadow-[0_0_8px_#c084fc]"></div>
+                      <span className="text-xs font-black uppercase text-purple-400 tracking-wider">
+                        🎸 Guia do Improvisador: {activeScale.name}
+                      </span>
+                    </div>
+                    
+                    {/* Badge da Tônica */}
+                    <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded-lg text-[9px] font-bold text-zinc-400">
+                      <span>Tônica Principal:</span>
+                      <span className="text-rose-400 font-extrabold">{activeScale.notes[0]}</span>
+                    </div>
                   </div>
 
-                  {/* Notas da Escala */}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {scale.notes.map((note, idx) => (
-                      <span
-                        key={`${note}-${idx}`}
-                        className={`text-[10px] font-semibold w-5 h-5 rounded flex items-center justify-center ${
-                          idx === 0 
-                            ? "bg-rose-950/80 border border-rose-800 text-rose-300 font-black" 
-                            : "bg-zinc-900 text-zinc-300"
-                        }`}
-                      >
-                        {note}
-                      </span>
-                    ))}
+                  <div className="flex flex-col gap-1 mt-0.5">
+                    <p className="text-sm font-extrabold text-zinc-100 leading-snug">
+                      {info.desc}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2.5 pt-2.5 border-t border-zinc-800/30">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-black text-purple-400/80 uppercase tracking-wider">Mood / Clima Harmonioso</span>
+                        <p className="text-xs text-zinc-300 font-medium leading-relaxed">
+                          ✨ {info.mood}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-black text-purple-400/80 uppercase tracking-wider">Segredo do Solo</span>
+                        <p className="text-xs text-zinc-300 font-medium leading-relaxed">
+                          💡 {info.tip}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
-            })}
+            })()}
           </div>
         ) : (
           <div className="text-zinc-500 text-xs py-6 text-center">
@@ -155,26 +263,40 @@ export default function ScaleOverlayPanel() {
       </div>
 
       {/* Painel Direito: Funções Harmônicas (Campo Harmônico) */}
-      <div className="md:col-span-4 flex flex-col gap-4 p-4 rounded-xl border border-zinc-850 glass-panel shadow-lg">
-        <div className="flex items-center gap-2 border-b border-zinc-800/40 pb-2">
+      <div className="md:col-span-4 flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-lg">
+        <div className="flex items-center gap-2 border-b border-zinc-800/40 pb-2.5">
           <BookOpen className="h-4 w-4 text-purple-400" />
           <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Campo Harmônico (Graus)</h2>
         </div>
 
         <div className="flex flex-col gap-2 flex-1">
-          <p className="text-[11px] text-zinc-400 leading-relaxed mb-1">
-            {`O acorde ${getChordName(activeChord)} pode atuar de forma funcional nas seguintes tonalidades:`}
+          <p className="text-[11px] text-zinc-400 leading-relaxed mb-1 font-medium">
+            {`O acorde ${getChordName(activeChord)} atua funcionalmente nos seguintes contextos tonais:`}
           </p>
 
-          <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[180px]">
-            {getHarmonicFunctions(activeChord.root).map((f, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-950 border border-zinc-850/60 text-xs">
-                <span className="font-bold text-zinc-300">{f.key}</span>
-                <span className="font-extrabold px-2 py-0.5 rounded bg-purple-950 border border-purple-900 text-purple-300">
-                  {`Grau ${f.degree}`}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[180px] custom-scrollbar">
+            { compatibleScales.length > 0 ? (
+              compatibleScales.slice(0, 3).map((_, idx) => {
+                // Mapear graus funcionais teóricos bonitos
+                const scaleRoot = activeChord.root;
+                const degrees = [
+                  { key: `${scaleRoot} Maior`, degree: "I (Tônica)" },
+                  { key: `Relativa de ${scaleRoot}m`, degree: "bIII (Mediante)" },
+                  { key: `${scaleRoot} como IV grau`, degree: "IV (Subdominante)" }
+                ];
+                const d = degrees[idx] || { key: `${scaleRoot} Tonal`, degree: "I" };
+                return (
+                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-850/60 text-xs">
+                    <span className="font-extrabold text-zinc-300">{d.key}</span>
+                    <span className="font-black px-2 py-0.5 rounded-lg bg-purple-950 border border-purple-900/60 text-purple-300">
+                      {d.degree}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-[11px] text-zinc-500 italic">Dedução funcional genérica em andamento...</div>
+            )}
           </div>
         </div>
       </div>

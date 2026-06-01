@@ -1,8 +1,9 @@
+import { useState, useRef, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getFriendlyInterval } from "../utils/music/theory/chordParser";
-import { Music, PlusCircle, AlertCircle } from "lucide-react";
+import { Music, AlertCircle, ChevronDown, Check } from "lucide-react";
 
 function parseChordNotationParts(chordName: string) {
   const match = chordName.match(/^([A-G][b#]?)([^/]*)(?:\/([A-G][b#]?))?$/);
@@ -69,10 +70,24 @@ export default function ChordList() {
     setSelectedChordIndex,
     tuning,
     selectedFrets,
-    addToProgression,
     notationStyle,
     setVoicingSelectorOpen
   } = useChordStore();
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const getChordName = (chord: typeof detectedChords[0]) => {
     if (notationStyle === "Brazilian") return chord.notationBrazilian;
@@ -104,69 +119,14 @@ export default function ChordList() {
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
-  // Retorna a cor de fundo do badge de confiança de acordo com a porcentagem
-  const getConfidenceColor = (conf: number) => {
-    if (conf >= 90) return "bg-emerald-950/80 border-emerald-800/50 text-emerald-400";
-    if (conf >= 75) return "bg-teal-950/80 border-teal-800/50 text-teal-400";
-    if (conf >= 50) return "bg-amber-950/80 border-amber-800/50 text-amber-400";
-    return "bg-rose-950/80 border-rose-800/50 text-rose-400";
-  };
-
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-5">
-      
-      {/* Coluna Esquerda: Lista de Candidatos (Rankeados) */}
-      <div className="md:col-span-5 flex flex-col gap-3 p-4 rounded-xl border border-zinc-850 glass-panel shadow-lg">
-        <div className="flex items-center gap-2 border-b border-zinc-800/40 pb-2 mb-1">
-          <Music className="h-4 w-4 text-purple-400" />
-          <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Acordes Detectados ({detectedChords.length})</h2>
-        </div>
-
-        <div className="flex flex-col gap-2 overflow-y-auto max-h-[360px] pr-1">
-          {detectedChords.map((chord, idx) => {
-            const isSelected = selectedChordIndex === idx;
-            const displayName = getChordName(chord);
-            return (
-              <button
-                key={`${displayName}-${idx}`}
-                onClick={() => setSelectedChordIndex(idx)}
-                className={`w-full flex items-center justify-between p-3 rounded-lg border text-left cursor-pointer transition-all ${
-                  isSelected 
-                    ? "bg-purple-950/30 border-purple-500/50 shadow-md shadow-purple-950/10" 
-                    : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/60 hover:border-zinc-800"
-                }`}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className={`text-base font-extrabold tracking-tight ${
-                    isSelected ? "text-purple-300" : "text-zinc-200"
-                  }`}>
-                    {displayName}
-                  </span>
-                  
-                  {/* Detalhes harmônicos rápidos */}
-                  <span className="text-[10px] text-zinc-400 font-medium">
-                    {chord.bass ? `Inversão (Baixo em ${chord.bass})` : "Estado Fundamental"}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Confidence Badge */}
-                  <div className={`px-2 py-1 rounded text-xs font-black border ${getConfidenceColor(chord.confidence)}`}>
-                    {chord.confidence}%
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Coluna Direita: Análise Harmônica Detalhada */}
-      <div className="md:col-span-7 flex flex-col gap-4 p-4 rounded-xl border border-zinc-850 glass-panel shadow-lg">
+    <div className="w-full">
+      {/* Card Único e Integrado de Análise Harmônica Detalhada */}
+      <div className="w-full flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-xl">
         {activeChord ? (
-          <div className="flex flex-col gap-4 h-full">
-            {/* Header Acorde Selecionado */}
-            <div className="flex items-center justify-between border-b border-zinc-800/40 pb-3">
+          <div className="flex flex-col gap-4">
+            {/* Header com Acorde Selecionado e Controles de Ação compactos */}
+            <div className="flex items-center justify-between border-b border-zinc-800/40 pb-3 flex-wrap gap-3">
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white tracking-tight">{getChordName(activeChord)}</span>
                 <span className="text-xs text-zinc-400 font-medium">
@@ -174,23 +134,69 @@ export default function ChordList() {
                 </span>
               </div>
 
-              {/* Controles de Ação */}
-              <div className="flex items-center gap-2">
+              {/* Controles de Ação Compactos */}
+              <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+                {/* Dropdown de Acordes Detectados */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 text-xs font-black transition shadow-lg cursor-pointer active:scale-95"
+                  >
+                    <Music className="h-3.5 w-3.5 text-purple-400" />
+                    🔍 Acordes Detectados ({detectedChords.length})
+                    <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-xl p-2 shadow-2xl z-50 flex flex-col gap-1">
+                      <div className="px-2.5 py-1.5 text-[9px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-900/60 mb-1">
+                        Selecione a Interpretação
+                      </div>
+                      <div className="flex flex-col gap-1 overflow-y-auto max-h-[250px] custom-scrollbar">
+                        {detectedChords.map((chord, idx) => {
+                          const isSelected = selectedChordIndex === idx;
+                          const displayName = getChordName(chord);
+                          return (
+                            <button
+                              key={`${displayName}-${idx}`}
+                              onClick={() => {
+                                setSelectedChordIndex(idx);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between p-2 rounded-lg text-left cursor-pointer transition-all ${
+                                isSelected
+                                  ? "bg-purple-950/40 border border-purple-500/30 text-purple-300"
+                                  : "bg-transparent border border-transparent hover:bg-zinc-900/60 hover:border-zinc-800/40 text-zinc-300"
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-xs font-extrabold tracking-tight">
+                                  {displayName}
+                                </span>
+                                <span className="text-[9px] text-zinc-500 font-medium">
+                                  {chord.bass ? `Baixo em ${chord.bass}` : "Estado Fundamental"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-zinc-400">
+                                  {chord.confidence}%
+                                </span>
+                                {isSelected && <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Botão de Voicings Modal */}
                 <button
                   onClick={() => setVoicingSelectorOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-md cursor-pointer shadow-purple-900/20"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg cursor-pointer shadow-purple-900/20 active:scale-95"
                 >
                   📖 Explorar Voicings
-                </button>
-                
-                {/* Botão de Progressão */}
-                <button
-                  onClick={() => addToProgression(getChordName(activeChord))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  Adicionar à Progressão
                 </button>
               </div>
             </div>
@@ -226,14 +232,14 @@ export default function ChordList() {
             })()}
 
             {/* Anatomia do Acorde (Notas Omitidas / Adicionadas) */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Omissões */}
-              <div className="flex flex-col p-2.5 rounded-lg bg-zinc-950 border border-zinc-850">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1">Ausente no Braço</span>
+              <div className="flex flex-col p-3 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1.5">Ausente no Braço</span>
                 {activeChord.omissions.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {activeChord.omissions.map(o => (
-                      <span key={o} className="text-xs px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-900/40 text-rose-300 font-bold">
+                      <span key={o} className="text-xs px-2 py-0.5 rounded bg-rose-950/40 border border-rose-900/40 text-rose-300 font-bold">
                         {`Grau ${getFriendlyInterval(o === "1" ? "1P" : o === "3" ? "3M" : o === "5" ? "5P" : o === "7" ? "7M" : o)}`}
                       </span>
                     ))}
@@ -244,12 +250,12 @@ export default function ChordList() {
               </div>
 
               {/* Adições/Extensões */}
-              <div className="flex flex-col p-2.5 rounded-lg bg-zinc-950 border border-zinc-850">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1">Tensões Adicionais</span>
+              <div className="flex flex-col p-3 rounded-xl bg-zinc-950 border border-zinc-850/60 shadow-sm">
+                <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 mb-1.5">Tensões Adicionais</span>
                 {activeChord.additions.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {activeChord.additions.map(a => (
-                      <span key={a} className="text-xs px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-900/40 text-amber-300 font-bold">
+                      <span key={a} className="text-xs px-2 py-0.5 rounded bg-amber-950/40 border border-amber-900/40 text-amber-300 font-bold">
                         {a}
                       </span>
                     ))}
@@ -261,16 +267,16 @@ export default function ChordList() {
             </div>
 
             {/* Mapeamento de Intervalos Físicos (Trastes Ativos) */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">Mapeamento de Intervalos</span>
-              <div className="overflow-x-auto border border-zinc-850 rounded-lg">
+              <div className="overflow-x-auto border border-zinc-850 rounded-xl">
                 <table className="w-full border-collapse text-left text-xs bg-zinc-950">
                   <thead>
                     <tr className="border-b border-zinc-850 text-zinc-400 bg-zinc-900/50">
-                      <th className="py-2 px-3 font-semibold">Corda</th>
-                      <th className="py-2 px-3 font-semibold">Traste</th>
-                      <th className="py-2 px-3 font-semibold">Nota Física</th>
-                      <th className="py-2 px-3 font-semibold">Função Harmônica</th>
+                      <th className="py-2 px-3.5 font-semibold">Corda</th>
+                      <th className="py-2 px-3.5 font-semibold">Traste</th>
+                      <th className="py-2 px-3.5 font-semibold">Nota Física</th>
+                      <th className="py-2 px-3.5 font-semibold">Função Harmônica</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -311,10 +317,10 @@ export default function ChordList() {
 
                       return (
                         <tr key={`tbl-string-${stringIdx}`} className="border-b border-zinc-850/60 hover:bg-zinc-900/30">
-                          <td className="py-2 px-3 font-bold text-zinc-500 uppercase">{`${stringIdx + 1}ª (${tuning[stringIdx].replace(/\d/, "")})`}</td>
-                          <td className="py-2 px-3 text-zinc-300 font-semibold">{fret === 0 ? "Solta (0)" : `Casa ${fret}`}</td>
-                          <td className="py-2 px-3 font-bold text-purple-300">{displayNoteName}</td>
-                          <td className="py-2 px-3 text-zinc-400 font-medium">
+                          <td className="py-2.5 px-3.5 font-bold text-zinc-500 uppercase">{`${stringIdx + 1}ª (${tuning[stringIdx].replace(/\d/, "")})`}</td>
+                          <td className="py-2.5 px-3.5 text-zinc-300 font-semibold">{fret === 0 ? "Solta (0)" : `Casa ${fret}`}</td>
+                          <td className="py-2.5 px-3.5 font-bold text-purple-300">{displayNoteName}</td>
+                          <td className="py-2.5 px-3.5 text-zinc-400 font-medium">
                             {intervalMapping[dist] || "Extensão"}
                           </td>
                         </tr>
@@ -381,12 +387,11 @@ export default function ChordList() {
 
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500">
+          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 py-12">
             Nenhum acorde selecionado na lista.
           </div>
         )}
       </div>
-
     </div>
   );
 }
