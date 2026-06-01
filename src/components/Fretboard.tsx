@@ -162,43 +162,7 @@ export default function Fretboard() {
         </div>
         
         {/* Ações do Braço */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {activeChord && (
-            <>
-              {/* Botão Explorar Voicings */}
-              <button
-                onClick={() => setVoicingSelectorOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-600 border border-purple-500 hover:bg-purple-500 text-white cursor-pointer transition shadow-md shadow-purple-900/20 active:scale-95 animate-fade-in"
-                title="Explorar formatos alternativos para tocar este acorde no braço"
-              >
-                📖 Explorar Voicings
-              </button>
-
-              {/* Botão Adicionar/Incluir na Progressão (quando não está ativamente editando um compasso) */}
-              {activeTimelineIndex === null && (
-                <button
-                  onClick={() => addToProgression(getDrawnChordName())}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 border border-emerald-500 hover:bg-emerald-500 text-white cursor-pointer transition shadow-md active:scale-95 animate-fade-in"
-                  title="Adicionar o acorde atual detectado na timeline de progressão"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  + Incluir na Progressão
-                </button>
-              )}
-            </>
-          )}
-
-          {activeTimelineIndex !== null && getDrawnChordName() && (
-            <button
-              onClick={handleSaveToTimeline}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-extrabold rounded-lg bg-purple-600 border border-purple-500 hover:bg-purple-500 text-white cursor-pointer transition shadow-md shadow-purple-900/20 active:scale-95 animate-fade-in"
-              title={`Salvar a digitação atual do braço no compasso ${activeTimelineIndex + 1}`}
-            >
-              <Save className="h-3.5 w-3.5" />
-              Salvar no Compasso {activeTimelineIndex + 1} ({getDrawnChordName()})
-            </button>
-          )}
-
+        <div className="flex items-center gap-2">
           {/* Play Button */}
           <button
             onClick={playCurrentFretboard}
@@ -572,6 +536,58 @@ export default function Fretboard() {
           })}
         </div>
       </div>
+
+      {/* 8. Contextual Composer Dock */}
+      {activeChord && (
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 rounded-2xl border border-purple-500/20 bg-purple-950/10 backdrop-blur-md shadow-xl animate-scale-up mt-1">
+          {/* Lado Esquerdo: Identificador Harmônico */}
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+            </span>
+            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+              Acorde Detectado:
+            </span>
+            <span className="text-xl font-black text-white tracking-tight">
+              {getDrawnChordName()}
+            </span>
+          </div>
+
+          {/* Lado Direito: Ações de Composição */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Explorar Voicings */}
+            <button
+              onClick={() => setVoicingSelectorOpen(true)}
+              className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg shadow-purple-950/20 active:scale-95 cursor-pointer"
+              title={`Ver outros formatos para tocar ${getDrawnChordName()}`}
+            >
+              📖 Explorar Voicings
+            </button>
+
+            {/* Incluir na Progressão ou Salvar no Compasso */}
+            {activeTimelineIndex !== null ? (
+              <button
+                onClick={handleSaveToTimeline}
+                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
+                title={`Salvar o dedilhado no compasso ${activeTimelineIndex + 1}`}
+              >
+                <Save className="h-4 w-4" />
+                Salvar no Compasso {activeTimelineIndex + 1}
+              </button>
+            ) : (
+              <button
+                onClick={() => addToProgression(getDrawnChordName())}
+                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
+                title={`Adicionar ${getDrawnChordName()} no final da timeline`}
+              >
+                <PlusCircle className="h-4 w-4" />
+                + Incluir {getDrawnChordName()}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

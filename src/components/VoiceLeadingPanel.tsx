@@ -9,8 +9,7 @@ import {
   SkipBack, 
   Trash2, 
   Music,
-  Sliders,
-  Plus
+  Sliders
 } from "lucide-react";
 
 export default function ChordTimeline() {
@@ -25,11 +24,7 @@ export default function ChordTimeline() {
     setProgressionChords,
     setPlaying,
     setActiveTimelineIndex,
-    setBpm,
-    detectedChords,
-    selectedChordIndex,
-    addToProgression,
-    notationStyle
+    setBpm
   } = useChordStore();
 
   const [cadenceInput, setCadenceInput] = useState(progressionChords.join(" "));
@@ -38,29 +33,6 @@ export default function ChordTimeline() {
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
-
-  // Auxiliares para ler acorde atualmente desenhado no braço
-  const currentDrawnChord = detectedChords.length > 0 && selectedChordIndex !== null
-    ? detectedChords[selectedChordIndex]
-    : null;
-
-  const getDrawnChordName = () => {
-    if (!currentDrawnChord) return "";
-    if (notationStyle === "Brazilian") return currentDrawnChord.notationBrazilian;
-    if (notationStyle === "Academic") return currentDrawnChord.notationAcademic;
-    return currentDrawnChord.notationJazz;
-  };
-
-  const handleAddDrawnChord = () => {
-    const name = getDrawnChordName();
-    if (name) {
-      addToProgression(name);
-      // Seleciona o recém adicionado para visualização
-      setTimeout(() => {
-        setActiveTimelineIndex(useChordStore.getState().progressionChords.length - 1);
-      }, 50);
-    }
-  };
 
   const saveInlineEdit = (idx: number) => {
     setEditingIndex(null);
@@ -239,17 +211,6 @@ export default function ChordTimeline() {
 
         {/* Lado Direito: Caixa de Entrada de Texto Livre */}
         <div className="flex flex-wrap items-center gap-2 flex-1 max-w-2xl xl:justify-end">
-          {currentDrawnChord && (
-            <button
-              onClick={handleAddDrawnChord}
-              className="px-3 py-2 text-xs font-black uppercase rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition cursor-pointer shadow-md shadow-emerald-900/20 active:scale-95 flex items-center gap-1.5"
-              title={`Adicionar ${getDrawnChordName()} ao fim da timeline`}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Incluir {getDrawnChordName()}
-            </button>
-          )}
-
           <input
             type="text"
             value={cadenceInput}
