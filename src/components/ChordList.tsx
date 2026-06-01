@@ -137,8 +137,7 @@ export default function ChordList() {
     setSelectedChordIndex,
     tuning,
     selectedFrets,
-    notationStyle,
-    setVoicingSelectorOpen
+    notationStyle
   } = useChordStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -257,14 +256,6 @@ export default function ChordList() {
                     </div>
                   )}
                 </div>
-
-                {/* Botão de Voicings Modal */}
-                <button
-                  onClick={() => setVoicingSelectorOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg cursor-pointer shadow-purple-900/20 active:scale-95"
-                >
-                  📖 Explorar Voicings
-                </button>
               </div>
             </div>
 

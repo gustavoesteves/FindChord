@@ -4,7 +4,7 @@ import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { CHORD_REGISTRY } from "../utils/music/constants/chordRegistry";
 import { playGuitarNote } from "../utils/audioSynth";
-import { Volume2, Save, RotateCcw } from "lucide-react";
+import { Volume2, Save, RotateCcw, PlusCircle } from "lucide-react";
 import { CageShape } from "../utils/music/models/VoicingShape";
 import type { VoicingShape } from "../utils/music/models/VoicingShape";
 
@@ -22,7 +22,9 @@ export default function Fretboard() {
     notationStyle,
     saveCustomVoicingToTimeline,
     clearFretboard,
-    setFretboardExplorerMode
+    setFretboardExplorerMode,
+    addToProgression,
+    setVoicingSelectorOpen
   } = useChordStore();
 
   const [vibratingStrings, setVibratingStrings] = useState<boolean[]>(Array(6).fill(false));
@@ -160,7 +162,32 @@ export default function Fretboard() {
         </div>
         
         {/* Ações do Braço */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {activeChord && (
+            <>
+              {/* Botão Explorar Voicings */}
+              <button
+                onClick={() => setVoicingSelectorOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-600 border border-purple-500 hover:bg-purple-500 text-white cursor-pointer transition shadow-md shadow-purple-900/20 active:scale-95 animate-fade-in"
+                title="Explorar formatos alternativos para tocar este acorde no braço"
+              >
+                📖 Explorar Voicings
+              </button>
+
+              {/* Botão Adicionar/Incluir na Progressão (quando não está ativamente editando um compasso) */}
+              {activeTimelineIndex === null && (
+                <button
+                  onClick={() => addToProgression(getDrawnChordName())}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 border border-emerald-500 hover:bg-emerald-500 text-white cursor-pointer transition shadow-md active:scale-95 animate-fade-in"
+                  title="Adicionar o acorde atual detectado na timeline de progressão"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  + Incluir na Progressão
+                </button>
+              )}
+            </>
+          )}
+
           {activeTimelineIndex !== null && getDrawnChordName() && (
             <button
               onClick={handleSaveToTimeline}
