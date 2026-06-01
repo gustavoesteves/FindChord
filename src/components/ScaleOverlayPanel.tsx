@@ -1,6 +1,6 @@
 import { useChordStore } from "../store/useChordStore";
 import { getCompatibleScales } from "../utils/music/theory/musicTheory";
-import { EyeOff, Sparkles, BookOpen } from "lucide-react";
+import { EyeOff, Sparkles } from "lucide-react";
 
 const SCALE_DESCRIPTIONS: Record<string, { desc: string; mood: string; tip: string }> = {
   "major": {
@@ -100,15 +100,8 @@ export default function ScaleOverlayPanel() {
     detectedChords,
     selectedChordIndex,
     activeScale,
-    setActiveScale,
-    notationStyle
+    setActiveScale
   } = useChordStore();
-
-  const getChordName = (chord: typeof detectedChords[0]) => {
-    if (notationStyle === "Brazilian") return chord.notationBrazilian;
-    if (notationStyle === "Academic") return chord.notationAcademic;
-    return chord.notationJazz;
-  };
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
@@ -126,10 +119,9 @@ export default function ScaleOverlayPanel() {
   };
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-5 animate-fade-in">
-      
-      {/* Painel Esquerdo: Escalas Compatíveis */}
-      <div className="md:col-span-8 flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-lg">
+    <div className="w-full animate-fade-in">
+      {/* Painel Único de Escalas Compatíveis para Improviso (Full Width) */}
+      <div className="w-full flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-lg">
         <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2.5">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-400" />
@@ -148,7 +140,7 @@ export default function ScaleOverlayPanel() {
 
         {compatibleScales.length > 0 ? (
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto pr-1">
               {compatibleScales.map(scale => {
                 const isActive = activeScale && activeScale.name === scale.name;
                 
@@ -195,14 +187,10 @@ export default function ScaleOverlayPanel() {
 
             {/* Guia de Improvisação da Escala Selecionada */}
             {activeScale && (() => {
-              // Extrair o tipo de escala (ex: de "C major" extrai "major")
               const scaleType = activeScale.name.replace(/^[A-G][b#]?\s+/, "").toLowerCase().trim();
-              
-              // Tentar encontrar uma correspondência no dicionário de descrições
               let info = SCALE_DESCRIPTIONS[scaleType];
               
               if (!info) {
-                // Tenta achar substring
                 const matchedKey = Object.keys(SCALE_DESCRIPTIONS).find(k => scaleType.includes(k));
                 if (matchedKey) info = SCALE_DESCRIPTIONS[matchedKey];
               }
@@ -261,46 +249,6 @@ export default function ScaleOverlayPanel() {
           </div>
         )}
       </div>
-
-      {/* Painel Direito: Funções Harmônicas (Campo Harmônico) */}
-      <div className="md:col-span-4 flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-lg">
-        <div className="flex items-center gap-2 border-b border-zinc-800/40 pb-2.5">
-          <BookOpen className="h-4 w-4 text-purple-400" />
-          <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Campo Harmônico (Graus)</h2>
-        </div>
-
-        <div className="flex flex-col gap-2 flex-1">
-          <p className="text-[11px] text-zinc-400 leading-relaxed mb-1 font-medium">
-            {`O acorde ${getChordName(activeChord)} atua funcionalmente nos seguintes contextos tonais:`}
-          </p>
-
-          <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[180px] custom-scrollbar">
-            { compatibleScales.length > 0 ? (
-              compatibleScales.slice(0, 3).map((_, idx) => {
-                // Mapear graus funcionais teóricos bonitos
-                const scaleRoot = activeChord.root;
-                const degrees = [
-                  { key: `${scaleRoot} Maior`, degree: "I (Tônica)" },
-                  { key: `Relativa de ${scaleRoot}m`, degree: "bIII (Mediante)" },
-                  { key: `${scaleRoot} como IV grau`, degree: "IV (Subdominante)" }
-                ];
-                const d = degrees[idx] || { key: `${scaleRoot} Tonal`, degree: "I" };
-                return (
-                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-850/60 text-xs">
-                    <span className="font-extrabold text-zinc-300">{d.key}</span>
-                    <span className="font-black px-2 py-0.5 rounded-lg bg-purple-950 border border-purple-900/60 text-purple-300">
-                      {d.degree}
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-[11px] text-zinc-500 italic">Dedução funcional genérica em andamento...</div>
-            )}
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
