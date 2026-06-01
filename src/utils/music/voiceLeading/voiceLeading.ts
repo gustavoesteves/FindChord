@@ -4,6 +4,9 @@ import { getAbsolutePitch } from "../core/midi";
 import { parseChord } from "../theory/chordParser";
 import { generateVoicings } from "../generation/voicingGenerator";
 import type { VoicingShape } from "../models/VoicingShape";
+import type { AnalyzedVoicing } from "../models/AnalyzedVoicing";
+import { buildAnalyzedVoicing } from "../analysis/voicingAnalyzer";
+import { SCORING_WEIGHTS } from "../constants/scoringWeights";
 
 export interface VoiceLeadingPath {
   stringIndex: number;
@@ -16,21 +19,24 @@ export interface VoiceLeadingPath {
 }
 
 export interface VoiceLeadingResult {
-  voicingB: VoicingShape;
+  voicingB: AnalyzedVoicing;
   totalCost: number;
   paths: VoiceLeadingPath[];
 }
 
 /**
- * Calcula o Custo Harmônico e Físico de transição entre dois voicings.
+ * Calcula o Custo Harmônico e Físico de transição consumindo EXCLUSIVAMENTE AnalyzedVoicing.
  */
 export function calculateVoiceLeadingCost(
-  fretsA: (number | null)[],
-  fretsB: (number | null)[],
+  voicingA: AnalyzedVoicing,
+  voicingB: AnalyzedVoicing,
   tuning: string[]
 ): { totalCost: number; paths: VoiceLeadingPath[] } {
   let cost = 0;
   const paths: VoiceLeadingPath[] = [];
+
+  const fretsA = voicingA.shape.frets;
+  const fretsB = voicingB.shape.frets;
 
   // Mapear direções para identificar movimento contrário ou paralelo
   const activeMovements: { stringIdx: number; direction: number; intervalStart: number | null }[] = [];
@@ -108,44 +114,32 @@ export function calculateVoiceLeadingCost(
         semitoneDiff: 0,
         direction: "unmuted"
       });
-    } else {
-      paths.push({
-        stringIndex: stringIdx,
-        fromNote: "x",
-        toNote: "x",
-        fromPitch: 0,
-        toPitch: 0,
-        semitoneDiff: 0,
-        direction: "muted"
-      });
     }
   }
 
-  // 2. Análise de Contraposição Harmônica (Movimento Contrário vs Paralelo)
+  // 2. Regras Estritas de Contraponto e Condução por Vozes Adjacentes
   if (activeMovements.length >= 2) {
     let contraryMotionCount = 0;
     let parallelFifthOctaveError = false;
 
     for (let i = 0; i < activeMovements.length; i++) {
       for (let j = i + 1; j < activeMovements.length; j++) {
-        const m1 = activeMovements[i];
-        const m2 = activeMovements[j];
+        const mv1 = activeMovements[i];
+        const mv2 = activeMovements[j];
 
-        if ((m1.direction > 0 && m2.direction < 0) || (m1.direction < 0 && m2.direction > 0)) {
-          contraryMotionCount++;
-        }
-
-        if (m1.direction === m2.direction && m1.direction !== 0 && m1.intervalStart !== null && m2.intervalStart !== null) {
-          const pitchA1 = m1.intervalStart;
-          const pitchA2 = m2.intervalStart;
-          const pitchB1 = pitchA1 + m1.direction;
-          const pitchB2 = pitchA2 + m2.direction;
-
-          const intervalA = Math.abs(pitchA1 - pitchA2) % 12;
-          const intervalB = Math.abs(pitchB1 - pitchB2) % 12;
-
-          if ((intervalA === 7 && intervalB === 7) || (intervalA === 0 && intervalB === 0)) {
-            parallelFifthOctaveError = true;
+        if (mv1.direction !== 0 && mv2.direction !== 0) {
+          if (mv1.direction * mv2.direction < 0) {
+            contraryMotionCount++;
+          } else if (mv1.direction === mv2.direction) {
+            // Detecção de Quintas e Oitavas Paralelas Proibidas
+            if (mv1.intervalStart !== null && mv2.intervalStart !== null) {
+              const startInterval = Math.abs(mv2.intervalStart - mv1.intervalStart) % 12;
+              const endInterval = Math.abs((mv2.intervalStart + mv2.direction) - (mv1.intervalStart + mv1.direction)) % 12;
+              const isPerfectInterval = startInterval === 7 || startInterval === 0;
+              if (isPerfectInterval && startInterval === endInterval) {
+                parallelFifthOctaveError = true;
+              }
+            }
           }
         }
       }
@@ -156,7 +150,7 @@ export function calculateVoiceLeadingCost(
     }
 
     if (parallelFifthOctaveError) {
-      cost += 15;
+      cost += SCORING_WEIGHTS.viterbiParallelPerfectPenalty; // +20
     }
   }
 
@@ -177,15 +171,15 @@ export function calculateVoiceLeadingCost(
 }
 
 /**
- * Dado um voicing A de origem, encontra e ordena os melhores voicings do acorde B pelo menor custo de voice leading.
+ * Encontra e ordena os melhores candidatos B consumindo EXCLUSIVAMENTE AnalyzedVoicing.
  */
 export function findBestVoiceLeading(
-  voicingA: (number | null)[],
-  candidatesB: VoicingShape[],
+  voicingA: AnalyzedVoicing,
+  candidatesB: AnalyzedVoicing[],
   tuning: string[]
 ): VoiceLeadingResult[] {
   const results: VoiceLeadingResult[] = candidatesB.map(voicingB => {
-    const { totalCost, paths } = calculateVoiceLeadingCost(voicingA, voicingB.frets, tuning);
+    const { totalCost, paths } = calculateVoiceLeadingCost(voicingA, voicingB, tuning);
     return {
       voicingB,
       totalCost,
@@ -200,57 +194,43 @@ const QUALITY_WEIGHT = 40;
 
 /**
  * Calcula a penalidade de baixo quando a nota mais grave não é a tônica em acordes simples.
+ * Consome semântica limpa do inversionType do DTO VoicingClassification.
  */
-function calculateBassCanonicalPenalty(
-  voicing: VoicingShape,
-  rootPC: number,
-  isSlash: boolean,
-  tuning: string[]
-): number {
+function calculateBassCanonicalPenalty(voicing: AnalyzedVoicing, isSlash: boolean): number {
   if (isSlash) return 0;
-
-  let minPitch = Infinity;
-  let physicalBassPC = -1;
-  for (let idx = 0; idx < 6; idx++) {
-    const fret = voicing.frets[idx];
-    if (fret !== null) {
-      const pitch = getAbsolutePitch(fret, tuning[idx]);
-      if (pitch !== null && pitch < minPitch) {
-        minPitch = pitch;
-        const noteName = getNoteAt(tuning[idx], fret);
-        physicalBassPC = getPitchClass(noteName);
-      }
-    }
-  }
-
-  if (physicalBassPC === -1) return 50;
-
-  const dist = (physicalBassPC - rootPC + 12) % 12;
-  if (dist === 0) return 0;
-  if (dist === 3 || dist === 4) return 15;
-  if (dist === 7 || dist === 8 || dist === 6) return 25;
-  if (dist === 10 || dist === 11 || dist === 9) return 40;
-  return 50;
+  
+  const inv = voicing.classification.inversionType;
+  if (inv === "root") return 0;
+  if (inv === "first") return 15;
+  if (inv === "second") return 25;
+  if (inv === "third") return 40;
+  return 50; // Exotic inversion
 }
 
 /**
- * DP (Viterbi-like) solver que encontra a progressão de voicings com menor custo acumulado de movimento no braço.
+ * Viterbi-like solver que encontra a progressão de aberturas de menor custo,
+ * operando EXCLUSIVAMENTE sobre o DTO unificado AnalyzedVoicing.
  */
 export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingShape | null)[] {
   if (chords.length === 0) return [];
   
-  const chordCandidatesList: VoicingShape[][] = chords.map(chordName => {
+  // 1. Gerar e analisar candidatos (povoando DTO Agregado AnalyzedVoicing para cada acorde)
+  const chordCandidatesList: AnalyzedVoicing[][] = chords.map(chordName => {
     const chordInfo = parseChord(chordName);
     if (chordInfo.empty) return [];
     const root = chordInfo.root || "C";
     const targetPCs = chordInfo.notes.map(n => getPitchClass(n));
-    return generateVoicings(chordName, root, targetPCs, tuning, chordInfo.quality);
+    const bassPC = chordInfo.bass ? getPitchClass(chordInfo.bass) : null;
+    const generatedShapes = generateVoicings(chordName, root, targetPCs, tuning, chordInfo.quality, bassPC);
+    
+    // Converter VoicingShape candidates em AnalyzedVoicing DTOs unificados
+    return generatedShapes.map(shape => buildAnalyzedVoicing(shape, tuning));
   });
 
   if (chordCandidatesList.some(list => list.length === 0)) {
     return chords.map((_, idx) => {
       const list = chordCandidatesList[idx];
-      return list && list.length > 0 ? list[0] : null;
+      return list && list.length > 0 ? list[0].shape : null;
     });
   }
 
@@ -259,18 +239,14 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
   const backtrace: number[][] = [];
 
   const firstChordInfo = parseChord(chords[0]);
-  const firstRoot = firstChordInfo.root || "C";
-  const firstRootPC = getPitchClass(firstRoot);
   const firstIsSlash = !!firstChordInfo.bass;
-
-  const maxQuality0 = Math.max(...chordCandidatesList[0].map(c => c.qualityScore || 100), 100);
+  const maxQuality0 = Math.max(...chordCandidatesList[0].map(c => c.shape.qualityScore || 100), 100);
 
   dp[0] = chordCandidatesList[0].map(c => {
-    const targetQuality = c.qualityScore || 100;
+    const targetQuality = c.shape.qualityScore || 100;
     const normalizedQuality = targetQuality / maxQuality0;
     const qualityPenalty = (1 - normalizedQuality) * QUALITY_WEIGHT;
-
-    const bassPenalty = calculateBassCanonicalPenalty(c, firstRootPC, firstIsSlash, tuning);
+    const bassPenalty = calculateBassCanonicalPenalty(c, firstIsSlash);
 
     return qualityPenalty + bassPenalty;
   });
@@ -283,11 +259,8 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
     backtrace[i] = Array(currList.length).fill(-1);
 
     const currChordInfo = parseChord(chords[i]);
-    const currRoot = currChordInfo.root || "C";
-    const currRootPC = getPitchClass(currRoot);
     const currIsSlash = !!currChordInfo.bass;
-
-    const maxQualityI = Math.max(...currList.map(c => c.qualityScore || 100), 100);
+    const maxQualityI = Math.max(...currList.map(c => c.shape.qualityScore || 100), 100);
 
     for (let currIdx = 0; currIdx < currList.length; currIdx++) {
       const currVoicing = currList[currIdx];
@@ -297,14 +270,14 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
       for (let prevIdx = 0; prevIdx < prevList.length; prevIdx++) {
         const prevVoicing = prevList[prevIdx];
         
-        const cost = calculateVoiceLeadingCost(prevVoicing.frets, currVoicing.frets, tuning).totalCost;
+        // Transição operando puramente sobre DTOs
+        const cost = calculateVoiceLeadingCost(prevVoicing, currVoicing, tuning).totalCost;
         
-        const targetQuality = currVoicing.qualityScore || 100;
+        const targetQuality = currVoicing.shape.qualityScore || 100;
         const normalizedQuality = targetQuality / maxQualityI;
         const qualityPenalty = (1 - normalizedQuality) * QUALITY_WEIGHT;
         
-        const bassPenalty = calculateBassCanonicalPenalty(currVoicing, currRootPC, currIsSlash, tuning);
-        
+        const bassPenalty = calculateBassCanonicalPenalty(currVoicing, currIsSlash);
         const accumulatedCost = dp[i - 1][prevIdx] + cost + qualityPenalty + bassPenalty;
 
         if (accumulatedCost < minAccumulatedCost) {
@@ -337,6 +310,6 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
   pathIndices.reverse();
 
   return pathIndices.map((candIdx, chordIdx) => {
-    return chordCandidatesList[chordIdx][candIdx];
+    return chordCandidatesList[chordIdx][candIdx].shape;
   });
 }

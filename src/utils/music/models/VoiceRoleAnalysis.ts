@@ -1,13 +1,11 @@
-export type HarmonicRole = 
-  | "Root" 
-  | "Third" 
-  | "Fifth" 
-  | "Seventh" 
-  | "Ninth" 
-  | "Eleventh" 
-  | "Thirteenth" 
-  | "Extension" 
-  | "Unknown";
+export type HarmonicRole = "root" | "third" | "fifth" | "seventh" | "tension" | "none";
+export type PresenceState = "present" | "omitted";
+
+export interface TensionPresence {
+  degree: 9 | 11 | 13;
+  pitchClass: number;
+  state: PresenceState;
+}
 
 export interface VoiceRole {
   stringIndex: number;
@@ -18,15 +16,21 @@ export interface VoiceRole {
 }
 
 export interface VoiceRoleAnalysis {
-  physicalVoices: number;   // Quantas cordas estão ativas
-  effectiveVoices: number;  // Quantos graus diferentes do acorde estão atuando
-  voices: VoiceRole[];      // Detalhamento de cada corda ativa
+  bassRole: HarmonicRole;
+  sopranoRole: HarmonicRole;
   
-  bassVoice: VoiceRole;     // Nota mais grave fisicamente soando (baixo acústico)
-  sopranoVoice: VoiceRole;  // Nota mais aguda fisicamente soando
+  root: PresenceState;
+  third: PresenceState;
+  fifth: PresenceState;
+  seventh: PresenceState;
   
-  omittedRoles: HarmonicRole[];     // Graus da fórmula teórica que ficaram de fora
-  duplicatedRoles: HarmonicRole[];   // Graus que foram duplicados/dobrados
+  tensions: TensionPresence[];
   
-  hasEssentialTones: boolean;       // Contém terça e sétima (essenciais para tétrades)
+  duplicatedRoles: HarmonicRole[];
+  omittedRoles: HarmonicRole[];
+  
+  physicalVoices: number;
+  effectiveVoices: number; // Vozes reais desconsiderando duplicações
+  
+  voices: VoiceRole[]; // Detalhamento de cada voz fisicamente soando
 }

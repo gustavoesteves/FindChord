@@ -2,6 +2,7 @@ import { getPitchClass } from "../core/pitch";
 import { getNoteAt, getOctave } from "../core/notes";
 import { analyzeChords } from "../analysis/chordAnalyzer";
 import { analyzeVoiceRoles } from "../analysis/voicingAnalyzer";
+import { classifyVoicing } from "../analysis/voicingClassifier";
 import { enarmonizeChordCandidate } from "../theory/enharmonics";
 import type { FretPosition, ChordCandidate } from "../../../store/useChordStore";
 
@@ -67,16 +68,25 @@ if (enarmonized.root !== "Eb" || enarmonized.notationJazz !== "Ebm7") {
 }
 
 // 3. Testar analyzeVoiceRoles
-const voiceRoles = analyzeVoiceRoles(ceFrets, tuning);
-if (voiceRoles.physicalVoices !== 6 || voiceRoles.bassVoice.pitch !== 40 || voiceRoles.sopranoVoice.pitch !== 64) {
-  console.log(`❌ ERRO: analyzeVoiceRoles falhou! (Físicas=${voiceRoles.physicalVoices}, Baixo=${voiceRoles.bassVoice.pitch})`);
+const voiceRoles = analyzeVoiceRoles(ceFrets, tuning, "C", "major");
+if (voiceRoles.physicalVoices !== 6 || voiceRoles.bassRole !== "third" || voiceRoles.sopranoRole !== "third") {
+  console.log(`❌ ERRO: analyzeVoiceRoles falhou! (Físicas=${voiceRoles.physicalVoices}, BaixoRole=${voiceRoles.bassRole}, SopranoRole=${voiceRoles.sopranoRole})`);
   passed = false;
 } else {
   console.log("✅ analyzeVoiceRoles (VoiceRoleAnalysis): OK");
 }
 
+// 4. Testar classifyVoicing (C/E)
+const classification = classifyVoicing(ceFrets, tuning, voiceRoles, "C", "major");
+if (classification.inversionType !== "first" || classification.shellType !== "extended") {
+  console.log(`❌ ERRO: classifyVoicing falhou! (Inversão=${classification.inversionType}, Abertura=${classification.shellType})`);
+  passed = false;
+} else {
+  console.log("✅ classifyVoicing (VoicingClassification): OK");
+}
+
 if (!passed) {
   throw new Error("Analysis tests failed!");
 } else {
-  console.log("\n🎉 TODOS OS TESTES DO DOMÍNIO analysis PASSARAM!\n");
+  console.log("\n🎉 TODOS OS TESTES DO DOMÍNIO analysis PASSARAM COM SUCESSO!\n");
 }

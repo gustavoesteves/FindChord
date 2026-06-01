@@ -2,6 +2,7 @@ import { getPitchClass } from "../core/pitch";
 import { getNoteAt } from "../core/notes";
 import { getPhysicalBassInfo } from "../core/physicalVoice";
 import { findAutoVoicings, calculateVoiceLeadingCost } from "../voiceLeading/voiceLeading";
+import { buildAnalyzedVoicing } from "../analysis/voicingAnalyzer";
 
 console.log("=============================================");
 console.log("INICIANDO SUITE DE REGRESSÃO E COMPATIBILIDADE MUSICAL: regressionTests");
@@ -70,7 +71,9 @@ if (userVoicings.length !== userCadence.length) {
       
       let transCost = 0;
       if (idx > 0 && userVoicings[idx - 1]) {
-        transCost = calculateVoiceLeadingCost(userVoicings[idx - 1]!.frets, v.frets, tuning).totalCost;
+        const analyzedA = buildAnalyzedVoicing(userVoicings[idx - 1]!, tuning);
+        const analyzedB = buildAnalyzedVoicing(v, tuning);
+        transCost = calculateVoiceLeadingCost(analyzedA, analyzedB, tuning).totalCost;
       }
 
       console.log(`      [Passo ${idx + 1}] ${v.chordName} (${v.cageShape}): frets = [${v.frets.map(f=>f===null?"x":f).join(",")}], baixo = ${bassInfo.name}, score = ${v.qualityScore}, transição = ${idx === 0 ? "N/A" : transCost}`);
