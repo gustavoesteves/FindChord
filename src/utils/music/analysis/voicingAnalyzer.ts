@@ -1,7 +1,7 @@
 import { getNoteAt, getOctave } from "../core/notes";
 import { getPitchClass } from "../core/pitch";
 import { getPhysicalBassInfo, getPhysicalSopranoInfo } from "../core/physicalVoice";
-import type { VoiceRoleAnalysis, VoiceRole, HarmonicRole, TensionPresence } from "../models/VoiceRoleAnalysis";
+import type { VoiceRoleAnalysis, VoiceRole, HarmonicRole, TensionPresence, VoiceRoleInfo } from "../models/VoiceRoleAnalysis";
 import { analyzeChords } from "./chordAnalyzer";
 import type { FretPosition } from "../../../store/useChordStore";
 import { parseChord } from "../theory/chordParser";
@@ -29,6 +29,38 @@ export function getHarmonicRole(interval: number, quality: string): HarmonicRole
   }
 
   return "none";
+}
+
+export function getVoiceRoleInfo(interval: number, quality: string): VoiceRoleInfo {
+  const role = getHarmonicRole(interval, quality);
+  if (role === "root" || role === "none") return { role };
+
+  if (role === "third") {
+    if (interval === 3) return { role, degree: 3, alteration: "b" };
+    return { role, degree: 3, alteration: null };
+  }
+  if (role === "fifth") {
+    if (interval === 6) return { role, degree: 5, alteration: "b" };
+    if (interval === 8) return { role, degree: 5, alteration: "#" };
+    return { role, degree: 5, alteration: null };
+  }
+  if (role === "seventh") {
+    const isSixthChord = quality === "major6th" || quality === "minor6th" || quality === "69";
+    if (isSixthChord && interval === 9) return { role, degree: 6, alteration: null };
+    if (quality === "diminished7th" && interval === 9) return { role, degree: 7, alteration: "bb" };
+    if (interval === 10) return { role, degree: 7, alteration: "b" };
+    if (interval === 11) return { role, degree: 7, alteration: null };
+    return { role, degree: 7, alteration: "b" };
+  }
+  if (role === "tension") {
+    if (interval === 1) return { role, degree: 9, alteration: "b" };
+    if (interval === 2) return { role, degree: 9, alteration: null };
+    if (interval === 5) return { role, degree: 11, alteration: null };
+    if (interval === 6) return { role, degree: 11, alteration: "#" };
+    if (interval === 8) return { role, degree: 13, alteration: "b" };
+    if (interval === 9) return { role, degree: 13, alteration: null };
+  }
+  return { role };
 }
 
 export function analyzeVoiceRoles(
@@ -193,9 +225,23 @@ export function analyzeVoiceRoles(
     }
   });
 
+  const voiceRoleMap: (VoiceRoleInfo | null)[] = Array(6).fill(null);
+  voices.forEach(v => {
+    const vInterval = (v.pitchClass - rootPC + 12) % 12;
+    const info = getVoiceRoleInfo(vInterval, activeQuality);
+    v.info = info;
+    voiceRoleMap[v.stringIndex] = info;
+  });
+
+  const orderedVoiceRoles: VoiceRoleInfo[] = [...voices]
+    .sort((a, b) => a.pitch - b.pitch)
+    .map(v => v.info || { role: v.role });
+
   const effectiveVoices = uniquePCs.size;
 
   return {
+    voiceRoleMap,
+    orderedVoiceRoles,
     bassRole: bassVoiceRole.role,
     sopranoRole: sopranoVoiceRole.role,
     root: rootPresent ? "present" : "omitted",

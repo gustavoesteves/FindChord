@@ -24,6 +24,87 @@ export interface VoiceLeadingResult {
   paths: VoiceLeadingPath[];
 }
 
+export interface FunctionalResolutionReport {
+  seventhToThird: boolean;
+  thirdToRoot: boolean;
+  tritonePairResolved: boolean;
+  functionalBonus: number;
+}
+
+export function detectFunctionalResolutions(
+  voicingA: AnalyzedVoicing,
+  voicingB: AnalyzedVoicing
+): FunctionalResolutionReport {
+  let seventhToThird = false;
+  let thirdToRoot = false;
+  let functionalBonus = 0;
+
+  const voicesA = [...voicingA.roles.voices].sort((a, b) => a.pitch - b.pitch);
+  const voicesB = [...voicingB.roles.voices].sort((a, b) => a.pitch - b.pitch);
+  const numVoices = Math.min(voicesA.length, voicesB.length);
+
+  // Armazena as correspondências de índices para detecção de trítono
+  const resolvedSeventhsIdx: number[] = [];
+  const resolvedThirdsIdx: number[] = [];
+
+  for (let vIdx = 0; vIdx < numVoices; vIdx++) {
+    const voiceA = voicesA[vIdx];
+    const voiceB = voicesB[vIdx];
+    const infoA = voiceA.info;
+    const infoB = voiceB.info;
+    if (!infoA || !infoB) continue;
+
+    const diff = voiceB.pitch - voiceA.pitch;
+
+    // Regra 1 (Sétima para Terça)
+    if (infoA.role === "seventh" && infoB.role === "third" && (diff === -1 || diff === -2)) {
+      seventhToThird = true;
+      functionalBonus += SCORING_WEIGHTS.viterbiSeventhToThirdResolutionBonus; // -15
+      resolvedSeventhsIdx.push(vIdx);
+      continue; // Regra de prioridade única por voz
+    }
+
+    // Regra 2 (Terça para Tônica/Sétima)
+    if (infoA.role === "third" && (infoB.role === "root" || infoB.role === "seventh") && (diff === 1 || diff === 2)) {
+      thirdToRoot = true;
+      functionalBonus += SCORING_WEIGHTS.viterbiThirdToRootResolutionBonus; // -10
+      resolvedThirdsIdx.push(vIdx);
+      continue; // Regra de prioridade única por voz
+    }
+
+    // Regra 3 (Resolução de Tensões)
+    if (infoA.role === "tension" && (infoB.role === "root" || infoB.role === "third" || infoB.role === "fifth") && (Math.abs(diff) === 1 || Math.abs(diff) === 2)) {
+      functionalBonus += SCORING_WEIGHTS.viterbiTensionResolutionBonus; // -5
+    }
+  }
+
+  // Detecção Fidedigna do Combo de Trítono Dominante resolvido
+  let tritonePairResolved = false;
+  for (const sIdx of resolvedSeventhsIdx) {
+    for (const tIdx of resolvedThirdsIdx) {
+      const pcA1 = voicesA[sIdx].pitchClass;
+      const pcA2 = voicesA[tIdx].pitchClass;
+      const pcDiff = Math.abs(pcA1 - pcA2) % 12;
+      if (pcDiff === 6) {
+        tritonePairResolved = true;
+        functionalBonus += SCORING_WEIGHTS.viterbiTritoneResolutionComboBonus; // -15
+        break;
+      }
+    }
+    if (tritonePairResolved) break;
+  }
+
+  // Teto funcional limítrofe
+  functionalBonus = Math.max(functionalBonus, SCORING_WEIGHTS.viterbiMaxFunctionalBonus); // Teto: -20
+
+  return {
+    seventhToThird,
+    thirdToRoot,
+    tritonePairResolved,
+    functionalBonus
+  };
+}
+
 /**
  * Calcula o Custo Harmônico e Físico de transição consumindo EXCLUSIVAMENTE AnalyzedVoicing.
  */
@@ -163,6 +244,11 @@ export function calculateVoiceLeadingCost(
     const positionShift = Math.abs(minFretB - minFretA);
     cost += positionShift * 2;
   }
+
+  // 3. Condução Semântica/Funcional das Vozes (Fase SATB)
+  const functionalReport = detectFunctionalResolutions(voicingA, voicingB);
+  cost += functionalReport.functionalBonus;
+  cost = Math.max(0, cost);
 
   return {
     totalCost: cost,
