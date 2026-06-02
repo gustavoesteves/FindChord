@@ -177,8 +177,8 @@ function classifyScaleNote(
     return {
       category: "root",
       label: "R (Tônica)",
-      color: "#FF4D4D",
-      glow: "shadow-[0_0_12px_#FF4D4D]",
+      color: "#0165e7",
+      glow: "shadow-[0_0_12px_#0165e7]",
       tooltip: "Tônica: O centro gravitacional absoluto do acorde. Nota de repouso perfeito."
     };
   }
@@ -240,8 +240,8 @@ function classifyScaleNote(
     return {
       category: "chordTone",
       label: labels[dist] || "Acorde",
-      color: "#00F0FF",
-      glow: "shadow-[0_0_8px_#00F0FF]",
+      color: "#ff4e8c",
+      glow: "shadow-[0_0_8px_#ff4e8c]",
       tooltip: "Nota do Acorde: Ponto de ancoragem harmônica ultra-estável. Excelente para repousar e finalizar frases."
     };
   }
@@ -377,12 +377,12 @@ export default function ScaleOverlayPanel() {
               onClick={() => toggleCategoryVisibility("root")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
                 visibleCategories.root
-                  ? "bg-[#FF4D4D]/10 border-[#FF4D4D]/45 text-zinc-200 shadow-[0_0_6px_rgba(255,77,77,0.06)]"
+                  ? "bg-[#0165e7]/10 border-[#0165e7]/45 text-zinc-200 shadow-[0_0_6px_rgba(1,101,231,0.06)]"
                   : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
               }`}
               title="Alternar visibilidade das tônicas"
             >
-              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.root ? "bg-[#FF4D4D] shadow-[0_0_5px_#FF4D4D]" : "bg-zinc-700"}`}></span>
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.root ? "bg-[#0165e7] shadow-[0_0_5px_#0165e7]" : "bg-zinc-700"}`}></span>
               <span>Tônica</span>
             </button>
 
@@ -390,12 +390,12 @@ export default function ScaleOverlayPanel() {
               onClick={() => toggleCategoryVisibility("chordTone")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
                 visibleCategories.chordTone
-                  ? "bg-[#00F0FF]/10 border-[#00F0FF]/45 text-zinc-200 shadow-[0_0_6px_rgba(0,240,255,0.06)]"
+                  ? "bg-[#ff4e8c]/10 border-[#ff4e8c]/45 text-zinc-200 shadow-[0_0_6px_rgba(255,78,140,0.06)]"
                   : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
               }`}
               title="Alternar visibilidade das notas do acorde"
             >
-              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.chordTone ? "bg-[#00F0FF] shadow-[0_0_5px_#00F0FF]" : "bg-zinc-700"}`}></span>
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.chordTone ? "bg-[#ff4e8c] shadow-[0_0_5px_#ff4e8c]" : "bg-zinc-700"}`}></span>
               <span>Acorde</span>
             </button>
 
@@ -450,14 +450,9 @@ export default function ScaleOverlayPanel() {
             >
               <defs>
                 <linearGradient id="modal-wood-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#1B1720" />
-                  <stop offset="50%" stopColor="#141118" />
-                  <stop offset="100%" stopColor="#0E0B10" />
-                </linearGradient>
-                <linearGradient id="modal-fret-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#7E7D83" />
-                  <stop offset="50%" stopColor="#D5D5D5" />
-                  <stop offset="100%" stopColor="#5E5E63" />
+                  <stop offset="0%" stopColor="#252528" />
+                  <stop offset="50%" stopColor="#1a1a1c" />
+                  <stop offset="100%" stopColor="#131315" />
                 </linearGradient>
                 <radialGradient id="modal-inlay-glow" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor="#FFF" stopOpacity="0.8" />
@@ -473,7 +468,7 @@ export default function ScaleOverlayPanel() {
               {FRET_MARKERS.map(fret => {
                 const x = nutWidth + (fret - 0.5) * fretWidth;
                 return (
-                  <circle key={`mod-inlay-${fret}`} cx={x} cy={height / 2} r="6" fill="url(#modal-inlay-glow)" />
+                  <circle key={`mod-inlay-${fret}`} cx={x} cy={height / 2} r="5" fill="url(#modal-inlay-glow)" />
                 );
               })}
 
@@ -482,18 +477,26 @@ export default function ScaleOverlayPanel() {
                 const x = nutWidth + (fret - 0.5) * fretWidth;
                 return (
                   <g key={`mod-inlay-double-${fret}`}>
-                    <circle cx={x} cy={height / 2 - 30} r="5.5" fill="url(#modal-inlay-glow)" />
-                    <circle cx={x} cy={height / 2 + 30} r="5.5" fill="url(#modal-inlay-glow)" />
+                    <circle cx={x} cy={height / 2 - 30} r="4.5" fill="url(#modal-inlay-glow)" />
+                    <circle cx={x} cy={height / 2 + 30} r="4.5" fill="url(#modal-inlay-glow)" />
                   </g>
                 );
               })}
 
-              {/* Trastes */}
-              <rect x={nutWidth - 6} y="6" width="6" height={height - 12} fill="#444" rx="1" />
+              {/* Trastes (Linhas discretas como Fretastic) */}
+              <rect x={nutWidth - 6} y="8" width="6" height={height - 16} fill="#444" rx="1" />
               {Array.from({ length: fretCount }).map((_, idx) => {
                 const x = nutWidth + (idx + 1) * fretWidth;
                 return (
-                  <rect key={`mod-fret-${idx + 1}`} x={x - 1} y="8" width="2" height={height - 16} fill="url(#modal-fret-grad)" />
+                  <line 
+                    key={`mod-fret-${idx + 1}`} 
+                    x1={x} 
+                    y1="8" 
+                    x2={x} 
+                    y2={height - 8} 
+                    stroke="hsl(0, 0%, 27%)" 
+                    strokeWidth="1.2" 
+                  />
                 );
               })}
 
@@ -502,7 +505,7 @@ export default function ScaleOverlayPanel() {
                 const y = 16 + idx * 30;
                 const gauge = 0.8 + idx * 0.5;
                 return (
-                  <line key={`mod-str-${idx}`} x1="0" y1={y} x2={width} y2={y} stroke="#777" strokeWidth={gauge} opacity="0.6" />
+                  <line key={`mod-str-${idx}`} x1="0" y1={y} x2={width} y2={y} stroke="hsl(0, 0%, 37%)" strokeWidth={gauge} opacity="0.6" />
                 );
               })}
 

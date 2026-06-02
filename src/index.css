@@ -1,19 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
 @import "tailwindcss";
 
-
 @theme {
-  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   
-  --color-dark-bg: #0A0A0C;
-  --color-dark-surface: #121216;
-  --color-dark-border: rgba(255, 255, 255, 0.08);
+  --color-dark-bg: hsl(0, 0%, 15%);
+  --color-dark-surface: hsl(0, 0%, 20%);
+  --color-dark-border: hsl(0, 0%, 26%);
   
-  /* Cores de Acordes/Intervalos */
-  --color-neon-root: #FF4D4D;
-  --color-neon-third: #00F0FF;
+  /* Cores de Acordes/Intervalos estilo Fretastic */
+  --color-neon-root: #0165e7;
+  --color-neon-third: #ff4e8c;
   --color-neon-fifth: #00FF88;
   --color-neon-seventh: #BD00FF;
   --color-neon-extension: #FF9900;
@@ -35,14 +34,11 @@ html, body {
   display: flex;
   flex-direction: column;
 }
-
-/* Background com textura sutil e gradiente radial de iluminação de palco */
+/* Background com textura sutil de cinza escuro estilo Fretastic */
 .bg-stage-lights {
-  background-color: #050507;
+  background-color: var(--color-dark-bg);
   background-image: 
-    radial-gradient(circle at 50% -20%, rgba(189, 0, 255, 0.15) 0%, transparent 60%),
-    radial-gradient(circle at 10% 80%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 85%, rgba(0, 255, 136, 0.06) 0%, transparent 40%);
+    radial-gradient(circle at 50% 30%, hsl(0, 0%, 18%) 0%, hsl(0, 0%, 12%) 100%);
   background-attachment: fixed;
 }
 
@@ -68,22 +64,22 @@ html, body {
 /* Pulsação neon suave para notas principais e tônicas */
 @keyframes neon-pulse {
   0%, 100% {
-    box-shadow: 0 0 12px var(--pulse-color, #FF4D4D);
+    box-shadow: 0 0 12px var(--pulse-color, #0165e7);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 24px var(--pulse-color, #FF4D4D), 0 0 8px var(--pulse-color, #FF4D4D);
+    box-shadow: 0 0 24px var(--pulse-color, #0165e7), 0 0 8px var(--pulse-color, #0165e7);
     transform: scale(1.08);
   }
 }
 
 .animate-neon-pulse-root {
-  --pulse-color: rgba(255, 77, 77, 0.6);
+  --pulse-color: rgba(1, 101, 231, 0.6);
   animation: neon-pulse 2s infinite ease-in-out;
 }
 
 .animate-neon-pulse-third {
-  --pulse-color: rgba(0, 240, 255, 0.6);
+  --pulse-color: rgba(255, 78, 140, 0.6);
   animation: neon-pulse 2.2s infinite ease-in-out;
 }
 
@@ -102,22 +98,19 @@ html, body {
   animation: neon-pulse 2.8s infinite ease-in-out;
 }
 
-/* --- CLASSE DE GLASSMORPHISM --- */
+/* --- PAINÉIS ADAPTADOS AO ESTILO FRETASTIC (Mais limpos e leves) --- */
 .glass-panel {
-  background: rgba(18, 18, 22, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background: var(--color-dark-surface);
+  border: 1px solid var(--color-dark-border);
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.25);
 }
 
 .glass-panel-glow {
-  background: rgba(18, 18, 22, 0.8);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-dark-surface);
+  border: 1px solid var(--color-dark-border);
   box-shadow: 
-    0 8px 32px 0 rgba(0, 0, 0, 0.4),
-    0 0 40px -10px rgba(189, 0, 255, 0.07);
+    0 4px 24px 0 rgba(0, 0, 0, 0.25),
+    0 0 40px -10px rgba(255, 78, 140, 0.06);
 }
 
 /* --- PERSONALIZAÇÃO DE SCROLLBARS --- */
@@ -127,16 +120,16 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0C;
+  background: var(--color-dark-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272A;
+  background: hsl(0, 0%, 28%);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3F3F46;
+  background: hsl(0, 0%, 38%);
 }
 
 /* --- PERSONALIZAÇÃO DE SLIDERS --- */
@@ -148,7 +141,7 @@ input[type="range"] {
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  background: #27272A;
+  background: hsl(0, 0%, 28%);
   height: 6px;
   border-radius: 9999px;
 }
@@ -156,12 +149,12 @@ input[type="range"]::-webkit-slider-runnable-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background-color: #BD00FF;
+  background-color: #ff4e8c;
   border-radius: 9999px;
   height: 16px;
   width: 16px;
   margin-top: -5px;
-  box-shadow: 0 0 10px rgba(189, 0, 255, 0.5);
+  box-shadow: 0 0 10px rgba(255, 78, 140, 0.5);
   transition: transform 0.1s;
 }
 

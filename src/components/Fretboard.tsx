@@ -123,14 +123,14 @@ export default function Fretboard() {
 
   // Retorna a cor correspondente ao grau relativo de um pitch class em formato HEX para SVG Fills
   const getNoteColor = (notePC: number, rootPC: number): string => {
-    if (notePC === rootPC) return "#FF4D4D"; // Tônica (Coral Neon)
+    if (notePC === rootPC) return "#0165e7"; // Tônica (Azul Fretastic)
     
     // Distância em semitons da tônica
     const intervalDist = (notePC - rootPC + 12) % 12;
     switch (intervalDist) {
       case 3: // Terça menor
       case 4: // Terça Maior
-        return "#00F0FF"; // Terça (Ciano Elétrico)
+        return "#ff4e8c"; // Terça (Pink Fretastic)
       case 5: // Quarta justa
       case 6: // Quinta diminuta
       case 7: // Quinta Justa
@@ -202,11 +202,11 @@ export default function Fretboard() {
           >
             {/* Definições de gradiente e estilos */}
             <defs>
-              {/* Jacarandá escuro para a madeira do braço */}
+              {/* Cinza escuro/carvão limpo para o braço estilo Fretastic */}
               <linearGradient id="fretboard-wood-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#1E1A24" />
-                <stop offset="50%" stopColor="#17141C" />
-                <stop offset="100%" stopColor="#110E14" />
+                <stop offset="0%" stopColor="#252528" />
+                <stop offset="50%" stopColor="#1a1a1c" />
+                <stop offset="100%" stopColor="#131315" />
               </linearGradient>
               {/* Gradiente metálico brilhante para trastes */}
               <linearGradient id="fret-metal-grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -217,8 +217,8 @@ export default function Fretboard() {
               </linearGradient>
               {/* Gradiente da pestana (Nut) */}
               <linearGradient id="nut-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#555" />
-                <stop offset="50%" stopColor="#DDD" />
+                <stop offset="0%" stopColor="#444" />
+                <stop offset="50%" stopColor="#777" />
                 <stop offset="100%" stopColor="#222" />
               </linearGradient>
               {/* Glow perolado para inlays */}
@@ -247,9 +247,8 @@ export default function Fretboard() {
                   key={`inlay-${fret}`}
                   cx={x} 
                   cy={height / 2} 
-                  r="8" 
+                  r="6" 
                   fill="url(#inlay-glow)"
-                  filter="drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.4))"
                 />
               );
             })}
@@ -259,8 +258,8 @@ export default function Fretboard() {
               const x = nutWidth + (fret - 0.5) * fretWidth;
               return (
                 <g key={`inlay-double-${fret}`}>
-                  <circle cx={x} cy={height / 2 - 40} r="7" fill="url(#inlay-glow)" />
-                  <circle cx={x} cy={height / 2 + 40} r="7" fill="url(#inlay-glow)" />
+                  <circle cx={x} cy={height / 2 - 40} r="5.5" fill="url(#inlay-glow)" />
+                  <circle cx={x} cy={height / 2 + 40} r="5.5" fill="url(#inlay-glow)" />
                 </g>
               );
             })}
@@ -268,32 +267,33 @@ export default function Fretboard() {
             {/* 3. Trastes Metálicos */}
             {/* Pestana / Traste 0 (Nut) */}
             <rect 
-              x={nutWidth - 8} 
-              y="6" 
-              width="8" 
-              height={height - 12} 
+              x={nutWidth - 6} 
+              y="8" 
+              width="6" 
+              height={height - 16} 
               fill="url(#nut-grad)"
-              rx="1.5"
+              rx="1"
             />
-            {/* Trastes 1 a 24 */}
+            {/* Trastes 1 a 24 (Linhas finas e discretas como Fretastic) */}
             {Array.from({ length: fretCount }).map((_, idx) => {
               const x = nutWidth + (idx + 1) * fretWidth;
               return (
-                <rect 
+                <line 
                   key={`fret-${idx + 1}`}
-                  x={x - 1.5} 
-                  y="8" 
-                  width="3" 
-                  height={height - 16} 
-                  fill="url(#fret-metal-grad)"
+                  x1={x}
+                  y1="10"
+                  x2={x}
+                  y2={height - 10}
+                  stroke="hsl(0, 0%, 27%)"
+                  strokeWidth="1.5"
                 />
               );
             })}
 
-            {/* 4. Cordas de Guitarra (Gauges crescentes de 0 a 5) */}
+            {/* 4. Cordas de Guitarra (Gauges crescentes de 0 a 5 com visual Fretastic leve) */}
             {Array.from({ length: 6 }).map((_, idx) => {
               const y = 20 + idx * 36;
-              const gauge = 1 + idx * 0.6; // A 6ª corda é fisicamente mais grossa que a 1ª
+              const gauge = 0.8 + idx * 0.5; // A 6ª corda é fisicamente mais grossa que a 1ª
               
               // Se a corda está vibrando devido à síntese de áudio, aplica animação de vibração
               const isVibrating = vibratingStrings[idx];
@@ -305,9 +305,9 @@ export default function Fretboard() {
                   y1={y} 
                   x2={width} 
                   y2={y} 
-                  stroke={isVibrating ? "#FFFFFF" : "#8A898E"} 
+                  stroke={isVibrating ? "#FFFFFF" : "hsl(0, 0%, 37%)"} 
                   strokeWidth={gauge} 
-                  opacity={isVibrating ? 1.0 : 0.8 - idx * 0.05}
+                  opacity={isVibrating ? 1.0 : 0.7 - idx * 0.04}
                   className={isVibrating ? "animate-vibrate" : ""}
                 />
               );
@@ -454,10 +454,10 @@ export default function Fretboard() {
                     // --- 3. MODO DE ENTRADA LIVRE (Desenha apenas a nota ativada fisicamente) ---
                     if (isFretted) {
                       // Se houver um acorde ativo detectado, colorimos com base no intervalo harmônico do acorde principal
-                      // Caso contrário, usamos cor padrão (tônica genérica vermelha)
+                      // Caso contrário, usamos cor padrão (tônica genérica azul)
                       const circleColor = activeChord 
                         ? getNoteColor(notePC, activeChordRootPC) 
-                        : "#FF4D4D";
+                        : "#0165e7";
 
                       const displayNoteName = activeChord
                         ? activeChord.notes.find(n => getPitchClass(n) === notePC) || noteName.replace(/\d/, "")
