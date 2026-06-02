@@ -583,7 +583,7 @@ export default function VoicingSelector() {
                       }}
                       className={`flex flex-col items-center p-2.5 rounded-xl border text-center cursor-pointer transition-all duration-200 hover:scale-102 ${
                         isSelected 
-                          ? "bg-purple-950/20 border-purple-500/70 shadow-[0_0_12px_rgba(168,85,247,0.15)] scale-[1.01]" 
+                          ? "bg-purple-950/20 border-purple-500/70 shadow-[0_0_12px_rgba(255,78,140,0.15)] scale-[1.01]" 
                           : "bg-zinc-950 border-zinc-850 hover:border-zinc-750 hover:bg-zinc-900/30"
                       }`}
                     >
@@ -631,7 +631,7 @@ export default function VoicingSelector() {
                   </div>
                   <button
                     onClick={() => playGuitarChord(activeAuditVoicing.shape.notes)}
-                    className="flex items-center gap-1.5 text-[9px] font-black px-3 py-1 rounded-full bg-purple-650 hover:bg-purple-550 text-white transition cursor-pointer active:scale-95 shadow-[0_0_10px_rgba(168,85,247,0.3)] hover:scale-105"
+                    className="flex items-center gap-1.5 text-[9px] font-black px-3 py-1 rounded-full bg-purple-650 hover:bg-purple-550 text-white transition cursor-pointer active:scale-95 shadow-[0_0_10px_rgba(255,78,140,0.3)] hover:scale-105"
                     title="Ouvir arpejo do voicing"
                   >
                     <Play className="h-3 w-3 fill-current" />

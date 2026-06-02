@@ -258,7 +258,7 @@ export default function ChordTimeline() {
               disabled={progressionChords.length === 0}
               className={`p-2 rounded-lg transition cursor-pointer hover:scale-105 active:scale-95 ${
                 isPlaying 
-                  ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(168,85,247,0.15)]" 
+                  ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
                   : "text-zinc-400 hover:text-zinc-100"
               }`}
               title={isPlaying ? "Pausar" : "Tocar"}
@@ -506,7 +506,7 @@ export default function ChordTimeline() {
                     onClick={() => handleSlotClick(idx)}
                     className={`relative w-[90px] h-[72px] flex flex-col justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:scale-[1.03] ${
                       isActive
-                        ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.25)] animate-pulse"
+                        ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(255,78,140,0.25)] animate-pulse"
                         : "bg-zinc-900/60 border-zinc-850 hover:border-zinc-700/60"
                     }`}
                   >

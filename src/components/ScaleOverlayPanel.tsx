@@ -638,7 +638,7 @@ export default function ScaleOverlayPanel() {
                           onClick={() => toggleScaleOverlay(scale)}
                           className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                             isActive 
-                              ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)] scale-[1.01]" 
+                              ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(255,78,140,0.1)] scale-[1.01]" 
                               : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/40 hover:border-zinc-800"
                           }`}
                         >

@@ -16,6 +16,21 @@
   --color-neon-fifth: #00FF88;
   --color-neon-seventh: #BD00FF;
   --color-neon-extension: #FF9900;
+
+  /* Redefinir a paleta de Purple para a paleta Pink da Fretastic (Consistência Visual total) */
+  --color-purple-50: #fff0f5;
+  --color-purple-100: #ffe1ed;
+  --color-purple-200: #ffc4db;
+  --color-purple-300: #ff93bd;
+  --color-purple-400: #ff5497;
+  --color-purple-500: #ff4e8c;
+  --color-purple-550: #e03975;
+  --color-purple-600: #d63d71;
+  --color-purple-650: #c2275e;
+  --color-purple-700: #b32e5b;
+  --color-purple-800: #94254b;
+  --color-purple-900: #7a2241;
+  --color-purple-950: #420d1f;
 }
 
 /* --- ESTILOS BASE --- */

@@ -48,7 +48,7 @@ export default function App() {
             <div className="w-full flex flex-col md:flex-row gap-6">
               
               <div className="flex-1 p-6 md:p-8 rounded-2xl border border-zinc-850 glass-panel shadow-xl flex flex-col gap-4 text-center md:text-left items-center md:items-start justify-center min-h-[300px]">
-                <div className="p-4 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                <div className="p-4 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 shadow-[0_0_20px_rgba(255,78,140,0.15)]">
                   <Compass className="h-8 w-8 animate-pulse" />
                 </div>
                 <div>

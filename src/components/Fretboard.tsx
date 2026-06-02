@@ -591,7 +591,7 @@ export default function Fretboard() {
             {activeTimelineIndex !== null ? (
               <button
                 onClick={handleSaveToTimeline}
-                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
                 title={`Salvar o dedilhado no compasso ${activeTimelineIndex + 1}`}
               >
                 <Save className="h-4 w-4" />
@@ -600,7 +600,7 @@ export default function Fretboard() {
             ) : (
               <button
                 onClick={() => addToProgression(getDrawnChordName())}
-                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition shadow-lg active:scale-95 cursor-pointer"
                 title={`Adicionar ${getDrawnChordName()} no final da timeline`}
               >
                 <PlusCircle className="h-4 w-4" />
