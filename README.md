@@ -70,4 +70,7 @@ export default defineConfig([
     },
   },
 ])
-```
+
+## MusicXML Export
+This application includes a MusicXML 4.0 export feature for guitar chord timelines, allowing seamless integration with MuseScore and other notation software.
+
