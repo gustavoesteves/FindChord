@@ -310,7 +310,7 @@ export default function VoicingSelector() {
           <line key={i} x1="12" y1={12 + i * 16} x2="62" y2={12 + i * 16} stroke="#3F3F46" strokeWidth="1" />
         ))}
         {frets.map((f, idx) => {
-          const x = 12 + idx * 10;
+          const x = 12 + (5 - idx) * 10;
           if (f === null) {
             return (
               <text key={idx} x={x} y="8" textAnchor="middle" fontSize="7.5" fontWeight="black" fill="#EF4444" opacity="0.8">×</text>
@@ -676,7 +676,7 @@ export default function VoicingSelector() {
                     {[...activeAuditVoicing.roles.voices]
                       .sort((a, b) => a.pitch - b.pitch)
                       .map((voice, idx) => {
-                        const stringNames = ["E (6ª)", "A (5ª)", "D (4ª)", "G (3ª)", "B (2ª)", "E (1ª)"];
+                        const stringNames = ["E (1ª)", "B (2ª)", "G (3ª)", "D (4ª)", "A (5ª)", "E (6ª)"];
                         const roleNames: Record<string, string> = {
                           root: "Tônica",
                           third: "Terça",
