@@ -4,6 +4,7 @@ import type { ResolvedProgression } from "../models/ResolvedProgression";
 import type { VoiceLeadingMetrics } from "../models/VoiceLeadingMetrics";
 import type { HarmonyRequest } from "../models/HarmonyRequest";
 import type { AnalyzedVoicing } from "../models/AnalyzedVoicing";
+import type { VoicingShape } from "../models/VoicingShape";
 import type { MidiRenderOptions, MidiExportResult } from "../models/MidiExport";
 import { exportMidiFromVoiced } from "../midi/midiExporter";
 import type { VoicingLayout } from "../realization/models/VoicingLayout";
@@ -19,28 +20,16 @@ import type { PerformanceMetrics } from "../runtime/models/PerformanceMetrics";
 import type { PerformanceTimeline } from "../runtime/models/PerformanceTimeline";
 import { harmonyRuntime } from "../runtime/HarmonyRuntime";
 
-// Session Bundle (Sprint 5A)
-import type { SessionBundle } from "../session/models/SessionBundle";
-import { sessionSerializer } from "../session/SessionSerializer";
-
-// DAW Adapters (Sprint 5B)
-import type { DawExportResult, DawExportBundle, DawAdapter } from "../session/adapters/DawAdapter";
-import type { ReaperTrackDefinition, ReaperExportOptions } from "../session/adapters/ReaperAdapter";
-import { reaperAdapter } from "../session/adapters/ReaperAdapter";
+// MusicXML Exporter
+import { exportMusicXml } from "../musicxml/musicxmlExporter";
 
 export type {
   RuntimePattern,
   PerformanceEvent,
   PerformanceMetrics,
-  PerformanceTimeline,
-  SessionBundle,
-  DawExportResult,
-  DawExportBundle,
-  DawAdapter,
-  ReaperTrackDefinition,
-  ReaperExportOptions
+  PerformanceTimeline
 };
-export { harmonyRuntime, sessionSerializer, reaperAdapter };
+export { harmonyRuntime, exportMusicXml };
 
 
 
@@ -246,38 +235,9 @@ export const harmonyEngine = {
   },
 
   /**
-   * Serializa o estado atual completo da cadeia musical em um SessionBundle estruturado e assinado.
+   * Converte a progressão ativa em um arquivo estruturado de notação MusicXML 4.0.
    */
-  generateSessionBundle(
-    decision: HarmonyDecision,
-    voiced: VoicedProgression,
-    timeline: PerformanceTimeline,
-    midiBytes: Uint8Array,
-    bpm: number,
-    timeSignature: { numerator: number; denominator: number }
-  ): SessionBundle {
-    return sessionSerializer.serializeSession(decision, voiced, timeline, midiBytes, bpm, timeSignature);
-  },
-
-  /**
-   * Desserializa e valida rigorosamente um SessionBundle a partir de uma string JSON de entrada.
-   */
-  loadSessionBundle(jsonStr: string): SessionBundle | null {
-    try {
-      const bundle = sessionSerializer.deserializeSession(jsonStr);
-      if (sessionSerializer.validateSession(bundle)) {
-        return bundle;
-      }
-    } catch (e) {
-      // Retorna null em caso de parsing inválido
-    }
-    return null;
-  },
-
-  /**
-   * Converte o SessionBundle em um projeto DAW integrado do Reaper (.RPP)
-   */
-  exportReaperProject(session: SessionBundle, options?: ReaperExportOptions): DawExportBundle {
-    return reaperAdapter.export(session, options);
+  exportMusicXml(chords: string[], voicings: (VoicingShape | null)[], bpm: number): string {
+    return exportMusicXml(chords, voicings, bpm);
   }
 };

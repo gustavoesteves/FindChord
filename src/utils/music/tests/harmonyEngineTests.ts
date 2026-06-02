@@ -4,8 +4,7 @@ import { toVLQ } from "../midi/midiEncoder";
 import { runMidiValidationSuite } from "./midiValidationSuite";
 import { runRealizerTests } from "./realizerTests";
 import { runRuntimeTests } from "./runtimeTests";
-import { runSessionTests } from "./sessionTests";
-import { runReaperTests } from "./reaperTests";
+import { runMusicXmlTests } from "./musicXmlTests";
 
 
 
@@ -212,15 +211,9 @@ try {
     passed = false;
   }
 
-  // I. Executar a Suíte de Testes do Session Bundle (Sprint 5A)
-  const sessionPassed = runSessionTests();
-  if (!sessionPassed) {
-    passed = false;
-  }
-
-  // J. Executar a Suíte de Testes do Reaper Adapter (Sprint 5B)
-  const reaperPassed = runReaperTests();
-  if (!reaperPassed) {
+  // I. Executar a Suíte de Testes do MusicXML Exporter
+  const musicXmlPassed = runMusicXmlTests();
+  if (!musicXmlPassed) {
     passed = false;
   }
 
