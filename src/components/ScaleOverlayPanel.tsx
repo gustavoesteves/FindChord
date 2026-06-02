@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getCompatibleScales } from "../utils/music/theory/musicTheory";
+import type { ScaleInfo } from "../utils/music/theory/musicTheory";
 import { EyeOff, Sparkles, BookOpen } from "lucide-react";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { playGuitarNote } from "../utils/audioSynth";
+import { Note as TonalNote } from "tonal";
 
 const SCALE_DESCRIPTIONS: Record<string, { desc: string; mood: string; tip: string }> = {
   "major": {
@@ -99,6 +101,180 @@ const SCALE_DESCRIPTIONS: Record<string, { desc: string; mood: string; tip: stri
   }
 };
 
+export interface SuggestedLick {
+  name: string;
+  school: "Bebop" | "Chord-Scale" | "Linear" | "Modal";
+  theoryDesc: string;
+  intervals: string[];
+}
+
+export const SUGGESTED_LICKS: Record<string, SuggestedLick> = {
+  "major": {
+    name: "Fraseado Linear (Bert Ligon Outline 1)",
+    school: "Linear",
+    theoryDesc: "Conecta a sétima maior (7) descendo linearmente até a terça (3), onde a nota de evitar (11) age rapidamente apenas como nota de passagem.",
+    intervals: ["7M", "6M", "5P", "4P", "3M", "2M", "1P"]
+  },
+  "lydian": {
+    name: "Gravidade Lídia (George Russell)",
+    school: "Modal",
+    theoryDesc: "Destaca a quarta aumentada (#11) como cor principal suspensa, subindo em direção à estabilidade da quinta justa (5) e tônica.",
+    intervals: ["1P", "3M", "4A", "5P", "7M", "6M", "8P"]
+  },
+  "mixolydian": {
+    name: "Fraseado Bebop Cromático (Barry Harris)",
+    school: "Bebop",
+    theoryDesc: "Cria balanço rítmico bebop conectando a sétima menor (b7) com a terça maior do acorde através de aproximações melódicas bop.",
+    intervals: ["3M", "2M", "1P", "7m", "6M", "5P", "8P"]
+  },
+  "dorian": {
+    name: "Dorian Swing (Miles Davis Style)",
+    school: "Modal",
+    theoryDesc: "Enfatiza a sexta maior (13) como a nota de assinatura dourada do modo, criando uma sonoridade de funk jazz sofisticada.",
+    intervals: ["1P", "3m", "5P", "6M", "7m", "6M", "5P"]
+  },
+  "aeolian": {
+    name: "Arpejo Menor Natural Dramático",
+    school: "Chord-Scale",
+    theoryDesc: "Desenha o contorno clássico da escala menor natural, marcando a tônica e terça antes de apoiar na carga dramática da sexta menor (b13).",
+    intervals: ["1P", "3m", "5P", "6m", "5P", "3m", "1P"]
+  },
+  "phrygian": {
+    name: "Linha Exótica Flamenca",
+    school: "Bebop",
+    theoryDesc: "Gera a tensão espanhola imediata ao iniciar o fraseado diretamente na segunda menor (b9), resolvendo passo a passo na tônica.",
+    intervals: ["2m", "1P", "7m", "6m", "5P", "3m", "1P"]
+  },
+  "locrian": {
+    name: "Tensão Meio-Diminuta (Berklee)",
+    school: "Chord-Scale",
+    theoryDesc: "Ideal sobre acordes m7b5. Contorna a quinta diminuta (b5) para criar forte tensão instável antes de preparar a resolução.",
+    intervals: ["1P", "3m", "5d", "7m", "8P", "5d", "1P"]
+  }
+};
+
+interface ScaleNoteClass {
+  category: "root" | "chordTone" | "characteristic" | "tension" | "avoid";
+  label: string;
+  color: string;
+  glow: string;
+  tooltip: string;
+}
+
+function classifyScaleNote(
+  noteName: string,
+  chordRoot: string,
+  chordNotes: string[],
+  scaleType: string
+): ScaleNoteClass {
+  const notePC = getPitchClass(noteName);
+  const rootPC = getPitchClass(chordRoot);
+  const chordPCs = chordNotes.map(n => getPitchClass(n));
+  const dist = (notePC - rootPC + 12) % 12;
+
+  // 1. TÔNICA
+  if (notePC === rootPC) {
+    return {
+      category: "root",
+      label: "R (Tônica)",
+      color: "#FF4D4D",
+      glow: "shadow-[0_0_12px_#FF4D4D]",
+      tooltip: "Tônica: O centro gravitacional absoluto do acorde. Nota de repouso perfeito."
+    };
+  }
+
+  // 2. NOTA CARACTERÍSTICA (MODAL COLOR NOTE SIGNATURE)
+  if (scaleType.includes("lydian") && dist === 6) {
+    return {
+      category: "characteristic",
+      label: "#11 (Modal)",
+      color: "#FCD34D",
+      glow: "shadow-[0_0_15px_#FCD34D] border-2 border-amber-300 animate-pulse",
+      tooltip: "Assinatura Lídia: A quarta aumentada (#11) dá a cor mística, flutuante e espacial característica do modo lídio."
+    };
+  }
+  if (scaleType.includes("dorian") && dist === 9) {
+    return {
+      category: "characteristic",
+      label: "13 (Modal)",
+      color: "#FCD34D",
+      glow: "shadow-[0_0_15px_#FCD34D] border-2 border-amber-300 animate-pulse",
+      tooltip: "Assinatura Dórica: A sexta maior (13) é o intervalo dourado que dá o sabor jazzístico e suingado ao modo dórico."
+    };
+  }
+  if (scaleType.includes("mixolydian") && dist === 10) {
+    return {
+      category: "characteristic",
+      label: "b7 (Modal)",
+      color: "#FCD34D",
+      glow: "shadow-[0_0_15px_#FCD34D] border-2 border-amber-300 animate-pulse",
+      tooltip: "Assinatura Mixolídia: A sétima menor (b7) cria o tempero clássico do rock sulista, blues e MPB."
+    };
+  }
+  if (scaleType.includes("phrygian") && dist === 1) {
+    return {
+      category: "characteristic",
+      label: "b9 (Modal)",
+      color: "#FCD34D",
+      glow: "shadow-[0_0_15px_#FCD34D] border-2 border-amber-300 animate-pulse",
+      tooltip: "Assinatura Frígia: A segunda menor (b9) gera a sonoridade exótica, sombria, espanhola e flamenca típica."
+    };
+  }
+  if (scaleType.includes("locrian") && dist === 6) {
+    return {
+      category: "characteristic",
+      label: "b5 (Modal)",
+      color: "#FCD34D",
+      glow: "shadow-[0_0_15px_#FCD34D] border-2 border-amber-300 animate-pulse",
+      tooltip: "Assinatura Lócria: A quinta diminuta (b5) é a nota de forte instabilidade, tensão e mistério do modo."
+    };
+  }
+
+  // 3. CHORD TONE (Notas do Acorde)
+  if (chordPCs.includes(notePC)) {
+    const labels: Record<number, string> = {
+      3: "3ª (Acorde)", 4: "3ª (Acorde)",
+      5: "5ª (Acorde)", 6: "5ª (Acorde)", 7: "5ª (Acorde)", 8: "5ª (Acorde)",
+      9: "7ª (Acorde)", 10: "7ª (Acorde)", 11: "7ª (Acorde)"
+    };
+    return {
+      category: "chordTone",
+      label: labels[dist] || "Acorde",
+      color: "#00F0FF",
+      glow: "shadow-[0_0_8px_#00F0FF]",
+      tooltip: "Nota do Acorde: Ponto de ancoragem harmônica ultra-estável. Excelente para repousar e finalizar frases."
+    };
+  }
+
+  // 4. AVOID NOTE (Notas de Evitar / Fricção Crítica)
+  const isAvoid4th = (scaleType === "major" || scaleType.includes("bebop") || scaleType.includes("mixolydian")) && dist === 5;
+  const isAvoid6th = (scaleType.includes("aeolian") || scaleType.includes("phrygian")) && dist === 8;
+  const isAvoid2nd = scaleType.includes("locrian") && dist === 1;
+
+  if (isAvoid4th || isAvoid6th || isAvoid2nd) {
+    const labels: Record<number, string> = { 1: "b9 (Evitar)", 5: "11 (Evitar)", 8: "b13 (Evitar)" };
+    return {
+      category: "avoid",
+      label: labels[dist] || "Evitar",
+      color: "#EF4444",
+      glow: "shadow-[0_0_10px_rgba(239,68,68,0.4)] border border-dashed border-red-500",
+      tooltip: "Nota de Evitar (Avoid Note): Cria forte tensão de semitônio com a terça ou quinta. Não repouse nela; use preferencialmente como nota rápida de passagem."
+    };
+  }
+
+  // 5. TENSION NOTE (Extensões de Cor Estáveis)
+  const labels: Record<number, string> = {
+    1: "b9", 2: "9", 5: "11", 6: "#11", 8: "b13", 9: "13"
+  };
+  return {
+    category: "tension",
+    label: labels[dist] || `${dist}`,
+    color: "#FF9900",
+    glow: "shadow-[0_0_6px_rgba(255,153,0,0.3)]",
+    tooltip: "Tensão Estável: Nota de cor melódica rica que adiciona sofisticação e tempero ao fraseado."
+  };
+}
+
 export default function ScaleOverlayPanel() {
   const {
     detectedChords,
@@ -109,14 +285,43 @@ export default function ScaleOverlayPanel() {
     tuning
   } = useChordStore();
 
-  const [localActiveScale, setLocalActiveScale] = useState<{ name: string; notes: string[] } | null>(null);
+  const [localActiveScale, setLocalActiveScale] = useState<ScaleInfo | null>(null);
+  const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({
+    root: true,
+    chordTone: true,
+    characteristic: true,
+    tension: true,
+    avoid: true
+  });
 
-  // Reseta a escala localmente ao fechar o modal
+  // Reseta a escala e os filtros ao fechar o modal
   useEffect(() => {
     if (!isScaleSelectorOpen) {
       setLocalActiveScale(null);
+      setVisibleCategories({
+        root: true,
+        chordTone: true,
+        characteristic: true,
+        tension: true,
+        avoid: true
+      });
     }
   }, [isScaleSelectorOpen]);
+
+  const toggleCategoryVisibility = (category: string) => {
+    setVisibleCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const playLickSequence = (intervals: string[]) => {
+    if (!activeChord) return;
+    intervals.forEach((interval, idx) => {
+      const note = TonalNote.simplify(TonalNote.transpose(`${activeChord.root}4`, interval));
+      playGuitarNote(note, idx * 280);
+    });
+  };
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
@@ -131,11 +336,11 @@ export default function ScaleOverlayPanel() {
     return chord.notationJazz;
   };
 
-  const toggleScaleOverlay = (scaleName: string, notes: string[]) => {
-    if (localActiveScale && localActiveScale.name === scaleName) {
+  const toggleScaleOverlay = (scale: ScaleInfo) => {
+    if (localActiveScale && localActiveScale.name === scale.name) {
       setLocalActiveScale(null); // Desativa se já estiver ativa
     } else {
-      setLocalActiveScale({ name: scaleName, notes });
+      setLocalActiveScale(scale);
     }
   };
 
@@ -143,11 +348,11 @@ export default function ScaleOverlayPanel() {
   const renderScaleFretboard = () => {
     if (!localActiveScale) return null;
 
-    const scaleRootPC = getPitchClass(localActiveScale.notes[0]);
+    const scaleType = localActiveScale.type;
 
     // Geometria compacta do Braço SVG
     const width = 1360;  
-    const height = 180;  // Altura ligeiramente reduzida para caber no modal
+    const height = 180;  
     const fretCount = 24;
     const fretWidth = (width - 60) / fretCount; 
     const nutWidth = 40; 
@@ -156,44 +361,83 @@ export default function ScaleOverlayPanel() {
     const FRET_MARKERS = [3, 5, 7, 9, 15, 17, 19, 21];
     const DOUBLE_FRET_MARKERS = [12, 24];
 
-    // Mapeamento de cores da escala
-    const getNoteColor = (notePC: number, rootPC: number): string => {
-      if (notePC === rootPC) return "#FF4D4D"; // Tônica (Coral Neon)
-      const intervalDist = (notePC - rootPC + 12) % 12;
-      switch (intervalDist) {
-        case 3: // Terça menor
-        case 4: // Terça Maior
-          return "#00F0FF"; // Terça (Ciano Elétrico)
-        case 5: // Quarta justa
-        case 6: // Quinta diminuta / #11
-        case 7: // Quinta Justa
-        case 8: // Quinta aumentada / b13
-          return "#00FF88"; // Quinta (Verde Esmeralda)
-        case 10: // Sétima menor
-        case 11: // Sétima Maior
-          return "#BD00FF"; // Sétima (Roxo/Violeta)
-        default: // Extensões
-          return "#FF9900"; // Extensões (Laranja Âmbar)
-      }
-    };
-
-    const getDegreeLabel = (notePC: number, rootPC: number): string => {
-      if (notePC === rootPC) return "R";
-      const dist = (notePC - rootPC + 12) % 12;
-      const mapping: Record<number, string> = {
-        1: "b9", 2: "9", 3: "b3", 4: "3", 5: "11", 6: "#11", 7: "5", 8: "b13", 9: "13", 10: "b7", 11: "7"
-      };
-      return mapping[dist] || `${dist}`;
-    };
-
     return (
-      <div className="w-full flex flex-col gap-2.5 mt-3 pt-3.5 border-t border-zinc-800/40 animate-fade-in">
-        <div className="flex items-center justify-between px-1 select-none">
+      <div className="w-full flex flex-col gap-2.5 mt-3 pt-3.5 border-t border-zinc-850 animate-fade-in">
+        <div className="flex items-center justify-between px-1 select-none flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black tracking-widest uppercase text-purple-400">Mapa Visual da Escala (Clique nas Notas para ouvir)</span>
+            <span className="text-[10px] font-black tracking-widest uppercase text-purple-400">
+              Mapa Harmônico da Escala (Pressione para ouvir)
+            </span>
             <div className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping"></div>
           </div>
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">Escala: {localActiveScale.name}</span>
+          
+          {/* Legenda de Cores Interativa */}
+          <div className="flex items-center gap-2 text-[9px] font-bold text-zinc-400 flex-wrap select-none">
+            <button
+              onClick={() => toggleCategoryVisibility("root")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                visibleCategories.root
+                  ? "bg-[#FF4D4D]/10 border-[#FF4D4D]/45 text-zinc-200 shadow-[0_0_6px_rgba(255,77,77,0.06)]"
+                  : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
+              }`}
+              title="Alternar visibilidade das tônicas"
+            >
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.root ? "bg-[#FF4D4D] shadow-[0_0_5px_#FF4D4D]" : "bg-zinc-700"}`}></span>
+              <span>Tônica</span>
+            </button>
+
+            <button
+              onClick={() => toggleCategoryVisibility("chordTone")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                visibleCategories.chordTone
+                  ? "bg-[#00F0FF]/10 border-[#00F0FF]/45 text-zinc-200 shadow-[0_0_6px_rgba(0,240,255,0.06)]"
+                  : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
+              }`}
+              title="Alternar visibilidade das notas do acorde"
+            >
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.chordTone ? "bg-[#00F0FF] shadow-[0_0_5px_#00F0FF]" : "bg-zinc-700"}`}></span>
+              <span>Acorde</span>
+            </button>
+
+            <button
+              onClick={() => toggleCategoryVisibility("characteristic")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                visibleCategories.characteristic
+                  ? "bg-[#FCD34D]/10 border-[#FCD34D]/45 text-zinc-200 shadow-[0_0_6px_rgba(252,211,77,0.06)]"
+                  : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
+              }`}
+              title="Alternar visibilidade das notas de assinatura modal"
+            >
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.characteristic ? "bg-[#FCD34D] shadow-[0_0_8px_#FCD34D] animate-pulse" : "bg-zinc-700"}`}></span>
+              <span>Nota Modal</span>
+            </button>
+
+            <button
+              onClick={() => toggleCategoryVisibility("tension")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                visibleCategories.tension
+                  ? "bg-[#FF9900]/10 border-[#FF9900]/45 text-zinc-200 shadow-[0_0_6px_rgba(255,153,0,0.06)]"
+                  : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
+              }`}
+              title="Alternar visibilidade das tensões admissíveis"
+            >
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.tension ? "bg-[#FF9900] shadow-[0_0_5px_#FF9900]" : "bg-zinc-700"}`}></span>
+              <span>Tensão</span>
+            </button>
+
+            <button
+              onClick={() => toggleCategoryVisibility("avoid")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                visibleCategories.avoid
+                  ? "bg-[#EF4444]/10 border-[#EF4444]/45 text-zinc-200 shadow-[0_0_6px_rgba(239,68,68,0.06)]"
+                  : "bg-zinc-950/40 border-zinc-900/50 text-zinc-500 opacity-45"
+              }`}
+              title="Alternar visibilidade das notas de evitar"
+            >
+              <span className={`w-2 h-2 rounded-full transition-transform ${visibleCategories.avoid ? "bg-[#EF4444] shadow-[0_0_5px_#EF4444] border border-dashed border-red-500" : "bg-zinc-700"}`}></span>
+              <span>Evitar (Avoid)</span>
+            </button>
+          </div>
         </div>
 
         <div className="w-full overflow-x-auto rounded-xl border border-zinc-800/70 p-3 bg-zinc-950/80 shadow-inner select-none scrollbar-thin">
@@ -225,7 +469,7 @@ export default function ScaleOverlayPanel() {
               {/* Madeira do Braço */}
               <rect x={nutWidth} y="8" width={width - nutWidth} height={height - 16} fill="url(#modal-wood-grad)" rx="3" />
 
-              {/* Marcadores de Traste (Inlays) */}
+              {/* Marcadores de Traste */}
               {FRET_MARKERS.map(fret => {
                 const x = nutWidth + (fret - 0.5) * fretWidth;
                 return (
@@ -276,33 +520,46 @@ export default function ScaleOverlayPanel() {
                       const isScaleNote = localActiveScale.notes.map(n => getPitchClass(n)).includes(notePC);
                       if (!isScaleNote) return null;
 
+                      // Músico inteligente: Classificação teórica de graus
+                      const noteClass = classifyScaleNote(
+                        noteName, 
+                        activeChord.root, 
+                        activeChord.notes, 
+                        scaleType
+                      );
+
+                      // Filtro de visibilidade interativo
+                      if (!visibleCategories[noteClass.category]) return null;
+
                       const x = fret === 0 ? nutWidth / 2 : nutWidth + (fret - 0.5) * fretWidth;
-                      
+
                       return (
                         <g 
                           key={`mod-note-${stringIdx}-${fret}`} 
-                          className="cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-95"
+                          className="cursor-pointer transition-transform duration-150 hover:scale-115 active:scale-95"
+                          style={{ transformOrigin: `${x}px ${y}px` }}
                           onClick={() => playGuitarNote(noteName)}
                         >
                           {/* Área de Clique expandida */}
                           <circle cx={x} cy={y} r="18" fill="transparent" />
-                          {/* Bolinha Brilhante */}
+                          
+                          {/* Bolinha Brilhante Classificada */}
                           <circle 
                             cx={x} 
                             cy={y} 
-                            r="11" 
-                            className="stroke-2 stroke-zinc-950" 
+                            r="11.5" 
+                            className={`stroke-2 ${noteClass.category === "characteristic" ? "stroke-amber-300" : "stroke-zinc-950"}`} 
                             style={{ 
-                              fill: getNoteColor(notePC, scaleRootPC),
-                              filter: `drop-shadow(0 0 5px ${getNoteColor(notePC, scaleRootPC)})` 
+                              fill: noteClass.color,
+                              filter: `drop-shadow(0 0 ${noteClass.category === "characteristic" ? "7px" : "4px"} ${noteClass.color})` 
                             }} 
                           />
                           {/* Nome da Nota ou Grau */}
-                          <text x={x} y={y + 3.5} textAnchor="middle" fontSize="8.5" fontWeight="900" fill="#FFFFFF">
-                            {getDegreeLabel(notePC, scaleRootPC)}
+                          <text x={x} y={y + 3} textAnchor="middle" fontSize="7.5" fontWeight="950" fill="#FFFFFF">
+                            {noteClass.label.split(" ")[0]}
                           </text>
-                          {/* Tooltip HTML clássico */}
-                          <title>{`${noteName.replace(/\d/, "")} (${getDegreeLabel(notePC, scaleRootPC)})`}</title>
+                          {/* Tooltip Educacional Harmônico */}
+                          <title>{`${noteName.replace(/\d/, "")} - ${noteClass.label}\n\n${noteClass.tooltip}`}</title>
                         </g>
                       );
                     })}
@@ -375,7 +632,7 @@ export default function ScaleOverlayPanel() {
                       return (
                         <div
                           key={scale.name}
-                          onClick={() => toggleScaleOverlay(scale.name, scale.notes)}
+                          onClick={() => toggleScaleOverlay(scale)}
                           className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                             isActive 
                               ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)] scale-[1.01]" 
@@ -392,7 +649,7 @@ export default function ScaleOverlayPanel() {
                               {isActive ? "Filtro Ativo" : "Mapear"}
                             </span>
                           </div>
-
+ 
                           {/* Notas */}
                           <div className="flex flex-wrap gap-1 mt-2">
                             {scale.notes.map((note, idx) => (
@@ -413,11 +670,11 @@ export default function ScaleOverlayPanel() {
                     })}
                   </div>
                 </div>
-
+ 
                 {/* Lado Direito (col-span-5): Guia do Improvisador Contextual */}
                 <div className="lg:col-span-5 h-full">
                   {localActiveScale ? (() => {
-                    const scaleType = localActiveScale.name.replace(/^[A-G][b#]?\s+/, "").toLowerCase().trim();
+                    const scaleType = localActiveScale.type;
                     let info = SCALE_DESCRIPTIONS[scaleType];
                     
                     if (!info) {
@@ -433,34 +690,76 @@ export default function ScaleOverlayPanel() {
                       };
                     }
                     
+                    const lick = SUGGESTED_LICKS[scaleType];
+                    
                     return (
-                      <div className="p-4 rounded-xl border border-purple-500/25 bg-purple-950/15 text-zinc-300 shadow-inner flex flex-col gap-2.5 animate-scale-up h-full justify-between">
-                        <div>
+                      <div className="p-4 rounded-xl border border-purple-500/25 bg-purple-950/15 text-zinc-300 shadow-inner flex flex-col gap-3.5 animate-scale-up h-full justify-between select-none">
+                        <div className="flex flex-col gap-2.5">
                           <div className="flex items-center gap-1.5">
                             <BookOpen className="h-3.5 w-3.5 text-purple-400" />
                             <span className="text-[9px] font-black uppercase text-purple-400 tracking-wider">
                               Guia do Improvisador
                             </span>
                           </div>
-                          <p className="text-xs font-extrabold text-zinc-100 leading-snug mt-1.5">
+                          <p className="text-xs font-extrabold text-zinc-100 leading-snug">
                             {info.desc}
                           </p>
+                          <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-zinc-800/40 text-[10px]">
+                            <div className="leading-tight">
+                              <span className="font-black text-purple-400 uppercase tracking-wider">✨ Mood: </span>
+                              <span className="text-zinc-300 font-semibold">{info.mood}</span>
+                            </div>
+                            <div className="leading-tight mt-1">
+                              <span className="font-black text-purple-400 uppercase tracking-wider">💡 Segredo: </span>
+                              <span className="text-zinc-300 font-semibold">{info.tip}</span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col gap-2.5 mt-2.5 pt-2.5 border-t border-zinc-850/60">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[9px] font-black text-purple-400/80 uppercase tracking-wider">✨ Mood</span>
-                            <p className="text-[11px] text-zinc-300 font-medium leading-relaxed">
-                              {info.mood}
-                            </p>
+                        {/* Bloco de Lick Sugerido (Conceitual) */}
+                        {lick && (
+                          <div className="flex flex-col gap-2 mt-2.5 pt-2.5 border-t border-purple-500/25 animate-fade-in">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                                <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider">
+                                  Lick / Frase de Estudo ({lick.school})
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => playLickSequence(lick.intervals)}
+                                className="flex items-center gap-1 text-[8.5px] font-black px-2.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(245,158,11,0.2)] hover:scale-105"
+                                title="Ouvir frase arpejada"
+                              >
+                                ▶ Ouvir
+                              </button>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[10px] font-black text-zinc-100 leading-tight">
+                                {lick.name}
+                              </span>
+                              <p className="text-[9.5px] text-zinc-400 leading-relaxed font-semibold">
+                                {lick.theoryDesc}
+                              </p>
+                            </div>
+                            {/* Notas do Lick Transpostas */}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {lick.intervals.map((interval, idx) => {
+                                const noteName = TonalNote.simplify(
+                                  TonalNote.transpose(`${activeChord.root}4`, interval)
+                                ).replace(/\d/, "");
+                                return (
+                                  <span
+                                    key={`${interval}-${idx}`}
+                                    className="text-[8.5px] font-black px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-amber-300 shadow-[0_0_2px_rgba(0,0,0,0.5)]"
+                                  >
+                                    {noteName}
+                                  </span>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[9px] font-black text-purple-400/80 uppercase tracking-wider">💡 Segredo</span>
-                            <p className="text-[11px] text-zinc-300 font-medium leading-relaxed">
-                              {info.tip}
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })() : (

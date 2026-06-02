@@ -6,7 +6,7 @@ import { enarmonizeChordCandidate } from "../utils/music/theory/enharmonics";
 import type { ChordQuality } from "../utils/music/constants/chordRegistry";
 import type { VoicingShape } from "../utils/music/models/VoicingShape";
 import { clearVoicingCache } from "../utils/music/generation/voicingGenerator";
-import { findAutoVoicings } from "../utils/music/voiceLeading/voiceLeading";
+import { harmonyEngine } from "../utils/music/harmonyEngine";
 
 export interface FretPosition {
   stringIndex: number; // 0 (1ª corda - E4) a 5 (6ª corda - E2)
@@ -70,6 +70,7 @@ interface ChordStore {
   notationStyle: "Jazz" | "Brazilian" | "Academic"; // Estilo de notação ativo
   isVoicingSelectorOpen: boolean;   // Se o modal de voicings está aberto
   isScaleSelectorOpen: boolean;     // Se o modal de escalas está aberto
+  isChordDetailsOpen: boolean;      // Se o modal de detalhes do acorde está aberto
   
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
@@ -96,6 +97,7 @@ interface ChordStore {
   setNotationStyle: (style: "Jazz" | "Brazilian" | "Academic") => void;
   setVoicingSelectorOpen: (open: boolean) => void;
   setScaleSelectorOpen: (open: boolean) => void;
+  setChordDetailsOpen: (open: boolean) => void;
   
   // Ações de Progressão e Timeline
   addToProgression: (chordName: string) => void;
@@ -160,11 +162,15 @@ export const useChordStore = create<ChordStore>((set, get) => {
     notationStyle: "Jazz",
     isVoicingSelectorOpen: false,
     isScaleSelectorOpen: false,
+    isChordDetailsOpen: false,
     
     voiceLeadingSource: null,
     
     progressionChords: ["C", "Am", "F", "G"],
-    timelineVoicings: findAutoVoicings(["C", "Am", "F", "G"], ["E4", "B3", "G3", "D3", "A2", "E2"]),
+    timelineVoicings: harmonyEngine.solve({
+      progression: ["C", "Am", "F", "G"],
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"]
+    }).solution.bestPath.map(av => av ? av.shape : null),
     activeTimelineIndex: null,
     isPlaying: false,
     bpm: 120,
@@ -305,6 +311,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({ isScaleSelectorOpen: open });
     },
 
+    setChordDetailsOpen: (open) => {
+      set({ isChordDetailsOpen: open });
+    },
+
     // Ações de Progressão e Timeline
     addToProgression: (chordName) => {
       const newChords = [...get().progressionChords, chordName];
@@ -388,7 +398,8 @@ export const useChordStore = create<ChordStore>((set, get) => {
     updateTimelineVoicings: () => {
       const chords = get().progressionChords;
       const tuning = get().tuning;
-      const voicings = findAutoVoicings(chords, tuning);
+      const decision = harmonyEngine.solve({ progression: chords, tuning });
+      const voicings = decision.solution.bestPath.map(av => av ? av.shape : null);
       
       // Mesclar as vozes auto-calculadas com as customizadas do usuário
       const customVoicings = get().userCustomVoicings || {};

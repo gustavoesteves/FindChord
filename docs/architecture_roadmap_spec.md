@@ -73,7 +73,12 @@ models/                     # DTOs e Interfaces de Dados Puros (Sem funções ne
 ├── VoicingShape.ts         # Posicionamento mecânico do braço (VoicingShape, CAGE)
 ├── VoicingScoreBreakdown.ts # Mapeamento granular e explicável do score de qualidade
 ├── VoiceLeadingTransition.ts # Métricas de custo de condução de vozes e transições
-└── AnalyzedVoicing.ts      # Moeda oficial do sistema: Agregador (Shape + Analysis + Score + Metadata)
+├── AnalyzedVoicing.ts      # Moeda oficial do sistema: Agregador (Shape + Analysis + Score + Metadata)
+├── GenerationConstraints.ts # Contrato declarativo de filtros e regras harmônicas
+├── VoiceLeadingMetrics.ts  # Métricas numéricas brutas da condução contrapontística e movimento
+├── VoiceLeadingExplanation.ts # Diagnóstico e explicabilidade humanizada de caminhos harmônicos
+├── ResolvedProgression.ts  # O resultado oficial e explicável do pipeline do resolvedor Viterbi
+└── HarmonySession.ts       # Sessão harmônica agregada contendo a progressão, regras e solução calculada
 
 theory/                     # Teoria musical pura e abstrata
 ├── musicTheory.ts          # Regras gerais de intervalos, transposição e escalas
@@ -91,9 +96,51 @@ generation/                 # Geradores combinatórios e mapeadores de shapes
 scoring/                    # Motor de pontuação explicável
 └── voicingScorer.ts        # Tradutor de análises e shapes para breakdowns de scores de qualidade
 
-voiceLeading/               # Resolvedor de caminhos temporais
-└── voiceLeading.ts         # Algoritmo Viterbi DP puro baseado em transição e qualidade
+voiceLeading/               # Resolvedor contrapontístico de caminhos temporais
+├── rules/                  # Regras modulares (ParallelFifths, ContraryMotion, etc.)
+├── solver/                 # Algoritmo Viterbi DP puro de caminho mínimo
+└── models/                 # Interfaces de transição e resolvedores
+
+midi/                       # Eventos e exportadores de protocolos musicais
+└── midiExporter.ts         # Conversor de ResolvedProgression para arquivos binários .mid SMF 0
+
+harmonyEngine/              # Fachada Principal (Public API Facade)
+└── index.ts                # APIs públicas unificadas (findBestVoicings, findBestProgression, generateMidi)
 ```
+
+---
+
+## 📐 Pipeline Harmônico Central (Core Harmonic Pipeline)
+
+O Harmony Engine opera sobre um pipeline unidirecional rígido de transformação de dados. O tráfego de dados é inteiramente orientado a contratos (DTOs) que desacoplam a intenção musical de sua materialização e de sua renderização final:
+
+```text
+  1. INTENT (Intenção do Músico)
+     GenerationConstraints
+              │
+              ▼
+  2. CANDIDATES (Candidatos Físicos e Geométricos)
+     AnalyzedVoicing[]
+              │
+              ▼
+  3. RESOLUTION (Resolução e Otimização Tonal)
+     ResolvedProgression
+              │
+              ▼
+  4. EXPLAINABILITY (Métricas & Explicabilidade Didática)
+     VoiceLeadingMetrics + VoiceLeadingExplanation
+              │
+              ▼
+  5. RENDERING (Camadas de Apresentação / Renderização)
+     UI React / MIDI Exporter / DAW Extension (Reaper) / VST3 / CLAP
+```
+
+### Detalhamento das Camadas do Pipeline:
+1. **Intent (Intenção)**: O músico declara suas preferências harmônicas abstratas (ex: "Quero uma progressão contrapontística Drop 2, sem tônica e com a 9ª obrigatória") encapsuladas em `GenerationConstraints`. A intenção é agnóstica de instrumento ou representação física.
+2. **Candidates (Candidatos)**: O motor combinatório do gerador procura shapes compatíveis no braço e os analisa no domínio, anexando os papéis das vozes no DTO `AnalyzedVoicing`.
+3. **Resolution (Resolução)**: O algoritmo Viterbi otimiza a progressão inteira de forma horizontal no tempo, encontrando o menor custo contrapontístico e retornando o DTO consolidado `ResolvedProgression`.
+4. **Explainability (Explicabilidade)**: O motor de métricas calcula os diagnósticos numéricos (`VoiceLeadingMetrics`) e formula a justificativa teórica em linguagem natural (`VoiceLeadingExplanation`), respondendo de forma fidedigna e didática *"Por que este caminho venceu as alternativas?"*.
+5. **Rendering (Renderização)**: Camada de apresentação/saída que converte a decisão resolvida e explicada em formatos perceptíveis (desenho de diagramas SVG, eventos MIDI, bytes SMF `.mid` salvos em arquivo, comandos VST3, extensões de DAW, etc.).
 
 ---
 
@@ -103,12 +150,17 @@ Para blindar o sistema contra acoplamentos circulares e garantir a integridade d
 
 ```text
   ┌─────────────────────────┐
+  │      harmonyEngine      │
+  └────────────┬────────────┘
+               │ (pode importar de)
+               ▼
+  ┌─────────────────────────┐
   │      voiceLeading       │
   └────────────┬────────────┘
                │ (pode importar de)
                ▼
   ┌─────────────────────────┐
-  │         scoring         │
+  │      midi / scoring     │
   └────────────┬────────────┘
                │ (pode importar de)
                ▼
@@ -135,25 +187,75 @@ Para blindar o sistema contra acoplamentos circulares e garantir a integridade d
 
 ---
 
-## 🛠️ Modelagem de Dados Puros (Domain Models)
-
-### `models/AnalyzedVoicing.ts`
+### `models/GenerationConstraints.ts`
 ```typescript
-import { VoicingShape } from "./VoicingShape";
-import { VoiceRoleAnalysis } from "./VoiceRoleAnalysis";
-import { VoicingScoreBreakdown } from "./VoicingScoreBreakdown";
-
-export interface AnalyzedVoicing {
-  shape: VoicingShape;
-  analysis: VoiceRoleAnalysis;
-  score: VoicingScoreBreakdown;
-  metadata: {
-    source: "generated" | "preset";
-    chordSymbol: string;
-    physicalBass: string;
-    physicalSoprano: string;
-  };
+export interface GenerationConstraints {
+  requireGuideTones?: boolean;
+  omitRoot?: boolean;
+  omitFifth?: boolean;
+  omitSeventh?: boolean;
+  requiredIntervals?: string[]; // ex: ["3", "7", "b9", "#11"]
+  voiceCount?: 3 | 4 | 5 | 6 | "any";
+  positionRange?: "0-5" | "5-9" | "9-12" | "12+" | "all";
+  bassFilter?: "root" | "third" | "fifth" | "seventh" | "tension" | "any";
+  structure?: string; // ex: "drop2", "drop3", "shell"
 }
+```
+
+### `models/VoiceLeadingMetrics.ts`
+```typescript
+// Métricas numéricas brutas do resolvedor (ideais para algoritmos, ponderações e comparações)
+export interface VoiceLeadingMetrics {
+  totalDistance: number;         // Distância física acumulada em semitônios nas cordas
+  contraryMotions: number;        // Quantidade de movimentos contrários/oblíquos promovidos
+  retainedCommonTones: number;   // Quantidade de notas comuns mantidas na mesma voz física
+  parallelFifths: number;        // Quantidade de quintas paralelas identificadas e evitadas
+  parallelOctaves: number;       // Quantidade de oitavas paralelas identificadas e evitadas
+  functionalResolutions: number; // Quantidade de resoluções de guide tones/trítonos realizadas
+}
+```
+
+### `models/VoiceLeadingExplanation.ts`
+```typescript
+// Diagnóstico pedagógico humanizado (perfeito para renderização e leitura direta do músico)
+export interface VoiceLeadingExplanation {
+  summary: string;     // Breve veredito de "Por que este caminho venceu as alternativas?"
+  strengths: string[]; // Pontos fortes da resolução (ex: ["Movimento contrário suave", "Notas comuns retidas"])
+  weaknesses: string[];// Concessões ergonômicas feitas (ex: ["Salto maior que 5 trastes na 6ª corda"])
+}
+```
+
+### `models/ResolvedProgression.ts`
+```typescript
+import { AnalyzedVoicing } from "./AnalyzedVoicing";
+import { VoiceLeadingTransition } from "./VoiceLeadingTransition";
+import { VoiceLeadingMetrics } from "./VoiceLeadingMetrics";
+import { VoiceLeadingExplanation } from "./VoiceLeadingExplanation";
+
+// O ativo mais valioso do resolvedor: a progressão inteiramente calculada e explicável
+export interface ResolvedProgression {
+  progression: string[];                // Cifras solicitadas (ex: ["Dm7", "G7", "Cmaj7"])
+  candidates: AnalyzedVoicing[][];      // Candidatos a aberturas gerados para cada acorde
+  bestPath: (AnalyzedVoicing | null)[]; // O melhor caminho harmônico (resolução) calculado
+  totalCost: number;                    // Custo acumulado total de condução e ergonomia
+  transitions: VoiceLeadingTransition[];// Conexões e caminhos de voz individuais SATB por passo
+  metrics?: VoiceLeadingMetrics;        // Métricas brutas da progressão
+  explanation?: VoiceLeadingExplanation;// Justificativa teórica humanizada da progressão
+}
+```
+
+### `models/HarmonySession.ts`
+```typescript
+import { GenerationConstraints } from "./GenerationConstraints";
+import { ResolvedProgression } from "./ResolvedProgression";
+
+// Sessão focada puramente no domínio harmônico (vigilância contra poluição de DAW/UI)
+export interface HarmonySession {
+  progression: string[];               // Cifras ativas da sessão
+  constraints: GenerationConstraints;  // Parâmetros declarativos aplicados
+  solution: ResolvedProgression | null;// A solução harmônica resolvida pelo motor
+}
+```
 ```
 
 ---
@@ -174,40 +276,49 @@ Para declarar a Sprint 0 formalmente concluída e homologada, o código refatora
 
 ---
 
-## 🎯 Roadmap Evolutivo de Sprints
+## 🎯 Roadmap Evolutivo de Sprints (Congelado & Atualizado)
 
-### 📅 Sprint 0: Refatoração Arquitetural e Divisão por Domínios (Atual)
-*   **Objetivo**: Estruturar e isolar os 5 motores conceituais, core físico e DTOs puros.
-*   **Neutralidade**: Zero alteração de comportamento musical e zero adição de novas heurísticas complexas.
+O Harmony Engine evoluiu de um visualizador físico-mecânico para um **gerador e auditor harmônico semântico inteligente**. O roteiro a seguir define as fases concluídas e planejadas do produto:
 
-### 📅 Sprint 1: VoiceRoleAnalysis Engine
-*   **Objetivo**: Implementar e expandir o modelo de voz estruturado `VoiceRoleAnalysis`.
-*   **Funcionalidades**:
-    *   `analyzeVoiceRoles()`
-    *   Identificação de graus em cada corda (Root, Third, Fifth, Seventh, Extensions)
-    *   Mapeamento de duplicidades (`duplicatedRoles`) e omissões (`omittedRoles`)
-    *   Cálculo de vozes efetivas (`effectiveVoices`)
+### 📅 Sprints 1, 1.1 & 2: O Motor Harmônico Semântico e Condução Funcional (Concluídos)
+*   **Objetivo**: Desenvolver o mapeamento estruturado `VoiceRoleAnalysis`, modularizar o gerador combinatório recursivo e implementar o resolvedor Viterbi de condução horizontal física e funcional (7ª ➔ 3ª, 3ª ➔ Tônica, combos de resolução de trítonos dominantes).
 
-### 📅 Sprint 2: VoicingScorer v2 (Explainable Score)
-*   **Objetivo**: Desenvolver o motor de pontuação explicável utilizando as informações do DTO `AnalyzedVoicing`.
-*   **Funcionalidades**:
-    *   Cálculo e breakdown detalhado do score no front-end para o usuário.
-    *   Exposição visual de auditoria anatômica e harmônica para depuração em tempo real.
+### 📅 Sprint 3.35: Consolidação Arquitetural (Architectural Consolidation) (Concluído)
+*   **Objetivo**: Garantir que toda a aplicação (incluindo o Zustand global store e futuros renders) consuma exclusivamente a fachada pública `harmonyEngine.solve`.
+*   **Critérios de Sucesso**:
+    *   Zero chamadas diretas ao resolvedor Viterbi (`findAutoVoicings` / `findAutoVoicingsAdvanced`) fora do domínio `harmonyEngine`.
+    *   Garantia de que a aplicação Web React, o sequenciador de timeline e os futuros renderizadores consumam apenas a especificação abstrata e declarativa exposta no DTO `HarmonyDecision`.
 
-### 📅 Sprint 3: Rootless & Jazz Engine
-*   **Objetivo**: Suportar voicings jazzísticos e formas clássicas.
-*   **Funcionalidades**:
-    *   Geração de aberturas sem tônica (Rootless maj7, m7, dominant7) para guitarra.
-    *   Presets estruturados e codificação física para voicings Drop 2, Drop 3 e Shell voicings.
+### 📅 Sprint 3.6 & 3.65: MIDI Hardening & Humanization (Concluído)
+*   **Objetivo**: Refinar a robustez e a expressividade musical do sequenciador binário.
+*   **Especificações Concluídas**:
+    *   **Time Signature Meta Event (`0xFF, 0x58`)**: Escrita explícita de fórmula de compasso (ex: 4/4) na trilha inicial, prevenindo defaults inconsistentes em DAWs externas.
+    *   **Program Change (`instrumentProgram`)**: Suporte a patch de timbre inicial por canal/trilha (ex: 24 = Nylon Guitar, 0 = Piano, 48 = Strings).
+    *   **SMF Tipo 1 (Multi-Track)**: Distribuição física e independente das notas em 4 faixas (Track 0 "Conductor" pura para andamento/tempo, Track 1 "Bass", Track 2 "Guide Tones" e Track 3 "Upper Structure").
+    *   **Humanização Semeada (PRNG)**: Introdução de variação de intensidade (+/- 8) e micro-tempo (+/- 6 ticks) baseada em LCG determinístico com semente (`seed`), garantindo reprodução perfeita e consistência nos testes unitários.
+    *   **MIDI Validation Suite (Golden Master)**: Testes de integridade bit a bit comparando hashes DJB2 de cadências de referência (`ii-V-I`, `Rhythm Changes`, `Autumn Leaves`) para evitar qualquer regressão.
 
-### 📅 Sprint 4: Advanced Voice Leading
-*   **Objetivo**: Implementar conduções contrapontísticas clássicas ao algoritmo Viterbi DP.
-*   **Funcionalidades**:
-    *   Evitar paralelismos rígidos (quintas e oitavas paralelas).
-    *   Priorizar movimento contrário, oblíquo e resolução de graus instáveis (Terça para Sétima e vice-versa).
+### 📅 Sprint 4: Progression Realizer (Voicing Layer) (Concluído)
+*   **Objetivo**: Introduzir a camada pura e desacoplada de reinterpretação acústica e materialização horizontal das decisões de condução abstratas (`VoicedProgression`).
+*   **Design Concluído (SRP & Ortogonalidade)**:
+    *   **VoicingLayout (Disposição)**:
+        *   `"guitar"`: Preserva exatamente a distribuição de trastes física resolvida pelo resolvedor Viterbi original na guitarra.
+        *   `"satb"`: Coraliza as aberturas de forma fixa em exatamente 4 vozes (*Bass, Tenor, Alto, Soprano*).
+    *   **VoicingTransform (Técnica)**:
+        *   `"none"`: Sem alterações.
+        *   `"rootless"`: Remove tônicas para focar a textura em terças, sétimas e tensões.
+        *   `"drop2"`: Transpõe a segunda voz mais aguda uma oitava abaixo (`midiNote - 12`).
+        *   `"shell"`: Reduz o voicing estritamente a *Root, 3rd, 7th*.
+        *   `"quartal"`: Reorganiza os pitches de forma quartal (intervalos de quarta justa), sob a regra estrita e conservativa de não rearmonização (ou seja, `outputNotes ⊆ inputNotes`).
+    *   **VoicingMetrics**: Métricas ricas incluindo **`rootPresence`** e **`averageVoiceMotion`** (movimento médio em semitônios entre acordes consecutivos).
+    *   **Fachada Polimórfica**: Método `realize` público e `generateMidi` aceitando progressões materializadas diretamente, desmembrando o MIDI da afinação física da guitarra.
 
-### 📅 Sprint 5: Arranger Engine
-*   **Objetivo**: Introduzir inteligência tonal adaptativa baseada em arranjo estilístico.
-*   **Funcionalidades**:
-    *   Ajuste inteligente de registros e oitavas com base no estilo (Jazz/Bossa/Pop).
-    *   Densidade adaptativa e priorização da linha do soprano.
+### 📅 Sprint 3.7: Harmony Runtime (Planejado)
+*   **Objetivo**: Consolidar a camada compartilhada de runtime (`createHarmonyRuntime()`) para orquestrar execução, análise e depuração das decisões.
+*   **Benefício**: Centralizar chamadas de depuração e auditorias para serem compartilhadas diretamente entre a Web UI, CLI, REST API e futuros plugins.
+
+### 📅 Sprint 5: Reaper Extension (Planejado)
+*   **Objetivo**: Integrar a VoicedProgression diretamente na timeline do DAW Reaper através de ReaScripts e APIs nativas do Reaper, criando itens MIDI de forma automatizada.
+
+### 📅 Sprint 6: MIDI FX Plugin (VST3/CLAP) (Planejado)
+*   **Objetivo**: Desenvolver um plugin de efeitos MIDI em formato nativo VST3 ou CLAP capaz de atuar como host e materializar as realizações harmônicas do core engine em tempo real.

@@ -108,8 +108,12 @@ export function getCompatibleScales(chord: ChordCandidate): ScaleInfo[] {
   compatibleTypes.forEach(scaleType => {
     const scale = TonalScale.get(`${root} ${scaleType}`);
     if (!scale.empty) {
+      const rawName = scale.name || scaleType;
+      const startsWithRoot = rawName.toLowerCase().startsWith(`${root.toLowerCase()} `) || rawName.toLowerCase() === root.toLowerCase();
+      const displayName = startsWithRoot ? rawName : `${root} ${rawName}`;
+
       results.push({
-        name: `${root} ${scale.name || scaleType}`,
+        name: displayName,
         type: scaleType,
         intervals: scale.intervals,
         notes: scale.notes.map(n => simplifyNote(n))

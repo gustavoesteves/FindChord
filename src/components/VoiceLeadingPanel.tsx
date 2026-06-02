@@ -9,8 +9,12 @@ import {
   SkipBack, 
   Trash2, 
   Music,
-  Sliders
+  Sliders,
+  Download
 } from "lucide-react";
+import { harmonyEngine } from "../utils/music/harmonyEngine";
+import type { RuntimePattern } from "../utils/music/harmonyEngine";
+
 
 export default function ChordTimeline() {
   const {
@@ -33,6 +37,16 @@ export default function ChordTimeline() {
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
+
+  // Estados para as configurações de exportação MIDI (Sprint 3.6, 3.65 & 4.5)
+  const [showMidiSettings, setShowMidiSettings] = useState(false);
+  const [midiFormat, setMidiFormat] = useState<0 | 1>(0);
+  const [midiInstrument, setMidiInstrument] = useState<number>(24); // Nylon Guitar
+  const [timeSigNum, setTimeSigNum] = useState<number>(4);
+  const [timeSigDen, setTimeSigDen] = useState<number>(4);
+  const [useHumanize, setUseHumanize] = useState<boolean>(true);
+  const [runtimePattern, setRuntimePattern] = useState<RuntimePattern>("block");
+
 
   const saveInlineEdit = (idx: number) => {
     setEditingIndex(null);
@@ -135,6 +149,214 @@ export default function ChordTimeline() {
     playCurrentChordAudio(0);
   };
 
+  const handleExportMidi = () => {
+    if (progressionChords.length === 0) return;
+    const tuning = useChordStore.getState().tuning;
+
+    try {
+      const midiResult = harmonyEngine.generateMidi(
+        {
+          progression: progressionChords,
+          tuning,
+          includeAlternatives: false
+        },
+        {
+          bpm,
+          velocity: 80,
+          chordDurationBeats: 4,
+          format: midiFormat,
+          instrumentProgram: midiInstrument,
+          timeSignature: {
+            numerator: timeSigNum,
+            denominator: timeSigDen
+          },
+          humanize: useHumanize ? {
+            velocityVariance: 8,
+            timingVarianceTicks: 6
+          } : undefined,
+          pattern: runtimePattern
+        }
+
+      );
+
+      const blob = new Blob([midiResult.bytes as any], { type: "audio/midi" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const filename = progressionChords.join("_").replace(/[\/\\?%*:|"<>\s]/g, "-") + ".mid";
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Fecha o popover de configurações
+      setShowMidiSettings(false);
+    } catch (err) {
+      console.error("Falha ao exportar MIDI:", err);
+    }
+  };
+
+  const handleExportSession = () => {
+    if (progressionChords.length === 0) return;
+    const tuning = useChordStore.getState().tuning;
+
+    try {
+      const request = {
+        progression: progressionChords,
+        tuning,
+        includeAlternatives: false
+      };
+      
+      const decision = harmonyEngine.solve(request);
+      
+      // Realização SATB / Native padrão baseada nos inputs ativos
+      const voiced = harmonyEngine.realize(decision, "satb", "none", tuning);
+      
+      // Performance Timeline
+      const timeline = harmonyEngine.perform(voiced, runtimePattern, {
+        chordDurationBeats: 4,
+        velocity: 80
+      });
+
+      // Renderização MIDI correspondente
+      const midiResult = harmonyEngine.generateMidi(voiced, {
+        bpm,
+        velocity: 80,
+        chordDurationBeats: 4,
+        format: midiFormat,
+        instrumentProgram: midiInstrument,
+        timeSignature: {
+          numerator: timeSigNum,
+          denominator: timeSigDen
+        },
+        humanize: useHumanize ? {
+          velocityVariance: 8,
+          timingVarianceTicks: 6
+        } : undefined,
+        pattern: runtimePattern
+      });
+
+      // Session Bundle unificado
+      const sessionBundle = harmonyEngine.generateSessionBundle(
+        decision,
+        voiced,
+        timeline,
+        midiResult.bytes,
+        bpm,
+        { numerator: timeSigNum, denominator: timeSigDen }
+      );
+
+
+      const jsonStr = JSON.stringify(sessionBundle, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const filename = progressionChords.join("_").replace(/[\/\\?%*:|"<>\s]/g, "-") + "_session.json";
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Fecha o popover de configurações
+      setShowMidiSettings(false);
+    } catch (err) {
+      console.error("Falha ao exportar Sessão:", err);
+    }
+  };
+
+  const handleExportReaper = () => {
+    if (progressionChords.length === 0) return;
+    const tuning = useChordStore.getState().tuning;
+
+    try {
+      const request = {
+        progression: progressionChords,
+        tuning,
+        includeAlternatives: false
+      };
+      
+      const decision = harmonyEngine.solve(request);
+      const voiced = harmonyEngine.realize(decision, "satb", "none", tuning);
+      const timeline = harmonyEngine.perform(voiced, runtimePattern, {
+        chordDurationBeats: 4,
+        velocity: 80
+      });
+
+      const midiResult = harmonyEngine.generateMidi(voiced, {
+        bpm,
+        velocity: 80,
+        chordDurationBeats: 4,
+        format: midiFormat,
+        instrumentProgram: midiInstrument,
+        timeSignature: {
+          numerator: timeSigNum,
+          denominator: timeSigDen
+        },
+        humanize: useHumanize ? {
+          velocityVariance: 8,
+          timingVarianceTicks: 6
+        } : undefined,
+        pattern: runtimePattern
+      });
+
+      const name = progressionChords.join("_").replace(/[\/\\?%*:|"<>\s]/g, "-");
+      const sessionBundle = harmonyEngine.generateSessionBundle(
+        decision,
+        voiced,
+        timeline,
+        midiResult.bytes,
+        bpm,
+        { numerator: timeSigNum, denominator: timeSigDen }
+      );
+      
+      // Adicionar metadados opcionais para o projeto Reaper
+      sessionBundle.sessionName = name;
+      sessionBundle.notes = `Generated automatically by Harmony Engine. Layout: satb, Pattern: ${runtimePattern}`;
+      sessionBundle.tags = ["harmony", "contraponto", "daw-session"];
+
+      // Exportar projeto DAW Reaper
+      const reaperBundle = harmonyEngine.exportReaperProject(sessionBundle, {
+        projectName: name,
+        midiFilename: `${name}.mid`
+      });
+
+      // 1. Download do Arquivo de Projeto (.RPP)
+      const rppBlob = new Blob([reaperBundle.projectFile.content as any], { type: reaperBundle.projectFile.mimeType });
+
+      const rppUrl = URL.createObjectURL(rppBlob);
+      const rppLink = document.createElement("a");
+      rppLink.href = rppUrl;
+      rppLink.download = reaperBundle.projectFile.filename;
+      document.body.appendChild(rppLink);
+      rppLink.click();
+      document.body.removeChild(rppLink);
+      URL.revokeObjectURL(rppUrl);
+
+      // 2. Download do Arquivo MIDI correspondente (.MID)
+      if (reaperBundle.assets && reaperBundle.assets.length > 0) {
+        const asset = reaperBundle.assets[0];
+        const midBlob = new Blob([asset.content as any], { type: asset.mimeType });
+        const midUrl = URL.createObjectURL(midBlob);
+        const midLink = document.createElement("a");
+        midLink.href = midUrl;
+        midLink.download = asset.filename;
+        document.body.appendChild(midLink);
+        midLink.click();
+        document.body.removeChild(midLink);
+        URL.revokeObjectURL(midUrl);
+      }
+
+      // Fecha o popover de configurações
+      setShowMidiSettings(false);
+    } catch (err) {
+      console.error("Falha ao exportar projeto Reaper:", err);
+    }
+  };
+
+
   // Clica manualmente em um slot da timeline
   const handleSlotClick = (idx: number) => {
     setActiveTimelineIndex(idx);
@@ -206,6 +428,169 @@ export default function ChordTimeline() {
               <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">Compasso</span>
               <span className="font-extrabold text-[10px] text-zinc-300">4 / 4</span>
             </div>
+          </div>
+
+          {/* Botão de Exportar MIDI com Configurações Popover */}
+          <div className="relative flex items-center gap-1.5">
+            <button
+              onClick={handleExportMidi}
+              disabled={progressionChords.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase rounded-xl border border-purple-500/20 bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 hover:text-purple-300 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-950/10"
+              title="Exportar cadência como arquivo MIDI (.mid)"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>MIDI</span>
+            </button>
+            <button
+              onClick={handleExportSession}
+              disabled={progressionChords.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase rounded-xl border border-purple-500/20 bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 hover:text-purple-300 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-950/10"
+              title="Exportar sessão musical completa como arquivo JSON de persistência"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Sessão</span>
+            </button>
+            <button
+              onClick={handleExportReaper}
+              disabled={progressionChords.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase rounded-xl border border-purple-500/20 bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 hover:text-purple-300 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-950/10"
+              title="Exportar projeto Reaper (.RPP) com assets MIDI casados"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Reaper</span>
+            </button>
+
+
+            <button
+              onClick={() => setShowMidiSettings(!showMidiSettings)}
+              disabled={progressionChords.length === 0}
+              className={`p-1.5 rounded-xl border transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none hover:scale-105 active:scale-95 ${
+                showMidiSettings
+                  ? "border-purple-500/40 bg-purple-950/40 text-purple-400"
+                  : "border-zinc-850 bg-zinc-950 text-zinc-400 hover:text-zinc-200"
+              }`}
+              title="Configurações de Exportação MIDI"
+            >
+              <Sliders className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Menu Popover das Configurações MIDI */}
+            {showMidiSettings && (
+              <div className="absolute top-10 left-0 z-50 w-64 p-4 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-md shadow-2xl flex flex-col gap-3 animate-scale-up text-left">
+                <h4 className="text-[11px] font-black text-zinc-300 uppercase tracking-widest border-b border-zinc-850 pb-1.5">
+                  Ajustes MIDI (Hardening)
+                </h4>
+                
+                {/* Formato MIDI */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Formato SMF</label>
+                  <div className="grid grid-cols-2 gap-1 bg-zinc-900 p-0.5 rounded-lg border border-zinc-800">
+                    <button
+                      onClick={() => setMidiFormat(0)}
+                      className={`py-1 text-[9px] font-bold rounded-md transition cursor-pointer ${
+                        midiFormat === 0
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      Tipo 0 (Pista Única)
+                    </button>
+                    <button
+                      onClick={() => setMidiFormat(1)}
+                      className={`py-1 text-[9px] font-bold rounded-md transition cursor-pointer ${
+                        midiFormat === 1
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      Tipo 1 (Multicanal)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Instrumento (Program Change) */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Timbre do Sintetizador</label>
+                  <select
+                    value={midiInstrument}
+                    onChange={(e) => setMidiInstrument(parseInt(e.target.value))}
+                    className="bg-zinc-900 border border-zinc-800 rounded-lg p-1.5 text-[10px] text-zinc-200 focus:outline-none focus:border-purple-500 font-semibold cursor-pointer"
+                  >
+                    <option value={24}>Nylon Guitar (24)</option>
+                    <option value={0}>Acoustic Piano (0)</option>
+                    <option value={48}>Orchestral Strings (48)</option>
+                    <option value={25}>Steel Guitar (25)</option>
+                    <option value={32}>Acoustic Bass (32)</option>
+                  </select>
+                </div>
+
+                {/* Fórmula de Compasso (Time Signature) */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Fórmula de Compasso</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[8px] text-zinc-500 font-bold uppercase">Numerador</span>
+                      <select
+                        value={timeSigNum}
+                        onChange={(e) => setTimeSigNum(parseInt(e.target.value))}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 text-[10px] text-zinc-200 focus:outline-none focus:border-purple-500 font-semibold text-center cursor-pointer"
+                      >
+                        <option value={4}>4</option>
+                        <option value={3}>3</option>
+                        <option value={6}>6</option>
+                        <option value={5}>5</option>
+                        <option value={7}>7</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[8px] text-zinc-500 font-bold uppercase">Denominador</span>
+                      <select
+                        value={timeSigDen}
+                        onChange={(e) => setTimeSigDen(parseInt(e.target.value))}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 text-[10px] text-zinc-200 focus:outline-none focus:border-purple-500 font-semibold text-center cursor-pointer"
+                      >
+                        <option value={4}>4</option>
+                        <option value={8}>8</option>
+                        <option value={2}>2</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Padrão de Execução Rítmica (Sprint 4.5) */}
+                <div className="flex flex-col gap-1 border-t border-zinc-850 pt-2.5 mt-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Estilo de Performance</label>
+                  <select
+                    value={runtimePattern}
+                    onChange={(e) => setRuntimePattern(e.target.value as RuntimePattern)}
+                    className="bg-zinc-900 border border-zinc-800 rounded-lg p-1.5 text-[10px] text-zinc-200 focus:outline-none focus:border-purple-500 font-semibold cursor-pointer"
+                  >
+                    <option value="block">Block Chord (Estático)</option>
+                    <option value="half-note">Half Note (Pulso Duplo)</option>
+                    <option value="quarter-note">Quarter Note (Pulso Quádruplo)</option>
+                    <option value="arpeggio-up">Arpeggio Up (Dedilhado Ascendente)</option>
+                    <option value="arpeggio-down">Arpeggio Down (Dedilhado Descendente)</option>
+                    <option value="broken-chord">Broken Chord (Baixo + Hits Sincopados)</option>
+                    <option value="pedal-bass">Pedal Bass (Baixo Sustentado + Hits Pulsantes)</option>
+                  </select>
+                </div>
+
+                {/* Humanização (Sprint 3.65) */}
+                <div className="flex items-center justify-between border-t border-zinc-850 pt-2.5 mt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-zinc-300">Humanizar Expressão</span>
+                    <span className="text-[8px] text-zinc-500 font-medium">Variação micro-tempo e volume</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={useHumanize}
+                    onChange={(e) => setUseHumanize(e.target.checked)}
+                    className="accent-purple-500 h-4 w-4 rounded bg-zinc-800 border-zinc-700 cursor-pointer"
+                  />
+                </div>
+
+              </div>
+            )}
           </div>
         </div>
 

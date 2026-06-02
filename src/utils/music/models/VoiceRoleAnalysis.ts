@@ -41,6 +41,7 @@ export interface VoiceRoleAnalysis {
   
   physicalVoices: number;
   effectiveVoices: number; // Vozes reais desconsiderando duplicações
+  voiceCount: number;      // Número de vozes fisicamente soando no dedilhado
   
   voices: VoiceRole[]; // Detalhamento de cada voz fisicamente soando
 }

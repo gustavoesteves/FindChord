@@ -3,7 +3,7 @@ import { useChordStore } from "../store/useChordStore";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getFriendlyInterval } from "../utils/music/theory/chordParser";
-import { Music, AlertCircle, ChevronDown, Check } from "lucide-react";
+import { Music, ChevronDown, Check } from "lucide-react";
 import { Note as TonalNote } from "tonal";
 
 function parseChordNotationParts(chordName: string) {
@@ -137,7 +137,9 @@ export default function ChordList() {
     setSelectedChordIndex,
     tuning,
     selectedFrets,
-    notationStyle
+    notationStyle,
+    isChordDetailsOpen,
+    setChordDetailsOpen
   } = useChordStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -167,38 +169,39 @@ export default function ChordList() {
     return interp.notationJazz;
   };
 
-  if (detectedChords.length === 0) {
-    return (
-      <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center border border-zinc-850 glass-panel rounded-xl p-6 text-zinc-500 gap-3 shadow-lg">
-        <div className="p-3 rounded-full bg-zinc-950/60 border border-zinc-800 text-zinc-600">
-          <AlertCircle className="h-6 w-6" />
-        </div>
-        <div className="text-center max-w-[280px]">
-          <h3 className="text-sm font-bold text-zinc-300">Nenhum acorde detectado</h3>
-          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-            Clique em qualquer traste ou solte cordas no braço da guitarra acima para iniciar a análise harmônica automática!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
+  if (!activeChord || !isChordDetailsOpen) return null;
+
   return (
-    <div className="w-full">
-      {/* Card Único e Integrado de Análise Harmônica Detalhada */}
-      <div className="w-full flex flex-col gap-4 p-5 rounded-2xl border border-zinc-850 glass-panel shadow-xl">
-        {activeChord ? (
-          <div className="flex flex-col gap-4">
-            {/* Header com Acorde Selecionado e Controles de Ação compactos */}
-            <div className="flex items-center justify-between border-b border-zinc-800/40 pb-3 flex-wrap gap-3">
-              <div className="flex flex-col">
-                <span className="text-2xl font-black text-white tracking-tight">{getChordName(activeChord)}</span>
-                <span className="text-xs text-zinc-400 font-medium">
-                  {`Fundamental (Tônica): ${activeChord.root} | Qualidade: ${activeChord.quality}`}
-                </span>
-              </div>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in"
+      onClick={() => setChordDetailsOpen(false)}
+    >
+      <div 
+        className="bg-[#0E0E12]/98 border border-zinc-800/85 rounded-2xl p-5 w-full max-w-3xl shadow-2xl flex flex-col max-h-[92vh] glass-panel relative animate-scale-up overflow-y-auto scrollbar-thin"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Botão Fechar */}
+        <button 
+          onClick={() => setChordDetailsOpen(false)}
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold bg-zinc-900 hover:bg-zinc-850 w-8 h-8 rounded-full flex items-center justify-center transition border border-zinc-800 cursor-pointer hover:scale-105 active:scale-95 z-10"
+          title="Fechar"
+        >
+          ×
+        </button>
+
+        <div className="flex flex-col gap-4 pt-2">
+          {/* Header com Acorde Selecionado e Controles de Ação compactos */}
+          <div className="flex items-center justify-between border-b border-zinc-800/40 pb-3 flex-wrap gap-3 pr-8 select-none">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Análise Harmônica Detalhada</span>
+              <span className="text-2xl font-black text-white tracking-tight mt-0.5">{getChordName(activeChord)}</span>
+              <span className="text-xs text-zinc-400 font-medium mt-0.5">
+                {`Fundamental (Tônica): ${activeChord.root} | Qualidade: ${activeChord.quality}`}
+              </span>
+            </div>
+
 
               {/* Controles de Ação Compactos */}
               <div className="flex items-center gap-3 relative" ref={dropdownRef}>
@@ -460,12 +463,7 @@ export default function ChordList() {
             )}
 
           </div>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 py-12">
-            Nenhum acorde selecionado na lista.
-          </div>
-        )}
+        </div>
       </div>
-    </div>
   );
 }

@@ -7,6 +7,20 @@ import type { VoicingShape } from "../models/VoicingShape";
 import type { AnalyzedVoicing } from "../models/AnalyzedVoicing";
 import { buildAnalyzedVoicing } from "../analysis/voicingAnalyzer";
 import { SCORING_WEIGHTS } from "../constants/scoringWeights";
+import type { ResolvedProgression } from "../models/ResolvedProgression";
+import type { VoiceLeadingTransition } from "../models/VoiceLeadingTransition";
+
+// Importar as Regras Modulares
+import { ParallelFifthsRule } from "./rules/ParallelFifthsRule";
+import { ParallelOctavesRule } from "./rules/ParallelOctavesRule";
+import { ContraryMotionRule } from "./rules/ContraryMotionRule";
+import { FunctionalResolutionRule } from "./rules/FunctionalResolutionRule";
+
+// Instâncias das Regras Modulares
+const parallelFifthsRule = new ParallelFifthsRule();
+const parallelOctavesRule = new ParallelOctavesRule();
+const contraryMotionRule = new ContraryMotionRule();
+const functionalResolutionRule = new FunctionalResolutionRule();
 
 export interface VoiceLeadingPath {
   stringIndex: number;
@@ -43,7 +57,6 @@ export function detectFunctionalResolutions(
   const voicesB = [...voicingB.roles.voices].sort((a, b) => a.pitch - b.pitch);
   const numVoices = Math.min(voicesA.length, voicesB.length);
 
-  // Armazena as correspondências de índices para detecção de trítono
   const resolvedSeventhsIdx: number[] = [];
   const resolvedThirdsIdx: number[] = [];
 
@@ -56,29 +69,25 @@ export function detectFunctionalResolutions(
 
     const diff = voiceB.pitch - voiceA.pitch;
 
-    // Regra 1 (Sétima para Terça)
     if (infoA.role === "seventh" && infoB.role === "third" && (diff === -1 || diff === -2)) {
       seventhToThird = true;
-      functionalBonus += SCORING_WEIGHTS.viterbiSeventhToThirdResolutionBonus; // -15
+      functionalBonus += SCORING_WEIGHTS.viterbiSeventhToThirdResolutionBonus;
       resolvedSeventhsIdx.push(vIdx);
-      continue; // Regra de prioridade única por voz
+      continue;
     }
 
-    // Regra 2 (Terça para Tônica/Sétima)
     if (infoA.role === "third" && (infoB.role === "root" || infoB.role === "seventh") && (diff === 1 || diff === 2)) {
       thirdToRoot = true;
-      functionalBonus += SCORING_WEIGHTS.viterbiThirdToRootResolutionBonus; // -10
+      functionalBonus += SCORING_WEIGHTS.viterbiThirdToRootResolutionBonus;
       resolvedThirdsIdx.push(vIdx);
-      continue; // Regra de prioridade única por voz
+      continue;
     }
 
-    // Regra 3 (Resolução de Tensões)
     if (infoA.role === "tension" && (infoB.role === "root" || infoB.role === "third" || infoB.role === "fifth") && (Math.abs(diff) === 1 || Math.abs(diff) === 2)) {
-      functionalBonus += SCORING_WEIGHTS.viterbiTensionResolutionBonus; // -5
+      functionalBonus += SCORING_WEIGHTS.viterbiTensionResolutionBonus;
     }
   }
 
-  // Detecção Fidedigna do Combo de Trítono Dominante resolvido
   let tritonePairResolved = false;
   for (const sIdx of resolvedSeventhsIdx) {
     for (const tIdx of resolvedThirdsIdx) {
@@ -87,15 +96,14 @@ export function detectFunctionalResolutions(
       const pcDiff = Math.abs(pcA1 - pcA2) % 12;
       if (pcDiff === 6) {
         tritonePairResolved = true;
-        functionalBonus += SCORING_WEIGHTS.viterbiTritoneResolutionComboBonus; // -15
+        functionalBonus += SCORING_WEIGHTS.viterbiTritoneResolutionComboBonus;
         break;
       }
     }
     if (tritonePairResolved) break;
   }
 
-  // Teto funcional limítrofe
-  functionalBonus = Math.max(functionalBonus, SCORING_WEIGHTS.viterbiMaxFunctionalBonus); // Teto: -20
+  functionalBonus = Math.max(functionalBonus, SCORING_WEIGHTS.viterbiMaxFunctionalBonus);
 
   return {
     seventhToThird,
@@ -106,7 +114,7 @@ export function detectFunctionalResolutions(
 }
 
 /**
- * Calcula o Custo Harmônico e Físico de transição consumindo EXCLUSIVAMENTE AnalyzedVoicing.
+ * Calcula o Custo Harmônico e Físico de transição consumindo as Regras Modulares.
  */
 export function calculateVoiceLeadingCost(
   voicingA: AnalyzedVoicing,
@@ -118,9 +126,6 @@ export function calculateVoiceLeadingCost(
 
   const fretsA = voicingA.shape.frets;
   const fretsB = voicingB.shape.frets;
-
-  // Mapear direções para identificar movimento contrário ou paralelo
-  const activeMovements: { stringIdx: number; direction: number; intervalStart: number | null }[] = [];
 
   // 1. Calcular deslocamentos individuais nas cordas
   for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
@@ -142,12 +147,8 @@ export function calculateVoiceLeadingCost(
       let direction: "up" | "down" | "stay" = "stay";
       if (diff > 0) {
         direction = "up";
-        activeMovements.push({ stringIdx, direction: 1, intervalStart: pitchA });
       } else if (diff < 0) {
         direction = "down";
-        activeMovements.push({ stringIdx, direction: -1, intervalStart: pitchA });
-      } else {
-        activeMovements.push({ stringIdx, direction: 0, intervalStart: pitchA });
       }
 
       if (absDiff === 0) {
@@ -198,43 +199,24 @@ export function calculateVoiceLeadingCost(
     }
   }
 
-  // 2. Regras Estritas de Contraponto e Condução por Vozes Adjacentes
-  if (activeMovements.length >= 2) {
-    let contraryMotionCount = 0;
-    let parallelFifthOctaveError = false;
-
-    for (let i = 0; i < activeMovements.length; i++) {
-      for (let j = i + 1; j < activeMovements.length; j++) {
-        const mv1 = activeMovements[i];
-        const mv2 = activeMovements[j];
-
-        if (mv1.direction !== 0 && mv2.direction !== 0) {
-          if (mv1.direction * mv2.direction < 0) {
-            contraryMotionCount++;
-          } else if (mv1.direction === mv2.direction) {
-            // Detecção de Quintas e Oitavas Paralelas Proibidas
-            if (mv1.intervalStart !== null && mv2.intervalStart !== null) {
-              const startInterval = Math.abs(mv2.intervalStart - mv1.intervalStart) % 12;
-              const endInterval = Math.abs((mv2.intervalStart + mv2.direction) - (mv1.intervalStart + mv1.direction)) % 12;
-              const isPerfectInterval = startInterval === 7 || startInterval === 0;
-              if (isPerfectInterval && startInterval === endInterval) {
-                parallelFifthOctaveError = true;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (contraryMotionCount > 0) {
-      cost = Math.max(0, cost - 3 * contraryMotionCount);
-    }
-
-    if (parallelFifthOctaveError) {
-      cost += SCORING_WEIGHTS.viterbiParallelPerfectPenalty; // +20
-    }
+  // 2. Regras Estritas de Contraponto (Modularizadas)
+  const isParallelFifth = parallelFifthsRule.evaluate(voicingA, voicingB, tuning) > 0;
+  const isParallelOctave = parallelOctavesRule.evaluate(voicingA, voicingB, tuning) > 0;
+  if (isParallelFifth || isParallelOctave) {
+    cost += SCORING_WEIGHTS.viterbiParallelPerfectPenalty; // +20
   }
 
+  // Movimento contrário
+  const contraryCount = contraryMotionRule.evaluate(voicingA, voicingB, tuning);
+  if (contraryCount > 0) {
+    cost = Math.max(0, cost + contraryCount * contraryMotionRule.weight); // -3 por movimento contrário
+  }
+
+  // 3. Condução Semântica/Funcional das Vozes
+  const functionalResolutionBonus = functionalResolutionRule.evaluate(voicingA, voicingB, tuning);
+  cost += functionalResolutionBonus;
+
+  // Penalidade de mudança de posição física (Shift de traste)
   const fretsANonNull = fretsA.filter(f => f !== null && f > 0) as number[];
   const fretsBNonNull = fretsB.filter(f => f !== null && f > 0) as number[];
 
@@ -245,9 +227,6 @@ export function calculateVoiceLeadingCost(
     cost += positionShift * 2;
   }
 
-  // 3. Condução Semântica/Funcional das Vozes (Fase SATB)
-  const functionalReport = detectFunctionalResolutions(voicingA, voicingB);
-  cost += functionalReport.functionalBonus;
   cost = Math.max(0, cost);
 
   return {
@@ -256,9 +235,6 @@ export function calculateVoiceLeadingCost(
   };
 }
 
-/**
- * Encontra e ordena os melhores candidatos B consumindo EXCLUSIVAMENTE AnalyzedVoicing.
- */
 export function findBestVoiceLeading(
   voicingA: AnalyzedVoicing,
   candidatesB: AnalyzedVoicing[],
@@ -278,10 +254,6 @@ export function findBestVoiceLeading(
 
 const QUALITY_WEIGHT = 40;
 
-/**
- * Calcula a penalidade de baixo quando a nota mais grave não é a tônica em acordes simples.
- * Consome semântica limpa do inversionType do DTO VoicingClassification.
- */
 function calculateBassCanonicalPenalty(voicing: AnalyzedVoicing, isSlash: boolean): number {
   if (isSlash) return 0;
   
@@ -290,34 +262,89 @@ function calculateBassCanonicalPenalty(voicing: AnalyzedVoicing, isSlash: boolea
   if (inv === "first") return 15;
   if (inv === "second") return 25;
   if (inv === "third") return 40;
-  return 50; // Exotic inversion
+  return 50;
+}
+
+function buildTransitionsForPath(
+  path: AnalyzedVoicing[],
+  tuning: string[]
+): VoiceLeadingTransition[] {
+  const transitions: VoiceLeadingTransition[] = [];
+  for (let i = 1; i < path.length; i++) {
+    const vA = path[i - 1];
+    const vB = path[i];
+    
+    let fretDist = 0;
+    let commonCount = 0;
+    for (let sIdx = 0; sIdx < 6; sIdx++) {
+      const fA = vA.shape.frets[sIdx];
+      const fB = vB.shape.frets[sIdx];
+      if (fA !== null && fB !== null) {
+        fretDist += Math.abs(fB - fA);
+        const pitchA = getAbsolutePitch(fA, tuning[sIdx]);
+        const pitchB = getAbsolutePitch(fB, tuning[sIdx]);
+        if (pitchA !== null && pitchB !== null && pitchA === pitchB) {
+          commonCount++;
+        }
+      }
+    }
+
+    const { totalCost } = calculateVoiceLeadingCost(vA, vB, tuning);
+
+    transitions.push({
+      fromVoicing: vA.shape.frets.map(f => f === null ? -1 : f),
+      toVoicing: vB.shape.frets.map(f => f === null ? -1 : f),
+      fretDistance: fretDist,
+      commonVoicesCount: commonCount,
+      voiceLeadingCost: totalCost,
+      totalTransitionCost: totalCost
+    });
+  }
+  return transitions;
 }
 
 /**
- * Viterbi-like solver que encontra a progressão de aberturas de menor custo,
- * operando EXCLUSIVAMENTE sobre o DTO unificado AnalyzedVoicing.
+ * Resolvedor Viterbi avançado que suporta extração de caminhos candidatos alternativos
+ * de forma lazy e desacoplada.
  */
-export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingShape | null)[] {
-  if (chords.length === 0) return [];
-  
-  // 1. Gerar e analisar candidatos (povoando DTO Agregado AnalyzedVoicing para cada acorde)
-  const chordCandidatesList: AnalyzedVoicing[][] = chords.map(chordName => {
+export function findAutoVoicingsAdvanced(
+  chords: string[],
+  tuning: string[],
+  includeAlternatives: boolean = false,
+  candidatesOverride?: AnalyzedVoicing[][]
+): {
+  solution: ResolvedProgression;
+  alternatives?: ResolvedProgression[];
+} {
+  if (chords.length === 0) {
+    return {
+      solution: { progression: [], bestPath: [], totalCost: 0, transitions: [] }
+    };
+  }
+
+  const chordCandidatesList: AnalyzedVoicing[][] = candidatesOverride || chords.map(chordName => {
     const chordInfo = parseChord(chordName);
     if (chordInfo.empty) return [];
     const root = chordInfo.root || "C";
     const targetPCs = chordInfo.notes.map(n => getPitchClass(n));
     const bassPC = chordInfo.bass ? getPitchClass(chordInfo.bass) : null;
     const generatedShapes = generateVoicings(chordName, root, targetPCs, tuning, chordInfo.quality, bassPC);
-    
-    // Converter VoicingShape candidates em AnalyzedVoicing DTOs unificados
     return generatedShapes.map(shape => buildAnalyzedVoicing(shape, tuning));
   });
 
   if (chordCandidatesList.some(list => list.length === 0)) {
-    return chords.map((_, idx) => {
+    const bestPath = chords.map((_, idx) => {
       const list = chordCandidatesList[idx];
-      return list && list.length > 0 ? list[0].shape : null;
+      return list && list.length > 0 ? list[0] : null;
     });
+    return {
+      solution: {
+        progression: chords,
+        bestPath,
+        totalCost: 9999,
+        transitions: []
+      }
+    };
   }
 
   const N = chords.length;
@@ -333,7 +360,6 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
     const normalizedQuality = targetQuality / maxQuality0;
     const qualityPenalty = (1 - normalizedQuality) * QUALITY_WEIGHT;
     const bassPenalty = calculateBassCanonicalPenalty(c, firstIsSlash);
-
     return qualityPenalty + bassPenalty;
   });
   backtrace[0] = Array(chordCandidatesList[0].length).fill(-1);
@@ -355,14 +381,10 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
 
       for (let prevIdx = 0; prevIdx < prevList.length; prevIdx++) {
         const prevVoicing = prevList[prevIdx];
-        
-        // Transição operando puramente sobre DTOs
         const cost = calculateVoiceLeadingCost(prevVoicing, currVoicing, tuning).totalCost;
-        
         const targetQuality = currVoicing.shape.qualityScore || 100;
         const normalizedQuality = targetQuality / maxQualityI;
         const qualityPenalty = (1 - normalizedQuality) * QUALITY_WEIGHT;
-        
         const bassPenalty = calculateBassCanonicalPenalty(currVoicing, currIsSlash);
         const accumulatedCost = dp[i - 1][prevIdx] + cost + qualityPenalty + bassPenalty;
 
@@ -378,24 +400,61 @@ export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingSh
   }
 
   const lastDp = dp[N - 1];
-  let bestLastIdx = 0;
-  let minFinalCost = Infinity;
-  for (let j = 0; j < lastDp.length; j++) {
-    if (lastDp[j] < minFinalCost) {
-      minFinalCost = lastDp[j];
-      bestLastIdx = j;
+  const sortedLastIndices = lastDp
+    .map((cost, idx) => ({ cost, idx }))
+    .sort((a, b) => a.cost - b.cost);
+
+  const reconstructPath = (lastIdx: number): (AnalyzedVoicing | null)[] => {
+    const pathIndices: number[] = [];
+    let currIdx = lastIdx;
+    for (let i = N - 1; i >= 0; i--) {
+      pathIndices.push(currIdx);
+      currIdx = backtrace[i][currIdx];
     }
+    pathIndices.reverse();
+    return pathIndices.map((candIdx, chordIdx) => chordCandidatesList[chordIdx][candIdx]);
+  };
+
+  const bestLastIdx = sortedLastIndices[0].idx;
+  const bestPath = reconstructPath(bestLastIdx);
+  const bestTransitions = buildTransitionsForPath(bestPath.filter((v): v is AnalyzedVoicing => v !== null), tuning);
+
+  const solution: ResolvedProgression = {
+    progression: chords,
+    bestPath,
+    totalCost: sortedLastIndices[0].cost,
+    transitions: bestTransitions
+  };
+
+  const result: {
+    solution: ResolvedProgression;
+    alternatives?: ResolvedProgression[];
+  } = { solution };
+
+  if (includeAlternatives && sortedLastIndices.length > 1) {
+    const alternatives: ResolvedProgression[] = [];
+    const limit = Math.min(sortedLastIndices.length, 4);
+    for (let k = 1; k < limit; k++) {
+      const altIdx = sortedLastIndices[k].idx;
+      const altPath = reconstructPath(altIdx);
+      const altTransitions = buildTransitionsForPath(altPath.filter((v): v is AnalyzedVoicing => v !== null), tuning);
+      alternatives.push({
+        progression: chords,
+        bestPath: altPath,
+        totalCost: sortedLastIndices[k].cost,
+        transitions: altTransitions
+      });
+    }
+    result.alternatives = alternatives;
   }
 
-  const pathIndices: number[] = [];
-  let currIdx = bestLastIdx;
-  for (let i = N - 1; i >= 0; i--) {
-    pathIndices.push(currIdx);
-    currIdx = backtrace[i][currIdx];
-  }
-  pathIndices.reverse();
+  return result;
+}
 
-  return pathIndices.map((candIdx, chordIdx) => {
-    return chordCandidatesList[chordIdx][candIdx].shape;
-  });
+/**
+ * Mantém retrocompatibilidade estrita com a assinatura original.
+ */
+export function findAutoVoicings(chords: string[], tuning: string[]): (VoicingShape | null)[] {
+  const result = findAutoVoicingsAdvanced(chords, tuning, false);
+  return result.solution.bestPath.map(av => av ? av.shape : null);
 }

@@ -3,9 +3,9 @@ import { getNoteAt } from "../core/notes";
 import { noteToMidi } from "../core/midi";
 import type { CageShape, VoicingShape } from "../models/VoicingShape";
 import { scoreVoicing } from "../scoring/voicingScorer";
-import { analyzeVoiceRoles } from "../analysis/voicingAnalyzer";
+import { analyzeVoiceRoles, buildAnalyzedVoicing } from "../analysis/voicingAnalyzer";
 import { classifyVoicing } from "../analysis/voicingClassifier";
-import type { VoicingAcoustics } from "../models/AnalyzedVoicing";
+import type { AnalyzedVoicing, VoicingAcoustics } from "../models/AnalyzedVoicing";
 import type { SearchContext } from "./searchContext";
 import { getRequiredPitchClasses } from "./requiredPitchClasses";
 import { isWithinAnatomicalStretch, isPhysicalReachValid } from "./voicingConstraints";
@@ -240,4 +240,33 @@ export function generateVoicings(
 
   voicingCache.set(cacheKey, finalResults);
   return finalResults;
+}
+
+export function generateAnalyzedVoicings(
+  chordName: string,
+  chordRoot: string,
+  targetPitchClasses: number[],
+  tuning: string[],
+  activeQuality?: string,
+  bassPC: number | null = null
+): AnalyzedVoicing[] {
+  const shapes = generateVoicings(chordName, chordRoot, targetPitchClasses, tuning, activeQuality, bassPC);
+  const rootPC = getPitchClass(chordRoot);
+
+  return shapes.map(shape => {
+    const analyzed = buildAnalyzedVoicing(shape, tuning);
+    const score = scoreVoicing(
+      analyzed.roles,
+      analyzed.classification,
+      analyzed.acoustics,
+      activeQuality || "major",
+      rootPC,
+      targetPitchClasses,
+      bassPC
+    );
+    return {
+      ...analyzed,
+      score
+    };
+  });
 }

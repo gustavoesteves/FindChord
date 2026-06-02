@@ -253,6 +253,7 @@ export function analyzeVoiceRoles(
     omittedRoles,
     physicalVoices,
     effectiveVoices,
+    voiceCount: physicalVoices,
     voices
   };
 }

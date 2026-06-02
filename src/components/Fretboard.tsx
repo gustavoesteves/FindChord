@@ -4,7 +4,7 @@ import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { CHORD_REGISTRY } from "../utils/music/constants/chordRegistry";
 import { playGuitarNote } from "../utils/audioSynth";
-import { Volume2, Save, RotateCcw, PlusCircle, Sparkles } from "lucide-react";
+import { Volume2, Save, RotateCcw, PlusCircle, Sparkles, Info } from "lucide-react";
 import { CageShape } from "../utils/music/models/VoicingShape";
 import type { VoicingShape } from "../utils/music/models/VoicingShape";
 
@@ -25,7 +25,8 @@ export default function Fretboard() {
     setFretboardExplorerMode,
     addToProgression,
     setVoicingSelectorOpen,
-    setScaleSelectorOpen
+    setScaleSelectorOpen,
+    setChordDetailsOpen
   } = useChordStore();
 
   const [vibratingStrings, setVibratingStrings] = useState<boolean[]>(Array(6).fill(false));
@@ -557,6 +558,16 @@ export default function Fretboard() {
 
           {/* Lado Direito: Ações de Composição */}
           <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Análise Detalhada */}
+            <button
+              onClick={() => setChordDetailsOpen(true)}
+              className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 text-xs font-bold transition shadow-lg active:scale-95 cursor-pointer"
+              title={`Ver análise detalhada, equivalências e intervalos de ${getDrawnChordName()}`}
+            >
+              <Info className="h-3.5 w-3.5 text-purple-400" />
+              🔍 Análise Detalhada
+            </button>
+
             {/* Explorar Voicings */}
             <button
               onClick={() => setVoicingSelectorOpen(true)}
