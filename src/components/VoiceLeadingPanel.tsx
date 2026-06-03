@@ -275,49 +275,52 @@ export default function ChordTimeline() {
       {/* 1. Barra Superior: Controle de Transporte (DAW Style) & Entrada */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-zinc-800/40">
         
-        {/* Lado Esquerdo: Identidade do Painel e Controles de Transporte */}
+        {/* Lado Esquerdo: Identidade do Painel e Console Unificado */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
             <h2 className="text-sm font-black text-zinc-100 uppercase tracking-widest">Progression Timeline</h2>
           </div>
 
-          {/* Botões do DAW */}
-          <div className="flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-850/80 shadow-inner">
-            <button
-              onClick={handleRewind}
-              disabled={progressionChords.length === 0}
-              className="p-2 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
-              title="Voltar ao início"
-            >
-              <SkipBack className="h-4 w-4" />
-            </button>
-            
-            <button
-              onClick={handlePlayToggle}
-              disabled={progressionChords.length === 0}
-              className={`p-2 rounded-lg transition cursor-pointer hover:scale-105 active:scale-95 ${
-                isPlaying 
-                  ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
-                  : "text-zinc-400 hover:text-zinc-100"
-              }`}
-              title={isPlaying ? "Pausar" : "Tocar"}
-            >
-              {isPlaying ? <Pause className="h-4 w-4 fill-purple-400" /> : <Play className="h-4 w-4 fill-zinc-400" />}
-            </button>
+          {/* Console de Transporte & Tempo Unificado */}
+          <div className="flex items-center bg-zinc-950 p-1.5 rounded-xl border border-zinc-850/80 shadow-inner gap-3 text-xs">
+            {/* Controles de Transporte (DAW Style) */}
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={handleRewind}
+                disabled={progressionChords.length === 0}
+                className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
+                title="Voltar ao início"
+              >
+                <SkipBack className="h-4 w-4" />
+              </button>
+              
+              <button
+                onClick={handlePlayToggle}
+                disabled={progressionChords.length === 0}
+                className={`p-1.5 rounded-lg transition cursor-pointer hover:scale-105 active:scale-95 ${
+                  isPlaying 
+                    ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
+                    : "text-zinc-400 hover:text-zinc-100"
+                }`}
+                title={isPlaying ? "Pausar" : "Tocar"}
+              >
+                {isPlaying ? <Pause className="h-4 w-4 fill-purple-400" /> : <Play className="h-4 w-4 fill-zinc-400" />}
+              </button>
 
-            <button
-              onClick={handleStop}
-              disabled={progressionChords.length === 0}
-              className="p-2 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
-              title="Parar"
-            >
-              <Square className="h-4 w-4 fill-zinc-400" />
-            </button>
-          </div>
+              <button
+                onClick={handleStop}
+                disabled={progressionChords.length === 0}
+                className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
+                title="Parar"
+              >
+                <Square className="h-4 w-4 fill-zinc-400" />
+              </button>
+            </div>
 
-          {/* Controle do Metrônomo e BPM Redesenhado */}
-          <div className="flex items-center gap-4 bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-850/80 text-xs shadow-inner">
+            {/* Separador */}
+            <div className="h-5 border-l border-zinc-855" />
+
             {/* Botão de Som do Metrônomo */}
             <button
               onClick={() => setIsMetronomeEnabled(!isMetronomeEnabled)}
@@ -328,49 +331,50 @@ export default function ChordTimeline() {
               }`}
               title={isMetronomeEnabled ? "Desativar clique do metrônomo" : "Ativar clique do metrônomo"}
             >
-              {isMetronomeEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              {isMetronomeEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
             </button>
 
+            {/* Separador */}
+            <div className="h-5 border-l border-zinc-855" />
+
             {/* Ajuste de BPM */}
-            <div className="flex flex-col gap-1 items-center">
-              <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider select-none">BPM</span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setBpm(Math.max(60, bpm - 1))}
-                  className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
-                  title="Diminuir 1 BPM"
-                >
-                  -
-                </button>
-                <span className="font-mono font-black text-xs text-purple-400 min-w-[24px] text-center select-none">
-                  {bpm}
-                </span>
-                <button
-                  onClick={() => setBpm(Math.min(200, bpm + 1))}
-                  className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
-                  title="Aumentar 1 BPM"
-                >
-                  +
-                </button>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider select-none mr-0.5">BPM</span>
+              <button
+                onClick={() => setBpm(Math.max(60, bpm - 1))}
+                className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                title="Diminuir 1 BPM"
+              >
+                -
+              </button>
+              <span className="font-mono font-black text-xs text-purple-400 min-w-[24px] text-center select-none">
+                {bpm}
+              </span>
+              <button
+                onClick={() => setBpm(Math.min(200, bpm + 1))}
+                className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                title="Aumentar 1 BPM"
+              >
+                +
+              </button>
               <input
                 type="range"
                 min="60"
                 max="200"
                 value={bpm}
                 onChange={(e) => setBpm(parseInt(e.target.value))}
-                className="w-16 accent-purple-500 cursor-pointer h-0.5 rounded-lg bg-zinc-800 hover:accent-purple-400 transition-colors"
+                className="w-12 accent-purple-500 cursor-pointer h-0.5 rounded-lg bg-zinc-800 hover:accent-purple-400 transition-colors ml-1 hidden sm:block"
               />
             </div>
 
             {/* Separador */}
-            <div className="h-8 border-l border-zinc-850" />
+            <div className="h-5 border-l border-zinc-855" />
 
             {/* Compasso e LEDs de Batida */}
-            <div className="flex flex-col justify-center items-center gap-1 min-w-[50px]">
+            <div className="flex items-center gap-2">
               <div className="flex flex-col items-center">
-                <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider select-none">Compasso</span>
-                <span className="font-extrabold text-[10px] text-zinc-300">4 / 4</span>
+                <span className="text-[7px] font-bold text-zinc-600 uppercase tracking-wider select-none leading-none mb-0.5">SIGN</span>
+                <span className="font-extrabold text-[10px] text-zinc-450 leading-none">4/4</span>
               </div>
               
               {/* LEDs Indicadores de Batida */}
@@ -394,36 +398,40 @@ export default function ChordTimeline() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Botão de Exportar MIDI com Configurações Popover */}
-          <div className="relative flex items-center gap-1.5">
+        {/* Lado Direito: Grupo de Exportação e Caixa de Entrada */}
+        <div className="flex flex-wrap items-center gap-3 flex-1 max-w-3xl xl:justify-end">
+          
+          {/* Pílula de Exportação Unificada */}
+          <div className="relative flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-850/80 shadow-inner">
             <button
               onClick={handleExportMidi}
               disabled={progressionChords.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase rounded-xl border border-purple-500/20 bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 hover:text-purple-300 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-950/10"
+              className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg text-zinc-400 hover:text-purple-400 hover:bg-purple-950/20 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
               title="Exportar cadência como arquivo MIDI (.mid)"
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download className="h-3 w-3" />
               <span>MIDI</span>
             </button>
+            <div className="h-4 border-l border-zinc-850" />
             <button
               onClick={handleExportMusicXml}
               disabled={progressionChords.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase rounded-xl border border-purple-500/20 bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 hover:text-purple-300 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-950/10"
+              className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg text-zinc-400 hover:text-purple-400 hover:bg-purple-950/20 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
               title="Exportar cadência como arquivo MusicXML (.musicxml)"
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download className="h-3 w-3" />
               <span>MusicXML</span>
             </button>
-
-
+            <div className="h-4 border-l border-zinc-850" />
             <button
               onClick={() => setShowMidiSettings(!showMidiSettings)}
               disabled={progressionChords.length === 0}
-              className={`p-1.5 rounded-xl border transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none hover:scale-105 active:scale-95 ${
+              className={`p-1.5 rounded-lg transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none hover:scale-105 active:scale-95 ${
                 showMidiSettings
-                  ? "border-purple-500/40 bg-purple-950/40 text-purple-400"
-                  : "border-zinc-850 bg-zinc-950 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-purple-900/30 text-purple-400 border border-purple-500/20"
+                  : "text-zinc-500 hover:text-zinc-300"
               }`}
               title="Configurações de Exportação MIDI"
             >
@@ -432,7 +440,7 @@ export default function ChordTimeline() {
 
             {/* Menu Popover das Configurações MIDI */}
             {showMidiSettings && (
-              <div className="absolute top-10 left-0 z-50 w-64 p-4 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-md shadow-2xl flex flex-col gap-3 animate-scale-up text-left">
+              <div className="absolute top-10 right-0 z-50 w-64 p-4 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-md shadow-2xl flex flex-col gap-3 animate-scale-up text-left">
                 <h4 className="text-[11px] font-black text-zinc-300 uppercase tracking-widest border-b border-zinc-850 pb-1.5">
                   Ajustes MIDI (Hardening)
                 </h4>
@@ -548,24 +556,25 @@ export default function ChordTimeline() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Lado Direito: Caixa de Entrada de Texto Livre */}
-        <div className="flex flex-wrap items-center gap-2 flex-1 max-w-2xl xl:justify-end">
-          <input
-            type="text"
-            value={cadenceInput}
-            onChange={(e) => setCadenceInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLoadCadence()}
-            placeholder="Digite acordes (ex: C Dm G7 ou C7M Am7)"
-            className="flex-1 bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-bold tracking-wide placeholder-zinc-600 focus:ring-1 focus:ring-purple-500/20 max-w-[200px]"
-          />
-          <button
-            onClick={handleLoadCadence}
-            className="px-4 py-2 text-xs font-black uppercase rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition cursor-pointer shadow-md shadow-purple-900/20 active:scale-95 flex items-center gap-1"
-          >
-            Carregar
-          </button>
+          {/* Caixa de Entrada de Texto Livre */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={cadenceInput}
+              onChange={(e) => setCadenceInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLoadCadence()}
+              placeholder="Digite acordes (ex: C Dm G7 ou C7M Am7)"
+              className="bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-bold tracking-wide placeholder-zinc-600 focus:ring-1 focus:ring-purple-500/20 w-[180px]"
+            />
+            <button
+              onClick={handleLoadCadence}
+              className="px-4 py-2 text-xs font-black uppercase rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition cursor-pointer shadow-md shadow-purple-900/20 active:scale-95 flex items-center gap-1"
+            >
+              Carregar
+            </button>
+          </div>
+
         </div>
       </div>
 
