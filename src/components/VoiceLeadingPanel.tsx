@@ -475,90 +475,8 @@ export default function ChordTimeline() {
 
         {progressionChords.length > 0 ? (
           <>
-            <div className="relative w-full overflow-x-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-900/60 scrollbar-thin">
-              {/* Réguas de compasso no topo da trilha */}
-              <div className="flex gap-4 items-center mb-3 text-[10px] text-zinc-600 font-bold select-none min-w-max border-b border-zinc-900/80 pb-1.5">
-                {progressionChords.map((_, idx) => (
-                  <div key={idx} className="w-[90px] flex-none text-center uppercase tracking-wider">
-                    {`Comp. ${idx + 1}`}
-                  </div>
-                ))}
-              </div>
-
-              {/* Trilha de Blocos */}
-              <div className="flex gap-4 items-center min-w-max py-1">
-                {progressionChords.map((chord, idx) => {
-                  const isActive = activeTimelineIndex === idx;
-                  
-                  return (
-                    <div
-                      key={`${chord}-${idx}`}
-                      onClick={() => handleSlotClick(idx)}
-                      className={`relative w-[90px] h-[72px] flex flex-col justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:scale-[1.03] ${
-                        isActive
-                          ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(255,78,140,0.25)] animate-pulse"
-                          : "bg-zinc-900/60 border-zinc-850 hover:border-zinc-700/60"
-                      }`}
-                    >
-                      {/* Playhead Indicator no topo do bloco */}
-                      {isActive && isPlaying && (
-                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-full bg-emerald-400 animate-pulse border border-zinc-950" />
-                      )}
-
-                      {/* Título do Acorde */}
-                      {editingIndex === idx ? (
-                        <input
-                          type="text"
-                          value={editingValue}
-                          onChange={(e) => setEditingValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              saveInlineEdit(idx);
-                            } else if (e.key === "Escape") {
-                              setEditingIndex(null);
-                            }
-                          }}
-                          onBlur={() => saveInlineEdit(idx)}
-                          onClick={(e) => e.stopPropagation()}
-                          autoFocus
-                          className="w-full bg-zinc-950 border border-purple-500 rounded px-1 py-0.5 text-[10px] text-center text-zinc-100 font-bold focus:outline-none mt-1"
-                        />
-                      ) : (
-                        <span 
-                          onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            setEditingIndex(idx);
-                            setEditingValue(chord);
-                          }}
-                          className="text-xs font-black tracking-wide text-zinc-100 text-center truncate mt-1 hover:underline cursor-pointer"
-                          title="Clique duplo para editar a cifra"
-                        >
-                          {chord}
-                        </span>
-                      )}
-
-                      {/* Rótulo e botão excluir no rodapé do bloco */}
-                      <div className="flex items-center justify-between mt-auto">
-                        <span className="text-[9px] font-bold text-zinc-500">{`0${idx + 1}`}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFromProgression(idx);
-                          }}
-                          className="text-zinc-500 hover:text-rose-400 p-0.5 rounded cursor-pointer transition"
-                          title="Remover da linha do tempo"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Console de Transporte & Tempo Unificado (Centralizado abaixo da timeline) */}
-            <div className="flex justify-center mt-2 animate-scale-up">
+            {/* Console de Transporte & Tempo Unificado (Centralizado acima da timeline) */}
+            <div className="flex justify-center mb-3 animate-scale-up">
               <div className="flex items-center bg-zinc-950 p-1.5 rounded-xl border border-zinc-850/80 shadow-inner gap-3 text-xs">
                 {/* Controles de Transporte (DAW Style) */}
                 <div className="flex items-center gap-0.5">
@@ -673,6 +591,88 @@ export default function ChordTimeline() {
                     })}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="relative w-full overflow-x-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-900/60 scrollbar-thin">
+              {/* Réguas de compasso no topo da trilha */}
+              <div className="flex gap-4 items-center mb-3 text-[10px] text-zinc-600 font-bold select-none min-w-max border-b border-zinc-900/80 pb-1.5">
+                {progressionChords.map((_, idx) => (
+                  <div key={idx} className="w-[90px] flex-none text-center uppercase tracking-wider">
+                    {`Comp. ${idx + 1}`}
+                  </div>
+                ))}
+              </div>
+
+              {/* Trilha de Blocos */}
+              <div className="flex gap-4 items-center min-w-max py-1">
+                {progressionChords.map((chord, idx) => {
+                  const isActive = activeTimelineIndex === idx;
+                  
+                  return (
+                    <div
+                      key={`${chord}-${idx}`}
+                      onClick={() => handleSlotClick(idx)}
+                      className={`relative w-[90px] h-[72px] flex flex-col justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:scale-[1.03] ${
+                        isActive
+                          ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(255,78,140,0.25)] animate-pulse"
+                          : "bg-zinc-900/60 border-zinc-850 hover:border-zinc-700/60"
+                      }`}
+                    >
+                      {/* Playhead Indicator no topo do bloco */}
+                      {isActive && isPlaying && (
+                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-full bg-emerald-400 animate-pulse border border-zinc-950" />
+                      )}
+
+                      {/* Título do Acorde */}
+                      {editingIndex === idx ? (
+                        <input
+                          type="text"
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              saveInlineEdit(idx);
+                            } else if (e.key === "Escape") {
+                              setEditingIndex(null);
+                            }
+                          }}
+                          onBlur={() => saveInlineEdit(idx)}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                          className="w-full bg-zinc-950 border border-purple-500 rounded px-1 py-0.5 text-[10px] text-center text-zinc-100 font-bold focus:outline-none mt-1"
+                        />
+                      ) : (
+                        <span 
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingIndex(idx);
+                            setEditingValue(chord);
+                          }}
+                          className="text-xs font-black tracking-wide text-zinc-100 text-center truncate mt-1 hover:underline cursor-pointer"
+                          title="Clique duplo para editar a cifra"
+                        >
+                          {chord}
+                        </span>
+                      )}
+
+                      {/* Rótulo e botão excluir no rodapé do bloco */}
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="text-[9px] font-bold text-zinc-500">{`0${idx + 1}`}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromProgression(idx);
+                          }}
+                          className="text-zinc-500 hover:text-rose-400 p-0.5 rounded cursor-pointer transition"
+                          title="Remover da linha do tempo"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </>
