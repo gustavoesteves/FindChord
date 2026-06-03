@@ -107,3 +107,36 @@ export function playGuitarChord(notes: string[], strumSpeed: number = 40): void 
     playGuitarNote(note, index * strumSpeed);
   });
 }
+
+/**
+ * Toca o clique do metrônomo usando a Web Audio API
+ */
+export function playMetronomeClick(isDownbeat: boolean, delayMs: number = 0): void {
+  try {
+    const ctx = getAudioContext();
+    const startTime = ctx.currentTime + delayMs / 1000;
+    const duration = 0.05; // 50ms para clique nítido e curto
+
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    // Onda triangular dá uma sensação orgânica de bloco de madeira
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(isDownbeat ? 1000 : 700, startTime);
+
+    gainNode.gain.setValueAtTime(0, startTime);
+    // Ataque quase instantâneo
+    gainNode.gain.linearRampToValueAtTime(isDownbeat ? 0.35 : 0.18, startTime + 0.002);
+    // Decaimento rápido exponencial
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  } catch (error) {
+    console.warn("Erro ao reproduzir clique do metrônomo:", error);
+  }
+}
+

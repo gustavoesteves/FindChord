@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
-import { playGuitarChord } from "../utils/audioSynth";
+import { playGuitarChord, playMetronomeClick } from "../utils/audioSynth";
 import { 
   Play, 
   Pause, 
@@ -10,7 +10,9 @@ import {
   Trash2, 
   Music,
   Sliders,
-  Download
+  Download,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { harmonyEngine } from "../utils/music/harmonyEngine";
 import type { RuntimePattern } from "../utils/music/harmonyEngine";
@@ -37,6 +39,16 @@ export default function ChordTimeline() {
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
+
+  // Estados do metrônomo e visualização
+  const [isMetronomeEnabled, setIsMetronomeEnabled] = useState<boolean>(false);
+  const [currentBeat, setCurrentBeat] = useState<number>(0);
+  const isMetronomeEnabledRef = useRef(isMetronomeEnabled);
+
+  // Sincroniza a referência para evitar reiniciar o timer ao mutar/desmutar
+  useEffect(() => {
+    isMetronomeEnabledRef.current = isMetronomeEnabled;
+  }, [isMetronomeEnabled]);
 
   // Estados para as configurações de exportação MIDI (Sprint 3.6, 3.65 & 4.5)
   const [showMidiSettings, setShowMidiSettings] = useState(false);
@@ -66,7 +78,7 @@ export default function ChordTimeline() {
     setCadenceInput(progressionChords.join(" "));
   }, [progressionChords]);
 
-  // Efeito principal do transporte (Play/Pause/Stop) baseado no BPM
+  // Efeito principal do transporte (Play/Pause/Stop) baseado no BPM e com suporte a metrônomo beat-by-beat
   useEffect(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -75,21 +87,44 @@ export default function ChordTimeline() {
 
     if (!isPlaying || progressionChords.length === 0) return;
 
-    // A duração de 1 compasso em 4/4 a um certo BPM é: (4 * 60.000) / BPM ms
-    const intervalMs = (4 * 60000) / bpm;
+    // A duração de 1 batida (quarter note) é 60.000 / BPM ms
+    const beatIntervalMs = 60000 / bpm;
 
-    // Dispara a reprodução do primeiro acorde imediatamente se não houver um ativo
+    // Dispara a reprodução do primeiro acorde e batida imediatamente se não houver um ativo
     if (activeTimelineIndex === null || activeTimelineIndex >= progressionChords.length) {
       setActiveTimelineIndex(0);
+      setCurrentBeat(0);
       playCurrentChordAudio(0);
+      if (isMetronomeEnabledRef.current) {
+        playMetronomeClick(true);
+      }
     }
 
     timerRef.current = setInterval(() => {
-      const currentIndex = useChordStore.getState().activeTimelineIndex;
-      const next = (currentIndex === null || currentIndex >= progressionChords.length - 1) ? 0 : currentIndex + 1;
-      setActiveTimelineIndex(next);
-      playCurrentChordAudio(next);
-    }, intervalMs);
+      setCurrentBeat((prevBeat) => {
+        const nextBeat = (prevBeat + 1) % 4;
+        
+        // Usamos o estado mais recente lido diretamente do store
+        const currentIndex = useChordStore.getState().activeTimelineIndex;
+
+        if (nextBeat === 0) {
+          // Início de um novo compasso: avança para o próximo acorde
+          const nextChordIdx = (currentIndex === null || currentIndex >= progressionChords.length - 1) ? 0 : currentIndex + 1;
+          setActiveTimelineIndex(nextChordIdx);
+          playCurrentChordAudio(nextChordIdx);
+          if (isMetronomeEnabledRef.current) {
+            playMetronomeClick(true);
+          }
+        } else {
+          // Batida intermediária do compasso atual: apenas toca o clique do metrônomo
+          if (isMetronomeEnabledRef.current) {
+            playMetronomeClick(false);
+          }
+        }
+        
+        return nextBeat;
+      });
+    }, beatIntervalMs);
 
     return () => {
       if (timerRef.current) {
@@ -139,6 +174,7 @@ export default function ChordTimeline() {
   const handleStop = () => {
     setPlaying(false);
     setActiveTimelineIndex(null);
+    setCurrentBeat(0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -146,7 +182,11 @@ export default function ChordTimeline() {
 
   const handleRewind = () => {
     setActiveTimelineIndex(0);
+    setCurrentBeat(0);
     playCurrentChordAudio(0);
+    if (isMetronomeEnabledRef.current) {
+      playMetronomeClick(true);
+    }
   };
 
   const handleExportMidi = () => {
@@ -276,23 +316,82 @@ export default function ChordTimeline() {
             </button>
           </div>
 
-          {/* Slider de BPM */}
-          <div className="flex items-center gap-3 bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-850/80 text-xs">
-            <Sliders className="h-3.5 w-3.5 text-zinc-500" />
-            <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">BPM: {bpm}</span>
+          {/* Controle do Metrônomo e BPM Redesenhado */}
+          <div className="flex items-center gap-4 bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-850/80 text-xs shadow-inner">
+            {/* Botão de Som do Metrônomo */}
+            <button
+              onClick={() => setIsMetronomeEnabled(!isMetronomeEnabled)}
+              className={`p-1.5 rounded-lg border transition duration-200 cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center ${
+                isMetronomeEnabled
+                  ? "bg-purple-900/30 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                  : "bg-zinc-900/40 text-zinc-500 border-zinc-800/80 hover:text-zinc-300 hover:border-zinc-700"
+              }`}
+              title={isMetronomeEnabled ? "Desativar clique do metrônomo" : "Ativar clique do metrônomo"}
+            >
+              {isMetronomeEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
+
+            {/* Ajuste de BPM */}
+            <div className="flex flex-col gap-1 items-center">
+              <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider select-none">BPM</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setBpm(Math.max(60, bpm - 1))}
+                  className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                  title="Diminuir 1 BPM"
+                >
+                  -
+                </button>
+                <span className="font-mono font-black text-xs text-purple-400 min-w-[24px] text-center select-none">
+                  {bpm}
+                </span>
+                <button
+                  onClick={() => setBpm(Math.min(200, bpm + 1))}
+                  className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                  title="Aumentar 1 BPM"
+                >
+                  +
+                </button>
+              </div>
               <input
                 type="range"
                 min="60"
                 max="200"
                 value={bpm}
                 onChange={(e) => setBpm(parseInt(e.target.value))}
-                className="w-20 accent-purple-500 cursor-pointer h-1 rounded-lg bg-zinc-800"
+                className="w-16 accent-purple-500 cursor-pointer h-0.5 rounded-lg bg-zinc-800 hover:accent-purple-400 transition-colors"
               />
             </div>
-            <div className="border-l border-zinc-800 pl-3 flex flex-col justify-center">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">Compasso</span>
-              <span className="font-extrabold text-[10px] text-zinc-300">4 / 4</span>
+
+            {/* Separador */}
+            <div className="h-8 border-l border-zinc-850" />
+
+            {/* Compasso e LEDs de Batida */}
+            <div className="flex flex-col justify-center items-center gap-1 min-w-[50px]">
+              <div className="flex flex-col items-center">
+                <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider select-none">Compasso</span>
+                <span className="font-extrabold text-[10px] text-zinc-300">4 / 4</span>
+              </div>
+              
+              {/* LEDs Indicadores de Batida */}
+              <div className="flex items-center gap-0.5">
+                {[0, 1, 2, 3].map((b) => {
+                  const isActive = isPlaying && currentBeat === b;
+                  return (
+                    <div
+                      key={b}
+                      className={`h-1.5 w-1.5 rounded-full transition-all duration-150 ${
+                        isActive
+                          ? b === 0
+                            ? "bg-purple-400 shadow-[0_0_8px_#c084fc] scale-110"
+                            : "bg-purple-500 shadow-[0_0_6px_#c084fc] scale-105"
+                          : "bg-zinc-850"
+                      }`}
+                      title={`Tempo ${b + 1}`}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
 
