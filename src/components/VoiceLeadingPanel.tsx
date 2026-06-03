@@ -588,7 +588,7 @@ export default function ChordTimeline() {
             {/* Réguas de compasso no topo da trilha */}
             <div className="flex gap-4 items-center mb-3 text-[10px] text-zinc-600 font-bold select-none min-w-max border-b border-zinc-900/80 pb-1.5">
               {progressionChords.map((_, idx) => (
-                <div key={idx} className="flex-1 w-[90px] text-center uppercase tracking-wider">
+                <div key={idx} className="w-[90px] flex-none text-center uppercase tracking-wider">
                   {`Comp. ${idx + 1}`}
                 </div>
               ))}
