@@ -275,129 +275,10 @@ export default function ChordTimeline() {
       {/* 1. Barra Superior: Controle de Transporte (DAW Style) & Entrada */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-zinc-800/40">
         
-        {/* Lado Esquerdo: Identidade do Painel e Console Unificado */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-            <h2 className="text-sm font-black text-zinc-100 uppercase tracking-widest">Progression Timeline</h2>
-          </div>
-
-          {/* Console de Transporte & Tempo Unificado */}
-          <div className="flex items-center bg-zinc-950 p-1.5 rounded-xl border border-zinc-850/80 shadow-inner gap-3 text-xs">
-            {/* Controles de Transporte (DAW Style) */}
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={handleRewind}
-                disabled={progressionChords.length === 0}
-                className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
-                title="Voltar ao início"
-              >
-                <SkipBack className="h-4 w-4" />
-              </button>
-              
-              <button
-                onClick={handlePlayToggle}
-                disabled={progressionChords.length === 0}
-                className={`p-1.5 rounded-lg transition cursor-pointer hover:scale-105 active:scale-95 ${
-                  isPlaying 
-                    ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
-                    : "text-zinc-400 hover:text-zinc-100"
-                }`}
-                title={isPlaying ? "Pausar" : "Tocar"}
-              >
-                {isPlaying ? <Pause className="h-4 w-4 fill-purple-400" /> : <Play className="h-4 w-4 fill-zinc-400" />}
-              </button>
-
-              <button
-                onClick={handleStop}
-                disabled={progressionChords.length === 0}
-                className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
-                title="Parar"
-              >
-                <Square className="h-4 w-4 fill-zinc-400" />
-              </button>
-            </div>
-
-            {/* Separador */}
-            <div className="h-5 border-l border-zinc-855" />
-
-            {/* Botão de Som do Metrônomo */}
-            <button
-              onClick={() => setIsMetronomeEnabled(!isMetronomeEnabled)}
-              className={`p-1.5 rounded-lg border transition duration-200 cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center ${
-                isMetronomeEnabled
-                  ? "bg-purple-900/30 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                  : "bg-zinc-900/40 text-zinc-500 border-zinc-800/80 hover:text-zinc-300 hover:border-zinc-700"
-              }`}
-              title={isMetronomeEnabled ? "Desativar clique do metrônomo" : "Ativar clique do metrônomo"}
-            >
-              {isMetronomeEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-            </button>
-
-            {/* Separador */}
-            <div className="h-5 border-l border-zinc-855" />
-
-            {/* Ajuste de BPM */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider select-none mr-0.5">BPM</span>
-              <button
-                onClick={() => setBpm(Math.max(60, bpm - 1))}
-                className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
-                title="Diminuir 1 BPM"
-              >
-                -
-              </button>
-              <span className="font-mono font-black text-xs text-purple-400 min-w-[24px] text-center select-none">
-                {bpm}
-              </span>
-              <button
-                onClick={() => setBpm(Math.min(200, bpm + 1))}
-                className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
-                title="Aumentar 1 BPM"
-              >
-                +
-              </button>
-              <input
-                type="range"
-                min="60"
-                max="200"
-                value={bpm}
-                onChange={(e) => setBpm(parseInt(e.target.value))}
-                className="w-12 accent-purple-500 cursor-pointer h-0.5 rounded-lg bg-zinc-800 hover:accent-purple-400 transition-colors ml-1 hidden sm:block"
-              />
-            </div>
-
-            {/* Separador */}
-            <div className="h-5 border-l border-zinc-855" />
-
-            {/* Compasso e LEDs de Batida */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-center">
-                <span className="text-[7px] font-bold text-zinc-600 uppercase tracking-wider select-none leading-none mb-0.5">SIGN</span>
-                <span className="font-extrabold text-[10px] text-zinc-450 leading-none">4/4</span>
-              </div>
-              
-              {/* LEDs Indicadores de Batida */}
-              <div className="flex items-center gap-0.5">
-                {[0, 1, 2, 3].map((b) => {
-                  const isActive = isPlaying && currentBeat === b;
-                  return (
-                    <div
-                      key={b}
-                      className={`h-1.5 w-1.5 rounded-full transition-all duration-150 ${
-                        isActive
-                          ? b === 0
-                            ? "bg-purple-400 shadow-[0_0_8px_#c084fc] scale-110"
-                            : "bg-purple-500 shadow-[0_0_6px_#c084fc] scale-105"
-                          : "bg-zinc-850"
-                      }`}
-                      title={`Tempo ${b + 1}`}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+        {/* Lado Esquerdo: Identidade do Painel */}
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+          <h2 className="text-sm font-black text-zinc-100 uppercase tracking-widest">Progression Timeline</h2>
         </div>
 
         {/* Lado Direito: Grupo de Exportação e Caixa de Entrada */}
@@ -593,87 +474,208 @@ export default function ChordTimeline() {
         </div>
 
         {progressionChords.length > 0 ? (
-          <div className="relative w-full overflow-x-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-900/60 scrollbar-thin">
-            {/* Réguas de compasso no topo da trilha */}
-            <div className="flex gap-4 items-center mb-3 text-[10px] text-zinc-600 font-bold select-none min-w-max border-b border-zinc-900/80 pb-1.5">
-              {progressionChords.map((_, idx) => (
-                <div key={idx} className="w-[90px] flex-none text-center uppercase tracking-wider">
-                  {`Comp. ${idx + 1}`}
-                </div>
-              ))}
-            </div>
-
-            {/* Trilha de Blocos */}
-            <div className="flex gap-4 items-center min-w-max py-1">
-              {progressionChords.map((chord, idx) => {
-                const isActive = activeTimelineIndex === idx;
-                
-                return (
-                  <div
-                    key={`${chord}-${idx}`}
-                    onClick={() => handleSlotClick(idx)}
-                    className={`relative w-[90px] h-[72px] flex flex-col justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:scale-[1.03] ${
-                      isActive
-                        ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(255,78,140,0.25)] animate-pulse"
-                        : "bg-zinc-900/60 border-zinc-850 hover:border-zinc-700/60"
-                    }`}
-                  >
-                    {/* Playhead Indicator no topo do bloco */}
-                    {isActive && isPlaying && (
-                      <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-full bg-emerald-400 animate-pulse border border-zinc-950" />
-                    )}
-
-                    {/* Título do Acorde */}
-                    {editingIndex === idx ? (
-                      <input
-                        type="text"
-                        value={editingValue}
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            saveInlineEdit(idx);
-                          } else if (e.key === "Escape") {
-                            setEditingIndex(null);
-                          }
-                        }}
-                        onBlur={() => saveInlineEdit(idx)}
-                        onClick={(e) => e.stopPropagation()}
-                        autoFocus
-                        className="w-full bg-zinc-950 border border-purple-500 rounded px-1 py-0.5 text-[10px] text-center text-zinc-100 font-bold focus:outline-none mt-1"
-                      />
-                    ) : (
-                      <span 
-                        onDoubleClick={(e) => {
-                          e.stopPropagation();
-                          setEditingIndex(idx);
-                          setEditingValue(chord);
-                        }}
-                        className="text-xs font-black tracking-wide text-zinc-100 text-center truncate mt-1 hover:underline cursor-pointer"
-                        title="Clique duplo para editar a cifra"
-                      >
-                        {chord}
-                      </span>
-                    )}
-
-                    {/* Rótulo e botão excluir no rodapé do bloco */}
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className="text-[9px] font-bold text-zinc-500">{`0${idx + 1}`}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromProgression(idx);
-                        }}
-                        className="text-zinc-500 hover:text-rose-400 p-0.5 rounded cursor-pointer transition"
-                        title="Remover da linha do tempo"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+          <>
+            <div className="relative w-full overflow-x-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-900/60 scrollbar-thin">
+              {/* Réguas de compasso no topo da trilha */}
+              <div className="flex gap-4 items-center mb-3 text-[10px] text-zinc-600 font-bold select-none min-w-max border-b border-zinc-900/80 pb-1.5">
+                {progressionChords.map((_, idx) => (
+                  <div key={idx} className="w-[90px] flex-none text-center uppercase tracking-wider">
+                    {`Comp. ${idx + 1}`}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+
+              {/* Trilha de Blocos */}
+              <div className="flex gap-4 items-center min-w-max py-1">
+                {progressionChords.map((chord, idx) => {
+                  const isActive = activeTimelineIndex === idx;
+                  
+                  return (
+                    <div
+                      key={`${chord}-${idx}`}
+                      onClick={() => handleSlotClick(idx)}
+                      className={`relative w-[90px] h-[72px] flex flex-col justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:scale-[1.03] ${
+                        isActive
+                          ? "bg-purple-950/20 border-purple-500 shadow-[0_0_15px_rgba(255,78,140,0.25)] animate-pulse"
+                          : "bg-zinc-900/60 border-zinc-850 hover:border-zinc-700/60"
+                      }`}
+                    >
+                      {/* Playhead Indicator no topo do bloco */}
+                      {isActive && isPlaying && (
+                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-full bg-emerald-400 animate-pulse border border-zinc-950" />
+                      )}
+
+                      {/* Título do Acorde */}
+                      {editingIndex === idx ? (
+                        <input
+                          type="text"
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              saveInlineEdit(idx);
+                            } else if (e.key === "Escape") {
+                              setEditingIndex(null);
+                            }
+                          }}
+                          onBlur={() => saveInlineEdit(idx)}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                          className="w-full bg-zinc-950 border border-purple-500 rounded px-1 py-0.5 text-[10px] text-center text-zinc-100 font-bold focus:outline-none mt-1"
+                        />
+                      ) : (
+                        <span 
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingIndex(idx);
+                            setEditingValue(chord);
+                          }}
+                          className="text-xs font-black tracking-wide text-zinc-100 text-center truncate mt-1 hover:underline cursor-pointer"
+                          title="Clique duplo para editar a cifra"
+                        >
+                          {chord}
+                        </span>
+                      )}
+
+                      {/* Rótulo e botão excluir no rodapé do bloco */}
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="text-[9px] font-bold text-zinc-500">{`0${idx + 1}`}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromProgression(idx);
+                          }}
+                          className="text-zinc-500 hover:text-rose-400 p-0.5 rounded cursor-pointer transition"
+                          title="Remover da linha do tempo"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+
+            {/* Console de Transporte & Tempo Unificado (Centralizado abaixo da timeline) */}
+            <div className="flex justify-center mt-2 animate-scale-up">
+              <div className="flex items-center bg-zinc-950 p-1.5 rounded-xl border border-zinc-850/80 shadow-inner gap-3 text-xs">
+                {/* Controles de Transporte (DAW Style) */}
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={handleRewind}
+                    disabled={progressionChords.length === 0}
+                    className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
+                    title="Voltar ao início"
+                  >
+                    <SkipBack className="h-4 w-4" />
+                  </button>
+                  
+                  <button
+                    onClick={handlePlayToggle}
+                    disabled={progressionChords.length === 0}
+                    className={`p-1.5 rounded-lg transition cursor-pointer hover:scale-105 active:scale-95 ${
+                      isPlaying 
+                        ? "bg-purple-900/30 text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
+                        : "text-zinc-400 hover:text-zinc-100"
+                    }`}
+                    title={isPlaying ? "Pausar" : "Tocar"}
+                  >
+                    {isPlaying ? <Pause className="h-4 w-4 fill-purple-400" /> : <Play className="h-4 w-4 fill-zinc-400" />}
+                  </button>
+
+                  <button
+                    onClick={handleStop}
+                    disabled={progressionChords.length === 0}
+                    className="p-1.5 text-zinc-400 hover:text-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer hover:scale-105 active:scale-95"
+                    title="Parar"
+                  >
+                    <Square className="h-4 w-4 fill-zinc-400" />
+                  </button>
+                </div>
+
+                {/* Separador */}
+                <div className="h-5 border-l border-zinc-855" />
+
+                {/* Botão de Som do Metrônomo */}
+                <button
+                  onClick={() => setIsMetronomeEnabled(!isMetronomeEnabled)}
+                  className={`p-1.5 rounded-lg border transition duration-200 cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center ${
+                    isMetronomeEnabled
+                      ? "bg-purple-900/30 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                      : "bg-zinc-900/40 text-zinc-500 border-zinc-800/80 hover:text-zinc-300 hover:border-zinc-700"
+                  }`}
+                  title={isMetronomeEnabled ? "Desativar clique do metrônomo" : "Ativar clique do metrônomo"}
+                >
+                  {isMetronomeEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                </button>
+
+                {/* Separador */}
+                <div className="h-5 border-l border-zinc-855" />
+
+                {/* Ajuste de BPM */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider select-none mr-0.5">BPM</span>
+                  <button
+                    onClick={() => setBpm(Math.max(60, bpm - 1))}
+                    className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                    title="Diminuir 1 BPM"
+                  >
+                    -
+                  </button>
+                  <span className="font-mono font-black text-xs text-purple-400 min-w-[24px] text-center select-none">
+                    {bpm}
+                  </span>
+                  <button
+                    onClick={() => setBpm(Math.min(200, bpm + 1))}
+                    className="w-4 h-4 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer select-none font-bold text-[10px]"
+                    title="Aumentar 1 BPM"
+                  >
+                    +
+                  </button>
+                  <input
+                    type="range"
+                    min="60"
+                    max="200"
+                    value={bpm}
+                    onChange={(e) => setBpm(parseInt(e.target.value))}
+                    className="w-12 accent-purple-500 cursor-pointer h-0.5 rounded-lg bg-zinc-800 hover:accent-purple-400 transition-colors ml-1 hidden sm:block"
+                  />
+                </div>
+
+                {/* Separador */}
+                <div className="h-5 border-l border-zinc-855" />
+
+                {/* Compasso e LEDs de Batida */}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[7px] font-bold text-zinc-600 uppercase tracking-wider select-none leading-none mb-0.5">SIGN</span>
+                    <span className="font-extrabold text-[10px] text-zinc-450 leading-none">4/4</span>
+                  </div>
+                  
+                  {/* LEDs Indicadores de Batida */}
+                  <div className="flex items-center gap-0.5">
+                    {[0, 1, 2, 3].map((b) => {
+                      const isActive = isPlaying && currentBeat === b;
+                      return (
+                        <div
+                          key={b}
+                          className={`h-1.5 w-1.5 rounded-full transition-all duration-150 ${
+                            isActive
+                              ? b === 0
+                                ? "bg-purple-400 shadow-[0_0_8px_#c084fc] scale-110"
+                                : "bg-purple-500 shadow-[0_0_6px_#c084fc] scale-105"
+                              : "bg-zinc-850"
+                          }`}
+                          title={`Tempo ${b + 1}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 border border-dashed border-zinc-850 rounded-2xl text-zinc-500 text-xs italic bg-zinc-950/20 gap-2">
             <Music className="h-6 w-6 text-zinc-650 animate-bounce" />
