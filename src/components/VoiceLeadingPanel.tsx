@@ -11,8 +11,8 @@ import {
   Music,
   Sliders,
   Download,
-  Volume2,
-  VolumeX
+  Bell,
+  BellOff
 } from "lucide-react";
 import { harmonyEngine } from "../utils/music/harmonyEngine";
 import type { RuntimePattern } from "../utils/music/harmonyEngine";
@@ -374,7 +374,7 @@ export default function ChordTimeline() {
                   }`}
                   title={isMetronomeEnabled ? "Desativar clique do metrônomo" : "Ativar clique do metrônomo"}
                 >
-                  {isMetronomeEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                  {isMetronomeEnabled ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
                 </button>
 
                 {/* Separador */}
