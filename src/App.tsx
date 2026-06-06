@@ -3,6 +3,7 @@ import Fretboard from "./components/Fretboard";
 import ChordList from "./components/ChordList";
 import VoicingSelector from "./components/VoicingSelector";
 import ScaleOverlayPanel from "./components/ScaleOverlayPanel";
+import DiatonicFieldOverlayPanel from "./components/DiatonicFieldOverlayPanel";
 import VoiceLeadingPanel from "./components/VoiceLeadingPanel";
 import { useChordStore } from "./store/useChordStore";
 import { Compass, HelpCircle } from "lucide-react";
@@ -66,7 +67,7 @@ export default function App() {
                 </h3>
                 <ul className="text-xs text-zinc-400 flex flex-col gap-3 leading-relaxed">
                   <li className="flex gap-2">
-                    <span className="text-purple-400 font-bold">•</span>
+                     <span className="text-purple-400 font-bold">•</span>
                     <span>Experimente afinações exóticas como <b>Open D</b> ou <b>Drop D</b> no painel de afinações para ouvir sonoridades totalmente novas.</span>
                   </li>
                   <li className="flex gap-2">
@@ -86,6 +87,9 @@ export default function App() {
         </div>
 
       </div>
+
+      {/* Modal Campo Harmônico */}
+      <DiatonicFieldOverlayPanel />
 
       {/* Rodapé Premium e Fluido */}
       <footer className="w-full border-t border-zinc-850/60 bg-zinc-950/60 backdrop-blur-md py-4 text-center mt-auto">

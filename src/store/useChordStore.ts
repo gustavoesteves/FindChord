@@ -118,6 +118,7 @@ interface ChordStore {
   isVoicingSelectorOpen: boolean;   // Se o modal de voicings está aberto
   isScaleSelectorOpen: boolean;     // Se o modal de escalas está aberto
   isChordDetailsOpen: boolean;      // Se o modal de detalhes do acorde está aberto
+  isDiatonicFieldOpen: boolean;     // Se o modal do campo harmônico está aberto
   
   // Voice Leading Explorer
   voiceLeadingSource: (number | null)[] | null; // Voicing A (frets) de origem
@@ -146,6 +147,7 @@ interface ChordStore {
   setVoicingSelectorOpen: (open: boolean) => void;
   setScaleSelectorOpen: (open: boolean) => void;
   setChordDetailsOpen: (open: boolean) => void;
+  setDiatonicFieldOpen: (open: boolean) => void;
   
   // Ações de Progressão e Timeline
   addToProgression: (chordName: string) => void;
@@ -212,6 +214,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
     isVoicingSelectorOpen: false,
     isScaleSelectorOpen: false,
     isChordDetailsOpen: false,
+    isDiatonicFieldOpen: false,
     
     voiceLeadingSource: null,
     
@@ -383,6 +386,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
 
     setChordDetailsOpen: (open) => {
       set({ isChordDetailsOpen: open });
+    },
+
+    setDiatonicFieldOpen: (open) => {
+      set({ isDiatonicFieldOpen: open });
     },
 
     // Ações de Progressão e Timeline

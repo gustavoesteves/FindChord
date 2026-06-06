@@ -201,6 +201,19 @@ function inferNonDiatonicFunction(
     return { function: 'DOMINANT', confidence: 0.6 };
   }
 
+  // Picardy Third: Tonic major chord in minor key
+  if (!isMajorKey && offset === 0 && (
+    quality === 'major' ||
+    quality === 'major7th' ||
+    quality === 'major9th' ||
+    quality === 'major13th' ||
+    quality === 'major6th' ||
+    quality === 'add9' ||
+    quality === '69'
+  )) {
+    return { function: 'TONIC', confidence: 0.8 };
+  }
+
   // Common borrowed chords
   if (isMajorKey) {
     if (offset === 5 && isMinorType(quality)) return { function: 'SUBDOMINANT', confidence: 0.7 }; // iv borrowed
@@ -277,12 +290,33 @@ export function classifyChordFunction(
     if (entry.offset !== offset) continue;
 
     // Check quality match
-    const qualityMatches =
-      (entry.isMinorChord && chordIsMinor) ||
-      (!entry.isMinorChord && !chordIsMinor) ||
-      (entry.isDominantOk && chordIsDominant) ||
-      // Diminished chords match their expected degree
-      (entry.scaleDegree.includes('°') && chordIsDiminished);
+    const entryIsDiminished = entry.scaleDegree.includes('°');
+    let qualityMatches = false;
+
+    if (entryIsDiminished) {
+      if (chordIsDiminished) {
+        if (parsed.quality === 'diminished7th') {
+          // Fully diminished 7th is diatonic only on vii° in minor keys
+          qualityMatches = !isMajorKey && entry.scaleDegree === 'vii°';
+        } else if (parsed.quality === 'halfDiminished') {
+          // Half diminished is diatonic on vii° in major keys, and ii° in minor keys
+          qualityMatches = (isMajorKey && entry.scaleDegree === 'vii°') || (!isMajorKey && entry.scaleDegree === 'ii°');
+        } else {
+          // Diminished triad is diatonic on vii° in major/minor, and ii° in minor
+          qualityMatches = entry.scaleDegree === 'vii°' || (!isMajorKey && entry.scaleDegree === 'ii°');
+        }
+      }
+    } else {
+      if (!chordIsDiminished) {
+        if (chordIsDominant) {
+          qualityMatches = entry.isDominantOk === true;
+        } else {
+          qualityMatches =
+            (entry.isMinorChord && chordIsMinor) ||
+            (!entry.isMinorChord && !chordIsMinor);
+        }
+      }
+    }
 
     if (!qualityMatches) continue;
 
@@ -313,6 +347,7 @@ export function classifyChordFunction(
       isDiatonic: true,
       analysisTags: [] as AnalysisTag[],
       confidence: entry.confidence,
+      contextualFunction: 'PRIMARY',
     };
   }
 
