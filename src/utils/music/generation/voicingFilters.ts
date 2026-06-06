@@ -4,7 +4,7 @@
 export function hasValidMutedGaps(frets: (number | null)[]): boolean {
   let firstPlayed = -1;
   let lastPlayed = -1;
-  for (let idx = 0; idx < 6; idx++) {
+  for (let idx = 0; idx < frets.length; idx++) {
     if (frets[idx] !== null) {
       if (firstPlayed === -1) firstPlayed = idx;
       lastPlayed = idx;

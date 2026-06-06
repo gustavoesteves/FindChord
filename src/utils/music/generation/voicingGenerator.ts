@@ -74,7 +74,7 @@ export function generateVoicings(
   const rootPC = getPitchClass(chordRoot);
   const notesOnStrings: { fret: number; pitchClass: number; noteName: string }[][] = [];
 
-  for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+  for (let stringIdx = 0; stringIdx < tuning.length; stringIdx++) {
     const baseNote = tuning[stringIdx];
     const stringNotes: { fret: number; pitchClass: number; noteName: string }[] = [];
     
@@ -94,15 +94,15 @@ export function generateVoicings(
   // Instanciar o estado de busca recursiva
   const context: SearchContext = {
     currentString: 0,
-    frets: Array(6).fill(null),
-    pitchClasses: Array(6).fill(null),
+    frets: Array(tuning.length).fill(null),
+    pitchClasses: Array(tuning.length).fill(null),
     lowestFret: Infinity,
     highestFret: -Infinity,
     mutedCount: 0,
     visitedNodes: 0
   };
 
-  const currentNotes: string[] = Array(6).fill("x");
+  const currentNotes: string[] = Array(tuning.length).fill("x");
 
   function search(stringIdx: number, frettedCount: number) {
     context.visitedNodes++;
@@ -112,7 +112,7 @@ export function generateVoicings(
       return;
     }
 
-    if (stringIdx === 6) {
+    if (stringIdx === tuning.length) {
       const activeCount = context.frets.filter(f => f !== null).length;
       if (activeCount < 3) return;
 
@@ -132,7 +132,7 @@ export function generateVoicings(
       let physicalSopranoName = "";
       let maxMidi = -Infinity;
 
-      for (let idx = 0; idx < 6; idx++) {
+      for (let idx = 0; idx < tuning.length; idx++) {
         const fret = currentFretting[idx];
         if (fret !== null && currentNotes[idx] !== "x") {
           const midi = noteToMidi(currentNotes[idx]);
@@ -165,7 +165,7 @@ export function generateVoicings(
       const breakdown = scoreVoicing(roles, classification, acoustics, activeQuality || "major", rootPC, targetPitchClasses, bassPC);
 
       let rootStringIdx = -1;
-      for (let idx = 0; idx < 6; idx++) {
+      for (let idx = 0; idx < tuning.length; idx++) {
         if (currentFretting[idx] !== null && context.pitchClasses[idx] === rootPC) {
           rootStringIdx = idx;
           break;

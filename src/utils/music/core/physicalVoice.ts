@@ -7,7 +7,7 @@ export function getPhysicalBassInfo(frets: (number | null)[], tuning: string[]):
   let physicalBassPC = -1;
   let physicalBassName = "";
   
-  for (let idx = 0; idx < 6; idx++) {
+  for (let idx = 0; idx < tuning.length; idx++) {
     const fret = frets[idx];
     if (fret !== null) {
       const noteName = getNoteAt(tuning[idx], fret);
@@ -28,7 +28,7 @@ export function getPhysicalSopranoInfo(frets: (number | null)[], tuning: string[
   let physicalSopranoPC = -1;
   let physicalSopranoName = "";
   
-  for (let idx = 0; idx < 6; idx++) {
+  for (let idx = 0; idx < tuning.length; idx++) {
     const fret = frets[idx];
     if (fret !== null) {
       const noteName = getNoteAt(tuning[idx], fret);

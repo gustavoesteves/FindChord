@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
+import { detectKey, getRomanNumeral } from "../utils/music/theory/musicTheory";
 import { playGuitarChord, playMetronomeClick } from "../utils/audioSynth";
 import { 
   Play, 
@@ -35,6 +36,9 @@ export default function ChordTimeline() {
 
   const [cadenceInput, setCadenceInput] = useState(progressionChords.join(" "));
   const timerRef = useRef<any>(null);
+
+  // Detecção automática de tom
+  const detectedKeyObj = detectKey(progressionChords);
 
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -279,9 +283,16 @@ export default function ChordTimeline() {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-zinc-800/40">
         
         {/* Lado Esquerdo: Identidade do Painel */}
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-          <h2 className="text-sm font-black text-zinc-100 uppercase tracking-widest">Progression Timeline</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+            <h2 className="text-sm font-black text-zinc-100 uppercase tracking-widest">Progression Timeline</h2>
+          </div>
+          {progressionChords.length > 0 && (
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-950/40 border border-purple-500/20 text-purple-300 font-bold uppercase tracking-wider select-none">
+              Tom: {detectedKeyObj.root} {detectedKeyObj.isMajor ? "Maior" : "Menor"}
+            </span>
+          )}
         </div>
 
         {/* Lado Direito: Caixa de Entrada */}
@@ -645,17 +656,22 @@ export default function ChordTimeline() {
                         className="w-full bg-zinc-950 border border-purple-500 rounded px-1 py-0.5 text-[10px] text-center text-zinc-100 font-bold focus:outline-none mt-1"
                       />
                     ) : (
-                      <span 
-                        onDoubleClick={(e) => {
-                          e.stopPropagation();
-                          setEditingIndex(idx);
-                          setEditingValue(chord);
-                        }}
-                        className="text-xs font-black tracking-wide text-zinc-100 text-center truncate mt-1 hover:underline cursor-pointer"
-                        title="Clique duplo para editar a cifra"
-                      >
-                        {chord}
-                      </span>
+                      <div className="flex flex-col items-center justify-center flex-1 mt-1">
+                        <span 
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingIndex(idx);
+                            setEditingValue(chord);
+                          }}
+                          className="text-xs font-black tracking-wide text-zinc-105 text-center truncate hover:underline cursor-pointer leading-tight"
+                          title="Clique duplo para editar a cifra"
+                        >
+                          {chord}
+                        </span>
+                        <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider leading-none mt-1">
+                          {getRomanNumeral(chord, detectedKeyObj.root, detectedKeyObj.isMajor) || "-"}
+                        </span>
+                      </div>
                     )}
 
                     {/* Rótulo e botão excluir no rodapé do bloco */}

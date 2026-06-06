@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
@@ -29,7 +29,10 @@ export default function Fretboard() {
     setChordDetailsOpen
   } = useChordStore();
 
-  const [vibratingStrings, setVibratingStrings] = useState<boolean[]>(Array(6).fill(false));
+  const [vibratingStrings, setVibratingStrings] = useState<boolean[]>([]);
+  useEffect(() => {
+    setVibratingStrings(Array(tuning.length).fill(false));
+  }, [tuning.length]);
 
   // Acorde ativo para o Explorer Mode
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
@@ -96,8 +99,8 @@ export default function Fretboard() {
   // Toca o acorde completo (dedilhado) do braço atual
   const playCurrentFretboard = () => {
     let delay = 0;
-    // Toca da corda mais grave (5) para a mais aguda (0)
-    for (let i = 5; i >= 0; i--) {
+    // Toca da corda mais grave para a mais aguda
+    for (let i = selectedFrets.length - 1; i >= 0; i--) {
       const fret = selectedFrets[i];
       if (fret !== null) {
         const noteName = getNoteAt(tuning[i], fret);
@@ -116,7 +119,7 @@ export default function Fretboard() {
 
   // Geometria do Braço SVG
   const width = 1360;  // Comprimento total do braço
-  const height = 220;  // Altura total
+  const height = 40 + (tuning.length - 1) * 36;  // Altura total dinâmica
   const fretCount = 24;
   const fretWidth = (width - 60) / fretCount; // Espaço horizontal por traste
   const nutWidth = 40; // Largura do traste 0 / pestana
@@ -290,8 +293,8 @@ export default function Fretboard() {
               );
             })}
 
-            {/* 4. Cordas de Guitarra (Gauges crescentes de 0 a 5 com visual Fretastic leve) */}
-            {Array.from({ length: 6 }).map((_, idx) => {
+            {/* 4. Cordas de Guitarra (Gauges crescentes com visual Fretastic leve) */}
+            {tuning.map((_, idx) => {
               const y = 20 + idx * 36;
               const gauge = 0.8 + idx * 0.5; // A 6ª corda é fisicamente mais grossa que a 1ª
               
@@ -315,7 +318,7 @@ export default function Fretboard() {
 
             {/* 5. Área de Clique Interativa invisível sobreposta no braço */}
             {/* Linhas das cordas de 1 a 24 trastes */}
-            {Array.from({ length: 6 }).map((_, stringIdx) => {
+            {tuning.map((_, stringIdx) => {
               const y = 20 + stringIdx * 36;
 
               return (
@@ -370,7 +373,7 @@ export default function Fretboard() {
             })}
 
             {/* 6. Renderização dos Marcadores de Notas no SVG */}
-            {Array.from({ length: 6 }).map((_, stringIdx) => {
+            {tuning.map((_, stringIdx) => {
               const y = 20 + stringIdx * 36;
               const baseNote = tuning[stringIdx];
               const selectedFret = selectedFrets[stringIdx];
@@ -503,7 +506,7 @@ export default function Fretboard() {
         {/* 7. Coluna lateral de Controle do Nut (Mute / Open string) */}
         {/* Renderiza painel flutuante esquerdo com botões rápidos */}
         <div className="absolute left-1 top-[20px] bottom-[20px] flex flex-col justify-between py-1 bg-[#121216]/90 border-r border-zinc-800/80 px-2 rounded-l-lg pointer-events-auto">
-          {Array.from({ length: 6 }).map((_, idx) => {
+          {tuning.map((_, idx) => {
             const isMuted = selectedFrets[idx] === null;
             const isOpen = selectedFrets[idx] === 0;
 

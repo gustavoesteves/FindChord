@@ -116,7 +116,7 @@ export function calculateMetrics(
     const vA = path[i - 1];
     const vB = path[i];
 
-    for (let sIdx = 0; sIdx < 6; sIdx++) {
+    for (let sIdx = 0; sIdx < tuning.length; sIdx++) {
       const fA = vA.shape.frets[sIdx];
       const fB = vB.shape.frets[sIdx];
       if (fA !== null && fB !== null) {

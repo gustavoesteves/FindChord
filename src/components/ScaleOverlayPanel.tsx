@@ -286,6 +286,7 @@ export default function ScaleOverlayPanel() {
   } = useChordStore();
 
   const [localActiveScale, setLocalActiveScale] = useState<ScaleInfo | null>(null);
+  const [labelMode, setLabelMode] = useState<"position" | "note">("position");
   const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({
     root: true,
     chordTone: true,
@@ -352,7 +353,7 @@ export default function ScaleOverlayPanel() {
 
     // Geometria compacta do Braço SVG
     const width = 1360;  
-    const height = 180;  
+    const height = 32 + (tuning.length - 1) * 30;  
     const fretCount = 24;
     const fretWidth = (width - 60) / fretCount; 
     const nutWidth = 40; 
@@ -364,11 +365,35 @@ export default function ScaleOverlayPanel() {
     return (
       <div className="w-full flex flex-col gap-2.5 mt-3 pt-3.5 border-t border-zinc-850 animate-fade-in">
         <div className="flex items-center justify-between px-1 select-none flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black tracking-widest uppercase text-purple-400">
-              Mapa Harmônico da Escala (Pressione para ouvir)
-            </span>
-            <div className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping"></div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black tracking-widest uppercase text-purple-400">
+                Mapa Harmônico da Escala (Pressione para ouvir)
+              </span>
+              <div className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping"></div>
+            </div>
+
+            {/* Toggle Notas / Posição */}
+            <div className="flex items-center bg-zinc-900 border border-zinc-850 p-0.5 rounded-lg text-[9px] font-bold">
+              <button
+                onClick={() => setLabelMode("position")}
+                className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                  labelMode === "position" ? "bg-purple-600 text-white" : "text-zinc-400 hover:text-zinc-250"
+                }`}
+                title="Mostrar Graus/Intervalos do campo harmônico (R, 3ª, 5ª, b7...)"
+              >
+                Posição
+              </button>
+              <button
+                onClick={() => setLabelMode("note")}
+                className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                  labelMode === "note" ? "bg-purple-600 text-white" : "text-zinc-400 hover:text-zinc-250"
+                }`}
+                title="Mostrar notas absolutas no braço (C, D, E...)"
+              >
+                Notas
+              </button>
+            </div>
           </div>
           
           {/* Legenda de Cores Interativa */}
@@ -501,7 +526,7 @@ export default function ScaleOverlayPanel() {
               })}
 
               {/* Cordas de Guitarra */}
-              {Array.from({ length: 6 }).map((_, idx) => {
+              {tuning.map((_, idx) => {
                 const y = 16 + idx * 30;
                 const gauge = 0.8 + idx * 0.5;
                 return (
@@ -510,7 +535,7 @@ export default function ScaleOverlayPanel() {
               })}
 
               {/* Notas e cliques interativos da Escala */}
-              {Array.from({ length: 6 }).map((_, stringIdx) => {
+              {tuning.map((_, stringIdx) => {
                 const y = 16 + stringIdx * 30;
                 const baseNote = tuning[stringIdx];
 
@@ -559,7 +584,7 @@ export default function ScaleOverlayPanel() {
                           />
                           {/* Nome da Nota ou Grau */}
                           <text x={x} y={y + 3} textAnchor="middle" fontSize="7.5" fontWeight="950" fill="#FFFFFF">
-                            {noteClass.label.split(" ")[0]}
+                            {labelMode === "note" ? noteName.replace(/\d/, "") : noteClass.label.split(" ")[0]}
                           </text>
                           {/* Tooltip Educacional Harmônico */}
                           <title>{`${noteName.replace(/\d/, "")} - ${noteClass.label}\n\n${noteClass.tooltip}`}</title>

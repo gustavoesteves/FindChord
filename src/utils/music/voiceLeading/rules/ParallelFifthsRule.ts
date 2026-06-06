@@ -11,7 +11,7 @@ export class ParallelFifthsRule implements VoiceLeadingRule {
     const fretsB = next.shape.frets;
     const activeMovements: { direction: number; intervalStart: number }[] = [];
 
-    for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+    for (let stringIdx = 0; stringIdx < tuning.length; stringIdx++) {
       const baseNote = tuning[stringIdx];
       const fretA = fretsA[stringIdx];
       const fretB = fretsB[stringIdx];

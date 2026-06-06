@@ -10,7 +10,7 @@ export function isWithinAnatomicalStretch(frettedMin: number, frettedMax: number
  * Valida a viabilidade anatômica de alcance da mão em cordas adjacentes
  */
 export function isPhysicalReachValid(frets: (number | null)[]): boolean {
-  for (let s_low = 0; s_low < 6; s_low++) {
+  for (let s_low = 0; s_low < frets.length; s_low++) {
     const f_low = frets[s_low];
     if (f_low === null || f_low === 0) continue;
 

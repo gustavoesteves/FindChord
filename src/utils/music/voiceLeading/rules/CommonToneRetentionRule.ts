@@ -11,7 +11,7 @@ export class CommonToneRetentionRule implements VoiceLeadingRule {
     const fretsB = next.shape.frets;
     let commonTones = 0;
 
-    for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+    for (let stringIdx = 0; stringIdx < tuning.length; stringIdx++) {
       const baseNote = tuning[stringIdx];
       const fretA = fretsA[stringIdx];
       const fretB = fretsB[stringIdx];

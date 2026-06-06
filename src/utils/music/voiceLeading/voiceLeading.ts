@@ -128,7 +128,7 @@ export function calculateVoiceLeadingCost(
   const fretsB = voicingB.shape.frets;
 
   // 1. Calcular deslocamentos individuais nas cordas
-  for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+  for (let stringIdx = 0; stringIdx < tuning.length; stringIdx++) {
     const baseNote = tuning[stringIdx];
     const fretA = fretsA[stringIdx];
     const fretB = fretsB[stringIdx];
@@ -276,7 +276,7 @@ function buildTransitionsForPath(
     
     let fretDist = 0;
     let commonCount = 0;
-    for (let sIdx = 0; sIdx < 6; sIdx++) {
+    for (let sIdx = 0; sIdx < tuning.length; sIdx++) {
       const fA = vA.shape.frets[sIdx];
       const fB = vB.shape.frets[sIdx];
       if (fA !== null && fB !== null) {

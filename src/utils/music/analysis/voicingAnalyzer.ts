@@ -225,7 +225,7 @@ export function analyzeVoiceRoles(
     }
   });
 
-  const voiceRoleMap: (VoiceRoleInfo | null)[] = Array(6).fill(null);
+  const voiceRoleMap: (VoiceRoleInfo | null)[] = Array(tuning.length).fill(null);
   voices.forEach(v => {
     const vInterval = (v.pitchClass - rootPC + 12) % 12;
     const info = getVoiceRoleInfo(vInterval, activeQuality);

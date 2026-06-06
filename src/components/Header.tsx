@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useChordStore, TUNING_PRESETS } from "../store/useChordStore";
+import { useChordStore, INSTRUMENTS } from "../store/useChordStore";
 import { Music, Sparkles, Sliders } from "lucide-react";
 
 const NOTE_CLASSES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -7,6 +7,8 @@ const OCTAVES = [1, 2, 3, 4, 5];
 
 export default function Header() {
   const {
+    activeInstrument,
+    setInstrument,
     tuningPreset,
     tuning,
     setTuning,
@@ -17,15 +19,16 @@ export default function Header() {
 
   const [showTuning, setShowTuning] = useState(false);
 
+  const currentInstrumentObj = INSTRUMENTS.find(i => i.name === activeInstrument) || INSTRUMENTS[0];
+  const currentPresets = currentInstrumentObj.tuningPresets;
+
   const handleTuningPresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const presetName = e.target.value;
-    const selected = TUNING_PRESETS.find(p => p.name === presetName);
+    const selected = currentPresets.find(p => p.name === presetName);
     if (selected) {
       setTuning(presetName, selected.notes);
     }
   };
-
-
 
   return (
     <header className="w-full flex flex-col gap-4">
@@ -79,16 +82,30 @@ export default function Header() {
             </span>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
+            {/* Seletor de Instrumento */}
+            <div className="flex flex-col gap-1 xl:col-span-3">
+              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Instrumento</label>
+              <select
+                value={activeInstrument}
+                onChange={(e) => setInstrument(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-purple-500 cursor-pointer transition font-semibold"
+              >
+                {INSTRUMENTS.map(i => (
+                  <option key={i.name} value={i.name}>{i.name}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Seletor de Presets */}
-            <div className="flex flex-col gap-1 md:w-1/3">
+            <div className="flex flex-col gap-1 xl:col-span-3">
               <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Preset de Afinação</label>
               <select
                 value={tuningPreset}
                 onChange={handleTuningPresetChange}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-purple-500 cursor-pointer transition font-semibold"
               >
-                {TUNING_PRESETS.map(p => (
+                {currentPresets.map(p => (
                   <option key={p.name} value={p.name}>{p.name}</option>
                 ))}
                 <option value="Personalizado" disabled>Personalizado</option>
@@ -96,7 +113,7 @@ export default function Header() {
             </div>
 
             {/* Estilo de Cifragem */}
-            <div className="flex flex-col gap-1 md:w-1/4">
+            <div className="flex flex-col gap-1 xl:col-span-2">
               <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Estilo de Cifragem</label>
               <select
                 value={notationStyle}
@@ -110,9 +127,14 @@ export default function Header() {
             </div>
 
             {/* Ajuste Individual das Cordas */}
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Ajuste Fino por Corda (1ª à 6ª)</label>
-              <div className="grid grid-cols-6 gap-2">
+            <div className="flex flex-col gap-1 xl:col-span-4">
+              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                Ajuste Fino por Corda (1ª à {tuning.length}ª)
+              </label>
+              <div 
+                className="grid gap-1.5" 
+                style={{ gridTemplateColumns: `repeat(${tuning.length}, minmax(0, 1fr))` }}
+              >
                 {tuning.map((note, index) => {
                   const match = note.match(/^([A-G][b#]?)(.*)$/);
                   const noteName = match ? match[1] : "E";
@@ -124,7 +146,7 @@ export default function Header() {
                       <select
                         value={`${noteName}${octave}`}
                         onChange={(e) => updateCustomStringTuning(index, e.target.value)}
-                        className="bg-zinc-950 border border-zinc-850 rounded-md text-xs py-1.5 px-0.5 text-center font-bold text-zinc-300 cursor-pointer focus:outline-none focus:border-purple-500"
+                        className="bg-zinc-950 border border-zinc-850 rounded-md text-[10px] py-1 px-0.5 text-center font-bold text-zinc-350 cursor-pointer focus:outline-none focus:border-purple-500"
                       >
                         {OCTAVES.flatMap(oct => 
                           NOTE_CLASSES.map(n => {
