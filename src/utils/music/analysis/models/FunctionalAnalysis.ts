@@ -92,6 +92,18 @@ export interface FunctionalChord {
 
   /** Confiança chord-level (ver documentação acima) */
   confidence: number;
+
+  /** Grau do acorde alvo (ex: "ii", "V", "I") */
+  secondaryTarget?: string;
+
+  /** Análise contextual (Dominante Secundário ou SubV7) */
+  contextualAnalysis?: ContextualAnalysis;
+}
+
+export interface ContextualAnalysis {
+  type: 'SECONDARY_DOMINANT' | 'TRITONE_SUBSTITUTION';
+  targetDegree: string;
+  resolutionDistance: number; // 1 = vizinho imediato, 2 = pulando um acorde
 }
 
 /**

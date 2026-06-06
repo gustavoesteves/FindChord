@@ -150,9 +150,10 @@ function scoreCandidateKey(
   }
 
   // ── Sequential pair analysis (V7→I / V7→Im cadences) ──
-  for (let i = 0; i < parsedChords.length - 1; i++) {
+  const limit = parsedChords.length > 2 ? parsedChords.length : parsedChords.length - 1;
+  for (let i = 0; i < limit; i++) {
     const current = parsedChords[i];
-    const next = parsedChords[i + 1];
+    const next = parsedChords[(i + 1) % parsedChords.length];
 
     const curIdx = chromaticIndex(current.root);
     const nxtIdx = chromaticIndex(next.root);

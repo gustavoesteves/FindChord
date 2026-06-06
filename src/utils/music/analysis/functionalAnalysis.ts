@@ -16,6 +16,7 @@ import type {
 } from './models/FunctionalAnalysis';
 import { resolveTonalCenter } from './tonalCenter';
 import { classifyChordFunction } from './functionalClassifier';
+import { analyzeSecondaryFunctions } from './secondaryAnalysis';
 
 /**
  * Analyzes a chord progression and returns a complete functional analysis.
@@ -37,9 +38,11 @@ import { classifyChordFunction } from './functionalClassifier';
 export function analyzeProgression(progression: string[]): FunctionalAnalysis {
   const tonalCenter = resolveTonalCenter(progression);
 
-  const chords = progression.map((chordSymbol, index) =>
+  let chords = progression.map((chordSymbol, index) =>
     classifyChordFunction(chordSymbol, index, tonalCenter)
   );
+
+  chords = analyzeSecondaryFunctions(chords, tonalCenter);
 
   return {
     tonalCenter,
