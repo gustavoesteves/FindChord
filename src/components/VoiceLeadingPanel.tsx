@@ -3,6 +3,8 @@ import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
 import { analyzeProgression, getFunctionLabel } from "../utils/music/analysis/functionalAnalysis";
 import { playGuitarChord, playMetronomeClick } from "../utils/audioSynth";
+import { Note as TonalNote } from "tonal";
+import { generateHarmonicField } from "../utils/music/analysis/harmonicField";
 import { 
   Play, 
   Pause, 
@@ -39,6 +41,40 @@ export default function ChordTimeline() {
 
   // Sprint 6A — Análise funcional completa (tonalidade + grau + função T/SD/D)
   const analysis = analyzeProgression(progressionChords);
+
+  // Sprint 6B — Visual Harmonic Field States and Logic
+  const [chordFormat, setChordFormat] = useState<'triad' | 'tetrad'>('tetrad');
+  const [minorFieldMode, setMinorFieldMode] = useState<'natural' | 'harmonic'>('harmonic');
+
+  const diatonicChords = generateHarmonicField(
+    analysis.tonalCenter.root,
+    analysis.tonalCenter.mode,
+    chordFormat,
+    minorFieldMode,
+    progressionChords
+  );
+
+  const handleAddDiatonicChord = (chordSymbol: string) => {
+    setProgressionChords([...progressionChords, chordSymbol]);
+  };
+
+  const playDiatonicChord = (chordSymbol: string) => {
+    const parsed = parseChord(chordSymbol);
+    if (parsed.empty) return;
+
+    let currentOctave = 3;
+    let lastMidiChroma = -1;
+    const playNotes = parsed.notes.map(note => {
+      const chroma = TonalNote.get(note).chroma;
+      if (chroma !== undefined && lastMidiChroma !== -1 && chroma < lastMidiChroma) {
+        currentOctave++;
+      }
+      lastMidiChroma = chroma ?? -1;
+      return `${note}${currentOctave}`;
+    });
+
+    playGuitarChord(playNotes, 45);
+  };
 
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -710,6 +746,157 @@ export default function ChordTimeline() {
           <div className="flex flex-col items-center justify-center p-8 border border-dashed border-zinc-850 rounded-2xl text-zinc-500 text-xs italic bg-zinc-950/20 gap-2">
             <Music className="h-6 w-6 text-zinc-650 animate-bounce" />
             <span>Digite sua cadência na caixa superior para iniciar a Timeline Track!</span>
+          </div>
+        )}
+
+        {/* ─── Campo Harmônico Section ─── */}
+        {progressionChords.length > 0 && (
+          <div className="mt-6 border-t border-zinc-900/60 pt-6 animate-scale-up select-none">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 select-none">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-black text-zinc-300 uppercase tracking-widest">Campo Harmônico Diatônico</h3>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold font-mono">
+                  Confiança: {Math.round(analysis.tonalCenter.confidence * 100)}%
+                </span>
+              </div>
+              
+              {/* Controles de Visualização */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Seletor Tríade/Tétrade */}
+                <div className="flex items-center bg-zinc-900/80 p-0.5 rounded-lg border border-zinc-800">
+                  <button
+                    onClick={() => setChordFormat("triad")}
+                    className={`px-2.5 py-1 text-[9px] font-black uppercase rounded-md transition duration-150 cursor-pointer ${
+                      chordFormat === "triad"
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    Tríades
+                  </button>
+                  <button
+                    onClick={() => setChordFormat("tetrad")}
+                    className={`px-2.5 py-1 text-[9px] font-black uppercase rounded-md transition duration-150 cursor-pointer ${
+                      chordFormat === "tetrad"
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    Tétrades
+                  </button>
+                </div>
+
+                {/* Seletor Menor Natural/Harmônica (Apenas se tom for Menor) */}
+                {analysis.tonalCenter.mode === "MINOR" && (
+                  <div className="flex items-center bg-zinc-900/80 p-0.5 rounded-lg border border-zinc-800">
+                    <button
+                      onClick={() => setMinorFieldMode("natural")}
+                      className={`px-2.5 py-1 text-[9px] font-black uppercase rounded-md transition duration-150 cursor-pointer ${
+                        minorFieldMode === "natural"
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      Natural
+                    </button>
+                    <button
+                      onClick={() => setMinorFieldMode("harmonic")}
+                      className={`px-2.5 py-1 text-[9px] font-black uppercase rounded-md transition duration-150 cursor-pointer ${
+                        minorFieldMode === "harmonic"
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      Harmônica
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Grid de Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+              {diatonicChords.map((diatonic) => {
+                const { degree, chordSymbol, harmonicFunction, isActive, isHarmonicMinorVariant } = diatonic;
+
+                const badgeColor =
+                  harmonicFunction === "TONIC"
+                    ? "bg-sky-950/80 text-sky-300 border-sky-500/20"
+                    : harmonicFunction === "SUBDOMINANT"
+                    ? "bg-amber-950/80 text-amber-300 border-amber-500/20"
+                    : "bg-rose-950/80 text-rose-300 border-rose-500/20";
+
+                const functionLabel =
+                  harmonicFunction === "TONIC" ? "T" : harmonicFunction === "SUBDOMINANT" ? "SD" : "D";
+
+                return (
+                  <div
+                    key={chordSymbol + degree}
+                    className={`group relative flex flex-col justify-between p-3 rounded-xl border transition-all duration-350 bg-zinc-900/30 select-none ${
+                      isActive
+                        ? "border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.25)] bg-purple-950/10 scale-[1.02]"
+                        : "border-zinc-850/80 hover:bg-zinc-900/60 hover:border-zinc-700"
+                    }`}
+                  >
+                    {/* Top Bar: Grau + Função */}
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`font-mono text-[10px] font-black ${isActive ? "text-purple-400" : "text-zinc-500"}`}>
+                        {degree}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {isHarmonicMinorVariant && (
+                          <span className="text-[7px] px-1 py-[1px] rounded bg-purple-950/50 border border-purple-500/20 text-purple-300 font-bold uppercase" title="Variante Harmônica">
+                            Harm
+                          </span>
+                        )}
+                        <span className={`text-[8px] font-black px-1.5 py-[1px] rounded border ${badgeColor}`}>
+                          {functionLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle: Cifra */}
+                    <div className="text-center py-2 flex flex-col items-center justify-center">
+                      <span className={`text-xs font-black tracking-wide ${isActive ? "text-zinc-100" : "text-zinc-300"}`}>
+                        {chordSymbol}
+                      </span>
+                    </div>
+
+                    {/* Bottom Bar: Ações (Play e +) */}
+                    <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-zinc-850/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playDiatonicChord(chordSymbol);
+                        }}
+                        className="p-1 rounded bg-zinc-850/80 hover:bg-zinc-800 text-zinc-400 hover:text-purple-400 transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center"
+                        title="Ouvir acorde"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddDiatonicChord(chordSymbol);
+                        }}
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-600 hover:bg-purple-500 text-white text-[8px] font-black uppercase transition cursor-pointer hover:scale-105 active:scale-95"
+                        title="Adicionar à timeline"
+                      >
+                        <span>+ Add</span>
+                      </button>
+                    </div>
+
+                    {/* Indicador Ativo sutil */}
+                    {isActive && (
+                      <div className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-purple-400 animate-ping" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
