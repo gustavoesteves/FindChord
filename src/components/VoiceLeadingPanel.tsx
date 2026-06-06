@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
-import { detectKey, getRomanNumeral } from "../utils/music/theory/musicTheory";
+import { analyzeProgression, getFunctionLabel } from "../utils/music/analysis/functionalAnalysis";
 import { playGuitarChord, playMetronomeClick } from "../utils/audioSynth";
 import { 
   Play, 
@@ -37,8 +37,8 @@ export default function ChordTimeline() {
   const [cadenceInput, setCadenceInput] = useState(progressionChords.join(" "));
   const timerRef = useRef<any>(null);
 
-  // Detecção automática de tom
-  const detectedKeyObj = detectKey(progressionChords);
+  // Sprint 6A — Análise funcional completa (tonalidade + grau + função T/SD/D)
+  const analysis = analyzeProgression(progressionChords);
 
   // Estados locais para edição inline (duplo clique)
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -290,7 +290,7 @@ export default function ChordTimeline() {
           </div>
           {progressionChords.length > 0 && (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-950/40 border border-purple-500/20 text-purple-300 font-bold uppercase tracking-wider select-none">
-              Tom: {detectedKeyObj.root} {detectedKeyObj.isMajor ? "Maior" : "Menor"}
+              Tom: {analysis.tonalCenter.root} {analysis.tonalCenter.mode === 'MAJOR' ? "Maior" : "Menor"}
             </span>
           )}
         </div>
@@ -668,9 +668,22 @@ export default function ChordTimeline() {
                         >
                           {chord}
                         </span>
-                        <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider leading-none mt-1">
-                          {getRomanNumeral(chord, detectedKeyObj.root, detectedKeyObj.isMajor) || "-"}
-                        </span>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider leading-none">
+                            {analysis.chords[idx]?.romanNumeral || "-"}
+                          </span>
+                          {analysis.chords[idx] && (
+                            <span className={`text-[7px] font-black uppercase tracking-wider leading-none px-1 py-[1px] rounded-sm ${
+                              analysis.chords[idx].harmonicFunction === 'TONIC'
+                                ? 'bg-sky-900/50 text-sky-300 border border-sky-500/30'
+                                : analysis.chords[idx].harmonicFunction === 'SUBDOMINANT'
+                                ? 'bg-amber-900/50 text-amber-300 border border-amber-500/30'
+                                : 'bg-rose-900/50 text-rose-300 border border-rose-500/30'
+                            }`}>
+                              {getFunctionLabel(analysis.chords[idx].harmonicFunction)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
 

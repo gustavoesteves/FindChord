@@ -3,7 +3,8 @@ import { simplifyNote } from "../core/pitch";
 import type { ChordQuality } from "../constants/chordRegistry";
 import { CHORD_REGISTRY } from "../constants/chordRegistry";
 import type { ChordCandidate } from "../../../store/useChordStore";
-import { parseChord } from "./chordParser";
+import { resolveTonalCenter } from "../analysis/tonalCenter";
+import { classifyChordFunction } from "../analysis/functionalClassifier";
 
 export interface ScaleInfo {
   name: string;
@@ -156,156 +157,25 @@ export function getNotesForChord(root: string, type: string): string[] {
   });
 }
 
+/**
+ * @deprecated Use `analyzeProgression()` from `analysis/functionalAnalysis.ts` instead.
+ * This function is kept for backward compatibility and delegates to the new
+ * tonal center resolver internally.
+ */
 export function detectKey(progression: string[]): { root: string; isMajor: boolean } {
-  const parsedChords = progression
-    .map(symbol => parseChord(symbol))
-    .filter(p => !p.empty);
-
-  if (parsedChords.length === 0) {
-    return { root: "C", isMajor: true };
-  }
-
-  const roots = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  let bestRoot = "C";
-  let bestIsMajor = true;
-  let maxScore = -1;
-
-  for (const root of roots) {
-    const rootIdx = roots.indexOf(root);
-    for (const isMajor of [true, false]) {
-      let score = 0;
-
-      // Se o primeiro acorde tiver a tônica da chave candidata como sua fundamental, ganha pontos
-      if (parsedChords[0].root === root) {
-        score += 8;
-        const firstIsMinor = parsedChords[0].quality.includes("minor") || parsedChords[0].quality === "halfDiminished" || parsedChords[0].quality === "diminished";
-        if (isMajor && !firstIsMinor) score += 4;
-        if (!isMajor && firstIsMinor) score += 4;
-      }
-
-      // Se o último acorde terminar na tônica da chave
-      if (parsedChords[parsedChords.length - 1].root === root) {
-        score += 4;
-      }
-
-      for (const chord of parsedChords) {
-        const chordRootIdx = roots.indexOf(chord.root);
-        if (chordRootIdx === -1) continue;
-        const offset = (chordRootIdx - rootIdx + 12) % 12;
-        const isMinor = chord.quality.includes("minor") || chord.quality === "halfDiminished" || chord.quality === "diminished" || chord.quality === "diminished7th";
-
-        if (isMajor) {
-          if (offset === 0 && !isMinor) score += 5; // I
-          else if (offset === 2 && isMinor) score += 5; // ii
-          else if (offset === 4 && isMinor) score += 5; // iii
-          else if (offset === 5 && !isMinor) score += 5; // IV
-          else if (offset === 7 && !isMinor) score += 5; // V
-          else if (offset === 9 && isMinor) score += 5; // vi
-          else if (offset === 11 && isMinor) score += 3; // vii°
-          
-          else if (offset === 7 && isMinor) score += 1; // v
-          else if (offset === 2 && !isMinor) score += 2; // II dominante (V/V)
-          else if (offset === 4 && !isMinor) score += 2; // III dominante (V/vi)
-          else if (offset === 9 && !isMinor) score += 2; // VI dominante (V/ii)
-          else if (offset === 8 && !isMinor) score += 2; // bVI
-          else if (offset === 10 && !isMinor) score += 2; // bVII
-          else if (offset === 5 && isMinor) score += 2; // iv menor
-        } else {
-          if (offset === 0 && isMinor) score += 5; // i
-          else if (offset === 2 && isMinor) score += 4; // ii°
-          else if (offset === 3 && !isMinor) score += 5; // bIII
-          else if (offset === 5 && isMinor) score += 5; // iv
-          else if (offset === 7 && isMinor) score += 4; // v
-          else if (offset === 7 && !isMinor) score += 5; // V dominante (menor harmônica)
-          else if (offset === 8 && !isMinor) score += 5; // bVI
-          else if (offset === 10 && !isMinor) score += 5; // bVII
-          else if (offset === 11 && isMinor) score += 3; // vii°
-        }
-      }
-
-      if (score > maxScore) {
-        maxScore = score;
-        bestRoot = root;
-        bestIsMajor = isMajor;
-      }
-    }
-  }
-
-  return { root: bestRoot, isMajor: bestIsMajor };
+  const result = resolveTonalCenter(progression);
+  return { root: result.root, isMajor: result.mode === 'MAJOR' };
 }
 
+/**
+ * @deprecated Use `analyzeProgression()` from `analysis/functionalAnalysis.ts` instead.
+ * This function is kept for backward compatibility and delegates to the new
+ * functional classifier internally.
+ */
 export function getRomanNumeral(chordSymbol: string, keyRoot: string, isMajor: boolean): string {
-  const parsed = parseChord(chordSymbol);
-  if (parsed.empty) return "";
-
-  const root = parsed.root;
-  const quality = parsed.quality;
-
-  const roots = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const rootIndex = roots.indexOf(root);
-  const keyIndex = roots.indexOf(keyRoot);
-  if (rootIndex === -1 || keyIndex === -1) return "";
-
-  const interval = (rootIndex - keyIndex + 12) % 12;
-  const isMinorChord = quality.includes("minor") || quality === "halfDiminished" || quality === "diminished" || quality === "diminished7th";
-  
-  if (isMajor) {
-    const majorMap: Record<number, { major: string; minor: string }> = {
-      0: { major: "I", minor: "i" },
-      1: { major: "bII", minor: "bii" },
-      2: { major: "II", minor: "ii" },
-      3: { major: "bIII", minor: "biii" },
-      4: { major: "III", minor: "iii" },
-      5: { major: "IV", minor: "iv" },
-      6: { major: "#IV", minor: "#iv" },
-      7: { major: "V", minor: "v" },
-      8: { major: "bVI", minor: "bvi" },
-      9: { major: "VI", minor: "vi" },
-      10: { major: "bVII", minor: "bvii" },
-      11: { major: "VII", minor: "vii°" }
-    };
-    
-    const entry = majorMap[interval];
-    if (!entry) return "";
-    
-    if (interval === 11) {
-      if (quality === "diminished" || quality === "halfDiminished" || quality === "diminished7th") return "vii°";
-      return "VII";
-    }
-    
-    return isMinorChord ? entry.minor : entry.major;
-  } else {
-    const minorMap: Record<number, { major: string; minor: string }> = {
-      0: { major: "I", minor: "i" },
-      1: { major: "bII", minor: "bii" },
-      2: { major: "II", minor: "ii°" },
-      3: { major: "bIII", minor: "biii" },
-      4: { major: "IV", minor: "iv" },
-      5: { major: "V", minor: "v" },
-      6: { major: "bV", minor: "bv" },
-      7: { major: "V", minor: "v" },
-      8: { major: "bVI", minor: "bvi" },
-      9: { major: "VI", minor: "vi" },
-      10: { major: "bVII", minor: "bvii" },
-      11: { major: "VII", minor: "vii°" }
-    };
-    
-    const entry = minorMap[interval];
-    if (!entry) return "";
-    
-    if (interval === 2) {
-      if (quality === "diminished" || quality === "halfDiminished" || quality === "diminished7th") return "ii°";
-      return isMinorChord ? "ii" : "II";
-    }
-    if (interval === 11) {
-      if (quality === "diminished" || quality === "halfDiminished" || quality === "diminished7th") return "vii°";
-      return "VII";
-    }
-    if (interval === 7) {
-      return isMinorChord ? "v" : "V";
-    }
-    
-    return isMinorChord ? entry.minor : entry.major;
-  }
+  const mode: 'MAJOR' | 'MINOR' = isMajor ? 'MAJOR' : 'MINOR';
+  const tonalCenter = { root: keyRoot, mode, confidence: 1 };
+  const result = classifyChordFunction(chordSymbol, 0, tonalCenter);
+  return result.romanNumeral;
 }
 
