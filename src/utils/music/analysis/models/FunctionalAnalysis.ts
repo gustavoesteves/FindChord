@@ -21,10 +21,24 @@ export type HarmonicFunction = 'TONIC' | 'SUBDOMINANT' | 'DOMINANT';
 export type AnalysisTag =
   | 'SECONDARY_DOMINANT'
   | 'TRITONE_SUBSTITUTION'
+  | 'SECONDARY_LEADING_TONE'
   | 'MODAL_BORROWING'
   | 'II_V_CADENCE'
   | 'BLUES_DOMINANT'
-  | 'CHROMATIC_APPROACH';
+  | 'CHROMATIC_APPROACH'
+  | 'PICARDY_THIRD'
+  | 'PASSING_DIMINISHED'
+  | 'COMMON_TONE_DIMINISHED'
+  | 'NEIGHBOR_DIMINISHED';
+
+
+
+export type HarmonicGrammarProfile =
+  | 'COMMON_PRACTICE'
+  | 'EXTENDED_FUNCTIONAL'
+  | 'CHROMATIC_FUNCTIONAL'
+  | 'MODAL_FUNCTIONAL'
+  | 'GENERAL';
 
 /**
  * Modo tonal da tonalidade detectada.
@@ -87,6 +101,9 @@ export interface FunctionalChord {
   /** true se o acorde pertence ao campo harmônico da tonalidade detectada */
   isDiatonic: boolean;
 
+  /** Centro tonal sob o qual este acorde foi analisado/resolvido (Sprint 9A) */
+  tonalCenter?: TonalCenter;
+
   /** Tags de análise avançada (vazio na Sprint 6A) */
   analysisTags: AnalysisTag[];
 
@@ -98,12 +115,178 @@ export interface FunctionalChord {
 
   /** Análise contextual (Dominante Secundário ou SubV7) */
   contextualAnalysis?: ContextualAnalysis;
+
+  /** Atalho explícito para a UI desenhar badges/rótulos */
+  contextualFunction?: ContextualFunction;
+
+  /** Análise de empréstimo modal (Sprint 6E) */
+  modalBorrowing?: ModalBorrowing;
+
+  /** Análise de harmonia cromática (Sprint 6F) */
+  chromaticAnalysis?: ChromaticAnalysis;
+
+  /** Evidência de resolução harmônica abstrata (Sprint 7A) */
+  resolutionEvidence?: ResolutionEvidence;
+
+  /** Coleção opcional de candidatos a resolução avaliados no lookahead para fins de depuração (Sprint 7C) */
+  candidateResolutions?: ResolutionEvidence[];
+
+  /** Lista de hipóteses funcionais concorrentes ordenadas por confiança (Sprint 8A) */
+  functionalHypotheses?: FunctionalHypothesis[];
+
+  /** Explicações de análise para fins de depuração e UI pedagógica */
+  explanation?: string[];
 }
+
+export interface ResolvedPair {
+  fromChroma: number; // Pitch class de origem (0-11)
+  toChroma: number;   // Pitch class de destino (0-11)
+  type: 'COMMON_TONE' | 'SEMITONE_ASCENDING' | 'SEMITONE_DESCENDING' | 'WHOLE_TONE_ASCENDING' | 'WHOLE_TONE_DESCENDING';
+  intervalSize: number; // Distância absoluta no ciclo de semitons (0 a 6)
+}
+
+export interface ResolutionEvidence {
+  targetChordIndex: number;
+  resolutionDistance: number;
+  
+  // Evidências Físicas
+  commonTones: number;
+  resolvedPairs: ResolvedPair[];
+  
+  ascendingSemitoneResolutions: number;
+  descendingSemitoneResolutions: number;
+  wholeToneResolutions: number;
+  unresolvedTones: number;
+  harmonicResolutionScore: number;
+}
+
+export type ContextualFunction = 
+  | 'PRIMARY' 
+  | 'SECONDARY_DOMINANT' 
+  | 'TRITONE_SUBSTITUTION' 
+  | 'SECONDARY_LEADING_TONE'
+  | 'MODAL_BORROWING'
+  | 'PASSING_DIMINISHED'
+  | 'COMMON_TONE_DIMINISHED'
+  | 'NEIGHBOR_DIMINISHED'
+  | 'CHROMATIC_APPROACH';
+
+export interface FunctionalHypothesis {
+  contextualFunction: ContextualFunction;
+  romanNumeral: string;
+  harmonicFunction: HarmonicFunction;
+  confidence: number;
+  explanation: string[];
+  secondaryTarget?: string;
+  contextualAnalysis?: ContextualAnalysis;
+  modalBorrowing?: ModalBorrowing;
+  chromaticAnalysis?: ChromaticAnalysis;
+  evidence?: {
+    resolutionScore?: number;
+    targetChordIndex?: number;
+    commonTones?: number;
+    stepwiseCount?: number;
+  };
+}
+
+export interface ModalBorrowing {
+  sourceMode: 'AEOLIAN' | 'PHRYGIAN' | 'DORIAN' | 'LYDIAN' | 'IONIAN' | 'MIXOLYDIAN';
+  modeName: string;
+}
+
+export interface ChromaticAnalysis {
+  type: 'PASSING_DIMINISHED' | 'COMMON_TONE_DIMINISHED' | 'NEIGHBOR_DIMINISHED' | 'CHROMATIC_APPROACH';
+  targetDegree?: string;
+  resolutionDistance: number;
+}
+
+
 
 export interface ContextualAnalysis {
   type: 'SECONDARY_DOMINANT' | 'TRITONE_SUBSTITUTION';
   targetDegree: string;
   resolutionDistance: number; // 1 = vizinho imediato, 2 = pulando um acorde
+}
+
+export interface CadenceInfo {
+  name: string; // Ex: "ii - V - I (C Maior)", "Turnaround de Jazz", "Plagal"
+  type: 'PERFECT' | 'PLAGAL' | 'DECEPTIVE' | 'BACKDOOR' | 'TURNAROUND' | 'SECONDARY_PERFECT';
+  startIndex: number;
+  endIndex: number;
+  chordIndexes: number[];
+  confidence: number;
+}
+
+export interface ModulationEvent {
+  chordIndex: number;
+  from: TonalCenter;
+  to: TonalCenter;
+  confidence: number;
+  reason: string;
+}
+
+export interface GlobalAnalysisPath {
+  chordIndexes: number[];
+  hypothesisIndexes: number[];
+  totalScore: number;
+  localScore: number;
+  transitionScore: number;
+  keys?: TonalCenter[];
+  modulations?: ModulationEvent[];
+  explanations: string[];
+}
+
+export type TonalRegionType = 
+  | 'TONICIZATION'
+  | 'REGIONAL_SHIFT'
+  | 'ESTABLISHED_MODULATION';
+
+export interface TonalRegion {
+  key: TonalCenter;
+  startIndex: number;
+  endIndex: number;
+  duration: number;
+  type: TonalRegionType;
+  isHomeKey: boolean;
+  stabilityScore: number;
+  cadenceIndexes: number[];
+}
+
+export interface Phrase {
+  index: number;
+  startIndex: number;
+  endIndex: number;
+  terminatingCadence?: CadenceInfo;
+  regions: TonalRegion[];
+}
+
+export interface TonalRegionNode {
+  id: string;
+  region: TonalRegion;
+  parent?: TonalRegionNode;
+  children: TonalRegionNode[];
+}
+
+export interface TonalSummary {
+  homeKey: TonalCenter;
+  
+  // Métricas principais normalizadas (0.0 a 1.0)
+  tonalComplexity: number;
+  tonalStability: number;
+  
+  // Estatísticas estruturais e de árvore
+  modulationCount: number;
+  tonicizationCount: number;
+  longestRegion: TonalRegion;
+  deepestNestingLevel: number;
+  visitedKeys: TonalCenter[];
+  
+  // Contagens auxiliares de recurso harmônico
+  cadenceCount: number;
+  resolvedCadenceCount: number;
+  modalBorrowingCount: number;
+  secondaryFunctionCount: number;
+  chromaticChordCount: number;
 }
 
 /**
@@ -116,4 +299,23 @@ export interface FunctionalAnalysis {
 
   /** Análise funcional de cada acorde na progressão */
   chords: FunctionalChord[];
+
+  /** Cadências detectadas na progressão */
+  cadences?: CadenceInfo[];
+
+  /** Caminho de análise global ótimo (Sprint 8B) */
+  globalPath?: GlobalAnalysisPath;
+
+  /** Regiões tonais detectadas na progressão (Sprint 9B) */
+  regions?: TonalRegion[];
+
+  /** Frases musicais estruturais detectadas (Sprint 9B) */
+  phrases?: Phrase[];
+
+  /** Árvore hierárquica de regiões tonais (Sprint 10A) */
+  regionTree?: TonalRegionNode;
+
+  /** Sumário tonal analítico e quantitativo (Sprint 10B) */
+  summary?: TonalSummary;
 }
+
