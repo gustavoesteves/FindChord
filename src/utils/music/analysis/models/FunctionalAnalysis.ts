@@ -225,9 +225,22 @@ export type ModalAxis =
   | 'LOCRIAN_AXIS';
 
 export interface ModalAxisContext {
-  sourceMode: ModalMode;
-  targetMode?: ModalMode;
-  modalAxis: ModalAxis;
+  axis: ModalAxis;
+  mode: ModalMode;
+  confidence: number;
+  active: boolean;
+}
+
+export interface HarmonicState {
+  root: string;
+  mode: ModalMode;
+}
+
+export interface ModalRegion {
+  startIndex: number;
+  endIndex: number;
+  axis: ModalAxis;
+  mode: ModalMode;
   confidence: number;
 }
 
@@ -385,6 +398,9 @@ export interface FunctionalAnalysis {
 
   /** Regiões tonais detectadas na progressão (Sprint 9B) */
   regions?: TonalRegion[];
+
+  /** Regiões modais detectadas na progressão (Sprint F4) */
+  modalRegions?: ModalRegion[];
 
   /** Frases musicais estruturais detectadas (Sprint 9B) */
   phrases?: Phrase[];
