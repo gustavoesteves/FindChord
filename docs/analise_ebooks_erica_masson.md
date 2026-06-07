@@ -31,12 +31,12 @@ A obra é composta por **3 volumes** progressivos, escritos por **Érica Masson*
 | Intervalos | ✅ Implementado | `getFriendlyInterval` |
 | Tríades e Tétrades | ✅ Implementado | `CHORD_REGISTRY` |
 | Campo Harmônico | ✅ Parcial | Escalas compatíveis mostradas, mas sem exibir o campo harmônico completo |
-| Funções Harmônicas (T/SD/D) | ⚠️ Básico | `detectKey` identifica tonalidade, `getRomanNumeral` dá o grau, mas **não classifica por função** (T/SD/D) |
-| Dominante Secundário (V7/) | ❌ Não implementado | O sistema não detecta dominantes secundários |
-| SubV7 (substituto tritonal) | ❌ Não implementado | — |
-| Cadência IIm7→V7 | ❌ Não detectada | O sistema não identifica padrões cadenciais |
+| Funções Harmônicas (T/SD/D) | ✅ Implementado | Mapeado no classificador e rotulado como `HarmonicFunction` no DTO final |
+| Dominante Secundário (V7/) | ✅ Implementado | Identificado como `SECONDARY_DOMINANT` no pipeline analítico |
+| SubV7 (substituto tritonal) | ✅ Implementado | Identificado como `TRITONE_SUBSTITUTION` no pipeline analítico |
+| Cadência IIm7→V7 | ✅ Implementado | Agrupamento e detecção estrutural de cadências perfeita, plagal, backdoor, etc. |
 | subIIm7 (bVIm7) | ❌ Não implementado | — |
-| Blues (12-bar) | ❌ Não detectado | — |
+| Blues (12-bar) | ❌ Não detectado | Planejado para sprints futuras |
 
 ---
 
@@ -75,10 +75,10 @@ A obra é composta por **3 volumes** progressivos, escritos por **Érica Masson*
 | Escala menor melódica | ✅ Implementado | Presente como "Melodic Minor" |
 | 7 Modos gregos | ✅ Implementado | Todos presentes em `SCALE_DATA` |
 | Campo harmônico menor | ❌ Não exibido | Dados existem nas escalas mas não são "harmonizados" na UI |
-| Funções no tom menor | ❌ Não implementado | `detectKey` não distingue maior/menor adequadamente |
-| Análise modal | ❌ Não implementado | O sistema não detecta contextos modais |
-| Intercâmbio modal | ❌ Não implementado | — |
-| Nota característica do modo | ❌ Não destacada | As escalas existem mas a nota que define o modo não é evidenciada |
+| Funções no tom menor | ✅ Implementado | Distinguido no resolvedor HMM de 24 tonalidades com cadências próprias |
+| Análise modal | ❌ Não implementado | Contextos puramente modais planejados para sprints futuras |
+| Intercâmbio modal | ✅ Implementado | Identificado como `MODAL_BORROWING` a nível de acorde e resumido no DTO |
+| Nota característica do modo | ❌ Não destacada | — |
 
 ---
 
@@ -118,12 +118,12 @@ A obra é composta por **3 volumes** progressivos, escritos por **Érica Masson*
 
 | Conceito | Status no Find Chord | Observação |
 |----------|---------------------|------------|
-| Empréstimo Modal | ❌ Não detectado | Acordes de empréstimo não são sinalizados |
-| Diminuto com 3 funções | ❌ Não implementado | Sistema trata diminuto genericamente |
-| Acorde Sus com 2 funções | ❌ Não implementado | — |
-| Acorde m6 como função aparente | ❌ Não implementado | — |
-| #IVm7(b5) como substituto do IV | ❌ Não implementado | — |
-| Tabela de Substituições | ❌ Não existe | **Seria uma feature matadora** |
+| Empréstimo Modal | ✅ Implementado | Sinalizado como `MODAL_BORROWING` a partir do modo paralelo homônimo |
+| Diminuto com 3 funções | ✅ Implementado | Classificado como de passagem, vizinho ou de tom comum em `chromaticAnalysis.ts` |
+| Acorde Sus com 2 funções | ❌ Não implementado | Planejado para sprints futuras |
+| Acorde m6 como função aparente | ❌ Não implementado | Planejado para sprints futuras |
+| #IVm7(b5) como substituto do IV | ❌ Não implementado | Planejado para sprints futuras |
+| Tabela de Substituições | ❌ Não existe | Planejado para sprints futuras |
 
 ---
 

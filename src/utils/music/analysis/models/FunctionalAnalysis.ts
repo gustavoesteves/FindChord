@@ -267,12 +267,23 @@ export interface TonalRegionNode {
   children: TonalRegionNode[];
 }
 
+export type KeyRelation =
+  | 'RELATIVE'
+  | 'PARALLEL'
+  | 'DOMINANT'
+  | 'SUBDOMINANT'
+  | 'MEDIANT'
+  | 'CHROMATIC_MEDIANT'
+  | 'TRITONE'
+  | 'DISTANT';
+
 export interface TonalSummary {
   homeKey: TonalCenter;
   
   // Métricas principais normalizadas (0.0 a 1.0)
   tonalComplexity: number;
   tonalStability: number;
+  regionalCoherenceScore: number;
   
   // Estatísticas estruturais e de árvore
   modulationCount: number;
@@ -280,6 +291,8 @@ export interface TonalSummary {
   longestRegion: TonalRegion;
   deepestNestingLevel: number;
   visitedKeys: TonalCenter[];
+  regionalTransitionCount: number;
+  keyModulationRelations: KeyRelation[];
   
   // Contagens auxiliares de recurso harmônico
   cadenceCount: number;
@@ -287,6 +300,30 @@ export interface TonalSummary {
   modalBorrowingCount: number;
   secondaryFunctionCount: number;
   chromaticChordCount: number;
+}
+
+export type TonalNarrativeType =
+  | 'STATIC'
+  | 'TONICIZATION_CHAIN'
+  | 'MODULATING'
+  | 'ROUND_TRIP'
+  | 'MULTI_CENTRIC';
+
+export interface StructuralTonalEvent {
+  startRegionId: string;
+  endRegionId: string;
+  relation: KeyRelation;
+  significance: 'LOCAL' | 'REGIONAL' | 'STRUCTURAL';
+  explanation: string;
+}
+
+export interface TonalNarrative {
+  departureKey: TonalCenter;
+  arrivalKey: TonalCenter;
+  primaryTrajectory: TonalCenter[];
+  structuralEvents: StructuralTonalEvent[];
+  narrativeType: TonalNarrativeType;
+  summaryText: string;
 }
 
 /**
@@ -317,5 +354,8 @@ export interface FunctionalAnalysis {
 
   /** Sumário tonal analítico e quantitativo (Sprint 10B) */
   summary?: TonalSummary;
+
+  /** Narrativa tonal e redução estrutural (Sprint 12A) */
+  narrative?: TonalNarrative;
 }
 

@@ -23,7 +23,11 @@ import type {
   Phrase,
   TonalRegionType,
   TonalRegionNode,
-  TonalSummary
+  TonalSummary,
+  KeyRelation,
+  TonalNarrative,
+  StructuralTonalEvent,
+  TonalNarrativeType
 } from './models/FunctionalAnalysis';
 import { resolveTonalCenter } from './tonalCenter';
 import { classifyChordFunction } from './functionalClassifier';
@@ -33,8 +37,8 @@ import { analyzeModalInterchange } from './modalInterchange';
 import { analyzeChromaticHarmony } from './chromaticAnalysis';
 import { analyzeResolutions } from './resolutionEngine';
 import { analyzeSecondaryLeadingTones } from './secondaryLeadingTone';
-import { resolveGlobalPath, StaticTransitionModel, CorpusTransitionModel, HybridTransitionModel, ALL_24_KEYS, getKeyString } from './pathResolver';
-import { GRAMMAR_PARAMETERS, GRAMMAR_CORPUS_TRANSITIONS } from './styleModels';
+import { resolveGlobalPath, StaticTransitionModel, CorpusTransitionModel, HybridTransitionModel, ALL_24_KEYS, getKeyString, getKeyRelation, getKeyTransitionMultiplier } from './pathResolver';
+import { GRAMMAR_PARAMETERS, GRAMMAR_CORPUS_TRANSITIONS } from './grammarProfiles';
 
 /**
  * Runs chord classification and isolation classifiers under a fixed candidate key center.
@@ -158,7 +162,7 @@ export function analyzeProgression(
   );
 
   // 3. Run the global path resolver (Viterbi Engine)
-  const globalPath = resolveGlobalPath(cache, cadencesByKey, hybridModel, initialTonalCenter);
+  const globalPath = resolveGlobalPath(cache, cadencesByKey, hybridModel, initialTonalCenter, profile);
   const resolvedKeys = globalPath.keys || [];
 
   // 4. Map the globally optimal path states back to the output progression
@@ -266,7 +270,12 @@ export function analyzeProgression(
   const regionTree = buildTonalRegionTree(regions);
 
   // 9. Calculate summary (Sprint 10B)
-  const summary = calculateTonalSummary(chords, regions, regionTree, cadences, finalTonalCenter);
+  const summary = calculateTonalSummary(chords, regions, regionTree, cadences, finalTonalCenter, profile);
+
+  // 10. Generate tonal narrative (Sprint 12A)
+  const narrative = summary
+    ? generateTonalNarrative(regions, regionTree, chords, summary)
+    : undefined;
 
   return {
     tonalCenter: finalTonalCenter,
@@ -276,7 +285,8 @@ export function analyzeProgression(
     regions,
     phrases,
     regionTree: regionTree || undefined,
-    summary: summary || undefined
+    summary: summary || undefined,
+    narrative: narrative || undefined
   };
 }
 
@@ -574,7 +584,8 @@ export function calculateTonalSummary(
   regions: TonalRegion[],
   regionTree: TonalRegionNode | null,
   cadences: CadenceInfo[],
-  homeKey: TonalCenter
+  homeKey: TonalCenter,
+  profile: HarmonicGrammarProfile = 'GENERAL'
 ): TonalSummary | null {
   if (chords.length === 0 || regions.length === 0) return null;
 
@@ -609,9 +620,30 @@ export function calculateTonalSummary(
     }
   });
 
-  // 5. Contagens auxiliares
+  // 5. Contagens auxiliares e transições regionais
   const cadenceCount = cadences.length;
   const resolvedCadenceCount = cadences.filter(c => c.type !== 'TURNAROUND').length;
+
+  const regionalTransitionCount = regions.length - 1;
+  const keyModulationRelations: KeyRelation[] = [];
+  let transitionMultipliersProduct = 1.0;
+
+  for (let i = 1; i < regions.length; i++) {
+    const prevReg = regions[i - 1];
+    const curReg = regions[i];
+    
+    // Classifica a relação de modulação
+    const relation = getKeyRelation(prevReg.key, curReg.key);
+    keyModulationRelations.push(relation);
+
+    // Obtém o multiplicador da transição
+    const multiplier = getKeyTransitionMultiplier(prevReg.key, curReg.key, profile);
+    transitionMultipliersProduct *= multiplier;
+  }
+
+  const regionalCoherenceScore = regionalTransitionCount > 0
+    ? Math.round(Math.pow(transitionMultipliersProduct, 1 / regionalTransitionCount) * 100) / 100
+    : 1.0;
 
   let modalBorrowingCount = 0;
   let secondaryFunctionCount = 0;
@@ -695,15 +727,178 @@ export function calculateTonalSummary(
     homeKey,
     tonalComplexity,
     tonalStability,
+    regionalCoherenceScore,
     modulationCount,
     tonicizationCount,
     longestRegion,
     deepestNestingLevel,
     visitedKeys,
+    regionalTransitionCount,
+    keyModulationRelations,
     cadenceCount,
     resolvedCadenceCount,
     modalBorrowingCount,
     secondaryFunctionCount,
     chromaticChordCount
+  };
+}
+
+/**
+ * Auxiliar para formatar o nome da relação em português.
+ */
+function getRelationLabel(rel: KeyRelation): string {
+  switch (rel) {
+    case 'RELATIVE': return 'relativa';
+    case 'PARALLEL': return 'homônima paralela';
+    case 'DOMINANT': return 'dominante';
+    case 'SUBDOMINANT': return 'subdominante';
+    case 'MEDIANT': return 'mediante diatônica';
+    case 'CHROMATIC_MEDIANT': return 'mediante cromática';
+    case 'TRITONE': return 'trítono';
+    case 'DISTANT': return 'distante';
+  }
+}
+
+/**
+ * Constrói a narrativa tonal de alto nível e a redução estrutural (Sprint 12A).
+ */
+export function generateTonalNarrative(
+  regions: TonalRegion[],
+  _regionTree: TonalRegionNode | null,
+  _chords: FunctionalChord[],
+  summary: TonalSummary
+): TonalNarrative | null {
+  if (regions.length === 0) return null;
+
+  const homeKey = regions[0].key;
+  const departureKey = homeKey;
+  const arrivalKey = regions[regions.length - 1].key;
+
+  // 1. Redução Estrutural (primaryTrajectory)
+  // Inclui Home Key, Modulações Estabelecidas e Regional Shifts estáveis (stabilityScore >= 0.45)
+  const structuralRegions = regions.filter(
+    r => r.isHomeKey || r.type === 'ESTABLISHED_MODULATION' || (r.type === 'REGIONAL_SHIFT' && r.stabilityScore >= 0.45)
+  );
+
+  const primaryTrajectory: TonalCenter[] = [];
+  structuralRegions.forEach(r => {
+    const last = primaryTrajectory[primaryTrajectory.length - 1];
+    if (!last || last.root !== r.key.root || last.mode !== r.key.mode) {
+      primaryTrajectory.push(r.key);
+    }
+  });
+
+  // Se a trajetória ficou vazia, garante que a home key esteja presente
+  if (primaryTrajectory.length === 0) {
+    primaryTrajectory.push(homeKey);
+  }
+
+  // 2. Eventos Estruturais (structuralEvents)
+  const structuralEvents: StructuralTonalEvent[] = [];
+  for (let i = 1; i < regions.length; i++) {
+    const startReg = regions[i - 1];
+    const endReg = regions[i];
+    const relation = getKeyRelation(startReg.key, endReg.key);
+
+    let significance: 'LOCAL' | 'REGIONAL' | 'STRUCTURAL' = 'REGIONAL';
+    if (startReg.type === 'TONICIZATION' || endReg.type === 'TONICIZATION') {
+      significance = 'LOCAL';
+    } else if (endReg.type === 'ESTABLISHED_MODULATION') {
+      significance = 'STRUCTURAL';
+    } else if (endReg.type === 'REGIONAL_SHIFT') {
+      significance = 'REGIONAL';
+    }
+
+    const modeLabel = endReg.key.mode === 'MAJOR' ? 'Maior' : 'Menor';
+    const relationLabel = getRelationLabel(relation);
+    let explanation = '';
+
+    if (significance === 'LOCAL') {
+      explanation = `Breve desvio tonal local (tonicização) para ${endReg.key.root} ${modeLabel} (relação ${relationLabel}).`;
+    } else if (significance === 'REGIONAL') {
+      explanation = `Desvio harmônico regional temporário para ${endReg.key.root} ${modeLabel} (relação ${relationLabel}).`;
+    } else {
+      explanation = `Modulação estrutural estabelecida para a tonalidade de ${endReg.key.root} ${modeLabel} (relação ${relationLabel}), confirmada por cadência local.`;
+    }
+
+    structuralEvents.push({
+      startRegionId: `region-node-${i - 1}`,
+      endRegionId: `region-node-${i}`,
+      relation,
+      significance,
+      explanation
+    });
+  }
+
+  // 3. Classificação do tipo de narrativa (narrativeType)
+  const establishedModulations = regions.filter(r => !r.isHomeKey && r.type === 'ESTABLISHED_MODULATION').length;
+  const tonicizations = regions.filter(r => r.type === 'TONICIZATION').length;
+  const regionalShifts = regions.filter(r => !r.isHomeKey && r.type === 'REGIONAL_SHIFT').length;
+  
+  // Verifica se o caminho se afasta e depois volta para a Home Key
+  const returnsToHome = regions.some(
+    (r, idx) => idx > 0 && r.isHomeKey && regions.slice(0, idx).some(prev => !prev.isHomeKey)
+  );
+
+  let narrativeType: TonalNarrativeType = 'STATIC';
+  if (regions.length === 1 || regions.every(r => r.isHomeKey)) {
+    narrativeType = 'STATIC';
+  } else if (establishedModulations === 0 && regionalShifts === 0 && tonicizations > 0) {
+    narrativeType = 'TONICIZATION_CHAIN';
+  } else if (returnsToHome) {
+    narrativeType = 'ROUND_TRIP';
+  } else if (primaryTrajectory.length > 2 || summary.visitedKeys.length > 2) {
+    narrativeType = 'MULTI_CENTRIC';
+  } else {
+    narrativeType = 'MODULATING';
+  }
+
+  // 4. Geração do sumário em português (summaryText)
+  const homeKeyStr = `${homeKey.root} ${homeKey.mode === 'MAJOR' ? 'Maior' : 'Menor'}`;
+  const arrivalKeyStr = `${arrivalKey.root} ${arrivalKey.mode === 'MAJOR' ? 'Maior' : 'Menor'}`;
+  
+  let summaryText = '';
+  switch (narrativeType) {
+    case 'STATIC':
+      summaryText = `A progressão permanece totalmente estável no campo harmônico da tonalidade principal de ${homeKeyStr}.`;
+      break;
+    case 'TONICIZATION_CHAIN':
+      summaryText = `A progressão está ancorada na tonalidade de ${homeKeyStr}, apresentando breves tonicizações e ornamentações locais, mas sem consolidar nenhuma modulação estrutural de longa duração.`;
+      break;
+    case 'MODULATING': {
+      const firstMod = regions.find(r => !r.isHomeKey);
+      const rel = firstMod ? getKeyRelation(homeKey, firstMod.key) : 'DISTANT';
+      summaryText = `A progressão parte da tonalidade de ${homeKeyStr} e realiza uma modulação estrutural direta para a tonalidade de ${arrivalKeyStr} (relação ${getRelationLabel(rel)}).`;
+      break;
+    }
+    case 'ROUND_TRIP': {
+      const awayReg = regions.find(r => !r.isHomeKey);
+      const awayKeyStr = awayReg ? `${awayReg.key.root} ${awayReg.key.mode === 'MAJOR' ? 'Maior' : 'Menor'}` : '';
+      summaryText = `A progressão inicia em ${homeKeyStr}, realiza um afastamento estrutural temporário para a tonalidade de ${awayKeyStr} e retorna de forma conclusiva à tonalidade inicial.`;
+      break;
+    }
+    case 'MULTI_CENTRIC': {
+      const trajectoryStr = primaryTrajectory.map(k => `${k.root} ${k.mode === 'MAJOR' ? 'Maior' : 'Menor'}`).join(' ➔ ');
+      summaryText = `A progressão apresenta uma trajetória tonal complexa e multicêntrica, percorrendo estruturalmente as tonalidades de: ${trajectoryStr}.`;
+      break;
+    }
+  }
+
+  // Anexa análise complementar de estabilidade
+  if (summary.tonalStability > 0.85) {
+    summaryText += ' A estabilidade tonal global é mantida de forma sólida ao longo do percurso.';
+  } else if (summary.tonalStability >= 0.50) {
+    summaryText += ' A estabilidade tonal global é moderada, equilibrando-se entre tensão regional e repouso.';
+  } else {
+    summaryText += ' A estabilidade tonal global é baixa, refletindo uma harmonia de grande mobilidade regional e cromatismo.';
+  }
+
+  return {
+    departureKey,
+    arrivalKey,
+    primaryTrajectory,
+    structuralEvents,
+    narrativeType,
+    summaryText
   };
 }
