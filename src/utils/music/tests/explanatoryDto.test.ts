@@ -45,18 +45,21 @@ console.log('\n🎵 Test 2 — Pedagogical Explanations');
   
   // Secondary Dominant A7
   const a7 = a.chords[1];
-  assert(a7.debug?.explanation !== undefined, 'A7 has explanations');
-  if (a7.debug?.explanation) {
-    assert(a7.debug.explanation.some(e => e.includes('Secondary dominant')), `Secondary dominant explanation exists, got: ${JSON.stringify(a7.debug.explanation)}`);
+  assert(a7.contextualFunction === 'SECONDARY_DOMINANT', 'A7 root-level contextualFunction = SECONDARY_DOMINANT');
+  assert(a7.explanation !== undefined, 'A7 has root-level explanation');
+  if (a7.explanation) {
+    assert(a7.explanation.some(e => e.includes('Secondary dominant')), 'Secondary dominant root explanation exists');
+  }
+  assert(a7.resolutionEvidence !== undefined, 'A7 has resolutionEvidence');
+  if (a7.resolutionEvidence) {
+    assert(a7.resolutionEvidence.targetChordIndex === 2, 'A7 resolves to Dm7 (index 2)');
+    assert(a7.resolutionEvidence.harmonicResolutionScore > 0, 'A7 has positive resolution score');
   }
 
-  // Primary / Diatonic Cmaj7 (now has a primary explanation under the new Viterbi path resolver)
+  // Primary / Diatonic Cmaj7
   const cMaj = a.chords[0];
-  assert(
-    cMaj.debug?.explanation !== undefined && cMaj.debug.explanation.some(e => e.includes('Diatonic chord in this key center')),
-    'Primary chord has diatonic explanation by default',
-    `got: ${JSON.stringify(cMaj.debug?.explanation)}`
-  );
+  assert(cMaj.contextualFunction === 'PRIMARY', 'Cmaj7 root-level contextualFunction = PRIMARY');
+  assert(cMaj.explanation !== undefined && cMaj.explanation.some(e => e.includes('Diatonic chord in this key center')), 'Primary chord has root diatonic explanation');
 }
 
 // ═══════════════════════════════════════════════════════════

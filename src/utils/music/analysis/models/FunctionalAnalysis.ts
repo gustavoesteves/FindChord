@@ -154,6 +154,14 @@ export interface FunctionalChord {
 
   // Sub-contextos opcionais agrupados
   state?: HarmonicState;
+  contextualFunction?: ContextualFunction;
+  resolutionEvidence?: {
+    commonTones: number;
+    semitoneResolutions: number;
+    harmonicResolutionScore: number;
+    targetChordIndex: number;
+  };
+  explanation?: string[];
   tonal?: TonalContext;
   secondary?: SecondaryContext;
   modal?: ModalContext;

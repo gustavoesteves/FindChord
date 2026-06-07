@@ -165,9 +165,30 @@ export function analyzeProgression(
         };
       }
 
+      let resolutionEvidence = undefined;
+      if (winner.evidence) {
+        resolutionEvidence = {
+          commonTones: winner.evidence.commonTones || 0,
+          semitoneResolutions: winner.evidence.stepwiseCount || 0,
+          harmonicResolutionScore: winner.evidence.resolutionScore || 0,
+          targetChordIndex: winner.evidence.targetChordIndex || 0
+        };
+      } else if (chordUnderKey.resolution?.resolutionEvidence) {
+        const ev = chordUnderKey.resolution.resolutionEvidence;
+        resolutionEvidence = {
+          commonTones: ev.commonTones,
+          semitoneResolutions: ev.ascendingSemitoneResolutions + ev.descendingSemitoneResolutions,
+          harmonicResolutionScore: ev.harmonicResolutionScore,
+          targetChordIndex: ev.targetChordIndex
+        };
+      }
+
       chords.push({
         ...chordUnderKey,
         state,
+        contextualFunction: winner.contextualFunction,
+        resolutionEvidence,
+        explanation: winner.explanation,
         tonal: { tonalCenter: keyCenter },
         romanNumeral: winner.romanNumeral,
         harmonicFunction: winner.harmonicFunction,
@@ -184,6 +205,8 @@ export function analyzeProgression(
       chords.push({
         ...chordUnderKey,
         state,
+        contextualFunction: 'PRIMARY',
+        explanation: ['Diatonic chord in this key center'],
         tonal: { tonalCenter: keyCenter }
       });
     }
