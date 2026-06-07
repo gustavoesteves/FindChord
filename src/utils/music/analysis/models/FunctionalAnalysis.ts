@@ -23,6 +23,7 @@ export const AnalysisTag = {
   TRITONE_SUBSTITUTION: 'TRITONE_SUBSTITUTION',
   SECONDARY_LEADING_TONE: 'SECONDARY_LEADING_TONE',
   MODAL_BORROWING: 'MODAL_BORROWING',
+  MODAL_AXIS: 'MODAL_AXIS',
   II_V_CADENCE: 'II_V_CADENCE',
   BLUES_DOMINANT: 'BLUES_DOMINANT',
   CHROMATIC_APPROACH: 'CHROMATIC_APPROACH',
@@ -88,9 +89,10 @@ export interface SecondaryContext {
 }
 
 export interface ModalContext {
-  contextualFunction: 'MODAL_BORROWING' | 'PASSING_DIMINISHED' | 'COMMON_TONE_DIMINISHED' | 'NEIGHBOR_DIMINISHED' | 'CHROMATIC_APPROACH';
+  contextualFunction: 'MODAL_BORROWING' | 'MODAL_AXIS' | 'PASSING_DIMINISHED' | 'COMMON_TONE_DIMINISHED' | 'NEIGHBOR_DIMINISHED' | 'CHROMATIC_APPROACH';
   modalBorrowing?: ModalBorrowing;
   chromaticAnalysis?: ChromaticAnalysis;
+  axisContext?: ModalAxisContext;
 }
 
 export interface ResolutionContext {
@@ -187,6 +189,7 @@ export type ContextualFunction =
   | 'TRITONE_SUBSTITUTION' 
   | 'SECONDARY_LEADING_TONE'
   | 'MODAL_BORROWING'
+  | 'MODAL_AXIS'
   | 'PASSING_DIMINISHED'
   | 'COMMON_TONE_DIMINISHED'
   | 'NEIGHBOR_DIMINISHED'
@@ -210,8 +213,26 @@ export interface FunctionalHypothesis {
   };
 }
 
+export type ModalMode = 'IONIAN' | 'DORIAN' | 'PHRYGIAN' | 'LYDIAN' | 'MIXOLYDIAN' | 'AEOLIAN' | 'LOCRIAN';
+
+export type ModalAxis = 
+  | 'IONIAN_AXIS'
+  | 'DORIAN_AXIS'
+  | 'PHRYGIAN_AXIS'
+  | 'LYDIAN_AXIS'
+  | 'MIXOLYDIAN_AXIS'
+  | 'AEOLIAN_AXIS'
+  | 'LOCRIAN_AXIS';
+
+export interface ModalAxisContext {
+  sourceMode: ModalMode;
+  targetMode?: ModalMode;
+  modalAxis: ModalAxis;
+  confidence: number;
+}
+
 export interface ModalBorrowing {
-  sourceMode: 'AEOLIAN' | 'PHRYGIAN' | 'DORIAN' | 'LYDIAN' | 'IONIAN' | 'MIXOLYDIAN';
+  sourceMode: ModalMode;
   modeName: string;
 }
 
