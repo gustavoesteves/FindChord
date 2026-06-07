@@ -4,6 +4,7 @@ import type { VoiceRoleAnalysis } from "../models/VoiceRoleAnalysis";
 import type { VoicingClassification } from "../models/VoicingClassification";
 import type { VoicingScoreBreakdown } from "../models/VoicingScoreBreakdown";
 import type { VoicingAcoustics } from "../models/AnalyzedVoicing";
+import { CageShape } from "../models/VoicingShape";
 
 /**
  * Calcula o Voice Distribution Score (Métrica Acústica de Espaçamento Físico)
@@ -246,7 +247,7 @@ export function scoreVoicingQuality(frets: (number | null)[], notes: string[], t
     chordName: "C",
     frets,
     rootString: 0,
-    cageShape: "E" as any,
+    cageShape: CageShape.E,
     positionFret: 0,
     notes
   };

@@ -1,5 +1,5 @@
-import type { ContextualFunction } from './models/FunctionalAnalysis';
-import { analyzeProgression } from './functionalAnalysis';
+import type { ContextualFunction } from '../../models/FunctionalAnalysis';
+import { analyzeProgression } from '../../functionalAnalysis';
 
 const ALL_FUNCTIONS: ContextualFunction[] = [
   'PRIMARY',
@@ -45,11 +45,9 @@ export class TransitionTrainer {
       const analysis = analyzeProgression(prog, 'COMMON_PRACTICE');
       const chords = analysis.chords;
       for (let i = 0; i < chords.length - 1; i++) {
-        const fromFn = chords[i].contextualFunction;
-        const toFn = chords[i + 1].contextualFunction;
-        if (fromFn && toFn) {
-          this.addTransition(fromFn, toFn);
-        }
+        const fromFn = chords[i].secondary?.contextualFunction || chords[i].modal?.contextualFunction || 'PRIMARY';
+        const toFn = chords[i + 1].secondary?.contextualFunction || chords[i + 1].modal?.contextualFunction || 'PRIMARY';
+        this.addTransition(fromFn, toFn);
       }
     }
   }

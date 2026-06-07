@@ -242,8 +242,10 @@ export function analyzeResolutions(chords: FunctionalChord[]): FunctionalChord[]
 
     return {
       ...chord,
-      candidateResolutions: candidates.length > 0 ? candidates : undefined,
-      resolutionEvidence: bestEvidence
+      resolution: {
+        candidateResolutions: candidates.length > 0 ? candidates : undefined,
+        resolutionEvidence: bestEvidence
+      }
     };
   });
 }

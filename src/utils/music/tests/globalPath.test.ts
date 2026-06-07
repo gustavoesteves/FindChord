@@ -32,11 +32,7 @@ console.log('\n🎵 Test 1 — Diminished Ambiguity (C -> C#dim7 -> Dm7 -> G7 ->
     assert(a.globalPath.explanations.length > 0, 'explanations are populated');
   }
 
-  // Without Viterbi, SECONDARY_LEADING_TONE and PASSING_DIMINISHED tied at 0.95.
-  // With Viterbi, SECONDARY_LEADING_TONE (vii°7/ii) resolves perfectly to Dm7 (ii), receiving target resolution bonus.
-  // PASSING_DIMINISHED (target next = Dm7) also has target but SLT -> PRIMARY base transition (1.25) is higher than PASSING_DIMINISHED -> PRIMARY (1.10).
-  // Thus, SECONDARY_LEADING_TONE wins.
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 winner is SECONDARY_LEADING_TONE, got ${cSharp.contextualFunction}`);
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 winner is SECONDARY_LEADING_TONE, got ${cSharp.secondary?.contextualFunction}`);
   assert(cSharp.romanNumeral === 'vii°7/ii', `C#dim7 romanNumeral is vii°7/ii, got ${cSharp.romanNumeral}`);
 }
 
@@ -52,16 +48,16 @@ console.log('\n🎵 Test 2 — Chained Dominants (E7 -> A7 -> D7 -> G7 -> C)');
   const d7 = a.chords[2];
   const g7 = a.chords[3];
 
-  assert(e7.contextualFunction === 'SECONDARY_DOMINANT', `E7 is SECONDARY_DOMINANT, got ${e7.contextualFunction}`);
+  assert(e7.secondary?.contextualFunction === 'SECONDARY_DOMINANT', `E7 is SECONDARY_DOMINANT, got ${e7.secondary?.contextualFunction}`);
   assert(e7.romanNumeral === 'V7/vi', `E7 romanNumeral is V7/vi, got ${e7.romanNumeral}`); // Resolves to A7 (vi relative to C, or target V7/ii)
 
-  assert(a7.contextualFunction === 'SECONDARY_DOMINANT', `A7 is SECONDARY_DOMINANT, got ${a7.contextualFunction}`);
+  assert(a7.secondary?.contextualFunction === 'SECONDARY_DOMINANT', `A7 is SECONDARY_DOMINANT, got ${a7.secondary?.contextualFunction}`);
   assert(a7.romanNumeral === 'V7/ii', `A7 romanNumeral is V7/ii, got ${a7.romanNumeral}`); // Resolves to D7
 
-  assert(d7.contextualFunction === 'SECONDARY_DOMINANT', `D7 is SECONDARY_DOMINANT, got ${d7.contextualFunction}`);
+  assert(d7.secondary?.contextualFunction === 'SECONDARY_DOMINANT', `D7 is SECONDARY_DOMINANT, got ${d7.secondary?.contextualFunction}`);
   assert(d7.romanNumeral === 'V7/V', `D7 romanNumeral is V7/V, got ${d7.romanNumeral}`); // Resolves to G7
 
-  assert(g7.contextualFunction === 'PRIMARY', `G7 is PRIMARY (diatonic V7), got ${g7.contextualFunction}`);
+  assert(g7.secondary === undefined && g7.modal === undefined, `G7 is PRIMARY (diatonic V7)`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -73,8 +69,8 @@ console.log('\n🎵 Test 3 — Deviation Resilience (C -> C#dim7 -> Dm7 -> Fmaj7
   const cSharp = a.chords[1];
   const fmaj7 = a.chords[3];
 
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 resolves correctly as SECONDARY_LEADING_TONE, got ${cSharp.contextualFunction}`);
-  assert(fmaj7.contextualFunction === 'PRIMARY', `Fmaj7 resolves correctly as PRIMARY, got ${fmaj7.contextualFunction}`);
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 resolves correctly as SECONDARY_LEADING_TONE, got ${cSharp.secondary?.contextualFunction}`);
+  assert(fmaj7.secondary === undefined && fmaj7.modal === undefined, `Fmaj7 resolves correctly as PRIMARY`);
 }
 
 // ═══════════════════════════════════════════════════════════

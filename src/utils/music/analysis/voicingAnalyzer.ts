@@ -5,6 +5,9 @@ import type { VoiceRoleAnalysis, VoiceRole, HarmonicRole, TensionPresence, Voice
 import { analyzeChords } from "./chordAnalyzer";
 import type { FretPosition } from "../../../store/useChordStore";
 import { parseChord } from "../theory/chordParser";
+import type { AnalyzedVoicing, VoicingAcoustics } from "../models/AnalyzedVoicing";
+import type { VoicingShape } from "../models/VoicingShape";
+import { classifyVoicing } from "./voicingClassifier";
 
 // Mapeia a distância em semitônios para a função harmônica correspondente
 export function getHarmonicRole(interval: number, quality: string): HarmonicRole {
@@ -257,11 +260,6 @@ export function analyzeVoiceRoles(
     voices
   };
 }
-
-import type { AnalyzedVoicing, VoicingAcoustics } from "../models/AnalyzedVoicing";
-import type { VoicingShape } from "../models/VoicingShape";
-import { classifyVoicing } from "./voicingClassifier";
-
 export function buildAnalyzedVoicing(shape: VoicingShape, tuning: string[]): AnalyzedVoicing {
   const roles = analyzeVoiceRoles(shape.frets, tuning, shape.chordName);
   const classification = classifyVoicing(shape.frets, tuning, roles, shape.chordName);

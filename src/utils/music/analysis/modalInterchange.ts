@@ -1,43 +1,9 @@
 import type { FunctionalChord, TonalCenter, ModalBorrowing, FunctionalHypothesis } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
+import { isDominantType, isMajorType, isMinorType } from './helpers/qualityHelpers';
 
-// Quality helpers
-function isDominantType(quality: string): boolean {
-  return (
-    quality.startsWith('dominant') ||
-    quality === 'dominant7th' ||
-    quality === 'dominant9th' ||
-    quality === 'dominant11th' ||
-    quality === 'dominant13th' ||
-    quality === 'dominant7b9' ||
-    quality === 'dominant7#9' ||
-    quality === 'dominant7#11' ||
-    quality === 'dominant7b13' ||
-    quality === 'dominant7sus4'
-  );
-}
-
-function isMajorType(quality: string): boolean {
-  return (
-    quality === 'major' ||
-    quality === 'major7th' ||
-    quality === 'major9th' ||
-    quality === 'major13th' ||
-    quality === 'major6th' ||
-    quality === 'add9' ||
-    quality === '69'
-  );
-}
-
-function isMinorType(quality: string): boolean {
-  return (
-    quality.includes('minor') ||
-    quality === 'halfDiminished' ||
-    quality === 'diminished' ||
-    quality === 'diminished7th'
-  );
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 export function analyzeModalInterchange(
   chords: FunctionalChord[],

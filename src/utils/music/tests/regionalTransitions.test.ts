@@ -2,7 +2,7 @@
 // Run with: npx tsx src/utils/music/tests/regionalTransitions.test.ts
 
 import { analyzeProgression } from '../analysis/functionalAnalysis';
-import { getKeyRelation } from '../analysis/pathResolver';
+import { getKeyRelation } from '../theory/tonalRelations';
 import type { TonalCenter } from '../analysis/models/FunctionalAnalysis';
 
 let passed = 0;

@@ -15,6 +15,8 @@ import type {
 } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
+import { isMinorType, isDominantType, isDiminishedType, getQualitySuffix } from './helpers/qualityHelpers';
+import { getDiatonicDegree } from '../theory/scaleDegree';
 
 // ─── Diatonic Field Definitions ──────────────────────────────
 
@@ -78,67 +80,7 @@ const MINOR_FIELD: DiatonicEntry[] = [
   { offset: 11, isMinorChord: true,  scaleDegree: 'vii°', romanBase: 'vii°', function: 'DOMINANT',    confidence: 1.0 },
 ];
 
-// ─── Quality Detection Helpers ───────────────────────────────
-
-function isMinorType(quality: string): boolean {
-  return (
-    quality.includes('minor') ||
-    quality === 'halfDiminished' ||
-    quality === 'diminished' ||
-    quality === 'diminished7th'
-  );
-}
-
-function isDominantType(quality: string): boolean {
-  return quality.startsWith('dominant');
-}
-
-function isDiminishedType(quality: string): boolean {
-  return (
-    quality === 'diminished' ||
-    quality === 'diminished7th' ||
-    quality === 'halfDiminished'
-  );
-}
-
-/**
- * Builds a display-ready quality suffix for the roman numeral.
- * Examples: "maj7", "m7", "7", "m7(b5)", "°", "sus4"
- */
-function getQualitySuffix(quality: string): string {
-  const map: Record<string, string> = {
-    'major': '',
-    'minor': '',
-    'major7th': 'maj7',
-    'minor7th': 'm7',
-    'dominant7th': '7',
-    'halfDiminished': 'm7(b5)',
-    'diminished': '°',
-    'diminished7th': '°7',
-    'augmented': '+',
-    'major9th': 'maj9',
-    'minor9th': 'm9',
-    'dominant9th': '9',
-    'minor11th': 'm11',
-    'dominant11th': '11',
-    'major13th': 'maj13',
-    'minor13th': 'm13',
-    'dominant13th': '13',
-    'dominant7b9': '7(b9)',
-    'dominant7#9': '7(#9)',
-    'dominant7#11': '7(#11)',
-    'dominant7b13': '7(b13)',
-    'dominant7sus4': '7sus4',
-    'major7#11': 'maj7(#11)',
-    'major6th': '6',
-    'minor6th': 'm6',
-    'sus2': 'sus2',
-    'sus4': 'sus4',
-    'add9': 'add9',
-    'minorMajor7th': 'm(maj7)',
-  };
-  return map[quality] ?? '';
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 // ─── Interval to Scale Degree (non-diatonic fallback) ────────
 
@@ -334,8 +276,7 @@ export function classifyChordFunction(
     }
 
     // Numeric degree (1-7)
-    const degreeMap: Record<number, number> = { 0: 1, 2: 2, 3: 3, 4: 3, 5: 4, 7: 5, 8: 6, 9: 6, 10: 7, 11: 7 };
-    const degree = degreeMap[offset] ?? 1;
+    const degree = getDiatonicDegree(offset);
 
     return {
       index,
@@ -347,15 +288,13 @@ export function classifyChordFunction(
       isDiatonic: true,
       analysisTags: [] as AnalysisTag[],
       confidence: entry.confidence,
-      contextualFunction: 'PRIMARY',
     };
   }
 
   // ── Non-diatonic chord fallback ──────────────────────
   const scaleDegree = offsetToScaleDegree(offset, chordIsMinor, isMajorKey);
   const inferred = inferNonDiatonicFunction(offset, parsed.quality, isMajorKey);
-  const degreeMap: Record<number, number> = { 0: 1, 1: 2, 2: 2, 3: 3, 4: 3, 5: 4, 6: 4, 7: 5, 8: 6, 9: 6, 10: 7, 11: 7 };
-  const degree = degreeMap[offset] ?? 1;
+  const degree = getDiatonicDegree(offset);
   const romanNumeral = scaleDegree + qualitySuffix;
 
   return {

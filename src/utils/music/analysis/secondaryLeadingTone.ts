@@ -1,7 +1,7 @@
 import type { FunctionalChord, TonalCenter, FunctionalHypothesis } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
-import { getDiatonicTargetDegree } from './secondaryAnalysis';
+import { getDiatonicTargetDegree } from '../theory/scaleDegree';
 
 /**
  * Analyzes secondary leading-tone chords (vii°7/x, vii°/x, viiø7/x)
@@ -32,7 +32,7 @@ export function analyzeSecondaryLeadingTones(
     if (!isDim) continue;
 
     // Check if we have a valid resolution evidence pointing to a lookahead target
-    const ev = current.resolutionEvidence;
+    const ev = current.resolution?.resolutionEvidence;
     if (!ev) continue;
 
     const tgtIdx = ev.targetChordIndex;

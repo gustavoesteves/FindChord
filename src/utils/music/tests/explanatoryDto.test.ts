@@ -24,13 +24,13 @@ console.log('\n🎵 Test 1 — Lookahead Candidate Resolutions');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
 
-  assert(cSharp.candidateResolutions !== undefined, 'candidateResolutions is populated');
-  if (cSharp.candidateResolutions) {
-    assert(cSharp.candidateResolutions.length >= 2, `Has at least 2 candidates, got ${cSharp.candidateResolutions.length}`);
+  assert(cSharp.resolution?.candidateResolutions !== undefined, 'candidateResolutions is populated');
+  if (cSharp.resolution?.candidateResolutions) {
+    assert(cSharp.resolution.candidateResolutions.length >= 2, `Has at least 2 candidates, got ${cSharp.resolution.candidateResolutions.length}`);
     
     // Check that Dm7 and G7 resolutions are evaluated in candidates
-    const hasDm7 = cSharp.candidateResolutions.some(c => c.targetChordIndex === 2);
-    const hasG7 = cSharp.candidateResolutions.some(c => c.targetChordIndex === 3);
+    const hasDm7 = cSharp.resolution.candidateResolutions.some(c => c.targetChordIndex === 2);
+    const hasG7 = cSharp.resolution.candidateResolutions.some(c => c.targetChordIndex === 3);
     assert(hasDm7, 'Evaluated Dm7 target in lookahead');
     assert(hasG7, 'Evaluated G7 target in lookahead');
   }
@@ -45,17 +45,17 @@ console.log('\n🎵 Test 2 — Pedagogical Explanations');
   
   // Secondary Dominant A7
   const a7 = a.chords[1];
-  assert(a7.explanation !== undefined, 'A7 has explanations');
-  if (a7.explanation) {
-    assert(a7.explanation.some(e => e.includes('Secondary dominant')), `Secondary dominant explanation exists, got: ${JSON.stringify(a7.explanation)}`);
+  assert(a7.debug?.explanation !== undefined, 'A7 has explanations');
+  if (a7.debug?.explanation) {
+    assert(a7.debug.explanation.some(e => e.includes('Secondary dominant')), `Secondary dominant explanation exists, got: ${JSON.stringify(a7.debug.explanation)}`);
   }
 
   // Primary / Diatonic Cmaj7 (now has a primary explanation under the new Viterbi path resolver)
   const cMaj = a.chords[0];
   assert(
-    cMaj.explanation !== undefined && cMaj.explanation.includes('Diatonic chord in this key center'),
+    cMaj.debug?.explanation !== undefined && cMaj.debug.explanation.includes('Diatonic chord in this key center'),
     'Primary chord has diatonic explanation by default',
-    `got: ${JSON.stringify(cMaj.explanation)}`
+    `got: ${JSON.stringify(cMaj.debug?.explanation)}`
   );
 }
 
@@ -67,10 +67,10 @@ console.log('\n🎵 Test 3 — Caso A (C -> C#°7 -> Dm7)');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
   
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 function is SECONDARY_LEADING_TONE, got ${cSharp.contextualFunction}`);
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 function is SECONDARY_LEADING_TONE, got ${cSharp.secondary?.contextualFunction}`);
   assert(cSharp.romanNumeral === 'vii°7/ii', `Roman numeral is vii°7/ii, got ${cSharp.romanNumeral}`);
-  if (cSharp.explanation) {
-    assert(cSharp.explanation.some(e => e.includes('secondary leading-tone')), 'Explanation mentions leading tone');
+  if (cSharp.debug?.explanation) {
+    assert(cSharp.debug.explanation.some(e => e.includes('secondary leading-tone')), 'Explanation mentions leading tone');
   }
 }
 
@@ -82,10 +82,10 @@ console.log('\n🎵 Test 4 — Caso B (C -> C#°7 -> C)');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Cmaj7']);
   const cSharp = a.chords[1];
 
-  assert(cSharp.contextualFunction === 'NEIGHBOR_DIMINISHED', `C#dim7 function is NEIGHBOR_DIMINISHED, got ${cSharp.contextualFunction}`);
+  assert(cSharp.modal?.contextualFunction === 'NEIGHBOR_DIMINISHED', `C#dim7 function is NEIGHBOR_DIMINISHED, got ${cSharp.modal?.contextualFunction}`);
   assert(cSharp.romanNumeral === '#I°7', `Roman numeral is #I°7, got ${cSharp.romanNumeral}`);
-  if (cSharp.explanation) {
-    assert(cSharp.explanation.some(e => e.includes('Neighbor diminished')), 'Explanation mentions Neighbor diminished');
+  if (cSharp.debug?.explanation) {
+    assert(cSharp.debug.explanation.some(e => e.includes('Neighbor diminished')), 'Explanation mentions Neighbor diminished');
   }
 }
 
@@ -98,7 +98,7 @@ console.log('\n🎵 Test 5 — Caso C (C -> C#°7 -> D7)');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'D7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
 
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 function is SECONDARY_LEADING_TONE, got ${cSharp.contextualFunction}`);
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', `C#dim7 function is SECONDARY_LEADING_TONE, got ${cSharp.secondary?.contextualFunction}`);
   assert(cSharp.romanNumeral === 'vii°7/ii', `Roman numeral resolves to root degree: vii°7/ii, got ${cSharp.romanNumeral}`);
 }
 

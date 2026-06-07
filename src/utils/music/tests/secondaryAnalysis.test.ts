@@ -28,9 +28,9 @@ console.log('\n🎵 Test 1 — Classic Secondary Dominant (A7 -> Dm7)');
   assert(a.chords[1].romanNumeral === 'V7/ii', 'A7 romanNumeral = V7/ii', `got ${a.chords[1].romanNumeral}`);
   assert(a.chords[1].harmonicFunction === 'DOMINANT', 'A7 harmonicFunction = DOMINANT');
   assert(a.chords[1].analysisTags.includes('SECONDARY_DOMINANT'), 'A7 has SECONDARY_DOMINANT tag');
-  assert(a.chords[1].secondaryTarget === 'ii', 'A7 secondaryTarget = ii');
+  assert(a.chords[1].secondary?.secondaryTarget === 'ii', 'A7 secondaryTarget = ii');
   assert(a.chords[1].confidence === 0.95, 'A7 confidence boosted to 0.95', `got ${a.chords[1].confidence}`);
-  assert(a.chords[1].contextualAnalysis?.resolutionDistance === 1, 'A7 resolutionDistance = 1');
+  assert(a.chords[1].secondary?.contextualAnalysis?.resolutionDistance === 1, 'A7 resolutionDistance = 1');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -43,7 +43,7 @@ console.log('\n🎵 Test 2 — Lookahead Resolution (A7 -> Fmaj7 -> Dm7)');
   assert(a.chords[1].chordSymbol === 'A7', 'A7 chord found');
   assert(a.chords[1].romanNumeral === 'V7/ii', 'A7 romanNumeral = V7/ii (resolves to Dm7 skipping Fmaj7)', `got ${a.chords[1].romanNumeral}`);
   assert(a.chords[1].analysisTags.includes('SECONDARY_DOMINANT'), 'A7 has SECONDARY_DOMINANT tag');
-  assert(a.chords[1].contextualAnalysis?.resolutionDistance === 2, 'A7 resolutionDistance = 2');
+  assert(a.chords[1].secondary?.contextualAnalysis?.resolutionDistance === 2, 'A7 resolutionDistance = 2');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -86,7 +86,7 @@ console.log('\n🎵 Test 4 — SubV7 vs Major quality check');
   const aDom = analyzeProgression(['Cmaj7', 'Db7', 'Cmaj7']);
   assert(aDom.chords[1].romanNumeral === 'subV7/I', 'Db7 = subV7/I', `got ${aDom.chords[1].romanNumeral}`);
   assert(aDom.chords[1].analysisTags.includes('TRITONE_SUBSTITUTION'), 'Db7 has TRITONE_SUBSTITUTION tag');
-  assert(aDom.chords[1].secondaryTarget === 'I', 'Db7 secondaryTarget = I');
+  assert(aDom.chords[1].secondary?.secondaryTarget === 'I', 'Db7 secondaryTarget = I');
 }
 
 // ═══════════════════════════════════════════════════════════

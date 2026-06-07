@@ -24,20 +24,20 @@ console.log('\n🎵 Test 1 — Real Ambiguity (C -> C#dim7 -> Dm7)');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
 
-  assert(cSharp.functionalHypotheses !== undefined, 'functionalHypotheses is defined');
-  if (cSharp.functionalHypotheses) {
-    assert(cSharp.functionalHypotheses.length >= 2, `Has at least 2 hypotheses, got ${cSharp.functionalHypotheses.length}`);
+  assert(cSharp.debug?.functionalHypotheses !== undefined, 'functionalHypotheses is defined');
+  if (cSharp.debug?.functionalHypotheses) {
+    assert(cSharp.debug.functionalHypotheses.length >= 2, `Has at least 2 hypotheses, got ${cSharp.debug.functionalHypotheses.length}`);
     
     // Check for SECONDARY_LEADING_TONE and PASSING_DIMINISHED
-    const hasLeadingTone = cSharp.functionalHypotheses.some(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
-    const hasPassing = cSharp.functionalHypotheses.some(h => h.contextualFunction === 'PASSING_DIMINISHED');
+    const hasLeadingTone = cSharp.debug.functionalHypotheses.some(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
+    const hasPassing = cSharp.debug.functionalHypotheses.some(h => h.contextualFunction === 'PASSING_DIMINISHED');
 
     assert(hasLeadingTone, 'Has SECONDARY_LEADING_TONE hypothesis');
     assert(hasPassing, 'Has PASSING_DIMINISHED hypothesis');
 
     // Verify both have the same confidence (0.95)
-    const ltHyp = cSharp.functionalHypotheses.find(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
-    const psHyp = cSharp.functionalHypotheses.find(h => h.contextualFunction === 'PASSING_DIMINISHED');
+    const ltHyp = cSharp.debug.functionalHypotheses.find(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
+    const psHyp = cSharp.debug.functionalHypotheses.find(h => h.contextualFunction === 'PASSING_DIMINISHED');
 
     if (ltHyp && psHyp) {
       assert(ltHyp.confidence === 0.95, 'Leading tone hypothesis has 0.95 confidence');
@@ -45,7 +45,7 @@ console.log('\n🎵 Test 1 — Real Ambiguity (C -> C#dim7 -> Dm7)');
     }
 
     // Verify winner selection via precedence tie-breaking (SECONDARY_LEADING_TONE wins over PASSING_DIMINISHED)
-    assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', `Winner is SECONDARY_LEADING_TONE, got ${cSharp.contextualFunction}`);
+    assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', `Winner is SECONDARY_LEADING_TONE, got ${cSharp.secondary?.contextualFunction}`);
   }
 }
 
@@ -57,11 +57,11 @@ console.log('\n🎵 Test 2 — Diatonic Compatibility (PRIMARY)');
   const a = analyzeProgression(['Dm7', 'G7', 'Cmaj7']);
   
   const dm7 = a.chords[0];
-  assert(dm7.contextualFunction === 'PRIMARY', `Dm7 winner is PRIMARY, got ${dm7.contextualFunction}`);
-  assert(dm7.functionalHypotheses !== undefined, 'Dm7 has functionalHypotheses');
-  if (dm7.functionalHypotheses) {
-    assert(dm7.functionalHypotheses[0].contextualFunction === 'PRIMARY', 'PRIMARY is the first (winning) hypothesis');
-    assert(dm7.functionalHypotheses[0].confidence === 1.0, 'PRIMARY has 1.0 confidence');
+  assert(dm7.secondary === undefined && dm7.modal === undefined, `Dm7 winner is PRIMARY`);
+  assert(dm7.debug?.functionalHypotheses !== undefined, 'Dm7 has functionalHypotheses');
+  if (dm7.debug?.functionalHypotheses) {
+    assert(dm7.debug.functionalHypotheses[0].contextualFunction === 'PRIMARY', 'PRIMARY is the first (winning) hypothesis');
+    assert(dm7.debug.functionalHypotheses[0].confidence === 1.0, 'PRIMARY has 1.0 confidence');
   }
 }
 
@@ -73,8 +73,8 @@ console.log('\n🎵 Test 3 — Structured Evidence in Hypotheses');
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
 
-  if (cSharp.functionalHypotheses) {
-    const ltHyp = cSharp.functionalHypotheses.find(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
+  if (cSharp.debug?.functionalHypotheses) {
+    const ltHyp = cSharp.debug.functionalHypotheses.find(h => h.contextualFunction === 'SECONDARY_LEADING_TONE');
     assert(ltHyp !== undefined, 'Found leading tone hypothesis');
     if (ltHyp) {
       assert(ltHyp.evidence !== undefined, 'Hypothesis contains resolution evidence');

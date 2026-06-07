@@ -372,7 +372,7 @@ export default function VoicingSelector() {
             {/* Seletor de Ordenação */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="bg-zinc-950 text-zinc-300 text-[10px] font-black uppercase px-2.5 py-1.5 rounded border border-zinc-800 outline-none cursor-pointer focus:border-purple-600 transition"
             >
               <option value="quality">Ordenar por: Qualidade</option>

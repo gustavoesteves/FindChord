@@ -3,6 +3,7 @@
 
 import { analyzeProgression, generateTonalNarrative } from '../analysis/functionalAnalysis';
 import type { TonalRegion, TonalSummary } from '../analysis/models/FunctionalAnalysis';
+import { NarrativeFormatter } from '../presentation/NarrativeFormatter';
 
 let passed = 0;
 let failed = 0;
@@ -30,7 +31,8 @@ console.log('\n🎵 Caso 1 — Diatônico Simples (STATIC) (Cmaj7 -> Fmaj7 -> G7
     assert(n.narrativeType === 'STATIC', `narrativeType is STATIC (got ${n.narrativeType})`);
     assert(n.primaryTrajectory.length === 1, `primaryTrajectory has length 1 (got ${n.primaryTrajectory.length})`);
     assert(n.primaryTrajectory[0].root === 'C' && n.primaryTrajectory[0].mode === 'MAJOR', 'Trajectory contains only C MAJOR');
-    assert(n.summaryText.includes('permanece totalmente estável'), `summaryText is appropriate: "${n.summaryText}"`);
+    const summaryText = NarrativeFormatter.formatNarrative(n, analysis.summary?.tonalStability ?? 1.0);
+    assert(summaryText.includes('permanece totalmente estável'), `summaryText is appropriate: "${summaryText}"`);
   }
 }
 
@@ -71,7 +73,8 @@ console.log('\n🎵 Caso 2 — Cadeia de Tonicizações (TONICIZATION_CHAIN)');
     assert(n.narrativeType === 'TONICIZATION_CHAIN', `narrativeType is TONICIZATION_CHAIN (got ${n.narrativeType})`);
     assert(n.primaryTrajectory.length === 1, `primaryTrajectory filters out local tonicizations (got length ${n.primaryTrajectory.length})`);
     assert(n.primaryTrajectory[0].root === 'C' && n.primaryTrajectory[0].mode === 'MAJOR', 'Primary trajectory remains C MAJOR');
-    assert(n.summaryText.includes('apresentando breves tonicizações'), `summaryText details local desvios: "${n.summaryText}"`);
+    const summaryText = NarrativeFormatter.formatNarrative(n, mockSummary.tonalStability);
+    assert(summaryText.includes('apresentando breves tonicizações'), `summaryText details local desvios: "${summaryText}"`);
   }
 }
 
@@ -122,7 +125,8 @@ console.log('\n🎵 Caso 4 — Modulação Direta (MODULATING) (Cmaj7 -> Fmaj7 -
       assert(n.primaryTrajectory[0].root === 'C', 'Departure key C');
       assert(n.primaryTrajectory[1].root === 'G', 'Arrival key G');
     }
-    assert(n.summaryText.includes('modulação estrutural direta'), `summaryText points out direct modulation: "${n.summaryText}"`);
+    const summaryText = NarrativeFormatter.formatNarrative(n, analysis.summary?.tonalStability ?? 1.0);
+    assert(summaryText.includes('modulação estrutural direta'), `summaryText points out direct modulation: "${summaryText}"`);
   }
 }
 

@@ -91,9 +91,9 @@ console.log('\n🎵 Caso 3 — Tonicization Classification (1-2 chords transitio
 {
   const mockHomeKey: TonalCenter = { root: 'C', mode: 'MAJOR', confidence: 1.0 };
   const mockChords: FunctionalChord[] = [
-    { index: 0, chordSymbol: 'Cmaj7', romanNumeral: 'Imaj7', scaleDegree: 'I', harmonicFunction: 'TONIC', degree: 1, isDiatonic: true, confidence: 1.0, analysisTags: [], tonalCenter: { root: 'C', mode: 'MAJOR', confidence: 1.0 } },
-    { index: 1, chordSymbol: 'F#dim7', romanNumeral: 'vii°7', scaleDegree: 'vii°', harmonicFunction: 'DOMINANT', degree: 7, isDiatonic: false, confidence: 0.90, analysisTags: [], tonalCenter: { root: 'G', mode: 'MAJOR', confidence: 1.0 } }, // 1-chord tonicization
-    { index: 2, chordSymbol: 'Cmaj7', romanNumeral: 'Imaj7', scaleDegree: 'I', harmonicFunction: 'TONIC', degree: 1, isDiatonic: true, confidence: 1.0, analysisTags: [], tonalCenter: { root: 'C', mode: 'MAJOR', confidence: 1.0 } }
+    { index: 0, chordSymbol: 'Cmaj7', romanNumeral: 'Imaj7', scaleDegree: 'I', harmonicFunction: 'TONIC', degree: 1, isDiatonic: true, confidence: 1.0, analysisTags: [], tonal: { tonalCenter: { root: 'C', mode: 'MAJOR', confidence: 1.0 } } },
+    { index: 1, chordSymbol: 'F#dim7', romanNumeral: 'vii°7', scaleDegree: 'vii°', harmonicFunction: 'DOMINANT', degree: 7, isDiatonic: false, confidence: 0.90, analysisTags: [], tonal: { tonalCenter: { root: 'G', mode: 'MAJOR', confidence: 1.0 } } }, // 1-chord tonicization
+    { index: 2, chordSymbol: 'Cmaj7', romanNumeral: 'Imaj7', scaleDegree: 'I', harmonicFunction: 'TONIC', degree: 1, isDiatonic: true, confidence: 1.0, analysisTags: [], tonal: { tonalCenter: { root: 'C', mode: 'MAJOR', confidence: 1.0 } } }
   ];
   const mockCadences: CadenceInfo[] = [];
 

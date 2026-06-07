@@ -25,7 +25,7 @@ console.log('\n🎵 Caso 1 — Diatonic Progression (Cmaj7 -> Am7 -> Dm7 -> G7 -
   
   assert(a.tonalCenter.root === 'C' && a.tonalCenter.mode === 'MAJOR', 'Overall Key = C MAJOR');
   
-  const allInC = a.chords.every(c => c.tonalCenter?.root === 'C' && c.tonalCenter?.mode === 'MAJOR');
+  const allInC = a.chords.every(c => c.tonal?.tonalCenter?.root === 'C' && c.tonal?.tonalCenter?.mode === 'MAJOR');
   assert(allInC, 'All chords resolved under C MAJOR tonal center');
   assert((a.globalPath?.modulations?.length ?? 0) === 0, 'No modulation events detected');
 }
@@ -40,7 +40,7 @@ console.log('\n🎵 Caso 2 — Persistent Modulation (C -> Am -> C)');
     'Bm7(b5)', 'E7', 'Am7', 'Dm7', 'E7', 'Am7', 'Dm7', 'G7', 'Cmaj7'
   ]);
 
-  const keys = a.chords.map(c => `${c.tonalCenter?.root} ${c.tonalCenter?.mode}`);
+  const keys = a.chords.map(c => c.tonal?.tonalCenter ? `${c.tonal.tonalCenter.root} ${c.tonal.tonalCenter.mode}` : 'undefined undefined');
   console.log('  Resolved Keys sequence:', keys.join(' -> '));
 
   assert(keys[0] === 'C MAJOR', 'Starts in C MAJOR');
@@ -66,14 +66,14 @@ console.log('\n🎵 Caso 3 — Tonicization Prevention (Cmaj7 -> Fmaj7 -> G7 -> 
 {
   const a = analyzeProgression(['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7', 'A7', 'Dm7', 'G7', 'Cmaj7']);
 
-  const keys = a.chords.map(c => `${c.tonalCenter?.root} ${c.tonalCenter?.mode}`);
+  const keys = a.chords.map(c => c.tonal?.tonalCenter ? `${c.tonal.tonalCenter.root} ${c.tonal.tonalCenter.mode}` : 'undefined undefined');
   console.log('  Resolved Keys sequence:', keys.join(' -> '));
 
-  const allInC = a.chords.every(c => c.tonalCenter?.root === 'C' && c.tonalCenter?.mode === 'MAJOR');
+  const allInC = a.chords.every(c => c.tonal?.tonalCenter?.root === 'C' && c.tonal?.tonalCenter?.mode === 'MAJOR');
   assert(allInC, 'Remained in C MAJOR the whole progression, avoiding key-hopping for brief tonicization');
   
   const a7 = a.chords[4];
-  assert(a7.contextualFunction === 'SECONDARY_DOMINANT', 'A7 resolved as SECONDARY_DOMINANT');
+  assert(a7.secondary?.contextualFunction === 'SECONDARY_DOMINANT', 'A7 resolved as SECONDARY_DOMINANT');
   assert(a7.romanNumeral === 'V7/ii', `A7 Roman numeral is V7/ii, got ${a7.romanNumeral}`);
 }
 

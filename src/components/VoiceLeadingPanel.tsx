@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
-import { analyzeProgression, getFunctionLabel } from "../utils/music/analysis/functionalAnalysis";
+import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
+import { getFunctionLabel } from "../utils/music/presentation/functionDisplayHelpers";
 import { playGuitarChord, playMetronomeClick } from "../utils/audioSynth";
 import { 
   Play, 

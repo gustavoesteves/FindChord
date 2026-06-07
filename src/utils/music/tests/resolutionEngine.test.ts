@@ -57,13 +57,13 @@ console.log('\n🎵 Test 2 — Chromatic/Diminished Resolution (C#dim7 -> Dm7, l
   const cSharp = a.chords[1];
   
   assert(cSharp.chordSymbol === 'C#dim7', 'Found C#dim7');
-  assert(cSharp.resolutionEvidence !== undefined, 'C#dim7 has resolutionEvidence');
+  assert(cSharp.resolution?.resolutionEvidence !== undefined, 'C#dim7 has resolutionEvidence');
   
-  if (cSharp.resolutionEvidence) {
+  if (cSharp.resolution?.resolutionEvidence) {
     // Fmaj7 score is 0.625. Dm7 score is 0.675. Since Dm7 has a higher score, it resolves to Dm7.
-    assert(cSharp.resolutionEvidence.targetChordIndex === 3, 'Resolution target is Dm7 (index 3)', `got ${cSharp.resolutionEvidence.targetChordIndex}`);
-    assert(cSharp.resolutionEvidence.resolutionDistance === 2, 'Resolution distance is 2', `got ${cSharp.resolutionEvidence.resolutionDistance}`);
-    assert(cSharp.resolutionEvidence.harmonicResolutionScore === 0.675, `Resolution score is 0.675: ${cSharp.resolutionEvidence.harmonicResolutionScore}`);
+    assert(cSharp.resolution.resolutionEvidence.targetChordIndex === 3, 'Resolution target is Dm7 (index 3)', `got ${cSharp.resolution.resolutionEvidence.targetChordIndex}`);
+    assert(cSharp.resolution.resolutionEvidence.resolutionDistance === 2, 'Resolution distance is 2', `got ${cSharp.resolution.resolutionEvidence.resolutionDistance}`);
+    assert(cSharp.resolution.resolutionEvidence.harmonicResolutionScore === 0.675, `Resolution score is 0.675: ${cSharp.resolution.resolutionEvidence.harmonicResolutionScore}`);
   }
 }
 
@@ -76,12 +76,12 @@ console.log('\n🎵 Test 3 — Lookahead Resolution with Inversion (C#dim7 -> Dm
   const cSharp = a.chords[0];
   
   assert(cSharp.chordSymbol === 'C#dim7', 'Found C#dim7');
-  assert(cSharp.resolutionEvidence !== undefined, 'C#dim7 has resolutionEvidence');
+  assert(cSharp.resolution?.resolutionEvidence !== undefined, 'C#dim7 has resolutionEvidence');
   
-  if (cSharp.resolutionEvidence) {
+  if (cSharp.resolution?.resolutionEvidence) {
     // Both Dm/A (index 1) and Dm (index 2) have the same score (0.675). The engine prefers index 1 because it is closer.
-    assert(cSharp.resolutionEvidence.targetChordIndex === 1, `Target chord index is 1 (Dm/A), got ${cSharp.resolutionEvidence.targetChordIndex}`);
-    assert(cSharp.resolutionEvidence.resolutionDistance === 1, `Resolution distance is 1, got ${cSharp.resolutionEvidence.resolutionDistance}`);
+    assert(cSharp.resolution.resolutionEvidence.targetChordIndex === 1, `Target chord index is 1 (Dm/A), got ${cSharp.resolution.resolutionEvidence.targetChordIndex}`);
+    assert(cSharp.resolution.resolutionEvidence.resolutionDistance === 1, `Resolution distance is 1, got ${cSharp.resolution.resolutionEvidence.resolutionDistance}`);
   }
 }
 
@@ -93,14 +93,14 @@ console.log('\n🎵 Test 4 — Ambiguity: Dm vs C resolution targets');
   // Dm case (strong resolution to Dm at lookahead 2, score 0.675 > G7 score 0.65)
   const aDm = analyzeProgression(['C#dim7', 'G7', 'Dm']);
   const cSharpDm = aDm.chords[0];
-  assert(cSharpDm.resolutionEvidence !== undefined, 'C#dim7 in Dm case has resolutionEvidence');
-  assert(cSharpDm.resolutionEvidence?.targetChordIndex === 2, `C#dim7 resolves to Dm (index 2), got ${cSharpDm.resolutionEvidence?.targetChordIndex}`);
+  assert(cSharpDm.resolution?.resolutionEvidence !== undefined, 'C#dim7 in Dm case has resolutionEvidence');
+  assert(cSharpDm.resolution?.resolutionEvidence?.targetChordIndex === 2, `C#dim7 resolves to Dm (index 2), got ${cSharpDm.resolution?.resolutionEvidence?.targetChordIndex}`);
 
   // C case (C#dim7 -> G7 is 0.65, C#dim7 -> C is 0.425. So it resolves to G7 (index 1))
   const aC = analyzeProgression(['C#dim7', 'G7', 'C']);
   const cSharpC = aC.chords[0];
-  assert(cSharpC.resolutionEvidence !== undefined, 'C#dim7 in C case has resolutionEvidence');
-  assert(cSharpC.resolutionEvidence?.targetChordIndex === 1, `C#dim7 resolves to G7 (index 1), got ${cSharpC.resolutionEvidence?.targetChordIndex}`);
+  assert(cSharpC.resolution?.resolutionEvidence !== undefined, 'C#dim7 in C case has resolutionEvidence');
+  assert(cSharpC.resolution?.resolutionEvidence?.targetChordIndex === 1, `C#dim7 resolves to G7 (index 1), got ${cSharpC.resolution?.resolutionEvidence?.targetChordIndex}`);
 }
 
 // ═══════════════════════════════════════════════════════════

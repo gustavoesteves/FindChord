@@ -2,7 +2,7 @@
 // Run with: npx tsx src/utils/music/tests/transitionLearning.test.ts
 
 import { analyzeProgression } from '../analysis/functionalAnalysis';
-import { TransitionTrainer } from '../analysis/transitionTrainer';
+import { TransitionTrainer } from '../analysis/_experimental/fx/transitionTrainer';
 import type { ContextualFunction } from '../analysis/models/FunctionalAnalysis';
 
 let passed = 0;
@@ -65,20 +65,22 @@ console.log('\n🎵 Test 2 — Grammar Profile Analysis for Db7 -> Cmaj7');
   // In extended functional profile, Triton Substitution is highly likely/favored
   const extendedAnalysis = analyzeProgression(['Cmaj7', 'Db7', 'Cmaj7'], 'EXTENDED_FUNCTIONAL');
   const extendedDb7 = extendedAnalysis.chords[1];
+  const extendedDb7Fn = extendedDb7.secondary?.contextualFunction || extendedDb7.modal?.contextualFunction || 'PRIMARY';
   
   assert(
-    extendedDb7.contextualFunction === 'TRITONE_SUBSTITUTION',
+    extendedDb7Fn === 'TRITONE_SUBSTITUTION',
     `Extended Functional profile: Db7 is identified as TRITONE_SUBSTITUTION`,
-    `got ${extendedDb7.contextualFunction}`
+    `got ${extendedDb7Fn}`
   );
 
   // In common practice profile, Triton Substitution is not favored in the corpus (not common)
   const commonAnalysis = analyzeProgression(['Cmaj7', 'Db7', 'Cmaj7'], 'COMMON_PRACTICE');
   const commonDb7 = commonAnalysis.chords[1];
+  const commonDb7Fn = commonDb7.secondary?.contextualFunction || commonDb7.modal?.contextualFunction || 'PRIMARY';
   
-  console.log(`  Common Practice Db7 function: ${commonDb7.contextualFunction} (confidence: ${commonDb7.confidence.toFixed(2)})`);
+  console.log(`  Common Practice Db7 function: ${commonDb7Fn} (confidence: ${commonDb7.confidence.toFixed(2)})`);
   assert(
-    commonDb7.contextualFunction !== undefined,
+    commonDb7Fn !== undefined,
     `Common Practice profile: Db7 has a resolved function`
   );
 }

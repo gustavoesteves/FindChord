@@ -18,18 +18,21 @@ export type HarmonicFunction = 'TONIC' | 'SUBDOMINANT' | 'DOMINANT';
  *  - 6E: MODAL_BORROWING
  *  - 6F: CHROMATIC_APPROACH
  */
-export type AnalysisTag =
-  | 'SECONDARY_DOMINANT'
-  | 'TRITONE_SUBSTITUTION'
-  | 'SECONDARY_LEADING_TONE'
-  | 'MODAL_BORROWING'
-  | 'II_V_CADENCE'
-  | 'BLUES_DOMINANT'
-  | 'CHROMATIC_APPROACH'
-  | 'PICARDY_THIRD'
-  | 'PASSING_DIMINISHED'
-  | 'COMMON_TONE_DIMINISHED'
-  | 'NEIGHBOR_DIMINISHED';
+export const AnalysisTag = {
+  SECONDARY_DOMINANT: 'SECONDARY_DOMINANT',
+  TRITONE_SUBSTITUTION: 'TRITONE_SUBSTITUTION',
+  SECONDARY_LEADING_TONE: 'SECONDARY_LEADING_TONE',
+  MODAL_BORROWING: 'MODAL_BORROWING',
+  II_V_CADENCE: 'II_V_CADENCE',
+  BLUES_DOMINANT: 'BLUES_DOMINANT',
+  CHROMATIC_APPROACH: 'CHROMATIC_APPROACH',
+  PICARDY_THIRD: 'PICARDY_THIRD',
+  PASSING_DIMINISHED: 'PASSING_DIMINISHED',
+  COMMON_TONE_DIMINISHED: 'COMMON_TONE_DIMINISHED',
+  NEIGHBOR_DIMINISHED: 'NEIGHBOR_DIMINISHED'
+} as const;
+
+export type AnalysisTag = typeof AnalysisTag[keyof typeof AnalysisTag];
 
 
 
@@ -74,6 +77,46 @@ export interface TonalCenter {
  * (ex: "bII", "#IV", "bVII"). Diferente de `romanNumeral` que é
  * formatado para display (ex: "bII7", "vii°").
  */
+export interface TonalContext {
+  tonalCenter: TonalCenter;
+}
+
+export interface SecondaryContext {
+  secondaryTarget: string;
+  contextualAnalysis: ContextualAnalysis;
+  contextualFunction: 'SECONDARY_DOMINANT' | 'TRITONE_SUBSTITUTION' | 'SECONDARY_LEADING_TONE';
+}
+
+export interface ModalContext {
+  contextualFunction: 'MODAL_BORROWING' | 'PASSING_DIMINISHED' | 'COMMON_TONE_DIMINISHED' | 'NEIGHBOR_DIMINISHED' | 'CHROMATIC_APPROACH';
+  modalBorrowing?: ModalBorrowing;
+  chromaticAnalysis?: ChromaticAnalysis;
+}
+
+export interface ResolutionContext {
+  resolutionEvidence?: ResolutionEvidence;
+  candidateResolutions?: ResolutionEvidence[];
+}
+
+export interface SemanticContext {
+  /**
+   * Placeholder types. Will be replaced during future sprints:
+   *  - F6: Harmonic Intent Engine
+   *  - F7: Cadential Grammar Engine
+   *  - F9: Phrase & Form Engine
+   *  - F10: Hypermetric Engine
+   */
+  harmonicIntent?: unknown;
+  cadentialContext?: unknown;
+  phraseRole?: unknown;
+  hypermetricRole?: unknown;
+}
+
+export interface DebugContext {
+  functionalHypotheses?: FunctionalHypothesis[];
+  explanation?: string[];
+}
+
 export interface FunctionalChord {
   /** Índice do acorde na progressão (0-based) */
   index: number;
@@ -101,41 +144,19 @@ export interface FunctionalChord {
   /** true se o acorde pertence ao campo harmônico da tonalidade detectada */
   isDiatonic: boolean;
 
-  /** Centro tonal sob o qual este acorde foi analisado/resolvido (Sprint 9A) */
-  tonalCenter?: TonalCenter;
-
   /** Tags de análise avançada (vazio na Sprint 6A) */
   analysisTags: AnalysisTag[];
 
   /** Confiança chord-level (ver documentação acima) */
   confidence: number;
 
-  /** Grau do acorde alvo (ex: "ii", "V", "I") */
-  secondaryTarget?: string;
-
-  /** Análise contextual (Dominante Secundário ou SubV7) */
-  contextualAnalysis?: ContextualAnalysis;
-
-  /** Atalho explícito para a UI desenhar badges/rótulos */
-  contextualFunction?: ContextualFunction;
-
-  /** Análise de empréstimo modal (Sprint 6E) */
-  modalBorrowing?: ModalBorrowing;
-
-  /** Análise de harmonia cromática (Sprint 6F) */
-  chromaticAnalysis?: ChromaticAnalysis;
-
-  /** Evidência de resolução harmônica abstrata (Sprint 7A) */
-  resolutionEvidence?: ResolutionEvidence;
-
-  /** Coleção opcional de candidatos a resolução avaliados no lookahead para fins de depuração (Sprint 7C) */
-  candidateResolutions?: ResolutionEvidence[];
-
-  /** Lista de hipóteses funcionais concorrentes ordenadas por confiança (Sprint 8A) */
-  functionalHypotheses?: FunctionalHypothesis[];
-
-  /** Explicações de análise para fins de depuração e UI pedagógica */
-  explanation?: string[];
+  // Sub-contextos opcionais agrupados
+  tonal?: TonalContext;
+  secondary?: SecondaryContext;
+  modal?: ModalContext;
+  resolution?: ResolutionContext;
+  semantic?: SemanticContext;
+  debug?: DebugContext;
 }
 
 export interface ResolvedPair {
@@ -314,7 +335,6 @@ export interface StructuralTonalEvent {
   endRegionId: string;
   relation: KeyRelation;
   significance: 'LOCAL' | 'REGIONAL' | 'STRUCTURAL';
-  explanation: string;
 }
 
 export interface TonalNarrative {
@@ -323,7 +343,6 @@ export interface TonalNarrative {
   primaryTrajectory: TonalCenter[];
   structuralEvents: StructuralTonalEvent[];
   narrativeType: TonalNarrativeType;
-  summaryText: string;
 }
 
 /**

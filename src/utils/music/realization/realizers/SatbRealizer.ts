@@ -67,7 +67,7 @@ export function realizeSatbVoicing(voicing: AnalyzedVoicing | null, chordSymbol:
   const voiceNames = ["Bass", "Tenor", "Alto", "Soprano"];
   const voiceMap: VoicedVoice[] = pitches.map((pitch, idx) => {
     const isBass = idx === 0;
-    const originalRole = roles[idx] as any;
+    const originalRole = roles[idx] as VoicedVoice['role'];
     const role = isBass ? "bass" as const : (originalRole || "tension");
     return {
       role,

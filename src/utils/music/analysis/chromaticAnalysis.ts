@@ -1,15 +1,9 @@
 import type { FunctionalChord, TonalCenter, FunctionalHypothesis, ChromaticAnalysis } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
+import { isDiminishedType } from './helpers/qualityHelpers';
 
-// Quality helpers
-function isDiminishedType(quality: string): boolean {
-  return (
-    quality === 'diminished' ||
-    quality === 'diminished7th' ||
-    quality === 'halfDiminished'
-  );
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 export function analyzeChromaticHarmony(
   chords: FunctionalChord[],

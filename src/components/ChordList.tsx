@@ -3,6 +3,7 @@ import { useChordStore } from "../store/useChordStore";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getFriendlyInterval } from "../utils/music/theory/chordParser";
+import { getChroma } from "../utils/music/theory/pitchClass";
 import { Music, ChevronDown, Check } from "lucide-react";
 import { Note as TonalNote } from "tonal";
 
@@ -365,12 +366,8 @@ export default function ChordList() {
 
                       // Calcular intervalo
                       // Distância da tônica
-                      const pitchClasses: Record<string, number> = {
-                        "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3, "E": 4, "F": 5,
-                        "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11
-                      };
-                      const rootPC = pitchClasses[activeChord.root] ?? 0;
-                      const notePC = pitchClasses[baseNote] ?? 0;
+                      const rootPC = getChroma(activeChord.root);
+                      const notePC = getChroma(baseNote);
                       const dist = (notePC - rootPC + 12) % 12;
                       
                       const intervalMapping: Record<number, string> = {
@@ -389,7 +386,7 @@ export default function ChordList() {
                       };
 
                       const displayNoteName = activeChord
-                        ? (activeChord.notes.find(n => pitchClasses[n] === notePC) || baseNote) + noteName.replace(/^[A-G][b#]?/, "")
+                        ? (activeChord.notes.find(n => getChroma(n) === notePC) || baseNote) + noteName.replace(/^[A-G][b#]?/, "")
                         : noteName;
 
                       return (

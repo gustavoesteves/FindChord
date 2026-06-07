@@ -11,6 +11,7 @@
 import type { TonalCenter, TonalMode } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
+import { isMinorType, isDominantType } from './helpers/qualityHelpers';
 
 const CHROMATIC_ROOTS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -45,36 +46,7 @@ function chromaticIndex(note: string): number {
   return getPitchClass(note);
 }
 
-/**
- * Determines if a chord quality implies a minor-type chord
- * (minor, half-diminished, diminished).
- */
-function isMinorType(quality: string): boolean {
-  return (
-    quality.includes('minor') ||
-    quality === 'halfDiminished' ||
-    quality === 'diminished' ||
-    quality === 'diminished7th'
-  );
-}
-
-/**
- * Determines if a chord quality implies a dominant 7th type.
- */
-function isDominantType(quality: string): boolean {
-  return (
-    quality.startsWith('dominant') ||
-    quality === 'dominant7th' ||
-    quality === 'dominant9th' ||
-    quality === 'dominant11th' ||
-    quality === 'dominant13th' ||
-    quality === 'dominant7b9' ||
-    quality === 'dominant7#9' ||
-    quality === 'dominant7#11' ||
-    quality === 'dominant7b13' ||
-    quality === 'dominant7sus4'
-  );
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 /**
  * Score a candidate key against the parsed progression.

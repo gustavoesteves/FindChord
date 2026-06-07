@@ -1,31 +1,9 @@
 import type { FunctionalChord, TonalCenter, CadenceInfo } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
+import { isDominantType, isMinorType } from './helpers/qualityHelpers';
 
-// Quality helpers
-function isDominantType(quality: string): boolean {
-  return (
-    quality.startsWith('dominant') ||
-    quality === 'dominant7th' ||
-    quality === 'dominant9th' ||
-    quality === 'dominant11th' ||
-    quality === 'dominant13th' ||
-    quality === 'dominant7b9' ||
-    quality === 'dominant7#9' ||
-    quality === 'dominant7#11' ||
-    quality === 'dominant7b13' ||
-    quality === 'dominant7sus4'
-  );
-}
-
-function isMinorType(quality: string): boolean {
-  return (
-    quality.includes('minor') ||
-    quality === 'halfDiminished' ||
-    quality === 'diminished' ||
-    quality === 'diminished7th'
-  );
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 export function detectCadences(chords: FunctionalChord[], tonalCenter: TonalCenter): CadenceInfo[] {
   const N = chords.length;
@@ -48,10 +26,10 @@ export function detectCadences(chords: FunctionalChord[], tonalCenter: TonalCent
 
   const hasSecondaryDomTarget = (c: FunctionalChord, target: string | string[]): boolean => {
     const targets = Array.isArray(target) ? target : [target];
-    if (c.contextualFunction === 'SECONDARY_DOMINANT') {
-      return c.secondaryTarget ? targets.includes(c.secondaryTarget) : false;
+    if (c.secondary?.contextualFunction === 'SECONDARY_DOMINANT') {
+      return c.secondary.secondaryTarget ? targets.includes(c.secondary.secondaryTarget) : false;
     }
-    return c.functionalHypotheses?.some(h => 
+    return c.debug?.functionalHypotheses?.some(h => 
       h.contextualFunction === 'SECONDARY_DOMINANT' && h.secondaryTarget && targets.includes(h.secondaryTarget)
     ) ?? false;
   };

@@ -2,6 +2,7 @@ import { Scale as TonalScale } from 'tonal';
 import type { HarmonicFunction } from './models/FunctionalAnalysis';
 import { getPitchClass, simplifyNote } from '../core/pitch';
 import { parseChord } from '../theory/chordParser';
+import { isMinorType, isDiminishedType } from './helpers/qualityHelpers';
 
 export interface DiatonicChordInfo {
   degree: string;
@@ -11,22 +12,7 @@ export interface DiatonicChordInfo {
   isHarmonicMinorVariant?: boolean;
 }
 
-function isMinorType(quality: string): boolean {
-  return (
-    quality.includes('minor') ||
-    quality === 'halfDiminished' ||
-    quality === 'diminished' ||
-    quality === 'diminished7th'
-  );
-}
-
-function isDiminishedType(quality: string): boolean {
-  return (
-    quality === 'diminished' ||
-    quality === 'diminished7th' ||
-    quality === 'halfDiminished'
-  );
-}
+// Quality helpers imported from helpers/qualityHelpers
 
 /**
  * Checks if a chord symbol from a progression matches a diatonic chord in pitch class and quality class.
@@ -97,25 +83,14 @@ export function generateHarmonicField(
       const degrees = ['i', 'ii°', 'bIII+', 'iv', 'V', 'bVI', 'vii°'];
       const suffixes = format === 'triad'
         ? ['m', 'dim', 'aug', 'm', '', '', 'dim']
-        : ['m(maj7)', 'm7b5', 'maj7', '7', 'maj7', 'dim7']; // Note: 'V' in harmonic minor tetrad is V7 (dominant), vii° is dim7
-      
-      // Let's correct suffixes for harmonic minor tetrads:
-      // i: m(maj7)
-      // ii°: m7b5
-      // bIII+: maj7 (augmented major 7th substituted for compatibility)
-      // iv: m7
-      // V: 7
-      // bVI: maj7
-      // vii°: dim7
-      const tetradSuffixes = ['m(maj7)', 'm7b5', 'maj7', 'm7', '7', 'maj7', 'dim7'];
-      const currentSuffixes = format === 'triad' ? suffixes : tetradSuffixes;
+        : ['m(maj7)', 'm7b5', 'maj7', 'm7', '7', 'maj7', 'dim7'];
       
       const functions: HarmonicFunction[] = ['TONIC', 'SUBDOMINANT', 'TONIC', 'SUBDOMINANT', 'DOMINANT', 'SUBDOMINANT', 'DOMINANT'];
       // Harmonic variants: bIII+ (index 2), V (index 4), vii° (index 6)
       const variantIndices = [2, 4, 6];
 
       for (let i = 0; i < 7; i++) {
-        const chordSymbol = `${notes[i]}${currentSuffixes[i]}`;
+        const chordSymbol = `${notes[i]}${suffixes[i]}`;
         const isActive = progressionChords.some(progChord => isChordMatch(progChord, chordSymbol));
         results.push({
           degree: degrees[i],

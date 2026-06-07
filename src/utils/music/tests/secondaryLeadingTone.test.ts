@@ -26,9 +26,9 @@ console.log('\n🎵 Test 1 — Diatonic Resolution (C -> C#dim7 -> Dm7)');
 
   const cSharp = a.chords[1];
   assert(cSharp.chordSymbol === 'C#dim7', 'Found C#dim7');
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', 'contextualFunction is SECONDARY_LEADING_TONE');
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'contextualFunction is SECONDARY_LEADING_TONE');
   assert(cSharp.romanNumeral === 'vii°7/ii', `Roman numeral is vii°7/ii, got ${cSharp.romanNumeral}`);
-  assert(cSharp.secondaryTarget === 'ii', 'secondaryTarget is ii');
+  assert(cSharp.secondary?.secondaryTarget === 'ii', 'secondaryTarget is ii');
   assert(cSharp.confidence === 0.95, 'Confidence is 0.95');
 }
 
@@ -41,9 +41,9 @@ console.log('\n🎵 Test 2 — Half-Diminished Resolution (C -> C#m7(b5) -> Dm7)
   const cSharp = a.chords[1];
 
   assert(cSharp.chordSymbol === 'C#m7(b5)', 'Found C#m7(b5)');
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', 'contextualFunction is SECONDARY_LEADING_TONE');
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'contextualFunction is SECONDARY_LEADING_TONE');
   assert(cSharp.romanNumeral === 'viiø7/ii', `Roman numeral is viiø7/ii, got ${cSharp.romanNumeral}`);
-  assert(cSharp.secondaryTarget === 'ii', 'secondaryTarget is ii');
+  assert(cSharp.secondary?.secondaryTarget === 'ii', 'secondaryTarget is ii');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -53,10 +53,10 @@ console.log('\n🎵 Test 3 — Precedência vs Chromatic Harmony (C -> C#dim7 ->
 {
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm7', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
-
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', 'Classified as SECONDARY_LEADING_TONE');
+ 
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'Classified as SECONDARY_LEADING_TONE');
   // Verify it is NOT classified as chromatic passing diminished
-  assert(cSharp.chromaticAnalysis === undefined, 'chromaticAnalysis is undefined (overwritten/skipped by precedence)');
+  assert(cSharp.modal?.chromaticAnalysis === undefined, 'chromaticAnalysis is undefined (overwritten/skipped by precedence)');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -66,8 +66,8 @@ console.log('\n🎵 Test 4 — Lookahead Resolution com Inversão (C#dim7 -> Dm/
 {
   const a = analyzeProgression(['Cmaj7', 'C#dim7', 'Dm/A', 'Dm', 'G7', 'Cmaj7']);
   const cSharp = a.chords[1];
-
-  assert(cSharp.contextualFunction === 'SECONDARY_LEADING_TONE', 'Found SECONDARY_LEADING_TONE with inversion target');
+ 
+  assert(cSharp.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'Found SECONDARY_LEADING_TONE with inversion target');
   assert(cSharp.romanNumeral === 'vii°7/ii', `Roman numeral resolves to root degree: vii°7/ii, got ${cSharp.romanNumeral}`);
 }
 
@@ -82,7 +82,7 @@ console.log('\n🎵 Test 5 — Lookahead Ambiguity (C#dim7 -> G7 -> C)');
   // In C#dim7 -> G7 -> Cmaj7, G7 has no note resolving as leading tone from C#dim7.
   // Therefore, cSharp should NOT be marked as SECONDARY_LEADING_TONE.
   // It falls back to chromatic harmony, resolving as a neighbor diminished to Cmaj7.
-  assert(cSharp.contextualFunction === 'NEIGHBOR_DIMINISHED', `contextualFunction is NEIGHBOR_DIMINISHED, got ${cSharp.contextualFunction}`);
+  assert(cSharp.modal?.contextualFunction === 'NEIGHBOR_DIMINISHED', `contextualFunction is NEIGHBOR_DIMINISHED, got ${cSharp.modal?.contextualFunction}`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -93,13 +93,13 @@ console.log('\n🎵 Test 6 — Diminished Symmetry (B°7 -> Cmaj7 and D°7 -> Eb
   // 6.1 B°7 -> Cmaj7 in C Major (resolves to C, B is the leading tone)
   const a1 = analyzeProgression(['Bdim7', 'Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
   const bDim = a1.chords[0];
-  assert(bDim.contextualFunction === 'SECONDARY_LEADING_TONE', 'Bdim7 is SECONDARY_LEADING_TONE');
+  assert(bDim.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'Bdim7 is SECONDARY_LEADING_TONE');
   assert(bDim.romanNumeral === 'vii°7/I', `Bdim7 romanNumeral is vii°7/I, got ${bDim.romanNumeral}`);
-
+ 
   // 6.2 D°7 -> Ebmaj7 in C Minor (resolves to Eb, D is the leading tone)
   const a2 = analyzeProgression(['Cm', 'Ddim7', 'Ebmaj7', 'Ab', 'G7', 'Cm']);
   const dDim = a2.chords[1];
-  assert(dDim.contextualFunction === 'SECONDARY_LEADING_TONE', 'Ddim7 is SECONDARY_LEADING_TONE');
+  assert(dDim.secondary?.contextualFunction === 'SECONDARY_LEADING_TONE', 'Ddim7 is SECONDARY_LEADING_TONE');
   assert(dDim.romanNumeral === 'vii°7/bIII', `Ddim7 romanNumeral is vii°7/bIII, got ${dDim.romanNumeral}`);
 }
 
