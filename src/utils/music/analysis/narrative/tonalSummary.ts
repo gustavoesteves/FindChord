@@ -1,7 +1,7 @@
 import type {
   FunctionalChord,
-  TonalRegion,
-  TonalRegionNode,
+  HarmonicRegion,
+  HarmonicRegionNode,
   CadenceInfo,
   TonalCenter,
   HarmonicGrammarProfile,
@@ -16,8 +16,8 @@ import { getDeepestNesting } from '../regions/regionTree';
  */
 export function calculateTonalSummary(
   chords: FunctionalChord[],
-  regions: TonalRegion[],
-  regionTree: TonalRegionNode | null,
+  regions: HarmonicRegion[],
+  regionTree: HarmonicRegionNode | null,
   cadences: CadenceInfo[],
   homeKey: TonalCenter,
   profile: HarmonicGrammarProfile = 'GENERAL'
@@ -30,9 +30,9 @@ export function calculateTonalSummary(
   // 2. Unique keys visited
   const visitedKeys: TonalCenter[] = [];
   regions.forEach(reg => {
-    const exists = visitedKeys.some(k => k.root === reg.key.root && k.mode === reg.key.mode);
+    const exists = visitedKeys.some(k => k.root === reg.baseCenter.root && k.mode === reg.baseCenter.mode);
     if (!exists) {
-      visitedKeys.push(reg.key);
+      visitedKeys.push(reg.baseCenter);
     }
   });
 
@@ -40,7 +40,7 @@ export function calculateTonalSummary(
   let modulationCount = 0;
   let tonicizationCount = 0;
   regions.forEach(reg => {
-    if (!reg.isHomeKey && reg.type === 'ESTABLISHED_MODULATION') {
+    if (!reg.isHomeKey && (reg.type === 'ESTABLISHED_MODULATION' || reg.type === 'MODAL_AXIS')) {
       modulationCount++;
     } else if (reg.type === 'TONICIZATION') {
       tonicizationCount++;
@@ -50,7 +50,9 @@ export function calculateTonalSummary(
   // 4. Longest region
   let longestRegion = regions[0];
   regions.forEach(reg => {
-    if (reg.duration > longestRegion.duration) {
+    const longestDur = longestRegion.endIndex - longestRegion.startIndex + 1;
+    const regDur = reg.endIndex - reg.startIndex + 1;
+    if (regDur > longestDur) {
       longestRegion = reg;
     }
   });
@@ -68,11 +70,11 @@ export function calculateTonalSummary(
     const curReg = regions[i];
     
     // Classify key relation
-    const relation = getKeyRelation(prevReg.key, curReg.key);
+    const relation = getKeyRelation(prevReg.baseCenter, curReg.baseCenter);
     keyModulationRelations.push(relation);
 
     // Get transition multiplier
-    const multiplier = getKeyTransitionMultiplier(prevReg.key, curReg.key, profile);
+    const multiplier = getKeyTransitionMultiplier(prevReg.baseCenter, curReg.baseCenter, profile);
     transitionMultipliersProduct *= multiplier;
   }
 
@@ -150,8 +152,9 @@ export function calculateTonalSummary(
   let weightedStabilitySum = 0;
   let totalDuration = 0;
   regions.forEach(reg => {
-    weightedStabilitySum += reg.stabilityScore * reg.duration;
-    totalDuration += reg.duration;
+    const regDur = reg.endIndex - reg.startIndex + 1;
+    weightedStabilitySum += reg.stabilityScore * regDur;
+    totalDuration += regDur;
   });
   const sAvgStability = totalDuration > 0 ? weightedStabilitySum / totalDuration : 0;
 

@@ -15,12 +15,12 @@ import { resolveTonalCenter } from '../tonalCenter';
 import { analyzeProgressionUnderKey, mapStateToTonalCenter } from '../facade/analyzeProgressionUnderKey';
 import { detectCadences } from '../cadenceDetector';
 import { resolveGlobalPath, StaticTransitionModel, CorpusTransitionModel, HybridTransitionModel, getStateString } from '../pathResolver';
-import { detectModalCandidates, detectModalRegions } from '../modalAxisSolver';
+import { detectModalCandidates } from '../modalAxisSolver';
 import { ALL_24_KEYS } from '../../theory/pitchClass';
 import { GRAMMAR_PARAMETERS, GRAMMAR_CORPUS_TRANSITIONS } from '../grammarProfiles';
-import { segmentTonalRegions } from '../regions/regionSegmentation';
+import { segmentHarmonicRegions } from '../regions/regionSegmentation';
 import { segmentPhrases } from '../narrative/phraseSegmentation';
-import { buildTonalRegionTree } from '../regions/regionTree';
+import { buildHarmonicRegionTree } from '../regions/regionTree';
 import { calculateTonalSummary } from '../narrative/tonalSummary';
 import { generateTonalNarrative } from '../narrative/tonalNarrative';
 
@@ -167,6 +167,7 @@ export function analyzeProgression(
 
       chords.push({
         ...chordUnderKey,
+        state,
         tonal: { tonalCenter: keyCenter },
         romanNumeral: winner.romanNumeral,
         harmonicFunction: winner.harmonicFunction,
@@ -182,6 +183,7 @@ export function analyzeProgression(
     } else {
       chords.push({
         ...chordUnderKey,
+        state,
         tonal: { tonalCenter: keyCenter }
       });
     }
@@ -228,23 +230,20 @@ export function analyzeProgression(
       }
     : initialTonalCenter;
 
-  // 8. Segment regions and phrases (Sprint 9B)
-  const regions = segmentTonalRegions(chords, cadences, finalTonalCenter);
+  // 8. Segment regions and phrases (Sprint Infra-1)
+  const regions = segmentHarmonicRegions(chords, cadences, finalTonalCenter);
   const phrases = segmentPhrases(progression.length, regions, cadences);
 
-  // 9. Build region tree hierarchy (Sprint 10A)
-  const regionTree = buildTonalRegionTree(regions);
+  // 9. Build region tree hierarchy (Sprint Infra-1)
+  const regionTree = buildHarmonicRegionTree(regions);
 
-  // 10. Calculate summary (Sprint 10B)
+  // 10. Calculate summary (Sprint Infra-1)
   const summary = calculateTonalSummary(chords, regions, regionTree, cadences, finalTonalCenter, profile);
 
-  // 11. Generate tonal narrative (Sprint 12A)
+  // 11. Generate tonal narrative (Sprint Infra-1)
   const narrative = summary
     ? generateTonalNarrative(regions, regionTree, chords, summary)
     : undefined;
-
-  // 12. Detect Modal Regions (Sprint F4)
-  const modalRegions = detectModalRegions(chords);
 
   return {
     tonalCenter: finalTonalCenter,
@@ -252,7 +251,6 @@ export function analyzeProgression(
     cadences,
     globalPath,
     regions,
-    modalRegions,
     phrases,
     regionTree: regionTree || undefined,
     summary: summary || undefined,

@@ -2,7 +2,7 @@
 // Run with: npx tsx src/utils/music/tests/tonalNarrative.test.ts
 
 import { analyzeProgression, generateTonalNarrative } from '../analysis/functionalAnalysis';
-import type { TonalRegion, TonalSummary } from '../analysis/models/FunctionalAnalysis';
+import type { HarmonicRegion, TonalSummary } from '../analysis/models/FunctionalAnalysis';
 import { NarrativeFormatter } from '../presentation/NarrativeFormatter';
 
 let passed = 0;
@@ -42,10 +42,10 @@ console.log('\n🎵 Caso 1 — Diatônico Simples (STATIC) (Cmaj7 -> Fmaj7 -> G7
 console.log('\n🎵 Caso 2 — Cadeia de Tonicizações (TONICIZATION_CHAIN)');
 {
   const homeKey = { root: 'C', mode: 'MAJOR' as const, confidence: 1.0 };
-  const mockRegions: TonalRegion[] = [
-    { key: homeKey, startIndex: 0, endIndex: 1, duration: 2, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [] },
-    { key: { root: 'D', mode: 'MINOR' as const, confidence: 0.8 }, startIndex: 2, endIndex: 3, duration: 2, type: 'TONICIZATION', isHomeKey: false, stabilityScore: 0.30, cadenceIndexes: [] },
-    { key: homeKey, startIndex: 4, endIndex: 5, duration: 2, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [] }
+  const mockRegions: HarmonicRegion[] = [
+    { state: { root: 'C', mode: 'IONIAN' }, baseCenter: homeKey, startIndex: 0, endIndex: 1, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [], confidence: 1.0 },
+    { state: { root: 'D', mode: 'AEOLIAN' }, baseCenter: { root: 'D', mode: 'MINOR' as const, confidence: 0.8 }, startIndex: 2, endIndex: 3, type: 'TONICIZATION', isHomeKey: false, stabilityScore: 0.30, cadenceIndexes: [], confidence: 0.8 },
+    { state: { root: 'C', mode: 'IONIAN' }, baseCenter: homeKey, startIndex: 4, endIndex: 5, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [], confidence: 1.0 }
   ];
 
   const mockSummary: TonalSummary = {
@@ -57,7 +57,7 @@ console.log('\n🎵 Caso 2 — Cadeia de Tonicizações (TONICIZATION_CHAIN)');
     tonicizationCount: 1,
     longestRegion: mockRegions[0],
     deepestNestingLevel: 0,
-    visitedKeys: [homeKey, mockRegions[1].key],
+    visitedKeys: [homeKey, mockRegions[1].baseCenter],
     regionalTransitionCount: 2,
     keyModulationRelations: ['DISTANT', 'DISTANT'],
     cadenceCount: 0,
@@ -136,12 +136,12 @@ console.log('\n🎵 Caso 4 — Modulação Direta (MODULATING) (Cmaj7 -> Fmaj7 -
 console.log('\n🎵 Caso 5 — Unit Test: Limiar Regional (REGIONAL_SHIFT >= 0.45)');
 {
   const homeKey = { root: 'C', mode: 'MAJOR' as const, confidence: 1.0 };
-  const mockRegions: TonalRegion[] = [
-    { key: homeKey, startIndex: 0, endIndex: 3, duration: 4, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [] },
+  const mockRegions: HarmonicRegion[] = [
+    { state: { root: 'C', mode: 'IONIAN' }, baseCenter: homeKey, startIndex: 0, endIndex: 3, type: 'ESTABLISHED_MODULATION', isHomeKey: true, stabilityScore: 0.90, cadenceIndexes: [], confidence: 1.0 },
     // Shift instável (stability 0.30)
-    { key: { root: 'D', mode: 'MAJOR' as const, confidence: 0.8 }, startIndex: 4, endIndex: 7, duration: 4, type: 'REGIONAL_SHIFT', isHomeKey: false, stabilityScore: 0.30, cadenceIndexes: [] },
+    { state: { root: 'D', mode: 'IONIAN' }, baseCenter: { root: 'D', mode: 'MAJOR' as const, confidence: 0.8 }, startIndex: 4, endIndex: 7, type: 'REGIONAL_SHIFT', isHomeKey: false, stabilityScore: 0.30, cadenceIndexes: [], confidence: 0.8 },
     // Shift estável (stability 0.50)
-    { key: { root: 'E', mode: 'MAJOR' as const, confidence: 0.9 }, startIndex: 8, endIndex: 11, duration: 4, type: 'REGIONAL_SHIFT', isHomeKey: false, stabilityScore: 0.50, cadenceIndexes: [] }
+    { state: { root: 'E', mode: 'IONIAN' }, baseCenter: { root: 'E', mode: 'MAJOR' as const, confidence: 0.9 }, startIndex: 8, endIndex: 11, type: 'REGIONAL_SHIFT', isHomeKey: false, stabilityScore: 0.50, cadenceIndexes: [], confidence: 0.9 }
   ];
 
   const mockSummary: TonalSummary = {
@@ -153,7 +153,7 @@ console.log('\n🎵 Caso 5 — Unit Test: Limiar Regional (REGIONAL_SHIFT >= 0.4
     tonicizationCount: 0,
     longestRegion: mockRegions[0],
     deepestNestingLevel: 0,
-    visitedKeys: [homeKey, mockRegions[1].key, mockRegions[2].key],
+    visitedKeys: [homeKey, mockRegions[1].baseCenter, mockRegions[2].baseCenter],
     regionalTransitionCount: 2,
     keyModulationRelations: ['DISTANT', 'DISTANT'],
     cadenceCount: 0,

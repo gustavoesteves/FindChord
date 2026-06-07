@@ -153,6 +153,7 @@ export interface FunctionalChord {
   confidence: number;
 
   // Sub-contextos opcionais agrupados
+  state?: HarmonicState;
   tonal?: TonalContext;
   secondary?: SecondaryContext;
   modal?: ModalContext;
@@ -294,20 +295,26 @@ export interface GlobalAnalysisPath {
   states?: HarmonicState[];
 }
 
-export type TonalRegionType = 
+export type HarmonicRegionType = 
   | 'TONICIZATION'
   | 'REGIONAL_SHIFT'
-  | 'ESTABLISHED_MODULATION';
+  | 'ESTABLISHED_MODULATION'
+  | 'MODAL_AXIS';
 
-export interface TonalRegion {
-  key: TonalCenter;
+export interface HarmonicRegion {
+  state: HarmonicState;
+  baseCenter: TonalCenter;
   startIndex: number;
   endIndex: number;
-  duration: number;
-  type: TonalRegionType;
+  type: HarmonicRegionType;
   isHomeKey: boolean;
+  confidence: number;
   stabilityScore: number;
   cadenceIndexes: number[];
+  metadata?: {
+    intent?: unknown;
+    cadenceWeight?: number;
+  };
 }
 
 export interface Phrase {
@@ -315,14 +322,14 @@ export interface Phrase {
   startIndex: number;
   endIndex: number;
   terminatingCadence?: CadenceInfo;
-  regions: TonalRegion[];
+  regions: HarmonicRegion[];
 }
 
-export interface TonalRegionNode {
+export interface HarmonicRegionNode {
   id: string;
-  region: TonalRegion;
-  parent?: TonalRegionNode;
-  children: TonalRegionNode[];
+  region: HarmonicRegion;
+  parent?: HarmonicRegionNode;
+  children: HarmonicRegionNode[];
 }
 
 export type KeyRelation =
@@ -346,7 +353,7 @@ export interface TonalSummary {
   // Estatísticas estruturais e de árvore
   modulationCount: number;
   tonicizationCount: number;
-  longestRegion: TonalRegion;
+  longestRegion: HarmonicRegion;
   deepestNestingLevel: number;
   visitedKeys: TonalCenter[];
   regionalTransitionCount: number;
@@ -399,17 +406,14 @@ export interface FunctionalAnalysis {
   /** Caminho de análise global ótimo (Sprint 8B) */
   globalPath?: GlobalAnalysisPath;
 
-  /** Regiões tonais detectadas na progressão (Sprint 9B) */
-  regions?: TonalRegion[];
-
-  /** Regiões modais detectadas na progressão (Sprint F4) */
-  modalRegions?: ModalRegion[];
+  /** Regiões harmônicas detectadas na progressão (Sprint Infra-1) */
+  regions?: HarmonicRegion[];
 
   /** Frases musicais estruturais detectadas (Sprint 9B) */
   phrases?: Phrase[];
 
-  /** Árvore hierárquica de regiões tonais (Sprint 10A) */
-  regionTree?: TonalRegionNode;
+  /** Árvore hierárquica de regiões harmônicas (Sprint Infra-1) */
+  regionTree?: HarmonicRegionNode;
 
   /** Sumário tonal analítico e quantitativo (Sprint 10B) */
   summary?: TonalSummary;

@@ -1,10 +1,11 @@
-import type { TonalRegion, TonalRegionNode } from '../models/FunctionalAnalysis';
+import type { HarmonicRegion, HarmonicRegionNode } from '../models/FunctionalAnalysis';
 
-export function getRegionRank(region: TonalRegion): number {
+export function getRegionRank(region: HarmonicRegion): number {
   if (region.isHomeKey) return 3;
 
   switch (region.type) {
     case 'ESTABLISHED_MODULATION':
+    case 'MODAL_AXIS':
       return 2;
     case 'REGIONAL_SHIFT':
       return 1;
@@ -13,11 +14,11 @@ export function getRegionRank(region: TonalRegion): number {
   }
 }
 
-export function buildTonalRegionTree(regions: TonalRegion[]): TonalRegionNode | null {
+export function buildHarmonicRegionTree(regions: HarmonicRegion[]): HarmonicRegionNode | null {
   if (regions.length === 0) return null;
 
   // 1. Mapeia as regiões planas para nós da árvore com IDs estáveis
-  const nodes: TonalRegionNode[] = regions.map((r, index) => ({
+  const nodes: HarmonicRegionNode[] = regions.map((r, index) => ({
     id: `region-node-${index}`,
     region: r,
     children: []
@@ -66,7 +67,12 @@ export function buildTonalRegionTree(regions: TonalRegion[]): TonalRegionNode | 
   return root;
 }
 
-export function getDeepestNesting(node: TonalRegionNode, currentLevel: number = 0): number {
+// Compatibility wrapper for backward compatibility with existing tests
+export function buildTonalRegionTree(regions: HarmonicRegion[]): HarmonicRegionNode | null {
+  return buildHarmonicRegionTree(regions);
+}
+
+export function getDeepestNesting(node: HarmonicRegionNode, currentLevel: number = 0): number {
   if (node.children.length === 0) return currentLevel;
   let maxSubLevel = currentLevel;
   for (const child of node.children) {

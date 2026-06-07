@@ -1,6 +1,6 @@
 import type {
-  TonalRegion,
-  TonalRegionNode,
+  HarmonicRegion,
+  HarmonicRegionNode,
   FunctionalChord,
   TonalSummary,
   TonalNarrative,
@@ -14,27 +14,30 @@ import { getKeyRelation } from '../../theory/tonalRelations';
  * Builds the high-level tonal narrative and structural reduction.
  */
 export function generateTonalNarrative(
-  regions: TonalRegion[],
-  _regionTree: TonalRegionNode | null,
+  regions: HarmonicRegion[],
+  _regionTree: HarmonicRegionNode | null,
   _chords: FunctionalChord[],
   summary: TonalSummary
 ): TonalNarrative | null {
   if (regions.length === 0) return null;
 
-  const homeKey = regions[0].key;
+  const homeKey = regions[0].baseCenter;
   const departureKey = homeKey;
-  const arrivalKey = regions[regions.length - 1].key;
+  const arrivalKey = regions[regions.length - 1].baseCenter;
 
   // 1. Structural Reduction (primaryTrajectory)
   const structuralRegions = regions.filter(
-    r => r.isHomeKey || r.type === 'ESTABLISHED_MODULATION' || (r.type === 'REGIONAL_SHIFT' && r.stabilityScore >= 0.45)
+    r => r.isHomeKey || 
+         r.type === 'ESTABLISHED_MODULATION' || 
+         r.type === 'MODAL_AXIS' || 
+         (r.type === 'REGIONAL_SHIFT' && r.stabilityScore >= 0.45)
   );
 
   const primaryTrajectory: TonalCenter[] = [];
   structuralRegions.forEach(r => {
     const last = primaryTrajectory[primaryTrajectory.length - 1];
-    if (!last || last.root !== r.key.root || last.mode !== r.key.mode) {
-      primaryTrajectory.push(r.key);
+    if (!last || last.root !== r.baseCenter.root || last.mode !== r.baseCenter.mode) {
+      primaryTrajectory.push(r.baseCenter);
     }
   });
 
@@ -47,12 +50,12 @@ export function generateTonalNarrative(
   for (let i = 1; i < regions.length; i++) {
     const startReg = regions[i - 1];
     const endReg = regions[i];
-    const relation = getKeyRelation(startReg.key, endReg.key);
+    const relation = getKeyRelation(startReg.baseCenter, endReg.baseCenter);
 
     let significance: 'LOCAL' | 'REGIONAL' | 'STRUCTURAL' = 'REGIONAL';
     if (startReg.type === 'TONICIZATION' || endReg.type === 'TONICIZATION') {
       significance = 'LOCAL';
-    } else if (endReg.type === 'ESTABLISHED_MODULATION') {
+    } else if (endReg.type === 'ESTABLISHED_MODULATION' || endReg.type === 'MODAL_AXIS') {
       significance = 'STRUCTURAL';
     } else if (endReg.type === 'REGIONAL_SHIFT') {
       significance = 'REGIONAL';
@@ -67,7 +70,7 @@ export function generateTonalNarrative(
   }
 
   // 3. Classify narrative type (narrativeType)
-  const establishedModulations = regions.filter(r => !r.isHomeKey && r.type === 'ESTABLISHED_MODULATION').length;
+  const establishedModulations = regions.filter(r => !r.isHomeKey && (r.type === 'ESTABLISHED_MODULATION' || r.type === 'MODAL_AXIS')).length;
   const tonicizations = regions.filter(r => r.type === 'TONICIZATION').length;
   const regionalShifts = regions.filter(r => !r.isHomeKey && r.type === 'REGIONAL_SHIFT').length;
   

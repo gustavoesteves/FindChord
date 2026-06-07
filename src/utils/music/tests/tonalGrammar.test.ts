@@ -1,7 +1,7 @@
 // Sprint 9B — Tonal Grammar & Hierarchical Analysis Tests
 // Run with: npx tsx src/utils/music/tests/tonalGrammar.test.ts
 
-import { analyzeProgression, segmentTonalRegions } from '../analysis/functionalAnalysis';
+import { analyzeProgression, segmentHarmonicRegions } from '../analysis/functionalAnalysis';
 import type { FunctionalChord, CadenceInfo, TonalCenter } from '../analysis/models/FunctionalAnalysis';
 
 let passed = 0;
@@ -28,9 +28,9 @@ console.log('\n🎵 Caso 1 — Diatonic Stable (Cmaj7 -> Am7 -> Dm7 -> G7 -> Cma
   if (a.regions) {
     assert(a.regions.length === 1, `Exactly 1 region detected (got ${a.regions.length})`);
     const reg = a.regions[0];
-    assert(reg.key.root === 'C' && reg.key.mode === 'MAJOR', 'Region is C MAJOR');
+    assert(reg.baseCenter.root === 'C' && reg.baseCenter.mode === 'MAJOR', 'Region is C MAJOR');
     assert(reg.isHomeKey, 'isHomeKey is true');
-    assert(reg.duration === 5, 'duration is 5');
+    assert((reg.endIndex - reg.startIndex + 1) === 5, 'duration is 5');
     assert(reg.type === 'ESTABLISHED_MODULATION', `type is ESTABLISHED_MODULATION (got ${reg.type})`);
     assert(reg.stabilityScore > 0.80, `stabilityScore is high: ${reg.stabilityScore}`);
   }
@@ -60,18 +60,18 @@ console.log('\n🎵 Caso 2 — Persistent Modulation (C -> Am -> C)');
     assert(a.regions.length === 3, `3 regions detected (got ${a.regions.length})`);
     
     const reg0 = a.regions[0];
-    assert(reg0.key.root === 'C' && reg0.key.mode === 'MAJOR', 'First region is C MAJOR');
+    assert(reg0.baseCenter.root === 'C' && reg0.baseCenter.mode === 'MAJOR', 'First region is C MAJOR');
     assert(reg0.isHomeKey, 'First region isHomeKey is true');
     assert(reg0.type === 'ESTABLISHED_MODULATION', 'First region type is ESTABLISHED_MODULATION');
 
     const reg1 = a.regions[1];
-    assert(reg1.key.root === 'A' && reg1.key.mode === 'MINOR', 'Second region is A MINOR');
+    assert(reg1.baseCenter.root === 'A' && reg1.baseCenter.mode === 'MINOR', 'Second region is A MINOR');
     assert(!reg1.isHomeKey, 'Second region isHomeKey is false');
     assert(reg1.type === 'ESTABLISHED_MODULATION', 'Second region type is ESTABLISHED_MODULATION');
     assert(reg1.stabilityScore > 0.70, `Second region stability is stable: ${reg1.stabilityScore}`);
 
     const reg2 = a.regions[2];
-    assert(reg2.key.root === 'C' && reg2.key.mode === 'MAJOR', 'Third region is C MAJOR');
+    assert(reg2.baseCenter.root === 'C' && reg2.baseCenter.mode === 'MAJOR', 'Third region is C MAJOR');
     assert(reg2.isHomeKey, 'Third region isHomeKey is true');
   }
 
@@ -97,7 +97,7 @@ console.log('\n🎵 Caso 3 — Tonicization Classification (1-2 chords transitio
   ];
   const mockCadences: CadenceInfo[] = [];
 
-  const segmented = segmentTonalRegions(mockChords, mockCadences, mockHomeKey);
+  const segmented = segmentHarmonicRegions(mockChords, mockCadences, mockHomeKey);
   assert(segmented.length === 3, `Segmented mock into 3 regions (got ${segmented.length})`);
   if (segmented.length === 3) {
     assert(segmented[0].type === 'TONICIZATION', `Region 0 (duration 1) is TONICIZATION (got ${segmented[0].type})`);

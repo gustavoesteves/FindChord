@@ -52,9 +52,10 @@ console.log('\n🎵 Test 1 — Dorian Vamp (Dm7 -> G -> Dm7 -> G)');
   assert(modalCad !== undefined, 'Found Dorian approach cadence');
 
   // Check regional segmentation
-  assert(a.modalRegions !== undefined, 'modalRegions is populated');
-  assert(a.modalRegions?.length === 1, `Has exactly 1 modal region (got ${a.modalRegions?.length})`);
-  assert(a.modalRegions?.[0].mode === 'DORIAN', 'Regional mode is DORIAN');
+  assert(a.regions !== undefined, 'regions is populated');
+  const mRegs = a.regions?.filter(r => r.type === 'MODAL_AXIS') || [];
+  assert(mRegs.length === 1, `Has exactly 1 modal region (got ${mRegs.length})`);
+  assert(mRegs[0].state.mode === 'DORIAN', 'Regional mode is DORIAN');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -154,10 +155,10 @@ console.log('\n🎵 Test 6 — Mixed Modulation (Tonal C Major -> Dorian D Dóri
   assert(chords[4].modal?.axisContext?.mode === 'DORIAN', 'Fifth chord is in DORIAN axis');
   
   // Verify regional segment boundaries
-  const modalRegions = a.modalRegions || [];
-  assert(modalRegions.length === 1, `Has exactly 1 modal region (got ${modalRegions.length})`);
-  assert(modalRegions[0].startIndex === 3, `Dorian starts at index 3 (got ${modalRegions[0].startIndex})`);
-  assert(modalRegions[0].endIndex === 6, `Dorian ends at index 6 (got ${modalRegions[0].endIndex})`);
+  const mRegs2 = a.regions?.filter(r => r.type === 'MODAL_AXIS') || [];
+  assert(mRegs2.length === 1, `Has exactly 1 modal region (got ${mRegs2.length})`);
+  assert(mRegs2[0].startIndex === 3, `Dorian starts at index 3 (got ${mRegs2[0].startIndex})`);
+  assert(mRegs2[0].endIndex === 6, `Dorian ends at index 6 (got ${mRegs2[0].endIndex})`);
 }
 
 // ═══════════════════════════════════════════════════════════

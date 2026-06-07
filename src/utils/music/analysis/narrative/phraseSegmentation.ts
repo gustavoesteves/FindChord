@@ -1,8 +1,8 @@
-import type { Phrase, TonalRegion, CadenceInfo } from '../models/FunctionalAnalysis';
+import type { Phrase, HarmonicRegion, CadenceInfo } from '../models/FunctionalAnalysis';
 
 export function segmentPhrases(
   progressionLength: number,
-  regions: TonalRegion[],
+  regions: HarmonicRegion[],
   cadences: CadenceInfo[]
 ): Phrase[] {
   const phrases: Phrase[] = [];
