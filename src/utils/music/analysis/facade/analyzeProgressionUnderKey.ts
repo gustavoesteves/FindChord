@@ -1,7 +1,8 @@
 import type {
   FunctionalChord,
   FunctionalHypothesis,
-  TonalCenter
+  TonalCenter,
+  HarmonicState
 } from '../models/FunctionalAnalysis';
 import { classifyChordFunction } from '../functionalClassifier';
 import { analyzeSecondaryFunctions } from '../secondaryAnalysis';
@@ -10,12 +11,22 @@ import { analyzeChromaticHarmony } from '../chromaticAnalysis';
 import { analyzeResolutions } from '../resolutionEngine';
 import { analyzeSecondaryLeadingTones } from '../secondaryLeadingTone';
 
+export function mapStateToTonalCenter(state: HarmonicState): TonalCenter {
+  const isMajor = state.mode === 'IONIAN' || state.mode === 'LYDIAN' || state.mode === 'MIXOLYDIAN';
+  return {
+    root: state.root,
+    mode: isMajor ? 'MAJOR' : 'MINOR',
+    confidence: 1.0
+  };
+}
+
 export function analyzeProgressionUnderKey(
   progression: string[],
-  candidateKey: TonalCenter
+  candidateState: HarmonicState
 ): FunctionalChord[] {
+  const candidateKey = mapStateToTonalCenter(candidateState);
   let chords = progression.map((chordSymbol, index) =>
-    classifyChordFunction(chordSymbol, index, candidateKey)
+    classifyChordFunction(chordSymbol, index, candidateKey, candidateState.mode)
   );
 
   chords = analyzeResolutions(chords);
@@ -37,7 +48,7 @@ export function analyzeProgressionUnderKey(
         romanNumeral: chord.romanNumeral,
         harmonicFunction: chord.harmonicFunction,
         confidence: chord.confidence,
-        explanation: ['Diatonic chord in this key center']
+        explanation: [`Diatonic chord in this key center (${candidateState.mode})`]
       });
     }
 

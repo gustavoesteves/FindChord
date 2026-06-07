@@ -53,7 +53,7 @@ console.log('\n🎵 Test 2 — Pedagogical Explanations');
   // Primary / Diatonic Cmaj7 (now has a primary explanation under the new Viterbi path resolver)
   const cMaj = a.chords[0];
   assert(
-    cMaj.debug?.explanation !== undefined && cMaj.debug.explanation.includes('Diatonic chord in this key center'),
+    cMaj.debug?.explanation !== undefined && cMaj.debug.explanation.some(e => e.includes('Diatonic chord in this key center')),
     'Primary chord has diatonic explanation by default',
     `got: ${JSON.stringify(cMaj.debug?.explanation)}`
   );

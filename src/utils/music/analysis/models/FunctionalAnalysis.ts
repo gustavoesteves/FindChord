@@ -270,6 +270,8 @@ export interface CadenceInfo {
   endIndex: number;
   chordIndexes: number[];
   confidence: number;
+  suppressed?: boolean;
+  suppressionReason?: string;
 }
 
 export interface ModulationEvent {
@@ -289,6 +291,7 @@ export interface GlobalAnalysisPath {
   keys?: TonalCenter[];
   modulations?: ModulationEvent[];
   explanations: string[];
+  states?: HarmonicState[];
 }
 
 export type TonalRegionType = 

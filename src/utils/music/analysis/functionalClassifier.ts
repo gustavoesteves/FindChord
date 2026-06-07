@@ -12,11 +12,13 @@ import type {
   TonalCenter,
   FunctionalChord,
   AnalysisTag,
+  ModalMode,
 } from './models/FunctionalAnalysis';
 import { parseChord } from '../theory/chordParser';
 import { getPitchClass } from '../core/pitch';
 import { isMinorType, isDominantType, isDiminishedType, getQualitySuffix } from './helpers/qualityHelpers';
 import { getDiatonicDegree } from '../theory/scaleDegree';
+import { MODAL_THEORY } from '../theory/modalTheory';
 
 // ─── Diatonic Field Definitions ──────────────────────────────
 
@@ -185,7 +187,8 @@ function inferNonDiatonicFunction(
 export function classifyChordFunction(
   chordSymbol: string,
   index: number,
-  tonalCenter: TonalCenter
+  tonalCenter: TonalCenter,
+  modalMode?: ModalMode
 ): FunctionalChord {
   const parsed = parseChord(chordSymbol);
 
@@ -223,8 +226,14 @@ export function classifyChordFunction(
   const chordIsMinor = isMinorType(parsed.quality);
   const chordIsDominant = isDominantType(parsed.quality);
   const chordIsDiminished = isDiminishedType(parsed.quality);
-  const isMajorKey = tonalCenter.mode === 'MAJOR';
-  const field = isMajorKey ? MAJOR_FIELD : MINOR_FIELD;
+  const isMajorKey = modalMode
+    ? (modalMode === 'IONIAN' || modalMode === 'LYDIAN' || modalMode === 'MIXOLYDIAN')
+    : tonalCenter.mode === 'MAJOR';
+
+  const field = modalMode
+    ? MODAL_THEORY[modalMode].field
+    : (isMajorKey ? MAJOR_FIELD : MINOR_FIELD);
+
   const qualitySuffix = getQualitySuffix(parsed.quality);
 
   // ── Try to match against the diatonic field ──────────
@@ -237,7 +246,10 @@ export function classifyChordFunction(
 
     if (entryIsDiminished) {
       if (chordIsDiminished) {
-        if (parsed.quality === 'diminished7th') {
+        if (modalMode) {
+          // Fully diminished 7th is never diatonic in standard diatonic modes
+          qualityMatches = parsed.quality !== 'diminished7th';
+        } else if (parsed.quality === 'diminished7th') {
           // Fully diminished 7th is diatonic only on vii° in minor keys
           qualityMatches = !isMajorKey && entry.scaleDegree === 'vii°';
         } else if (parsed.quality === 'halfDiminished') {

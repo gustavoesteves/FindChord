@@ -6,13 +6,17 @@ import type {
   FunctionalChord,
   AnalysisTag,
   SecondaryContext,
-  ModalContext
+  ModalContext,
+  HarmonicState,
+  ModalMode,
+  ModalAxis
 } from '../models/FunctionalAnalysis';
 import { resolveTonalCenter } from '../tonalCenter';
-import { analyzeProgressionUnderKey } from '../facade/analyzeProgressionUnderKey';
+import { analyzeProgressionUnderKey, mapStateToTonalCenter } from '../facade/analyzeProgressionUnderKey';
 import { detectCadences } from '../cadenceDetector';
-import { resolveGlobalPath, StaticTransitionModel, CorpusTransitionModel, HybridTransitionModel } from '../pathResolver';
-import { ALL_24_KEYS, getKeyString } from '../../theory/pitchClass';
+import { resolveGlobalPath, StaticTransitionModel, CorpusTransitionModel, HybridTransitionModel, getStateString } from '../pathResolver';
+import { detectModalCandidates, detectModalRegions } from '../modalAxisSolver';
+import { ALL_24_KEYS } from '../../theory/pitchClass';
 import { GRAMMAR_PARAMETERS, GRAMMAR_CORPUS_TRANSITIONS } from '../grammarProfiles';
 import { segmentTonalRegions } from '../regions/regionSegmentation';
 import { segmentPhrases } from '../narrative/phraseSegmentation';
@@ -43,24 +47,28 @@ export function analyzeProgression(
 
   const initialTonalCenter = resolveTonalCenter(progression);
 
-  // 1. Build cache of pre-analyzed chords and cadences for all 24 key centers
+  // 1. Build active candidate list (24 tonal keys + top-N modal candidates)
+  const modalCandidates = detectModalCandidates(progression, 3);
+  const tonalCandidates = ALL_24_KEYS.map(k => ({
+    root: k.root,
+    mode: (k.mode === 'MAJOR' ? 'IONIAN' : 'AEOLIAN') as ModalMode
+  }));
+  const candidates: HarmonicState[] = [...tonalCandidates, ...modalCandidates];
+
+  // 2. Build cache of pre-analyzed chords and cadences for candidate states
   const cache: Record<string, FunctionalChord[]> = {};
   const cadencesByKey: Record<string, CadenceInfo[]> = {};
 
-  for (const key of ALL_24_KEYS) {
-    const keyCenter: TonalCenter = {
-      root: key.root,
-      mode: key.mode,
-      confidence: 1.0
-    };
-    const keyStr = getKeyString(key);
+  for (const state of candidates) {
+    const keyCenter = mapStateToTonalCenter(state);
+    const stateStr = getStateString(state);
     
-    const analyzedChords = analyzeProgressionUnderKey(progression, keyCenter);
-    cache[keyStr] = analyzedChords;
-    cadencesByKey[keyStr] = detectCadences(analyzedChords, keyCenter);
+    const analyzedChords = analyzeProgressionUnderKey(progression, state);
+    cache[stateStr] = analyzedChords;
+    cadencesByKey[stateStr] = detectCadences(analyzedChords, keyCenter, state.mode);
   }
 
-  // 2. Instantiate transition model based on profile parameters
+  // 3. Instantiate transition model based on profile parameters
   const params = GRAMMAR_PARAMETERS[profile];
   const corpusTransitions = GRAMMAR_CORPUS_TRANSITIONS[profile];
   
@@ -73,18 +81,23 @@ export function analyzeProgression(
     params.corpusWeight
   );
 
-  // 3. Run the global path resolver (Viterbi Engine)
-  const globalPath = resolveGlobalPath(cache, cadencesByKey, hybridModel, initialTonalCenter, profile);
+  // 4. Run the global path resolver (Viterbi Engine)
+  const globalPath = resolveGlobalPath(cache, cadencesByKey, hybridModel, initialTonalCenter, profile, candidates);
+  const resolvedStates: HarmonicState[] = globalPath.states || [];
   const resolvedKeys = globalPath.keys || [];
 
-  // 4. Map the globally optimal path states back to the output progression
+  // 5. Map the globally optimal path states back to the output progression
   const chords: FunctionalChord[] = [];
 
   for (let idx = 0; idx < progression.length; idx++) {
-    const keyCenter = resolvedKeys[idx] || initialTonalCenter;
-    const keyStr = getKeyString(keyCenter);
+    const state = resolvedStates[idx] || {
+      root: initialTonalCenter.root,
+      mode: (initialTonalCenter.mode === 'MAJOR' ? 'IONIAN' : 'AEOLIAN') as ModalMode
+    };
+    const keyCenter = mapStateToTonalCenter(state);
+    const stateStr = getStateString(state);
     
-    const chordUnderKey = cache[keyStr][idx];
+    const chordUnderKey = cache[stateStr][idx];
     const chosenHypIndex = globalPath.hypothesisIndexes[idx];
     const winner = chordUnderKey.debug?.functionalHypotheses?.[chosenHypIndex];
 
@@ -121,17 +134,36 @@ export function analyzeProgression(
             }
           : undefined;
 
-      const modalContext = (winner.contextualFunction === 'MODAL_BORROWING' ||
-        winner.contextualFunction === 'PASSING_DIMINISHED' ||
-        winner.contextualFunction === 'COMMON_TONE_DIMINISHED' ||
-        winner.contextualFunction === 'NEIGHBOR_DIMINISHED' ||
-        winner.contextualFunction === 'CHROMATIC_APPROACH')
-          ? {
-              contextualFunction: winner.contextualFunction as ModalContext['contextualFunction'],
-              modalBorrowing: winner.modalBorrowing,
-              chromaticAnalysis: winner.chromaticAnalysis
-            }
-          : undefined;
+      const isModalMode = state.mode !== 'IONIAN' && state.mode !== 'AEOLIAN';
+      const modalAxisContext = isModalMode
+        ? {
+            axis: `${state.mode}_AXIS` as ModalAxis,
+            mode: state.mode,
+            confidence: 0.90,
+            active: true
+          }
+        : undefined;
+
+      let modalContext = undefined;
+      if (winner.contextualFunction === 'MODAL_BORROWING' ||
+          winner.contextualFunction === 'PASSING_DIMINISHED' ||
+          winner.contextualFunction === 'COMMON_TONE_DIMINISHED' ||
+          winner.contextualFunction === 'NEIGHBOR_DIMINISHED' ||
+          winner.contextualFunction === 'CHROMATIC_APPROACH' ||
+          isModalMode) {
+        
+        let contextualFunctionValue: ModalContext['contextualFunction'] = 'MODAL_AXIS';
+        if (winner.contextualFunction !== 'PRIMARY') {
+          contextualFunctionValue = winner.contextualFunction as ModalContext['contextualFunction'];
+        }
+        
+        modalContext = {
+          contextualFunction: contextualFunctionValue,
+          modalBorrowing: winner.modalBorrowing,
+          chromaticAnalysis: winner.chromaticAnalysis,
+          axisContext: modalAxisContext
+        };
+      }
 
       chords.push({
         ...chordUnderKey,
@@ -155,15 +187,16 @@ export function analyzeProgression(
     }
   }
 
-  // 5. Select cadences that align with the Viterbi path's chosen local keys
+  // 6. Select cadences that align with the Viterbi path's chosen local keys
   const cadences: CadenceInfo[] = [];
-  for (const key of ALL_24_KEYS) {
-    const keyStr = getKeyString(key);
-    const keyCadences = cadencesByKey[keyStr] || [];
+  for (const state of candidates) {
+    const stateStr = getStateString(state);
+    const keyCadences = cadencesByKey[stateStr] || [];
     for (const cad of keyCadences) {
       let pathMatchesKey = true;
       for (let idx = cad.startIndex; idx <= cad.endIndex; idx++) {
-        if (resolvedKeys[idx].root !== key.root || resolvedKeys[idx].mode !== key.mode) {
+        const pathState = resolvedStates[idx];
+        if (pathState.root !== state.root || pathState.mode !== state.mode) {
           pathMatchesKey = false;
           break;
         }
@@ -174,7 +207,7 @@ export function analyzeProgression(
     }
   }
 
-  // 5b. Post-process to clear modal borrowing for backdoor dominant chords
+  // 6b. Post-process to clear modal borrowing for backdoor dominant chords
   for (const cad of cadences) {
     if (cad.type === 'BACKDOOR') {
       const backdoorChordIdx = cad.startIndex;
@@ -186,7 +219,7 @@ export function analyzeProgression(
     }
   }
 
-  // 6. Set global center tonal as the starting key signature in Viterbi
+  // 7. Set global center tonal as the starting key signature in Viterbi
   const finalTonalCenter: TonalCenter = resolvedKeys.length > 0
     ? {
         root: resolvedKeys[0].root,
@@ -195,20 +228,23 @@ export function analyzeProgression(
       }
     : initialTonalCenter;
 
-  // 7. Segment regions and phrases (Sprint 9B)
+  // 8. Segment regions and phrases (Sprint 9B)
   const regions = segmentTonalRegions(chords, cadences, finalTonalCenter);
   const phrases = segmentPhrases(progression.length, regions, cadences);
 
-  // 8. Build region tree hierarchy (Sprint 10A)
+  // 9. Build region tree hierarchy (Sprint 10A)
   const regionTree = buildTonalRegionTree(regions);
 
-  // 9. Calculate summary (Sprint 10B)
+  // 10. Calculate summary (Sprint 10B)
   const summary = calculateTonalSummary(chords, regions, regionTree, cadences, finalTonalCenter, profile);
 
-  // 10. Generate tonal narrative (Sprint 12A)
+  // 11. Generate tonal narrative (Sprint 12A)
   const narrative = summary
     ? generateTonalNarrative(regions, regionTree, chords, summary)
     : undefined;
+
+  // 12. Detect Modal Regions (Sprint F4)
+  const modalRegions = detectModalRegions(chords);
 
   return {
     tonalCenter: finalTonalCenter,
@@ -216,6 +252,7 @@ export function analyzeProgression(
     cadences,
     globalPath,
     regions,
+    modalRegions,
     phrases,
     regionTree: regionTree || undefined,
     summary: summary || undefined,

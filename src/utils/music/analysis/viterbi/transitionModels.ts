@@ -1,4 +1,4 @@
-import type { ContextualFunction, HarmonicFunction } from '../models/FunctionalAnalysis';
+import type { ContextualFunction, HarmonicFunction, HarmonicGrammarProfile } from '../models/FunctionalAnalysis';
 
 export const BASE_TRANSITIONS: Partial<Record<ContextualFunction, Partial<Record<ContextualFunction, number>>>> = {
   'PRIMARY': {
@@ -46,7 +46,11 @@ export function getBaseTransition(from: ContextualFunction, to: ContextualFuncti
   return 0.90; // Default transition weight
 }
 
-export function getFunctionalMultiplier(fromFn: HarmonicFunction, toFn: HarmonicFunction): number {
+export function getFunctionalMultiplier(fromFn: HarmonicFunction, toFn: HarmonicFunction, profile?: HarmonicGrammarProfile): number {
+  if (profile === 'MODAL_FUNCTIONAL') {
+    // In modal harmony, traditional cadential tension is flat or ignored
+    return 1.00;
+  }
   if (fromFn === 'SUBDOMINANT' && toFn === 'DOMINANT') return 1.20;
   if (fromFn === 'DOMINANT' && toFn === 'TONIC') return 1.30;
   if (fromFn === 'TONIC' && toFn === 'SUBDOMINANT') return 1.10;
