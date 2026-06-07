@@ -49,8 +49,8 @@ export function analyzeChromaticHarmony(
             const diff1_desc = (chromaPrev - chromaCur + 12) % 12;
             const diff2_desc = (chromaCur - chromaNext + 12) % 12;
 
-            let isPassingAsc = (diff1_asc === 1 && diff2_asc === 1) || (diff1_asc === 1 && diff2_asc === 2) || (diff1_asc === 2 && diff2_asc === 1);
-            let isPassingDesc = (diff1_desc === 1 && diff2_desc === 1) || (diff1_desc === 1 && diff2_desc === 2) || (diff1_desc === 2 && diff2_desc === 1);
+            const isPassingAsc = (diff1_asc === 1 && diff2_asc === 1) || (diff1_asc === 1 && diff2_asc === 2) || (diff1_asc === 2 && diff2_asc === 1);
+            const isPassingDesc = (diff1_desc === 1 && diff2_desc === 1) || (diff1_desc === 1 && diff2_desc === 2) || (diff1_desc === 2 && diff2_desc === 1);
 
             if (isPassingAsc || isPassingDesc) {
               let romanNumeral = current.romanNumeral;

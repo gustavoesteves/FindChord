@@ -146,7 +146,7 @@ console.log('\n🎵 Caso 4 — JSON Serialization Safety');
   
   try {
     jsonString = JSON.stringify(tree);
-  } catch (err) {
+  } catch {
     didThrow = true;
   }
   

@@ -17,13 +17,14 @@ export class TransitionTrainer {
   private counts: Record<ContextualFunction, Record<ContextualFunction, number>>;
 
   constructor() {
-    this.counts = {} as any;
+    const counts = {} as Record<ContextualFunction, Record<ContextualFunction, number>>;
     for (const f of ALL_FUNCTIONS) {
-      this.counts[f] = {} as any;
+      counts[f] = {} as Record<ContextualFunction, number>;
       for (const t of ALL_FUNCTIONS) {
-        this.counts[f][t] = 0;
+        counts[f][t] = 0;
       }
     }
+    this.counts = counts;
   }
 
   /**
@@ -57,11 +58,11 @@ export class TransitionTrainer {
    * P(to|from) = (count + alpha) / (total_from + alpha * stateCount)
    */
   exportModel(alpha = 1.0): Record<ContextualFunction, Record<ContextualFunction, number>> {
-    const model: Record<ContextualFunction, Record<ContextualFunction, number>> = {} as any;
+    const model = {} as Record<ContextualFunction, Record<ContextualFunction, number>>;
     const stateCount = ALL_FUNCTIONS.length;
 
     for (const from of ALL_FUNCTIONS) {
-      model[from] = {} as any;
+      model[from] = {} as Record<ContextualFunction, number>;
       const toMap = this.counts[from];
       
       // Calculate total count for this state

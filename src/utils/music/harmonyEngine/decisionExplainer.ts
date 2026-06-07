@@ -19,7 +19,7 @@ export class DecisionExplainer {
 
     const strengths: string[] = [];
     const weaknesses: string[] = [];
-    let summary = "";
+    let summary: string;
 
     // 1. Analisar Pontos Fortes (Strengths)
     if (metrics.parallelFifths === 0 && metrics.parallelOctaves === 0) {

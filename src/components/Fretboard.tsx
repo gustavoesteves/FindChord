@@ -31,7 +31,9 @@ export default function Fretboard() {
 
   const [vibratingStrings, setVibratingStrings] = useState<boolean[]>([]);
   useEffect(() => {
-    setVibratingStrings(Array(tuning.length).fill(false));
+    setTimeout(() => {
+      setVibratingStrings(Array(tuning.length).fill(false));
+    }, 0);
   }, [tuning.length]);
 
   // Acorde ativo para o Explorer Mode

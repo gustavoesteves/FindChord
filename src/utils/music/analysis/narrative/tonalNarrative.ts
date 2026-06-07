@@ -75,7 +75,7 @@ export function generateTonalNarrative(
     (r, idx) => idx > 0 && r.isHomeKey && regions.slice(0, idx).some(prev => !prev.isHomeKey)
   );
 
-  let narrativeType: TonalNarrativeType = 'STATIC';
+  let narrativeType: TonalNarrativeType;
   if (regions.length === 1 || regions.every(r => r.isHomeKey)) {
     narrativeType = 'STATIC';
   } else if (establishedModulations === 0 && regionalShifts === 0 && tonicizations > 0) {

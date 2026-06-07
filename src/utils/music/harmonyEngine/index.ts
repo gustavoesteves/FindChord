@@ -197,10 +197,9 @@ export const harmonyEngine = {
   realize(
     decision: HarmonyDecision,
     layout: VoicingLayout,
-    transform: VoicingTransform,
-    tuning?: string[]
+    transform: VoicingTransform
   ): VoicedProgression {
-    return progressionRealizer.realize(decision, layout, transform, tuning);
+    return progressionRealizer.realize(decision, layout, transform);
   },
 
   /**
@@ -228,8 +227,7 @@ export const harmonyEngine = {
       // HarmonyRequest padrão
       const request = requestOrVoiced as HarmonyRequest;
       const decision = this.solve(request);
-      const tuning = request.tuning || ["E4", "B3", "G3", "D3", "A2", "E2"];
-      const voiced = this.realize(decision, "guitar", "none", tuning);
+      const voiced = this.realize(decision, "guitar", "none");
       return exportMidiFromVoiced(voiced, options);
     }
   },

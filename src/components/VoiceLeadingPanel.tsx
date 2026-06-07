@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { parseChord } from "../utils/music/theory/chordParser";
 import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
@@ -37,7 +37,7 @@ export default function ChordTimeline() {
   } = useChordStore();
 
   const [cadenceInput, setCadenceInput] = useState(progressionChords.join(" "));
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Sprint 6A — Análise funcional completa (tonalidade + grau + função T/SD/D)
   const analysis = analyzeProgression(progressionChords);
@@ -81,9 +81,20 @@ export default function ChordTimeline() {
     }
   };
 
+  // Auxiliar para tocar o áudio de um voicing específico na timeline
+  const playCurrentChordAudio = useCallback((idx: number) => {
+    const voicing = useChordStore.getState().timelineVoicings[idx];
+    if (voicing) {
+      // Coleta as notas físicas do voicing ativo
+      playGuitarChord(voicing.notes, 45);
+    }
+  }, []);
+
   // Sincroniza o input de texto caso a progressão mude por ações internas
   useEffect(() => {
-    setCadenceInput(progressionChords.join(" "));
+    setTimeout(() => {
+      setCadenceInput(progressionChords.join(" "));
+    }, 0);
   }, [progressionChords]);
 
   // Efeito principal do transporte (Play/Pause/Stop) baseado no BPM e com suporte a metrônomo beat-by-beat
@@ -99,10 +110,13 @@ export default function ChordTimeline() {
     const beatIntervalMs = 60000 / bpm;
 
     // Dispara a reprodução do primeiro acorde e batida imediatamente se não houver um ativo
-    if (activeTimelineIndex === null || activeTimelineIndex >= progressionChords.length) {
-      setActiveTimelineIndex(0);
-      setCurrentBeat(0);
-      playCurrentChordAudio(0);
+    const initialIndex = useChordStore.getState().activeTimelineIndex;
+    if (initialIndex === null || initialIndex >= progressionChords.length) {
+      setTimeout(() => {
+        setActiveTimelineIndex(0);
+        setCurrentBeat(0);
+        playCurrentChordAudio(0);
+      }, 0);
       if (isMetronomeEnabledRef.current) {
         playMetronomeClick(true);
       }
@@ -139,16 +153,9 @@ export default function ChordTimeline() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isPlaying, bpm, progressionChords.length]);
+  }, [isPlaying, bpm, progressionChords.length, playCurrentChordAudio, setActiveTimelineIndex]);
 
-  // Auxiliar para tocar o áudio de um voicing específico na timeline
-  const playCurrentChordAudio = (idx: number) => {
-    const voicing = timelineVoicings[idx];
-    if (voicing) {
-      // Coleta as notas físicas do voicing ativo
-      playGuitarChord(voicing.notes, 45);
-    }
-  };
+
 
   // Carrega e valida a cadência digitada pelo usuário
   const handleLoadCadence = () => {
@@ -226,10 +233,10 @@ export default function ChordTimeline() {
         }
       );
 
-      const blob = new Blob([midiResult.bytes as any], { type: "audio/midi" });
+      const blob = new Blob([midiResult.bytes.buffer as ArrayBuffer], { type: "audio/midi" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const filename = progressionChords.join("_").replace(/[\/\\?%*:|"<>\s]/g, "-") + ".mid";
+      const filename = progressionChords.join("_").replace(/[/\\?%*:|"<>\s]/g, "-") + ".mid";
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -257,7 +264,7 @@ export default function ChordTimeline() {
       const blob = new Blob([xml], { type: "application/vnd.recordare.musicxml+xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const filename = progressionChords.join("_").replace(/[\/\\?%*:|"<>\s]/g, "-") + ".musicxml";
+      const filename = progressionChords.join("_").replace(/[/\\?%*:|"<>\s]/g, "-") + ".musicxml";
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);

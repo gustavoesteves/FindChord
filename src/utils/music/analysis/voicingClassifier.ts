@@ -109,7 +109,7 @@ export function classifyVoicing(
 
   // 5. Classificar tipo de abertura (shellType) sob a Matriz de Precedência Estrita
   // Precedência: 1. quartal, 2. cluster, 3. drop2, 4. drop3, 5. shell, 6. triad, 7. extended
-  let shellType: "triad" | "shell" | "drop2" | "drop3" | "quartal" | "cluster" | "extended" = "extended";
+  let shellType: "triad" | "shell" | "drop2" | "drop3" | "quartal" | "cluster" | "extended";
 
   const activeStringIndexes = frets
     .map((f, idx) => (f !== null ? idx : null))

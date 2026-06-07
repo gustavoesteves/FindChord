@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useChordStore } from "../store/useChordStore";
+import { useChordStore, type HarmonicInterpretation } from "../store/useChordStore";
 import { getPitchClass } from "../utils/music/core/pitch";
 import { getNoteAt } from "../utils/music/core/notes";
 import { getFriendlyInterval } from "../utils/music/theory/chordParser";
@@ -121,7 +121,7 @@ function getChordHarmonicDegrees(root: string, quality: string): { key: string; 
         { key: `${keyVII} Maior/menor`, degree: "vii°" }
       ];
     }
-  } catch (e) {
+  } catch {
     // Fallback silencioso
   }
   
@@ -164,7 +164,7 @@ export default function ChordList() {
     return chord.notationJazz;
   };
 
-  const getInterpretationName = (interp: any) => {
+  const getInterpretationName = (interp: HarmonicInterpretation) => {
     if (notationStyle === "Brazilian") return interp.notationBrazilian;
     if (notationStyle === "Academic") return interp.notationAcademic;
     return interp.notationJazz;

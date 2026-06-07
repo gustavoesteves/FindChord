@@ -6,6 +6,7 @@ export class FunctionalResolutionRule implements VoiceLeadingRule {
   name = "FunctionalResolution";
   weight = 1; // O valor retornado pela regra já é o bônus absoluto negativo
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   evaluate(current: AnalyzedVoicing, next: AnalyzedVoicing, _tuning: string[]): number {
     let functionalBonus = 0;
 

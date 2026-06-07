@@ -4,7 +4,9 @@ import type {
   TonalCenter,
   CadenceInfo,
   FunctionalChord,
-  AnalysisTag
+  AnalysisTag,
+  SecondaryContext,
+  ModalContext
 } from '../models/FunctionalAnalysis';
 import { resolveTonalCenter } from '../tonalCenter';
 import { analyzeProgressionUnderKey } from '../facade/analyzeProgressionUnderKey';
@@ -76,7 +78,7 @@ export function analyzeProgression(
   const resolvedKeys = globalPath.keys || [];
 
   // 4. Map the globally optimal path states back to the output progression
-  let chords: FunctionalChord[] = [];
+  const chords: FunctionalChord[] = [];
 
   for (let idx = 0; idx < progression.length; idx++) {
     const keyCenter = resolvedKeys[idx] || initialTonalCenter;
@@ -115,7 +117,7 @@ export function analyzeProgression(
           ? {
               secondaryTarget: winner.secondaryTarget || '',
               contextualAnalysis: winner.contextualAnalysis!,
-              contextualFunction: winner.contextualFunction as any
+              contextualFunction: winner.contextualFunction as SecondaryContext['contextualFunction']
             }
           : undefined;
 
@@ -125,7 +127,7 @@ export function analyzeProgression(
         winner.contextualFunction === 'NEIGHBOR_DIMINISHED' ||
         winner.contextualFunction === 'CHROMATIC_APPROACH')
           ? {
-              contextualFunction: winner.contextualFunction as any,
+              contextualFunction: winner.contextualFunction as ModalContext['contextualFunction'],
               modalBorrowing: winner.modalBorrowing,
               chromaticAnalysis: winner.chromaticAnalysis
             }

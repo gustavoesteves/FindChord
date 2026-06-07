@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { getPresetVoicingsForChord } from "../utils/music/generation/shapeFinder";
 import { generateAnalyzedVoicings, identifyShapeFamily } from "../utils/music/generation/voicingGenerator";
@@ -24,16 +24,15 @@ export default function VoicingSelector() {
     setVoicingSelectorOpen
   } = useChordStore();
 
-  const getChordName = (chord: typeof detectedChords[0]) => {
+  const getChordName = useCallback((chord: typeof detectedChords[0]) => {
     if (notationStyle === "Brazilian") return chord.notationBrazilian;
     if (notationStyle === "Academic") return chord.notationAcademic;
     return chord.notationJazz;
-  };
+  }, [notationStyle]);
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
   // --- ESTADOS DO EXPLORADOR SEMÂNTICO SPRINT 2.5 ---
-  const [voicings, setVoicings] = useState<AnalyzedVoicing[]>([]);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [hoveredVoicing, setHoveredVoicing] = useState<AnalyzedVoicing | null>(null);
 
@@ -87,16 +86,17 @@ export default function VoicingSelector() {
   // Reseta estados temporários ao fechar o modal
   useEffect(() => {
     if (!isVoicingSelectorOpen) {
-      setHoveredVoicing(null);
-      setFilterDrawerOpen(false);
+      setTimeout(() => {
+        setHoveredVoicing(null);
+        setFilterDrawerOpen(false);
+      }, 0);
     }
   }, [isVoicingSelectorOpen]);
 
   // Carrega e analisa voicings (Presets + Gerador Combinatório) na camada de DTOs
-  useEffect(() => {
+  const voicings = useMemo(() => {
     if (!activeChord) {
-      setVoicings([]);
-      return;
+      return [];
     }
 
     const chordRoot = activeChord.root;
@@ -164,8 +164,8 @@ export default function VoicingSelector() {
       }
     });
 
-    setVoicings(combined);
-  }, [activeChord, tuning, notationStyle]);
+    return combined;
+  }, [activeChord, tuning, getChordName]);
 
   if (!activeChord || !isVoicingSelectorOpen) return null;
 

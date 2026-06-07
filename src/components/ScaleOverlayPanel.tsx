@@ -108,7 +108,7 @@ export interface SuggestedLick {
   intervals: string[];
 }
 
-export const SUGGESTED_LICKS: Record<string, SuggestedLick> = {
+const SUGGESTED_LICKS: Record<string, SuggestedLick> = {
   "major": {
     name: "Fraseado Linear (Bert Ligon Outline 1)",
     school: "Linear",
@@ -298,14 +298,16 @@ export default function ScaleOverlayPanel() {
   // Reseta a escala e os filtros ao fechar o modal
   useEffect(() => {
     if (!isScaleSelectorOpen) {
-      setLocalActiveScale(null);
-      setVisibleCategories({
-        root: true,
-        chordTone: true,
-        characteristic: true,
-        tension: true,
-        avoid: true
-      });
+      setTimeout(() => {
+        setLocalActiveScale(null);
+        setVisibleCategories({
+          root: true,
+          chordTone: true,
+          characteristic: true,
+          tension: true,
+          avoid: true
+        });
+      }, 0);
     }
   }, [isScaleSelectorOpen]);
 

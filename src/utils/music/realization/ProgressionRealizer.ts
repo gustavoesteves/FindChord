@@ -19,8 +19,7 @@ export const progressionRealizer = {
   realize(
     decision: HarmonyDecision,
     layout: VoicingLayout,
-    transform: VoicingTransform,
-    _tuning?: string[]
+    transform: VoicingTransform
   ): VoicedProgression {
     const voicedChords: VoicedChord[] = [];
 
@@ -32,7 +31,7 @@ export const progressionRealizer = {
       }
 
       // 1. Aplicar o Layout (Disposição de Vozes)
-      let voiced: VoicedChord | null = null;
+      let voiced: VoicedChord | null;
       if (layout === "satb") {
         voiced = realizeSatbVoicing(voicing, chordSymbol);
       } else {

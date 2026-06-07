@@ -343,8 +343,8 @@ export function resolveGlobalPath(
 
     localScore += Math.log(Math.max(0.01, curHyp.confidence));
 
-    let baseProb = 1.0;
-    let transitionDetailStr = '';
+    let baseProb: number;
+    let transitionDetailStr: string;
 
     if (model instanceof HybridTransitionModel) {
       const details = model.getExplanations(prevHyp.contextualFunction, curHyp.contextualFunction);
@@ -357,10 +357,10 @@ export function resolveGlobalPath(
 
     const isSameKey = prevState.key.root === curState.key.root && prevState.key.mode === curState.key.mode;
     const keyMult = getKeyTransitionMultiplier(prevState.key, curState.key, profile);
-    let keyExpl = isSameKey ? 'same key' : `modulation to ${getKeyString(curState.key)} (mult: ${keyMult.toFixed(2)})`;
+    const keyExpl = isSameKey ? 'same key' : `modulation to ${getKeyString(curState.key)} (mult: ${keyMult.toFixed(2)})`;
 
     // Calculate exact consecutive duration for explanation
-    let prevKey = optimalStates[i - 1].key;
+    const prevKey = optimalStates[i - 1].key;
     let duration = 0;
     for (let idx = i - 1; idx >= 0; idx--) {
       if (optimalStates[idx].key.root === prevKey.root && optimalStates[idx].key.mode === prevKey.mode) {
@@ -379,7 +379,7 @@ export function resolveGlobalPath(
     const curKeyStr = getKeyString(curState.key);
     const curKeyCadences = cadencesByKey[curKeyStr] || [];
     const cadence = curKeyCadences.find(cad => cad.endIndex === i);
-    let cadenceExpl = cadence ? `cadence: ${cadence.name}` : 'no cadence';
+    const cadenceExpl = cadence ? `cadence: ${cadence.name}` : 'no cadence';
 
     let targetMultiplier = 1.0;
     let resolutionExpl = 'no target';

@@ -164,7 +164,7 @@ export function scoreVoicing(
   redundancy += duplicationPenalty;
 
   // 4. INVERSÃO (bassScore do baixo acústico)
-  let inversion = SCORING_WEIGHTS.bassRootPositionScore;
+  let inversion: number;
   const sortedVoices = [...roles.voices].sort((a, b) => a.pitch - b.pitch);
   const physicalBassPC = sortedVoices.length > 0 ? sortedVoices[0].pitchClass : -1;
 
@@ -209,7 +209,7 @@ export function scoreVoicing(
     }
   });
 
-  let completenessBonus = 0;
+  let completenessBonus: number;
   if (missingPCs.length === 0) {
     completenessBonus = SCORING_WEIGHTS.completeVoicingBonus; // +40
   } else if (essentialMissingCount === 0) {

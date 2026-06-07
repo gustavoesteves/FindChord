@@ -1,4 +1,6 @@
 import { harmonyEngine } from "../harmonyEngine";
+import type { VoicingTransform } from "../realization/models/VoicingTransform";
+import type { VoicingLayout } from "../realization/models/VoicingLayout";
 
 console.log("=============================================");
 console.log("INICIANDO SUÍTE DE TESTES DOS REALIZADORES (SPRINT 4)");
@@ -113,8 +115,8 @@ export function runRealizerTests(): boolean {
 
     // 6.5. Auditoria de Conservação Estrita (Sem Re-armonização): outputPitchClasses ⊆ inputPitchClasses
     console.log("\n🧪 Testando Auditoria de Conservação Estrita de Notas:");
-    const transforms: any[] = ["none", "rootless", "drop2", "shell", "quartal"];
-    const layouts: any[] = ["native", "satb"];
+    const transforms: VoicingTransform[] = ["none", "rootless", "drop2", "shell", "quartal"];
+    const layouts: VoicingLayout[] = ["guitar", "satb"];
 
     transforms.forEach(trsf => {
       layouts.forEach(lay => {

@@ -12,7 +12,7 @@ const userCadence = [
   "Amaj7/C#", "B6", "Amaj7/C#", "D#m7", "A7M", "G#m7", "G#m11", "Amaj9", "G#m7", "B11", "C#m7"
 ];
 
-const runs: any[][] = [];
+const runs: ReturnType<typeof findAutoVoicings>[] = [];
 
 // 1. Rodar 10 iterações consecutivos da mesma cadência
 for (let i = 0; i < 10; i++) {

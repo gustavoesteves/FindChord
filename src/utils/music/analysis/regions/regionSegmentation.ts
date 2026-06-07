@@ -34,7 +34,7 @@ export function segmentTonalRegions(
         }
       });
 
-      let type: TonalRegionType = 'REGIONAL_SHIFT';
+      let type: TonalRegionType;
       if (duration <= 2) {
         type = 'TONICIZATION';
       } else if (hasCadence) {
