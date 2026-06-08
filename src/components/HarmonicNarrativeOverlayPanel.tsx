@@ -12,8 +12,7 @@ import {
   Brain, 
   Volume2, 
   Activity, 
-  ArrowRight, 
-  CheckCircle,
+  ArrowRight,
   HelpCircle,
   Clock
 } from "lucide-react";
@@ -221,6 +220,16 @@ export default function HarmonicNarrativeOverlayPanel() {
                   ))}
                 </div>
               </div>
+
+              {/* Overview Pedagogical Explanation (F9) */}
+              {analysis.narrativeExplanation?.overview && (
+                <div className="p-5 rounded-2xl border border-purple-500/15 bg-purple-950/10 text-xs text-zinc-300 leading-relaxed shadow-lg">
+                  <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block mb-2 select-none">
+                    Análise Pedagógica Geral
+                  </span>
+                  <p className="whitespace-pre-line font-medium">{analysis.narrativeExplanation.overview}</p>
+                </div>
+              )}
 
               {/* Phrase chains (Formal Structure Blocks) */}
               <div className="flex flex-col gap-6">
@@ -443,13 +452,21 @@ export default function HarmonicNarrativeOverlayPanel() {
                   </div>
 
                   <div className="flex-1 md:max-w-xl border-t md:border-t-0 md:border-l border-zinc-900 pt-3 md:pt-0 md:pl-4">
-                    <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest block mb-1.5">Fatos de Explicabilidade</span>
-                    <ul className="text-[10.5px] text-zinc-400 font-medium flex flex-col gap-1 leading-normal list-disc list-inside">
-                      {(activeChord.semantic?.explanation || []).map((fact: string, fIdx: number) => (
-                        <li key={fIdx} className="truncate">{fact}</li>
-                      ))}
-                    </ul>
+                    <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest block mb-1.5">Análise do Professor</span>
+                    {(() => {
+                      const chordExpl = analysis.narrativeExplanation?.chords?.[actualSelectedIdx];
+                      if (!chordExpl) return <p className="text-[10.5px] text-zinc-500 italic">Sem análise disponível.</p>;
+                      return (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black text-zinc-300 uppercase tracking-wider">{chordExpl.roleDescription}</span>
+                          <p className="text-[10.5px] text-zinc-400 font-medium leading-relaxed">
+                            {chordExpl.compositionalChoice}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
+
                 </div>
               )}
 
@@ -700,25 +717,67 @@ export default function HarmonicNarrativeOverlayPanel() {
                                   </div>
                                 )}
 
-                                {/* 4. Fatos (Audit Factual) */}
-                                <div className="flex flex-col gap-2 bg-zinc-950/40 p-3 rounded-lg border border-zinc-900/60 select-none">
-                                  <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Brain className="h-3 w-3 text-purple-400" />
-                                    Audit Factual (Professor de Harmonia)
-                                  </span>
-                                  
-                                  <ul className="text-xs text-zinc-300 font-semibold flex flex-col gap-2 leading-relaxed mt-1">
-                                    {(semantic?.explanation || []).map((item: string, fIdx: number) => (
-                                      <li key={fIdx} className="flex gap-2.5 items-start">
-                                        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                                        <span>{item}</span>
-                                      </li>
-                                    ))}
-                                    {(!semantic || (semantic.explanation || []).length === 0) && (
-                                      <li className="text-zinc-500 italic">Nenhuma explicação disponível para este acorde.</li>
-                                    )}
-                                  </ul>
-                                </div>
+                                 {/* 4. Fatos (Audit Factual - Professor de Harmonia) */}
+                                 {(() => {
+                                   const chordExpl = analysis.narrativeExplanation?.chords?.[idx];
+                                   if (!chordExpl) return null;
+                                   return (
+                                     <div className="flex flex-col gap-4 bg-[#121217]/50 p-4 rounded-xl border border-purple-500/10 select-none">
+                                       <div className="flex items-center gap-2 border-b border-zinc-900/60 pb-2">
+                                         <Brain className="h-4 w-4 text-purple-400" />
+                                         <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">
+                                           Professor de Harmonia (F9)
+                                         </span>
+                                       </div>
+                                       
+                                       {/* Função Principal */}
+                                       <div className="flex flex-col gap-1">
+                                         <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">
+                                           Função Principal
+                                         </span>
+                                         <span className="text-xs font-bold text-zinc-100">
+                                           {chordExpl.roleDescription}
+                                         </span>
+                                       </div>
+
+                                       {/* Explicação */}
+                                       <div className="flex flex-col gap-1 border-t border-zinc-900/40 pt-2">
+                                         <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">
+                                           Explicação
+                                         </span>
+                                         <p className="text-xs font-semibold text-zinc-300 leading-relaxed">
+                                           {chordExpl.compositionalChoice}
+                                         </p>
+                                       </div>
+
+                                       {/* Fatos Detectados */}
+                                       <div className="flex flex-col gap-2 border-t border-zinc-900/40 pt-2">
+                                         <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">
+                                           Fatos Detectados (Camada Técnica)
+                                         </span>
+                                         <div className="flex flex-wrap gap-2 mt-1">
+                                           {chordExpl.facts.map((fact, fIdx) => (
+                                             <span 
+                                               key={fIdx} 
+                                               className="inline-flex items-center gap-1.5 text-[8.5px] font-bold px-2 py-1 rounded bg-purple-950/20 border border-purple-900/20 text-purple-300"
+                                             >
+                                               ✓ {fact.type} 
+                                               <span className="text-zinc-500 font-bold ml-0.5">
+                                                 (Prio: {fact.priority}, Origem: {fact.sourceEngine})
+                                               </span>
+                                             </span>
+                                           ))}
+                                           {chordExpl.facts.length === 0 && (
+                                             <span className="text-[9px] text-zinc-500 italic">
+                                               Nenhum fato complexo detectado (acorde diatônico padrão).
+                                             </span>
+                                           )}
+                                         </div>
+                                       </div>
+                                     </div>
+                                   );
+                                 })()}
+
                               </div>
                             )}
                           </div>

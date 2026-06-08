@@ -2,6 +2,7 @@
 // Sprint 6A — Functional Analysis DTOs (Contrato Congelado)
 // ──────────────────────────────────────────────────────────────
 import type { HarmonicKnowledgeGraph } from './HarmonicGraph';
+import type { HarmonicNarrativeFacts, HarmonicNarrativeExplanation } from './HarmonicNarrative';
 
 
 /**
@@ -513,5 +514,12 @@ export interface FunctionalAnalysis {
 
   /** Grafo de conhecimento harmônico da progressão (Sprint Infra-2) */
   knowledgeGraph?: HarmonicKnowledgeGraph;
+
+  /** Fatos puros extraídos para a narrativa harmônica (Sprint F9) */
+  narrativeFacts?: HarmonicNarrativeFacts;
+
+  /** Explicação narrativa compilada em português (Sprint F9) */
+  narrativeExplanation?: HarmonicNarrativeExplanation;
 }
+
 

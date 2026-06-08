@@ -26,6 +26,9 @@ import { generateTonalNarrative } from '../narrative/tonalNarrative';
 import { analyzeSemanticContext } from '../narrative/semanticAnalyzer';
 import { analyzeFormalStructure } from '../narrative/formalStructureSolver';
 import { buildHarmonicKnowledgeGraph } from '../narrative/knowledgeGraphBuilder';
+import { extractNarrativeFacts } from '../narrative/narrativeFactEngine';
+import { compileNarrativeExplanation } from '../narrative/harmonicNarrativeCompiler';
+
 
 /**
  * Analyzes a chord progression and returns a complete functional analysis.
@@ -288,7 +291,8 @@ export function analyzeProgression(
   };
   const knowledgeGraph = buildHarmonicKnowledgeGraph(intermediateDTO);
 
-  return {
+  // 13. Extract Narrative Facts & Compile natural language explanation (Sprint F9)
+  const fullAnalysisDTO: FunctionalAnalysis = {
     tonalCenter: finalTonalCenter,
     chords,
     cadences,
@@ -301,4 +305,13 @@ export function analyzeProgression(
     narrative: narrative || undefined,
     knowledgeGraph
   };
+
+  const narrativeFacts = extractNarrativeFacts(fullAnalysisDTO);
+  const narrativeExplanation = compileNarrativeExplanation(narrativeFacts, chords);
+
+  fullAnalysisDTO.narrativeFacts = narrativeFacts;
+  fullAnalysisDTO.narrativeExplanation = narrativeExplanation;
+
+  return fullAnalysisDTO;
+
 }
