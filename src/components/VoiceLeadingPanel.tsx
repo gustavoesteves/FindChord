@@ -14,7 +14,8 @@ import {
   Sliders,
   Download,
   Bell,
-  BellOff
+  BellOff,
+  BookOpen
 } from "lucide-react";
 import { harmonyEngine } from "../utils/music/harmonyEngine";
 import type { RuntimePattern } from "../utils/music/harmonyEngine";
@@ -33,7 +34,7 @@ export default function ChordTimeline() {
     setPlaying,
     setActiveTimelineIndex,
     setBpm,
-    setDiatonicFieldOpen
+    setHarmonicNarrativeOpen
   } = useChordStore();
 
   const [cadenceInput, setCadenceInput] = useState(progressionChords.join(" "));
@@ -308,12 +309,12 @@ export default function ChordTimeline() {
                 Tom: {analysis.tonalCenter.root} {analysis.tonalCenter.mode === 'MAJOR' ? "Maior" : "Menor"}
               </span>
               <button
-                onClick={() => setDiatonicFieldOpen(true)}
+                onClick={() => setHarmonicNarrativeOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 hover:text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm"
-                title="Exibir Campo Harmônico Diatônico para o tom atual"
+                title="Exibir a Narrativa Harmônica Semântica e Cadencial da frase"
               >
-                <Music className="h-3 w-3 text-purple-400" />
-                <span>Campo Harmônico</span>
+                <BookOpen className="h-3 w-3 text-purple-400" />
+                <span>Narrativa Harmônica</span>
               </button>
             </div>
           )}

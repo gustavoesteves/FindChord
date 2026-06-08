@@ -3,7 +3,7 @@ import Fretboard from "./components/Fretboard";
 import ChordList from "./components/ChordList";
 import VoicingSelector from "./components/VoicingSelector";
 import ScaleOverlayPanel from "./components/ScaleOverlayPanel";
-import DiatonicFieldOverlayPanel from "./components/DiatonicFieldOverlayPanel";
+import HarmonicNarrativeOverlayPanel from "./components/HarmonicNarrativeOverlayPanel";
 import VoiceLeadingPanel from "./components/VoiceLeadingPanel";
 import { useChordStore } from "./store/useChordStore";
 import { Compass, HelpCircle } from "lucide-react";
@@ -88,8 +88,8 @@ export default function App() {
 
       </div>
 
-      {/* Modal Campo Harmônico */}
-      <DiatonicFieldOverlayPanel />
+      {/* Modal Narrativa Harmônica */}
+      <HarmonicNarrativeOverlayPanel />
 
       {/* Rodapé Premium e Fluido */}
       <footer className="w-full border-t border-zinc-850/60 bg-zinc-950/60 backdrop-blur-md py-4 text-center mt-auto">

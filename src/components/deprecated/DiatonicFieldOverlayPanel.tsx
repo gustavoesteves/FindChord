@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useChordStore } from "../store/useChordStore";
-import { generateHarmonicField } from "../utils/music/analysis/harmonicField";
-import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
-import { parseChord } from "../utils/music/theory/chordParser";
-import { playGuitarChord } from "../utils/audioSynth";
+import { useChordStore } from "../../store/useChordStore";
+import { generateHarmonicField, type DiatonicChordInfo } from "../../utils/music/analysis/harmonicField";
+import { analyzeProgression } from "../../utils/music/analysis/functionalAnalysis";
+import { parseChord } from "../../utils/music/theory/chordParser";
+import { playGuitarChord } from "../../utils/audioSynth";
 import { Note as TonalNote } from "tonal";
 import { Music, X, PlusCircle, Volume2 } from "lucide-react";
 
@@ -11,9 +11,10 @@ export default function DiatonicFieldOverlayPanel() {
   const {
     progressionChords,
     setProgressionChords,
-    isDiatonicFieldOpen,
-    setDiatonicFieldOpen
   } = useChordStore();
+
+  const isDiatonicFieldOpen = false;
+  const setDiatonicFieldOpen = () => {};
 
   const [chordFormat, setChordFormat] = useState<'triad' | 'tetrad'>('tetrad');
   const [minorFieldMode, setMinorFieldMode] = useState<'natural' | 'harmonic'>('harmonic');
@@ -42,7 +43,7 @@ export default function DiatonicFieldOverlayPanel() {
 
     let currentOctave = 3;
     let lastMidiChroma = -1;
-    const playNotes = parsed.notes.map(note => {
+    const playNotes = parsed.notes.map((note: string) => {
       const chroma = TonalNote.get(note).chroma;
       if (chroma !== undefined && lastMidiChroma !== -1 && chroma < lastMidiChroma) {
         currentOctave++;
@@ -61,7 +62,7 @@ export default function DiatonicFieldOverlayPanel() {
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in"
-      onClick={() => setDiatonicFieldOpen(false)}
+      onClick={() => setDiatonicFieldOpen()}
     >
       <div 
         className="bg-[#121216]/98 border border-zinc-800/85 rounded-2xl p-6 w-full max-w-4xl shadow-2xl flex flex-col glass-panel relative animate-scale-up select-none"
@@ -69,7 +70,7 @@ export default function DiatonicFieldOverlayPanel() {
       >
         {/* Botão Fechar */}
         <button 
-          onClick={() => setDiatonicFieldOpen(false)}
+          onClick={() => setDiatonicFieldOpen()}
           className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold bg-zinc-900 hover:bg-zinc-850 w-8 h-8 rounded-full flex items-center justify-center transition border border-zinc-800 cursor-pointer hover:scale-105 active:scale-95"
           title="Fechar"
         >
@@ -147,7 +148,7 @@ export default function DiatonicFieldOverlayPanel() {
 
         {/* Grid de Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4.5 mt-6 pb-2">
-          {diatonicChords.map((diatonic) => {
+          {diatonicChords.map((diatonic: DiatonicChordInfo) => {
             const { degree, chordSymbol, harmonicFunction, isActive, isHarmonicMinorVariant } = diatonic;
 
             const badgeColor =
