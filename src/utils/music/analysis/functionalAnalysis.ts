@@ -10,3 +10,6 @@ export { getRegionRank, buildHarmonicRegionTree, buildTonalRegionTree } from './
 export { calculateTonalSummary } from './narrative/tonalSummary';
 export { generateTonalNarrative } from './narrative/tonalNarrative';
 export { analyzeFormalStructure } from './narrative/formalStructureSolver';
+export type { HarmonicNodeType, HarmonicNode, HarmonicEdge, HarmonicEdgeRelation, HarmonicKnowledgeGraph } from './models/HarmonicGraph';
+export { buildHarmonicKnowledgeGraph } from './narrative/knowledgeGraphBuilder';
+export { HarmonicGraphEngine } from './narrative/knowledgeGraphEngine';

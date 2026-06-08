@@ -25,6 +25,7 @@ import { calculateTonalSummary } from '../narrative/tonalSummary';
 import { generateTonalNarrative } from '../narrative/tonalNarrative';
 import { analyzeSemanticContext } from '../narrative/semanticAnalyzer';
 import { analyzeFormalStructure } from '../narrative/formalStructureSolver';
+import { buildHarmonicKnowledgeGraph } from '../narrative/knowledgeGraphBuilder';
 
 /**
  * Analyzes a chord progression and returns a complete functional analysis.
@@ -276,6 +277,17 @@ export function analyzeProgression(
     ? generateTonalNarrative(regions, regionTree, chords, summary)
     : undefined;
 
+  // 12. Build Knowledge Graph (Sprint Infra-2)
+  const intermediateDTO = {
+    tonalCenter: finalTonalCenter,
+    chords,
+    cadences,
+    regions,
+    phrases,
+    phraseGroups
+  };
+  const knowledgeGraph = buildHarmonicKnowledgeGraph(intermediateDTO);
+
   return {
     tonalCenter: finalTonalCenter,
     chords,
@@ -286,6 +298,7 @@ export function analyzeProgression(
     phraseGroups,
     regionTree: regionTree || undefined,
     summary: summary || undefined,
-    narrative: narrative || undefined
+    narrative: narrative || undefined,
+    knowledgeGraph
   };
 }

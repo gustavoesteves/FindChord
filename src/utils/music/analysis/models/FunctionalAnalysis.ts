@@ -1,6 +1,8 @@
 // ──────────────────────────────────────────────────────────────
 // Sprint 6A — Functional Analysis DTOs (Contrato Congelado)
 // ──────────────────────────────────────────────────────────────
+import type { HarmonicKnowledgeGraph } from './HarmonicGraph';
+
 
 /**
  * Função harmônica tonal de um acorde dentro de uma tonalidade.
@@ -508,5 +510,8 @@ export interface FunctionalAnalysis {
 
   /** Narrativa tonal e redução estrutural (Sprint 12A) */
   narrative?: TonalNarrative;
+
+  /** Grafo de conhecimento harmônico da progressão (Sprint Infra-2) */
+  knowledgeGraph?: HarmonicKnowledgeGraph;
 }
 
