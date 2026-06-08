@@ -24,6 +24,7 @@ import { buildHarmonicRegionTree } from '../regions/regionTree';
 import { calculateTonalSummary } from '../narrative/tonalSummary';
 import { generateTonalNarrative } from '../narrative/tonalNarrative';
 import { analyzeSemanticContext } from '../narrative/semanticAnalyzer';
+import { analyzeFormalStructure } from '../narrative/formalStructureSolver';
 
 /**
  * Analyzes a chord progression and returns a complete functional analysis.
@@ -261,6 +262,9 @@ export function analyzeProgression(
   // 8b. Perform semantic analysis (Sprint F6)
   analyzeSemanticContext(chords, phrases);
 
+  // 8c. Perform formal structure analysis (Sprint F8)
+  const phraseGroups = analyzeFormalStructure(phrases);
+
   // 9. Build region tree hierarchy (Sprint Infra-1)
   const regionTree = buildHarmonicRegionTree(regions);
 
@@ -279,6 +283,7 @@ export function analyzeProgression(
     globalPath,
     regions,
     phrases,
+    phraseGroups,
     regionTree: regionTree || undefined,
     summary: summary || undefined,
     narrative: narrative || undefined

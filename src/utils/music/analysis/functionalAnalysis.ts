@@ -9,3 +9,4 @@ export { segmentPhrases } from './narrative/phraseSegmentation';
 export { getRegionRank, buildHarmonicRegionTree, buildTonalRegionTree } from './regions/regionTree';
 export { calculateTonalSummary } from './narrative/tonalSummary';
 export { generateTonalNarrative } from './narrative/tonalNarrative';
+export { analyzeFormalStructure } from './narrative/formalStructureSolver';

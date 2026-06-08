@@ -383,12 +383,31 @@ export interface HarmonicRegion {
   };
 }
 
+export type PhraseFormalRole =
+  | 'ANTECEDENT'
+  | 'CONSEQUENT'
+  | 'STANDALONE';
+
+export type PhraseGroupType = 'PERIOD' | 'STANDALONE';
+
+export interface PhraseGroup {
+  index: number;
+  type: PhraseGroupType;
+  phraseIndices: number[];
+  confidence: number;
+  name: string; // Ex: "Período Autêntico", "Frase Isolada"
+}
+
 export interface Phrase {
   index: number;
   startIndex: number;
   endIndex: number;
   terminatingCadence?: CadenceInfo;
   regions: HarmonicRegion[];
+  
+  // Novos campos F8
+  formalRole?: PhraseFormalRole;
+  phraseGroupId?: number;
 }
 
 export interface HarmonicRegionNode {
@@ -477,6 +496,9 @@ export interface FunctionalAnalysis {
 
   /** Frases musicais estruturais detectadas (Sprint 9B) */
   phrases?: Phrase[];
+
+  /** Grupos de frases formais detectadas (Sprint F8) */
+  phraseGroups?: PhraseGroup[];
 
   /** Árvore hierárquica de regiões harmônicas (Sprint Infra-1) */
   regionTree?: HarmonicRegionNode;

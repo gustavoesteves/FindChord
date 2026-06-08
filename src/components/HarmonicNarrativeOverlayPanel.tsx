@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useChordStore } from "../store/useChordStore";
 import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
+import type { Phrase, PhraseGroup } from "../utils/music/analysis/models/FunctionalAnalysis";
 import { playGuitarChord } from "../utils/audioSynth";
 import { parseChord } from "../utils/music/theory/chordParser";
 import { formatChordName } from "../utils/music/theory/enharmonics";
@@ -53,6 +54,12 @@ const roleLabels: Record<string, string> = {
   CLOSING: "Fechamento"
 };
 
+const formalRoleLabels: Record<string, string> = {
+  ANTECEDENT: "Antecedente (Tensão/Suspensão)",
+  CONSEQUENT: "Consequente (Resolução)",
+  STANDALONE: "Frase Independente"
+};
+
 export default function HarmonicNarrativeOverlayPanel() {
   const {
     progressionChords,
@@ -69,6 +76,40 @@ export default function HarmonicNarrativeOverlayPanel() {
   const analysis = progressionChords.length > 0 ? analyzeProgression(progressionChords) : null;
 
   if (!isHarmonicNarrativeOpen || !analysis || progressionChords.length === 0) return null;
+
+  // Agrupamento para renderização na Visão Geral (Overview)
+  const formalBlocks: Array<
+    | { type: 'PERIOD'; group: PhraseGroup; phrases: Phrase[] }
+    | { type: 'STANDALONE'; phrase: Phrase }
+  > = [];
+
+  const phrasesList = analysis.phrases || [];
+  const phraseGroupsList = analysis.phraseGroups || [];
+
+  let blockIdx = 0;
+  while (blockIdx < phrasesList.length) {
+    const phrase = phrasesList[blockIdx];
+    if (phrase.phraseGroupId !== undefined) {
+      const group = phraseGroupsList.find(g => g.index === phrase.phraseGroupId);
+      if (group && group.type === 'PERIOD') {
+        const nextPhrase = phrasesList[blockIdx + 1];
+        if (nextPhrase && nextPhrase.phraseGroupId === group.index) {
+          formalBlocks.push({
+            type: 'PERIOD',
+            group,
+            phrases: [phrase, nextPhrase]
+          });
+          blockIdx += 2;
+          continue;
+        }
+      }
+    }
+    formalBlocks.push({
+      type: 'STANDALONE',
+      phrase
+    });
+    blockIdx += 1;
+  }
 
   const actualSelectedIdx = (selectedChordIdx !== null && selectedChordIdx < progressionChords.length) 
     ? selectedChordIdx 
@@ -181,80 +222,191 @@ export default function HarmonicNarrativeOverlayPanel() {
                 </div>
               </div>
 
-              {/* Phrase chains */}
-              <div className="flex flex-col gap-5">
-                {(analysis.phrases || []).map((phrase, pIdx) => {
-                  const firstChord = analysis.chords[phrase.startIndex];
-                  const keyName = firstChord?.state ? `${firstChord.state.root} ${firstChord.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '';
+              {/* Phrase chains (Formal Structure Blocks) */}
+              <div className="flex flex-col gap-6">
+                {formalBlocks.map((block, idx) => {
+                  if (block.type === 'PERIOD') {
+                    const [phraseA, phraseB] = block.phrases;
+                    const firstChordA = analysis.chords[phraseA.startIndex];
+                    const firstChordB = analysis.chords[phraseB.startIndex];
+                    const keyNameA = firstChordA?.state ? `${firstChordA.state.root} ${firstChordA.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '';
+                    const keyNameB = firstChordB?.state ? `${firstChordB.state.root} ${firstChordB.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '';
 
-                  return (
-                    <div 
-                      key={pIdx} 
-                      className="p-4 rounded-2xl border border-zinc-900 bg-zinc-950/30 flex flex-col gap-3.5 relative overflow-hidden"
-                    >
-                      {/* Background soft glow */}
-                      <div className="absolute -right-20 -top-20 w-40 h-40 rounded-full bg-purple-500/5 blur-3xl" />
-                      
-                      {/* Phrase Header */}
-                      <div className="flex items-center justify-between border-b border-zinc-900 pb-2 select-none">
-                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">
-                          Frase {pIdx + 1}
-                        </span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold uppercase">
-                          Tom Inicial: {keyName}
-                        </span>
-                      </div>
+                    return (
+                      <div 
+                        key={`period-${idx}`}
+                        className="p-5 rounded-2xl border border-purple-900/35 bg-purple-950/5 flex flex-col gap-4 relative overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.05)]"
+                      >
+                        {/* Background soft glow */}
+                        <div className="absolute -right-20 -top-20 w-45 h-45 rounded-full bg-purple-500/5 blur-3xl animate-pulse" />
+                        
+                        {/* Period Group Header */}
+                        <div className="flex items-center justify-between border-b border-purple-900/20 pb-2.5 select-none">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black text-purple-400 uppercase tracking-widest">
+                              🎼 {block.group.name}
+                            </span>
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-900/30 border border-purple-800/35 text-purple-300 font-extrabold uppercase font-mono">
+                              Confiança: {Math.round(block.group.confidence * 100)}%
+                            </span>
+                          </div>
+                          <span className="text-[8.5px] text-zinc-500 font-extrabold uppercase tracking-wider">
+                            Relação Antecedente ➔ Consequente
+                          </span>
+                        </div>
 
-                      {/* Horizontally scrollable chain of chords */}
-                      <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-thin select-none">
-                        {Array.from({ length: phrase.endIndex - phrase.startIndex + 1 }).map((_, stepIdx) => {
-                          const idx = phrase.startIndex + stepIdx;
-                          const chord = analysis.chords[idx];
-                          if (!chord) return null;
-
-                          const isSelected = selectedChordIdx === idx;
-                          const displayName = getChordDisplay(chord);
-                          const semantic = chord.semantic;
-
-                          return (
-                            <div key={idx} className="flex items-center shrink-0">
-                              <div
-                                onClick={() => setSelectedChordIdx(idx)}
-                                className={`flex flex-col p-3 rounded-xl border text-center cursor-pointer transition duration-200 hover:scale-[1.03] w-[110px] ${
-                                  isSelected 
-                                    ? "bg-purple-950/20 border-purple-500 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
-                                    : "bg-zinc-900/40 border-zinc-850 hover:border-zinc-700/80"
-                                }`}
-                              >
-                                <span className={`text-xs font-black tracking-wide truncate ${isSelected ? "text-white" : "text-zinc-200"}`}>
-                                  {displayName}
-                                </span>
-                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest mt-1">
-                                  {chord.romanNumeral || "-"}
-                                </span>
-                                
-                                {/* Intent & Role Badges (Orthogonal) */}
-                                {semantic && (
-                                  <div className="flex flex-col gap-1 mt-2.5">
-                                    <span className={`text-[7.5px] px-1 py-0.5 rounded font-black uppercase tracking-wider border leading-none truncate ${intentColors[semantic.intent] || "text-zinc-400 border-zinc-800"}`}>
-                                      {intentLabels[semantic.intent] || semantic.intent}
-                                    </span>
-                                    <span className={`text-[7px] px-1 py-0.5 rounded font-bold uppercase tracking-wider border leading-none truncate ${roleColors[semantic.phraseRole] || "text-zinc-500 border-zinc-900"}`}>
-                                      {roleLabels[semantic.phraseRole] || semantic.phraseRole}
-                                    </span>
+                        {/* Inner phrases stack */}
+                        <div className="flex flex-col gap-4.5">
+                          {/* Phrase 1 (Antecedent) */}
+                          <div className="flex flex-col gap-2 pl-3 border-l-2 border-amber-500/50">
+                            <div className="flex items-center justify-between select-none">
+                              <span className="text-[9.5px] font-black text-amber-400 uppercase tracking-wider">
+                                Frase {phraseA.index + 1} — Antecedente
+                              </span>
+                              <span className="text-[8.5px] text-zinc-500 font-bold uppercase">
+                                Tom: {keyNameA}
+                              </span>
+                            </div>
+                            
+                            {/* Chord chain for Phrase A */}
+                            <div className="flex items-center gap-2 overflow-x-auto py-1.5 scrollbar-thin select-none">
+                              {Array.from({ length: phraseA.endIndex - phraseA.startIndex + 1 }).map((_, stepIdx) => {
+                                const cIdx = phraseA.startIndex + stepIdx;
+                                const chord = analysis.chords[cIdx];
+                                if (!chord) return null;
+                                const isSelected = selectedChordIdx === cIdx;
+                                return (
+                                  <div key={cIdx} className="flex items-center shrink-0">
+                                    <div
+                                      onClick={() => setSelectedChordIdx(cIdx)}
+                                      className={`flex flex-col p-2.5 rounded-xl border text-center cursor-pointer transition duration-150 hover:scale-[1.02] w-[100px] ${
+                                        isSelected 
+                                          ? "bg-purple-950/20 border-purple-500 shadow-[0_0_10px_rgba(255,78,140,0.15)]" 
+                                          : "bg-zinc-900/40 border-zinc-850 hover:border-zinc-700/80"
+                                      }`}
+                                    >
+                                      <span className={`text-[11px] font-black truncate ${isSelected ? "text-white" : "text-zinc-200"}`}>
+                                        {getChordDisplay(chord)}
+                                      </span>
+                                      <span className="text-[8.5px] font-black text-purple-400 uppercase tracking-widest mt-0.5">
+                                        {chord.romanNumeral || "-"}
+                                      </span>
+                                    </div>
+                                    {cIdx < phraseA.endIndex && (
+                                      <ArrowRight className="h-3.5 w-3.5 text-zinc-800 mx-1.5 shrink-0" />
+                                    )}
                                   </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Phrase 2 (Consequent) */}
+                          <div className="flex flex-col gap-2 pl-3 border-l-2 border-emerald-500/50">
+                            <div className="flex items-center justify-between select-none">
+                              <span className="text-[9.5px] font-black text-emerald-400 uppercase tracking-wider">
+                                Frase {phraseB.index + 1} — Consequente
+                              </span>
+                              <span className="text-[8.5px] text-zinc-500 font-bold uppercase">
+                                Tom: {keyNameB}
+                              </span>
+                            </div>
+
+                            {/* Chord chain for Phrase B */}
+                            <div className="flex items-center gap-2 overflow-x-auto py-1.5 scrollbar-thin select-none">
+                              {Array.from({ length: phraseB.endIndex - phraseB.startIndex + 1 }).map((_, stepIdx) => {
+                                const cIdx = phraseB.startIndex + stepIdx;
+                                const chord = analysis.chords[cIdx];
+                                if (!chord) return null;
+                                const isSelected = selectedChordIdx === cIdx;
+                                return (
+                                  <div key={cIdx} className="flex items-center shrink-0">
+                                    <div
+                                      onClick={() => setSelectedChordIdx(cIdx)}
+                                      className={`flex flex-col p-2.5 rounded-xl border text-center cursor-pointer transition duration-150 hover:scale-[1.02] w-[100px] ${
+                                        isSelected 
+                                          ? "bg-purple-950/20 border-purple-500 shadow-[0_0_10px_rgba(255,78,140,0.15)]" 
+                                          : "bg-zinc-900/40 border-zinc-850 hover:border-zinc-700/80"
+                                      }`}
+                                    >
+                                      <span className={`text-[11px] font-black truncate ${isSelected ? "text-white" : "text-zinc-200"}`}>
+                                        {getChordDisplay(chord)}
+                                      </span>
+                                      <span className="text-[8.5px] font-black text-purple-400 uppercase tracking-widest mt-0.5">
+                                        {chord.romanNumeral || "-"}
+                                      </span>
+                                    </div>
+                                    {cIdx < phraseB.endIndex && (
+                                      <ArrowRight className="h-3.5 w-3.5 text-zinc-800 mx-1.5 shrink-0" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    const phrase = block.phrase;
+                    const firstChord = analysis.chords[phrase.startIndex];
+                    const keyName = firstChord?.state ? `${firstChord.state.root} ${firstChord.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '';
+
+                    return (
+                      <div 
+                        key={`standalone-${idx}`}
+                        className="p-4 rounded-2xl border border-zinc-900 bg-zinc-950/30 flex flex-col gap-3 relative overflow-hidden"
+                      >
+                        {/* Background soft glow */}
+                        <div className="absolute -right-20 -top-20 w-40 h-40 rounded-full bg-purple-500/5 blur-3xl" />
+                        
+                        {/* Phrase Header */}
+                        <div className="flex items-center justify-between border-b border-zinc-900 pb-2 select-none">
+                          <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">
+                            Frase {phrase.index + 1} — Independente
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold uppercase">
+                            Tom Inicial: {keyName}
+                          </span>
+                        </div>
+
+                        {/* Horizontally scrollable chain of chords */}
+                        <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-thin select-none">
+                          {Array.from({ length: phrase.endIndex - phrase.startIndex + 1 }).map((_, stepIdx) => {
+                            const cIdx = phrase.startIndex + stepIdx;
+                            const chord = analysis.chords[cIdx];
+                            if (!chord) return null;
+
+                            const isSelected = selectedChordIdx === cIdx;
+                            const displayName = getChordDisplay(chord);
+
+                            return (
+                              <div key={cIdx} className="flex items-center shrink-0">
+                                <div
+                                  onClick={() => setSelectedChordIdx(cIdx)}
+                                  className={`flex flex-col p-3 rounded-xl border text-center cursor-pointer transition duration-200 hover:scale-[1.03] w-[110px] ${
+                                    isSelected 
+                                      ? "bg-purple-950/20 border-purple-500 shadow-[0_0_12px_rgba(255,78,140,0.15)]" 
+                                      : "bg-zinc-900/40 border-zinc-850 hover:border-zinc-700/80"
+                                  }`}
+                                >
+                                  <span className={`text-xs font-black tracking-wide truncate ${isSelected ? "text-white" : "text-zinc-200"}`}>
+                                    {displayName}
+                                  </span>
+                                  <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest mt-1">
+                                    {chord.romanNumeral || "-"}
+                                  </span>
+                                </div>
+                                {cIdx < phrase.endIndex && (
+                                  <ArrowRight className="h-4 w-4 text-zinc-750 mx-1.5 shrink-0" />
                                 )}
                               </div>
-
-                              {idx < phrase.endIndex && (
-                                <ArrowRight className="h-4 w-4 text-zinc-750 mx-1.5 shrink-0" />
-                              )}
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
+                  }
                 })}
               </div>
 
@@ -410,7 +562,7 @@ export default function HarmonicNarrativeOverlayPanel() {
                 return (
                   <div key={pIdx} className="p-4 rounded-2xl border border-zinc-900 bg-zinc-950/20 flex flex-col gap-4">
                     <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider select-none">
-                      Estrutura da Frase {pIdx + 1}
+                      Frase {phrase.index + 1} — {formalRoleLabels[phrase.formalRole || 'STANDALONE']}
                     </span>
 
                     {/* Vertical timeline flow */}
