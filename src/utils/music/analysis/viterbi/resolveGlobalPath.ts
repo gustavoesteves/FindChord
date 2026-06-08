@@ -252,7 +252,7 @@ export function resolveGlobalPath(
           const curIsModal = curState.state.mode !== 'IONIAN' && curState.state.mode !== 'AEOLIAN';
           const curStateStr = getStateString(curState.state);
           const curKeyCadences = cadencesByKey[curStateStr] || [];
-          const hasCadence = curKeyCadences.some(cad => cad.endIndex === i && !cad.suppressed);
+          const hasCadence = curKeyCadences.some(cad => cad.endIndex === i && !cad.suppressed && cad.resolution?.status !== 'INTERRUPTED' && cad.resolution?.status !== 'EVADED');
           if (curIsModal && hasCadence) {
             persistenceMultiplier = Math.min(1.0, persistenceMultiplier * 1.5);
           }
@@ -262,7 +262,7 @@ export function resolveGlobalPath(
         let cadenceBonus = 1.0;
         const curStateStr = getStateString(curState.state);
         const curKeyCadences = cadencesByKey[curStateStr] || [];
-        const matchingCadence = curKeyCadences.find(cad => cad.endIndex === i && !cad.suppressed);
+        const matchingCadence = curKeyCadences.find(cad => cad.endIndex === i && !cad.suppressed && cad.resolution?.status !== 'INTERRUPTED' && cad.resolution?.status !== 'EVADED');
         if (matchingCadence) {
           const isModalCadence = matchingCadence.name.startsWith('Aproximação');
           const mult = isModalCadence ? 0.80 : 0.40;
@@ -376,7 +376,7 @@ export function resolveGlobalPath(
     if (!isSameState) {
       const curStateStr = getStateString(curState.state);
       const curKeyCadences = cadencesByKey[curStateStr] || [];
-      const cadence = curKeyCadences.find(cad => i >= cad.startIndex && i <= cad.endIndex && !cad.suppressed);
+      const cadence = curKeyCadences.find(cad => i >= cad.startIndex && i <= cad.endIndex && !cad.suppressed && cad.resolution?.status !== 'INTERRUPTED' && cad.resolution?.status !== 'EVADED');
       
       const isClose = isCloselyRelated(prevTonal, curTonal);
       let confidence = isClose ? 0.70 : 0.50;
@@ -477,7 +477,7 @@ export function resolveGlobalPath(
     }
 
     let cadenceBonus = 1.0;
-    if (cadence) {
+    if (cadence && cadence.resolution?.status !== 'INTERRUPTED' && cadence.resolution?.status !== 'EVADED') {
       const isModalCadence = cadence.name.startsWith('Aproximação');
       const mult = isModalCadence ? 0.80 : 0.40;
       cadenceBonus = 1.0 + cadence.confidence * mult;

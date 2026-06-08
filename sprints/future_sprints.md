@@ -1,10 +1,15 @@
-# 🚀 Catálogo de Sprints Futuras — Do Motor Analítico ao Engine de Produto
+# 🚀 Catálogo de Sprints Futuras — Do Motor Analítico ao Engine de Significado
 
-Após a conclusão da **Sprint 12A**, o Find Chord consolidou seu núcleo como um **Analisador Tonal Hierárquico**. A maior parte da Prioridade 1 (Harmonia Funcional Clássica) e várias fundações de análise regional avançada (Viterbi, Árvores de Regiões, Sumário e Narrativas) foram concluídas.
+Após a conclusão das sprints **F4**, **Infra-1**, **Sprint 7**, **F7** e **F6**, o Find Chord consolidou seu núcleo como um **Analisador Tonal, Modal e Semântico Hierárquico**. A maior parte da Prioridade 1 (Harmonia Funcional Clássica) e várias fundações de análise regional, cadencial e semântica avançadas foram concluídas.
+
+Com a consolidação dessas camadas, o gargalo do motor mudou:
+> **O próximo gargalo não é mais "detectar coisas", mas sim "explicar o significado musical".**
+
+Este documento redefine e prioriza o roadmap futuro do Find Chord sob essa ótica semântica.
 
 ---
 
-## 📊 Estado de Cobertura Atual (vs Obra de Érica Masson)
+## 📊 Estado de Cobertura Atual
 
 | Área | Cobertura Atual | Detalhamento |
 |---|---|---|
@@ -13,243 +18,134 @@ Após a conclusão da **Sprint 12A**, o Find Chord consolidou seu núcleo como u
 | **Dominantes secundários** | ~100% | Detecção e rotulação contextual de V7/X na timeline. |
 | **SubV7** | ~100% | Identificação de dominantes substitutos tritone. |
 | **Tonicizações e modulações** | ~100% | Delimitação de janelas temporárias vs modulações estruturais via cadência. |
-| **Narrativa tonal** | ~100% | Redução de trajetória e categorização da narrativa da peça. |
+| **Regiões harmônicas unificadas** | ~100% | Unificação de tonalidades e eixos modais em `HarmonicRegion`. |
+| **Gramática cadencial** | ~100% | Quatro tipos objetivos (`AUTHENTIC`, `PLAGAL`, `HALF`, `PHRYGIAN`) com pesos e status de resolução. |
+| **DTO Explicável** | ~100% | Evidências físicas, notas comuns e caminhos Viterbi expostos diretamente no DTO público. |
+| **Contexto Semântico (F6)** | ~100% | AST semântica contendo intenção harmônica, papéis de frase, causas e suportes tipados. |
 | **Empréstimo modal** | ~60% | Identificação de acordes emprestados sem modulação formal. |
-| **Harmonia modal** | ~35% | Rastreamento estatístico de escalas/modos na timeline, mas sem resolvedor de eixo modal verdadeiro. |
+| **Harmonia modal** | ~75% | resolvedor de eixos modais verdadeiro integrado ao Viterbi. |
 | **Funções aparentes (Volume 3)** | ~15% | Heurísticas básicas de diminutos inteligentes, mas sem reinterpretação via resolução. |
 | **Equivalência funcional / substituições** | ~10% | Agrupamento funcional básico, sem motor de substituição ou geração equivalente. |
 | **Blues** | ~5% | Parcialmente detectado como acordes dominantes avulsos, sem suporte estrutural formal. |
-| **Voice-leading** | ~0% | Foco atual em acordes inteiros, sem condução de vozes internas. |
+| **Voice-leading** | ~15% | Condução linear na geração coralizada, mas sem análise de movimentos paralelos no input do usuário. |
 
 ---
 
-## 🗺️ Visão Geral do Roadmap
+## 🗺️ Visão Geral do Novo Roadmap
 
 ```mermaid
 graph TD
-    subgraph "Fase 1: Teoria, Semântica & Estrutura"
-        S4["Sprint F4: Harmonia Modal Completa (Modal Axis Solver)"]
-        S7["Sprint F7: Cadential Grammar Engine"]
-        S6["Sprint F6: Harmonic Intent Engine"]
-        S2["Sprint F2: Funções Aparentes (sus, dim, m6, #IVm7b5)"]
-        C2["Sprint C2: Voice-Leading Engine"]
-        S3["Sprint F3: Equivalência Funcional (Tabela de Substituições)"]
-        S8["Sprint F8: Harmonic Tension Curve"]
-        S5["Sprint F5: Blues Engine"]
-        S9["Sprint F9: Phrase & Form Engine"]
-        S10["Sprint F10: Phrase & Hypermetric Engine"]
+    subgraph "Sprints Concluídas (Consolidação do Motor)"
+        C4["F4: Modal Axis Solver"]
+        CI1["Infra-1: HarmonicRegion"]
+        CS7["Sprint 7: Explanations DTO"]
+        CF7["F7: Cadential Grammar"]
+        F6["F6: Semantic Harmonic Context"]
+    end
+
+    subgraph "Fase 1: Forma & Significado Narrativo (Prioridade Máxima)"
+        F8["Sprint F8: Phrase & Formal Structure Engine"]
+        F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
     
-    subgraph "Fase 2: Visualização, Geração & Estatística"
-        C1["Sprint C1: Grafo de Redução Hierárquica"]
-        C15["Sprint C1.5: Functional Graph Engine"]
+    subgraph "Fase 2: Infraestrutura, Analytics & Rearmonização"
+        I2["Infra-2: Harmonic Knowledge Graph (antiga C1.5)"]
+        F10["Sprint F10: Comparative Harmonic Analytics"]
         C3["Sprint C3: Rearmonizador Inteligente"]
-        CFX["Sprint FX: Corpus & Statistical Learning"]
     end
 
-    S4 --> S7
-    S7 --> S6
-    S6 --> S2
-    S2 --> C2
-    C2 --> S3
-    S3 --> S8
-    S8 --> S5
-    S5 --> S9
-    S9 --> S10
-    S10 --> C1
-    C1 --> C15
-    C15 --> C3
-    C3 --> CFX
-```
+    subgraph "Fase 3: Refinamentos Gramaticais & Condução"
+        F2["Sprint F2: Funções Aparentes (sus, dim, m6)"]
+        C2["Sprint C2: Voice-Leading Analysis Engine"]
+        F3["Sprint F3: Equivalência Funcional & Substituições"]
+        F8T["Sprint F8.5: Curva de Tensão Harmônica"]
+        F5["Sprint F5: Blues Engine"]
+        FX["Sprint FX: Corpus & Statistical Learning"]
+    end
 
----
+    subgraph "Research / Experimental"
+        C1["Experimental: Schenker-Lite Visualizer"]
+    end
 
-## 📖 Parte 1: Cobertura da Obra & Consolidação Teórica
-
-### Sprint F4: Harmonia Modal Completa (Modal Axis Solver)
-**Objetivo**: Resolver contextos de harmonia modal verdadeira (Volume 2), onde as progressões não se baseiam em relações de tensão e resolução do tipo dominante-tônica.
-*   **Conceito**: Criar um resolvedor HMM paralelo ou alternativo baseado em "Eixos e Acordes Característicos" dos modos (Dórico, Mixolídio, Lídio, Frígio, Lócrio).
-*   **Exemplos Práticos**:
-    *   Identificar e rotular eixos oscilatórios (vamps) como `||: Dm7 | G :||` como Mixolídio ou Dórico (pela nota característica).
-*   **Implementação**:
-    *   Detecção de eixos estáveis baseados na nota característica do modo.
-    *   Desativação de cadências tonais artificiais em prol de cadências de aproximação modal.
-
----
-
-### Sprint F7: Cadential Grammar Engine (Gramática de Cadências Avançada)
-**Objetivo**: Enriquecer a taxonomia de detecção de cadências e acoplar a análise sintática de resolução cadencial.
-*   **Conceito**: Identificar relações como `AUTHENTIC`, `PLAGAL`, `DECEPTIVE`, `HALF`, `BACKDOOR`, `BLUES` e `PHRYGIAN`, além do estado e direcionamento da resolução:
-    *   `resolved` (resolvida estruturalmente)
-    *   `interrupted` (interrompida no meio do caminho)
-    *   `evaded` (evitada/deceptiva, desviando a atração)
-    *   `delayed` (atrasada por suspensão)
-*   **Implementação**:
-    *   Estender as definições estruturais do `cadenceDetector.ts` para capturar com mais nuance a conclusão melódico-harmônica.
-
----
-
-### Sprint F6: Harmonic Intent Engine (Motor de Intenção Harmônica)
-**Objetivo**: Responder ao *"porquê"* um acorde está presente em determinada posição, definindo o papel dele no fraseado sob a perspectiva do compositor/analista.
-*   **Conceito**: Rotular a intenção semântica em categorias abstratas como `PROLONGATION` (prolongamento de tônica), `PREPARATION` (tensão preparatória), `INTENSIFICATION` (cromatismo intensificador), `DECEPTION` (cadência deceptiva) ou `COLORATION` (empréstimo modal estético).
-*   **Implementação**:
-    *   Mapear interfaces e contratos:
-        ```typescript
-        interface HarmonicIntent {
-          intent: 'PROLONGATION' | 'PREPARATION' | 'INTENSIFICATION' | 'DECEPTION' | 'COLORATION';
-          confidence: number;
-        }
-        ```
-    *   Gerar o mapeamento lógico e contextual combinando funções vizinhas imediatas e lookahead.
-
----
-
-### Sprint F2: Funções Aparentes (Functional Substitution Engine)
-**Objetivo**: Implementar o núcleo do **Volume 3**, permitindo que o motor classifique acordes cuja função harmônica real difira de sua estrutura de superfície.
-*   **Conceito**: Mapear equivalências onde a condução de vozes e a resolução transformam a função percebida do acorde.
-*   **Exemplos Práticos**:
-    *   `Idim` atuando como `IV7` (Subdominante).
-    *   Acordes menor com sexta (`m6`) funcionando como dominantes implícitos (ex: `Dm6` como `G7(b9)` sem fundamental).
-    *   `#IVm7(b5)` funcionando como substituto com tensão intensificada de `IVmaj7`.
-*   **Implementação**: Estender o classificador funcional para reinterpretar os graus baseando-se no lookahead de resolução (lookahead estendido).
-
----
-
-### Sprint F3: Motor de Equivalência & Tabela de Substituições Harmônicas
-**Objetivo**: Desenvolver uma API de consulta que forneça alternativas de rearmonização com equivalência funcional para qualquer acorde da timeline.
-*   **Conceito**: Implementar as regras do Cap. 6 (Volume 3), agrupando substitutos por função harmônica (T/SD/D). Esta sprint depende de F2 e F4 para diferenciar substituições tonais de substituições modais.
-*   **Implementação**:
-    *   Criar um mapeamento dinâmico que receba `{ chord: FunctionalChord, key: TonalCenter }` e retorne uma lista de substitutos com scores de estabilidade.
-    *   Permitir substituições por proximidade física de terça (ex: `Imaj7` ➔ `IIIm7` ou `VIm7`) e substituições por tensão (ex: `IIm7` ➔ `bIImaj7`).
-
----
-
-### Sprint F8: Harmonic Tension Curve (Curva de Tensão Dinâmica)
-**Objetivo**: Computar e exportar a curva de tensão harmônica instantânea da progressão, gerando dados cruciais para visualizações e motores de IA generativa.
-*   **Conceito**: Mapear a flutuação de dissonância e instabilidade tonal acorde a acorde.
-*   **Implementação**:
-    *   Calcular um score numérico contínuo para cada acorde da timeline (ex: `tensionCurve = [0.10, 0.65, 0.40, 0.85, 0.05]`), ponderando a dissonância intervalar inerente, a distância do centro tonal ativo e o direcionamento cadencial.
-
----
-
-### Sprint F5: Detector de Formas e Variações de Blues
-**Objetivo**: Classificar e analisar progressões estruturadas em formas de Blues clássicas e suas variações modernas.
-*   **Conceito**: Isolar a estrutura de Blues do resolvedor funcional clássico, permitindo que acordes de dominante com sétima (`I7`, `IV7`, `V7`) funcionem como tônica ou subdominante sem gerar falsos positivos de dominante secundário.
-*   **Implementação**:
-    *   Mapear Blues de 12 compassos (básico, jazz blues, choro blues).
-    *   Identificar substituições específicas de blues (ex: aproximações cromáticas e turnarounds de blues).
-
----
-
-### Sprint F9: Phrase & Form Engine (Estruturas de Frase e Forma)
-**Objetivo**: Conectar a análise harmônica com a forma macro da peça musical, detectando limites de frases e tipos de estruturas formais de fraseado.
-*   **Conceito**: Identificar relações formais entre frases (antecedente, consequente, período, sentença, semifrase, turnarounds e extensões cadenciais).
-*   **Implementação**:
-    *   Fornecer saídas descritivas como: *"Estrutura periódica de 8 compassos com antecedente e consequente"*.
-    *   Apoiar visualizadores na delimitação formal e agrupamento rítmico-harmônico das frases.
-
----
-
-### Sprint F10: Phrase & Hypermetric Engine (Métrica e Posição Formal)
-**Objetivo**: Acoplar a métrica e a posição temporal da timeline para refinar o papel formal de cada acorde baseado em sua alocação no fraseado.
-*   **Conceito**: O significado de um grau romano (ex: I, V) varia drasticamente se ele ocorre no início da frase, no meio de um trecho de passagem ou em uma fronteira cadencial de resolução.
-*   **Implementação**:
-    *   Rastrear propriedades contextuais como:
-        ```typescript
-        interface FormalAccent {
-          isPhraseBoundary: boolean;
-          hypermetricAccent: 'STRONG' | 'WEAK';
-          formalFunction: 'INITIATION' | 'TRANSITION' | 'CADENCE';
-        }
-        ```
-
----
-
-## 💻 Parte 2: Inovações (Musicologia Computacional & IA)
-
-### Sprint C1: Grafo de Redução Hierárquica (Schenker-Lite Visualizer)
-**Objetivo**: Gerar uma representação gráfica aninhada ilustrando as camadas de redução da narrativa tonal.
-*   **Conceito**: Visualizar como desvios e tonicizações locais se aninham sob modulações estruturais maiores.
-
----
-
-### Sprint C1.5: Functional Graph Engine (Grafo de Fluxo Funcional)
-**Objetivo**: Converter a análise sequencial de acordes e hierarquia regional em um grafo direcionado de dependência e transição funcional.
-*   **Conceito**: Mapear caminhos funcionais explícitos (ex: `Tônica ➔ Subdominante ➔ Dominante ➔ Tônica` ou `Tônica ➔ Dominante Secundária ➔ Subdominante`).
-*   **Implementação**:
-    *   Habilitar buscas por padrões complexos e criar a fundação para algoritmos de correspondência harmônica e Machine Learning.
-
----
-
-### Sprint C2: Voice-Leading Engine (Condução de Vozes)
-**Objetivo**: Analisar o movimento linear de vozes internas (condução melódica por graus conjuntos/afastamento de notas) entre acordes adjacentes.
-*   **Conceito**: Mapear a transição intervalar física das vozes (soprano, contralto, tenor, baixo) e detectar resoluções de trítonos ou sensíveis soltas.
-
----
-
-### Sprint C3: Rearmonizador Inteligente Guiado por Metas
-**Objetivo**: Permitir rearmonização automática guiada por parâmetros de complexidade, tensão e tipo de narrativa selecionados pelo usuário.
-*   **Conceito**: Gerar caminhos de rearmonização inversa respeitando metas de tensão e curva de tensão harmônica.
-
----
-
-### Sprint FX: Corpus & Statistical Learning Layer (Camada Empírica/Estatística)
-**Objetivo**: Enriquecer as heurísticas teóricas com frequências observadas e probabilidades estatísticas extraídas de corpora musicais reais, adicionando uma camada empírica ao resolvedor teórico.
-
-#### Sub-fases de Implementação:
-1.  **FX1 — Camada Observacional (Segura)**: O motor realiza a medição empírica e enriquece os DTOs com dados estatísticos (frequências de cadências, progressões e modulações), mas sem interferir na decisão do resolvedor Viterbi.
-2.  **FX2 — Camada Probabilística (Delicada)**: As estatísticas passam a atuar como fatores de desempate e pesos adicionais no solver HMM (ex: escolher uma análise de menor score teórico caso ela seja 20x mais frequente empiricamente).
-3.  **FX3 — Camada Adaptativa (Pesquisa/Extensão Futura)**: Análise adaptativa baseada nas preferências harmônicas do próprio usuário (`UserCorpusProfile`). O sistema aprende tendências estéticas individuais (ex: se o usuário prefere intercâmbio modal ou evita cromatismos) para filtrar e classificar as recomendações de rearmonização e substituição, preservando a explicabilidade matemática da inferência de base.
-
-*   **Evitando Dependência de Gêneros Musicais**: Seguindo a filosofia arquitetural do projeto, o resolvedor não trabalhará com eixos rígidos de gêneros (`JAZZ`, `POP`, `CLASSICAL`), mas sim com eixos gramaticais abstratos e pesos contínuos:
-    ```typescript
-    interface CorpusProfile {
-      tonalFunctionalWeight: number; // Força de atração de cadências clássicas
-      modalWeight: number;           // Incidência de eixos e vamps modais
-      chromaticWeight: number;       // Tolerância a cromatismos e substituições
-      substitutionWeight: number;    // Frequência de caminhos de rearmonização
-    }
-
-    interface CorpusEvidence {
-      support: number;               // Ocorrências absolutas no corpus
-      confidence: number;            // Frequência normalizada (0.0 a 1.0)
-      corpusSources: string[];       // Origem das fontes analíticas
-    }
-    ```
-
----
-
-## ⚠️ Risco Arquitetural: DTO Inflation & Modularização
-
-> [!WARNING]
-> Conforme novas camadas analíticas são agregadas, a interface do DTO principal `FunctionalAnalysis` tende a inflar excessivamente. Para evitar um modelo monolítico difícil de gerenciar e serializar, é recomendado modularizar o DTO antes de iniciar a **Sprint C2**.
-
-**Mapeamento de Módulos Sugerido**:
-```typescript
-interface FunctionalAnalysis {
-  harmonicAnalysis: HarmonicAnalysisModule;     // Chords, Roman Numerals, Functions
-  structuralAnalysis: StructuralAnalysisModule; // Regions, Tree, Phrases
-  modalAnalysis?: ModalAnalysisModule;          // Modal Axis, Borrowing context
-  pedagogicalAnalysis: PedagogicalModule;       // Summary, Narrative, Intent, Explanations, Tension
-}
+    CF7 --> F6
+    F6 --> F8
+    F8 --> I2
+    I2 --> F9
+    F9 --> F10
+    F10 --> C3
+    C3 --> F2
+    F2 --> C2
+    C2 --> F3
+    F3 --> F8T
+    F8T --> F5
+    F5 --> FX
+    FX --> C1
 ```
 
 ---
 
 ## 🔑 Cronograma de Priorização Recomendado
 
-1.  **Fase 1 (Teoria & Semântica Tonal/Modal)**:
-    1.  [F4] Harmonia Modal Completa (Modal Axis Solver)
-    2.  [F7] Cadential Grammar Engine
-    3.  [F6] Harmonic Intent Engine
-    4.  [F2] Funções Aparentes (sus, dim, m6, #IVm7b5)
-    5.  [C2] Voice-Leading Engine
-    6.  [F3] Equivalência Funcional (Tabela de Substituições)
-    7.  [F8] Harmonic Tension Curve
-    8.  [F5] Blues Engine
-    9.  [F9] Phrase & Form Engine
-    10. [F10] Phrase & Hypermetric Engine (Métrica e Posição Formal)
-2.  **Fase 2 (Visualização, Geração & Estatística)**:
-    11. [C1 / C1.5] Visualização de Grafos e Árvore Schenker-Lite
-    12. [C3] Rearmonizador Inteligente
-    13. [FX] Corpus & Statistical Learning Layer (FX1/FX2/FX3)
+---
+
+### Sprint F6: Semantic Harmonic Context Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Mapear fatos e relações dinâmicas de significado e discurso musical diretamente nos acordes.
+*   **Conceito**: Implementou a tipagem semântica ortogonal (`HarmonicIntent`, `PhraseRole`, `SemanticCause`, `SemanticSupport`) e o motor de explicabilidade estrutural objetiva, fornecendo a AST semântica básica.
+*   **Valor**: Evita a geração prematura de textos, servindo como uma AST semântica pura a ser consumida pela futura F9.
+
+---
+
+### Sprint F8: Phrase & Formal Structure Engine
+**Prioridade: ALTA**
+*   **Objetivo**: Conectar a análise harmônica com a forma macro da peça musical, estruturando frases e seções formais (Antecedente, Consequente, Período, Sentença).
+*   **Conceito**: Identificar relações formais entre frases (antecedente, consequente, período, sentença, semifrase, turnarounds e extensões cadenciais) e mapear a macro-forma em seções (Introdução, Refrão, Ponte, etc.).
+*   **Implementação**:
+    ```typescript
+    interface FormalStructure {
+      phraseType: 'ANTECEDENT' | 'CONSEQUENT' | 'STANDALONE';
+      formType: 'PERIOD' | 'SENTENCE' | 'SECTIONAL';
+      sectionRole?: 'INTRO' | 'VERSE' | 'CHORUS' | 'BRIDGE' | 'OUTRO';
+    }
+    ```
+
+---
+
+### Infra-2: Harmonic Knowledge Graph (antiga C1.5)
+**Prioridade: ALTA (Infraestrutura)**
+*   **Objetivo**: Representar dependências funcionais, regiões, cadências, intenções e relações semânticas em um grafo de conhecimento interno estruturado (`Region -> Phrase -> Intent -> Cadence -> Resolution`), sem acoplamento visual ou de UI.
+*   **Conceito**: Funcionar como a espinha dorsal de dados para as sprints seguintes (F9 e F10), permitindo buscas harmônicas complexas, clustering e queries semânticas.
+*   **Valor**: Base essencial para o explicador linguístico (F9) percorrer a hierarquia formal e contextual da peça.
+
+---
+
+### Sprint F9: Compositional Choice & Intent Explainer
+**Prioridade: ALTA**
+*   **Objetivo**: Traduzir a análise estrutural e o grafo de conhecimento (Infra-2) em explicações musicais em linguagem natural fluida e pedagógica.
+*   **Conceito**: Consumir os dados do grafo semântico para gerar narrativas explicativas sobre escolhas composicionais (ex: *"O compositor utiliza A7 para intensificar a aproximação ao acorde de Ré menor antes da resolução da frase."*).
+*   **Valor**: Diferencial central para o usuário final que estuda teoria musical.
+
+---
+
+### Sprint F10: Comparative Harmonic Analytics
+**Prioridade: MÉDIA**
+*   **Objetivo**: Mapear similaridades e estatísticas analíticas comparativas entre progressões.
+*   **Conceito**: Calcular similaridade funcional contínua (ex: *"Esta progressão possui 78% de similaridade funcional com Autumn Leaves"*).
+*   **Valor**: Fornece recursos pedagógicos e sugestões de peças similares com base no comportamento de regiões e cadências em vez de apenas cifra.
+
+---
+
+### Sprints Secundárias & Refinamentos Gramaticais
+
+*   **[F2] Funções Aparentes (Functional Substitution)**: Classificar acordes cuja estrutura física difere da função de superfície (ex: `Idim` atuando como `IV7`, `m6` como dominante implícito).
+*   **[C2] Voice-Leading Analysis Engine**: Analisar o movimento de vozes internas do input do usuário (soprano, contralto, tenor, baixo) e detectar conduções proibidas (oitavas/quintas paralelas, sensíveis não resolvidas).
+*   **[F3] Equivalência Funcional & Substituições**: API que sugere rearmonizações equivalentes para cada ponto da timeline.
+*   **[F8.5] Curva de Tensão Harmônica (Tension Curve)**: Computar curva contínua de flutuação de dissonância e instabilidade tonal.
+*   **[F5] Blues Engine**: Identificar formas de Blues de 12 compassos e tratar dominantes como acordes estáticos sem falsa tensão dominante.
+*   **[FX] Corpus & Statistical Learning**: Adicionar probabilidade empírica baseada em corpora para desempate do resolvedor Viterbi.
+
+---
+
+### Sprints Experimentais / Pesquisa
+
+*   **[Experimental] Schenker-Lite Visualizer (antiga C1)**: Grafo de redução hierárquica gráfica aninhada ilustrando as camadas de redução da narrativa tonal. Removido do roadmap principal devido ao menor valor de produto comparado com a descrição textual de significado musical.

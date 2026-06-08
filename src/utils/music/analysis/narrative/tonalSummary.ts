@@ -59,7 +59,11 @@ export function calculateTonalSummary(
 
   // 5. Cadence counts and regional transitions
   const cadenceCount = cadences.length;
-  const resolvedCadenceCount = cadences.filter(c => c.type !== 'TURNAROUND').length;
+  const resolvedCadenceCount = cadences.filter(
+    c => c.resolution?.status === 'RESOLVED' ||
+         c.resolution?.status === 'DECEPTIVE' ||
+         c.resolution?.status === 'DELAYED'
+  ).length;
 
   const regionalTransitionCount = regions.length - 1;
   const keyModulationRelations: KeyRelation[] = [];

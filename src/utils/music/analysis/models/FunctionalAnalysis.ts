@@ -100,18 +100,49 @@ export interface ResolutionContext {
   candidateResolutions?: ResolutionEvidence[];
 }
 
+export type HarmonicIntent =
+  | 'PROLONGATION'
+  | 'PREPARATION'
+  | 'INTENSIFICATION'
+  | 'ATTRACTION'
+  | 'RESOLUTION'
+  | 'COLORATION';
+
+export type PhraseRole =
+  | 'OPENING'
+  | 'BODY'
+  | 'PRE_CADENTIAL'
+  | 'CADENTIAL'
+  | 'CLOSING';
+
+export type SemanticCause =
+  | 'TONIC_FUNCTION'
+  | 'SUBDOMINANT_FUNCTION'
+  | 'DOMINANT_FUNCTION'
+  | 'SECONDARY_DOMINANT'
+  | 'SECONDARY_LEADING_TONE'
+  | 'TRITONE_SUBSTITUTION'
+  | 'MODAL_BORROWING'
+  | 'MODAL_AXIS'
+  | 'CHROMATIC_APPROACH'
+  | 'PASSING_DIMINISHED'
+  | 'COMMON_TONE_DIMINISHED'
+  | 'NEIGHBOR_DIMINISHED'
+  | 'TONICIZATION';
+
+export type SemanticSupport =
+  | 'PHRASE_OPENING'
+  | 'CADENCE_PREPARATION'
+  | 'CADENCE_TENSION'
+  | 'CADENCE_RESOLUTION'
+  | 'PHRASE_CLOSING';
+
 export interface SemanticContext {
-  /**
-   * Placeholder types. Will be replaced during future sprints:
-   *  - F6: Harmonic Intent Engine
-   *  - F7: Cadential Grammar Engine
-   *  - F9: Phrase & Form Engine
-   *  - F10: Hypermetric Engine
-   */
-  harmonicIntent?: unknown;
-  cadentialContext?: unknown;
-  phraseRole?: unknown;
-  hypermetricRole?: unknown;
+  intent: HarmonicIntent;
+  phraseRole: PhraseRole;
+  causes: SemanticCause[];
+  supports: SemanticSupport[];
+  explanation: string[];
 }
 
 export interface DebugContext {
@@ -272,15 +303,42 @@ export interface ContextualAnalysis {
   resolutionDistance: number; // 1 = vizinho imediato, 2 = pulando um acorde
 }
 
+export type CadenceType =
+  | 'AUTHENTIC'
+  | 'PLAGAL'
+  | 'HALF'
+  | 'PHRYGIAN';
+
+export type CadenceResolutionStatus = 
+  | 'RESOLVED'
+  | 'DECEPTIVE'
+  | 'EVADED'
+  | 'INTERRUPTED'
+  | 'DELAYED';
+
+export type CadentialStrength =
+  | 'WEAK'
+  | 'MODERATE'
+  | 'STRONG';
+
+export interface CadenceResolution {
+  status: CadenceResolutionStatus;
+  targetChordIndex?: number;
+  explanation: string[];
+}
+
 export interface CadenceInfo {
-  name: string; // Ex: "ii - V - I (C Maior)", "Turnaround de Jazz", "Plagal"
-  type: 'PERFECT' | 'PLAGAL' | 'DECEPTIVE' | 'BACKDOOR' | 'TURNAROUND' | 'SECONDARY_PERFECT';
+  name: string;
+  type: CadenceType;
   startIndex: number;
   endIndex: number;
   chordIndexes: number[];
   confidence: number;
+  strength: CadentialStrength;
+  cadentialWeight: number;
   suppressed?: boolean;
   suppressionReason?: string;
+  resolution: CadenceResolution;
 }
 
 export interface ModulationEvent {

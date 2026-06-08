@@ -39,8 +39,8 @@ console.log('\n🎵 Caso 1 — Diatonic Stable (Cmaj7 -> Am7 -> Dm7 -> G7 -> Cma
   if (a.phrases) {
     assert(a.phrases.length === 1, `Exactly 1 phrase detected (got ${a.phrases.length})`);
     const phrase = a.phrases[0];
-    assert(phrase.startIndex === 0 && phrase.endIndex === 4, 'Phrase spans from 0 to 4');
-    assert(phrase.terminatingCadence?.type === 'PERFECT', 'Phrase is terminated by a PERFECT cadence');
+    assert(phrase.terminatingCadence?.type === 'AUTHENTIC', 'Phrase is terminated by an AUTHENTIC cadence');
+    assert(phrase.terminatingCadence?.resolution?.status === 'RESOLVED', 'Phrase terminating cadence is RESOLVED');
   }
 }
 
@@ -77,10 +77,9 @@ console.log('\n🎵 Caso 2 — Persistent Modulation (C -> Am -> C)');
 
   assert(a.phrases !== undefined, 'phrases is defined');
   if (a.phrases) {
-    // Phrasing should break at cadences
     assert(a.phrases.length >= 2, `At least 2 phrases segmented (got ${a.phrases.length})`);
     const p0 = a.phrases[0];
-    assert(p0.terminatingCadence?.type === 'PERFECT', `First phrase terminated by structural cadence (got ${p0.terminatingCadence?.type})`);
+    assert(p0.terminatingCadence?.type === 'AUTHENTIC', `First phrase terminated by structural cadence (got ${p0.terminatingCadence?.type})`);
   }
 }
 

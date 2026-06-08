@@ -24,7 +24,7 @@ console.log('\n🎵 Test 1 — Backdoor Cadence Precedence (Bb7 -> Cmaj7)');
   const a = analyzeProgression(['Bb7', 'Cmaj7']);
   assert(a.tonalCenter.root === 'C', 'Key is C');
   
-  const backdoorCadence = a.cadences?.find(c => c.type === 'BACKDOOR');
+  const backdoorCadence = a.cadences?.find(c => c.type === 'AUTHENTIC' && c.name.includes('Backdoor'));
   assert(backdoorCadence !== undefined, 'Backdoor cadence detected');
   
   const bb7Chord = a.chords[0];

@@ -23,6 +23,7 @@ import { segmentPhrases } from '../narrative/phraseSegmentation';
 import { buildHarmonicRegionTree } from '../regions/regionTree';
 import { calculateTonalSummary } from '../narrative/tonalSummary';
 import { generateTonalNarrative } from '../narrative/tonalNarrative';
+import { analyzeSemanticContext } from '../narrative/semanticAnalyzer';
 
 /**
  * Analyzes a chord progression and returns a complete functional analysis.
@@ -234,7 +235,7 @@ export function analyzeProgression(
 
   // 6b. Post-process to clear modal borrowing for backdoor dominant chords
   for (const cad of cadences) {
-    if (cad.type === 'BACKDOOR') {
+    if (cad.type === 'AUTHENTIC' && cad.name.includes('Backdoor')) {
       const backdoorChordIdx = cad.startIndex;
       const chord = chords[backdoorChordIdx];
       if (chord) {
@@ -256,6 +257,9 @@ export function analyzeProgression(
   // 8. Segment regions and phrases (Sprint Infra-1)
   const regions = segmentHarmonicRegions(chords, cadences, finalTonalCenter);
   const phrases = segmentPhrases(progression.length, regions, cadences);
+
+  // 8b. Perform semantic analysis (Sprint F6)
+  analyzeSemanticContext(chords, phrases);
 
   // 9. Build region tree hierarchy (Sprint Infra-1)
   const regionTree = buildHarmonicRegionTree(regions);

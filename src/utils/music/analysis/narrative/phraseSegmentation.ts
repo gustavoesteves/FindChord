@@ -10,32 +10,11 @@ export function segmentPhrases(
 
   const structuralCadences = cadences
     .map((cad, originalIdx) => ({ cad, originalIdx }))
-    .filter(({ cad }) => 
-      cad.type === 'PERFECT' ||
-      cad.type === 'PLAGAL' ||
-      cad.type === 'DECEPTIVE' ||
-      cad.type === 'BACKDOOR' ||
-      cad.type === 'TURNAROUND'
-    );
+    .filter(({ cad }) => !cad.suppressed);
 
-  const rawBoundaries = Array.from(
+  const boundaryIndices = Array.from(
     new Set(structuralCadences.map(({ cad }) => cad.endIndex))
   ).sort((a, b) => a - b);
-
-  const boundaryIndices: number[] = [];
-  rawBoundaries.forEach(b => {
-    const isTurnaroundEnd = structuralCadences.some(({ cad }) => cad.endIndex === b && cad.type === 'TURNAROUND');
-    if (isTurnaroundEnd) {
-      const hasResolvingLater = structuralCadences.some(({ cad }) =>
-        (cad.type === 'PERFECT' || cad.type === 'PLAGAL' || cad.type === 'DECEPTIVE') &&
-        (cad.endIndex === b + 1 || cad.endIndex === b + 2)
-      );
-      if (hasResolvingLater) {
-        return;
-      }
-    }
-    boundaryIndices.push(b);
-  });
 
   let phraseStart = 0;
   let phraseIndex = 0;
