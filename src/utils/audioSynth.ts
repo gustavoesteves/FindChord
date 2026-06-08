@@ -104,7 +104,10 @@ export function playGuitarNote(noteName: string, delayMs: number = 0): void {
  */
 export function playGuitarChord(notes: string[], strumSpeed: number = 40): void {
   if (notes.length === 0) return;
-  const activeNotes = notes.filter(n => n !== "x" && n !== "");
+  // O array de notas dos voicings corre da 1ª corda (aguda, index 0) para a 6ª (grave, index 5).
+  // Invertemos para que o dedilhado/arpejo soe de forma natural da mais grave para a mais aguda.
+  const reversedNotes = [...notes].reverse();
+  const activeNotes = reversedNotes.filter(n => n !== "x" && n !== "");
   activeNotes.forEach((note, index) => {
     playGuitarNote(note, index * strumSpeed);
   });

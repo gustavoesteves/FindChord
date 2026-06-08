@@ -50,6 +50,7 @@ export default function ChordTimeline() {
   const [isMetronomeEnabled, setIsMetronomeEnabled] = useState<boolean>(false);
   const [currentBeat, setCurrentBeat] = useState<number>(0);
   const isMetronomeEnabledRef = useRef(isMetronomeEnabled);
+  const currentBeatRef = useRef<number>(0);
 
   // Sincroniza a referência para evitar reiniciar o timer ao mutar/desmutar
   useEffect(() => {
@@ -115,6 +116,7 @@ export default function ChordTimeline() {
       setTimeout(() => {
         setActiveTimelineIndex(0);
         setCurrentBeat(0);
+        currentBeatRef.current = 0;
         playCurrentChordAudio(0);
       }, 0);
       if (isMetronomeEnabledRef.current) {
@@ -123,29 +125,30 @@ export default function ChordTimeline() {
     }
 
     timerRef.current = setInterval(() => {
-      setCurrentBeat((prevBeat) => {
-        const nextBeat = (prevBeat + 1) % 4;
-        
-        // Usamos o estado mais recente lido diretamente do store
-        const currentIndex = useChordStore.getState().activeTimelineIndex;
+      // 1. Calcular a próxima batida usando a referência do tempo atual para consistência e thread-safety
+      const nextBeat = (currentBeatRef.current + 1) % 4;
+      currentBeatRef.current = nextBeat;
+      
+      // 2. Atualizar o estado visual no React
+      setCurrentBeat(nextBeat);
 
-        if (nextBeat === 0) {
-          // Início de um novo compasso: avança para o próximo acorde
-          const nextChordIdx = (currentIndex === null || currentIndex >= progressionChords.length - 1) ? 0 : currentIndex + 1;
-          setActiveTimelineIndex(nextChordIdx);
-          playCurrentChordAudio(nextChordIdx);
-          if (isMetronomeEnabledRef.current) {
-            playMetronomeClick(true);
-          }
-        } else {
-          // Batida intermediária do compasso atual: apenas toca o clique do metrônomo
-          if (isMetronomeEnabledRef.current) {
-            playMetronomeClick(false);
-          }
+      // 3. Executar efeitos colaterais
+      const currentIndex = useChordStore.getState().activeTimelineIndex;
+
+      if (nextBeat === 0) {
+        // Início de um novo compasso: avança para o próximo acorde
+        const nextChordIdx = (currentIndex === null || currentIndex >= progressionChords.length - 1) ? 0 : currentIndex + 1;
+        setActiveTimelineIndex(nextChordIdx);
+        playCurrentChordAudio(nextChordIdx);
+        if (isMetronomeEnabledRef.current) {
+          playMetronomeClick(true);
         }
-        
-        return nextBeat;
-      });
+      } else {
+        // Batida intermediária do compasso atual: apenas toca o clique do metrônomo
+        if (isMetronomeEnabledRef.current) {
+          playMetronomeClick(false);
+        }
+      }
     }, beatIntervalMs);
 
     return () => {
@@ -190,6 +193,7 @@ export default function ChordTimeline() {
     setPlaying(false);
     setActiveTimelineIndex(null);
     setCurrentBeat(0);
+    currentBeatRef.current = 0;
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -198,6 +202,7 @@ export default function ChordTimeline() {
   const handleRewind = () => {
     setActiveTimelineIndex(0);
     setCurrentBeat(0);
+    currentBeatRef.current = 0;
     playCurrentChordAudio(0);
     if (isMetronomeEnabledRef.current) {
       playMetronomeClick(true);

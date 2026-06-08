@@ -396,6 +396,44 @@ export const useChordStore = create<ChordStore>((set, get) => {
     addToProgression: (chordName) => {
       const newChords = [...get().progressionChords, chordName];
       set({ progressionChords: newChords });
+
+      // Salva o voicing desenhado no braço como customizado para o novo compasso, se houver notas pressionadas
+      const selectedFrets = get().selectedFrets;
+      const hasFrets = selectedFrets.some(f => f !== null);
+      if (hasFrets) {
+        const chords = get().detectedChords;
+        const activeChord = get().selectedChordIndex !== null ? chords[get().selectedChordIndex!] : chords[0];
+        const activeChordRootPC = activeChord ? getPitchClass(activeChord.root) : -1;
+        
+        let rootString = -1;
+        const tuning = get().tuning;
+        selectedFrets.forEach((f, idx) => {
+          if (f !== null) {
+            const noteName = getNoteAt(tuning[idx], f);
+            if (getPitchClass(noteName) === activeChordRootPC) {
+              rootString = idx;
+            }
+          }
+        });
+
+        const activeFrets = selectedFrets.filter(f => f !== null && f > 0) as number[];
+        const minFret = activeFrets.length > 0 ? Math.min(...activeFrets) : 0;
+
+        const customVoicing: VoicingShape = {
+          chordName,
+          frets: [...selectedFrets],
+          rootString,
+          cageShape: "E",
+          positionFret: minFret,
+          notes: selectedFrets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x")
+        };
+
+        const newIndex = newChords.length - 1;
+        const userCustomVoicings = { ...get().userCustomVoicings };
+        userCustomVoicings[newIndex] = customVoicing;
+        set({ userCustomVoicings });
+      }
+
       get().updateTimelineVoicings();
     },
 
