@@ -58,11 +58,13 @@ graph TD
     subgraph "Trilha de Integração (MuseScore)"
         IM0["Sprint Infra-M0: Harmony Engine Adapter"]
         IMX["Sprint Infra-MX: Canonical Score Format"]
+        IMY["Sprint Infra-MY: Canonical Harmonic Event Model"]
         M1["Sprint M1: MuseScore Integration Foundation"]
         M2["Sprint M2: Harmonic Overlay Layer"]
         M3["Sprint M3: Narrative Assistant"]
         M4["Sprint M4: Interactive Harmonic Search"]
     end
+
     
     subgraph "Sprints Futuras Core & Rearmonização"
         C3["Sprint C3: Rearmonizador Inteligente"]
@@ -93,13 +95,15 @@ graph TD
     
     F9 --> IM0
     IM0 --> IMX
-    IMX --> M1
+    IMX --> IMY
+    IMY --> M1
     M1 --> M2
     M2 --> M3
     M3 --> M4
     I3 --> M4
     F10 --> M4
 ```
+
 
 ```
 
@@ -265,7 +269,16 @@ graph TD
 
 ---
 
+### Sprint Infra-MY: Canonical Harmonic Event Model
+**Prioridade: ALTA**
+*   **Objetivo**: Definir um modelo canônico de eventos harmônicos baseado em tempo/offset (`HarmonicEvent[]`) para alimentar o motor a partir de dados de áudio ou cifras temporizadas (sem necessidade de partitura).
+*   **Conceito**: Criar uma estrutura de dados de eventos sequenciais temporizados (timestamp, duration, chord, notes, region, cadence). Permite que clientes de análise de áudio (ex: APIs do Spotify, Chordify, bases do MusicBrainz) possam mapear suas saídas de transcrição direta para o formato canônico do Harmony Engine, contornando a necessidade de representações de compassos ou notações de partitura rígidas.
+*   **Valor**: Abre a inteligência harmônica para o ecossistema de áudio digital e processamento de sinal (DSP), expandindo o mercado do Find Chord além do escopo de editores de partitura.
+
+---
+
 ### Sprint M1: MuseScore Integration Foundation
+
 
 **Prioridade: MÉDIA**
 *   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord de forma simplificada.
