@@ -61,8 +61,9 @@ export default function HarmonicNarrativeOverlayPanel() {
     notationStyle
   } = useChordStore();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "phrases" | "chords" | "cadences">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "phrases">("overview");
   const [selectedChordIdx, setSelectedChordIdx] = useState<number | null>(null);
+  const [expandedChordIdx, setExpandedChordIdx] = useState<number | null>(null);
 
   // Run harmonic and semantic analysis pipeline on the current progression
   const analysis = progressionChords.length > 0 ? analyzeProgression(progressionChords) : null;
@@ -154,23 +155,7 @@ export default function HarmonicNarrativeOverlayPanel() {
                 activeTab === "phrases" ? "bg-purple-600 text-white shadow" : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              Frases
-            </button>
-            <button
-              onClick={() => setActiveTab("chords")}
-              className={`px-3 py-1.5 rounded-lg transition duration-200 cursor-pointer ${
-                activeTab === "chords" ? "bg-purple-600 text-white shadow" : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              Acordes
-            </button>
-            <button
-              onClick={() => setActiveTab("cadences")}
-              className={`px-3 py-1.5 rounded-lg transition duration-200 cursor-pointer ${
-                activeTab === "cadences" ? "bg-purple-600 text-white shadow" : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              Cadências
+              Estrutura &amp; Auditoria
             </button>
           </div>
         </div>
@@ -315,10 +300,110 @@ export default function HarmonicNarrativeOverlayPanel() {
                   </div>
                 </div>
               )}
+
+              {/* Cadential Landmarks */}
+              <div className="flex flex-col gap-3 mt-4 border-t border-zinc-900/60 pt-5">
+                <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider select-none">
+                  Pontos Cadenciais da Progressão (F7)
+                </span>
+                
+                {(analysis.cadences || []).length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
+                    {(analysis.cadences || []).map((cad, idx) => {
+                      const statusColors: Record<string, string> = {
+                        RESOLVED: "text-emerald-400 bg-emerald-950/30 border-emerald-900/40",
+                        DECEPTIVE: "text-purple-400 bg-purple-950/30 border-purple-900/40",
+                        EVADED: "text-rose-400 bg-rose-950/30 border-rose-900/40",
+                        INTERRUPTED: "text-amber-400 bg-amber-950/30 border-amber-900/40",
+                        DELAYED: "text-sky-400 bg-sky-950/30 border-sky-900/40"
+                      };
+
+                      const statusLabels: Record<string, string> = {
+                        RESOLVED: "Resolvida",
+                        DECEPTIVE: "Deceptiva (Falsa)",
+                        EVADED: "Evadida",
+                        INTERRUPTED: "Interrompida",
+                        DELAYED: "Atrasada/Suspensa"
+                      };
+
+                      const strengthLabels: Record<string, string> = {
+                        STRONG: "Forte",
+                        MODERATE: "Moderada",
+                        WEAK: "Fraca"
+                      };
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-3 relative overflow-hidden"
+                        >
+                          {/* Title & Type */}
+                          <div className="flex justify-between items-start select-none">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">
+                                Cadência {cad.type}
+                              </span>
+                              <span className="text-xs font-black text-zinc-200 mt-0.5">{cad.name}</span>
+                            </div>
+
+                            <span className={`text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusColors[cad.resolution.status]}`}>
+                              {statusLabels[cad.resolution.status] || cad.resolution.status}
+                            </span>
+                          </div>
+
+                          {/* Metadados */}
+                          <div className="grid grid-cols-2 gap-2 mt-1 py-2 border-t border-b border-zinc-900 text-[10px] font-bold text-zinc-400">
+                            <div className="flex justify-between pr-2 border-r border-zinc-900">
+                              <span className="text-zinc-500 uppercase">Força:</span>
+                              <span className="text-zinc-200">{strengthLabels[cad.strength] || cad.strength}</span>
+                            </div>
+                            <div className="flex justify-between pl-2">
+                              <span className="text-zinc-500 uppercase">Intervalo:</span>
+                              <span className="text-zinc-200">{`Comp. ${cad.startIndex + 1}-${cad.endIndex + 1}`}</span>
+                            </div>
+                          </div>
+
+                          {/* Cadential Weight */}
+                          <div className="flex flex-col gap-1 mt-1">
+                            <div className="flex justify-between text-[8.5px] font-black uppercase text-zinc-500 tracking-wider">
+                              <span>Peso de Convicção (F7)</span>
+                              <span className="text-purple-300 font-extrabold">{Math.round((cad.cadentialWeight || 0.5) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-gradient-to-r from-purple-600 to-pink-500 h-full rounded-full" 
+                                style={{ width: `${Math.round((cad.cadentialWeight || 0.5) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Explaining string */}
+                          {(() => {
+                            const targetChordObj = cad.resolution.targetChordIndex !== undefined ? analysis.chords[cad.resolution.targetChordIndex] : undefined;
+                            if (!targetChordObj) return null;
+                            const targetChordName = getChordDisplay(targetChordObj);
+                            return (
+                              <div className="text-[9.5px] text-zinc-400 font-medium italic mt-1.5 flex items-center gap-1 leading-normal select-none">
+                                <Clock className="h-3 w-3 text-purple-400 shrink-0" />
+                                <span>Resoluções esperadas em direção ao acorde <b className="text-zinc-300">{targetChordName}</b>.</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col items-center justify-center p-6 border border-dashed border-zinc-850 rounded-xl text-zinc-500 text-xs italic gap-1 select-none">
+                    <HelpCircle className="h-5 w-5 text-zinc-700 animate-pulse" />
+                    <span>Nenhuma cadência formal confirmada na progressão atual.</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* TAB 2: FLUXO FRASEOLÓGICO (PHRASES) */}
+          {/* TAB 2: ESTRUTURA E AUDITORIA (PHRASES & ACCORDION CHORDS) */}
           {activeTab === "phrases" && (
             <div className="flex flex-col gap-4 animate-scale-up select-none">
               {(analysis.phrases || []).map((phrase, pIdx) => {
@@ -336,35 +421,44 @@ export default function HarmonicNarrativeOverlayPanel() {
                         if (!chord) return null;
 
                         const semantic = chord.semantic;
-                        const isSelected = selectedChordIdx === idx;
+                        const isExpanded = expandedChordIdx === idx;
 
                         return (
                           <div 
                             key={idx} 
                             onClick={() => {
-                              setSelectedChordIdx(idx);
-                              setActiveTab("chords");
+                              setExpandedChordIdx(prev => prev === idx ? null : idx);
                             }}
-                            className={`flex items-start gap-3.5 relative py-1 cursor-pointer group ${
-                              isSelected ? "text-purple-300" : "text-zinc-400 hover:text-zinc-200"
+                            className={`flex flex-col gap-2 relative py-2 pl-4 cursor-pointer group rounded-xl hover:bg-zinc-900/10 transition ${
+                              isExpanded ? "bg-zinc-900/15" : ""
                             }`}
                           >
                             {/* Marker circle on the line */}
-                            <div className={`absolute -left-[13px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border transition duration-200 ${
-                              isSelected 
+                            <div className={`absolute -left-[13px] top-4 w-2.5 h-2.5 rounded-full border transition duration-200 ${
+                              isExpanded 
                                 ? "bg-purple-500 border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.8)] scale-110" 
                                 : "bg-zinc-950 border-zinc-700 group-hover:border-zinc-500"
                             }`} />
 
                             {/* Info */}
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 flex-1 pr-2">
                               <div className="flex items-center gap-2">
-                                <span className={`text-xs font-black tracking-wide select-none ${isSelected ? "text-white" : "text-zinc-200"}`}>
+                                <span className={`text-xs font-black tracking-wide select-none ${isExpanded ? "text-purple-300 font-extrabold" : "text-zinc-200 group-hover:text-white"}`}>
                                    {getChordDisplay(chord)}
                                 </span>
-                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider font-mono">
+                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider font-mono mr-1">
                                   {chord.romanNumeral || "-"}
                                 </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Evita alternar acordeão
+                                    playChordAudio(getChordDisplay(chord));
+                                  }}
+                                  className="p-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-purple-400 transition cursor-pointer active:scale-95 flex items-center justify-center border border-zinc-855"
+                                  title="Ouvir acorde"
+                                >
+                                  <Volume2 className="h-2.5 w-2.5" />
+                                </button>
                               </div>
 
                               {semantic && (
@@ -378,6 +472,103 @@ export default function HarmonicNarrativeOverlayPanel() {
                                 </div>
                               )}
                             </div>
+
+                            {/* Panel expansível (Inline Auditor Accordion) */}
+                            {isExpanded && (
+                              <div 
+                                className="mt-3.5 pt-3.5 border-t border-zinc-900/60 flex flex-col gap-4 animate-scale-up mr-2"
+                                onClick={(e) => e.stopPropagation() /* Evita fechar ao clicar nos detalhes */}
+                              >
+                                {/* 1. Semântica */}
+                                {semantic && (
+                                  <div className="flex flex-col gap-1.5">
+                                    <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Semântica Harmônica</span>
+                                    <div className="flex flex-wrap gap-2">
+                                      <span className={`text-[9px] px-2.5 py-1.5 rounded-lg border font-black uppercase tracking-widest text-center shadow-inner ${intentColors[semantic.intent]}`}>
+                                        Intenção: {intentLabels[semantic.intent]} ({semantic.intent})
+                                      </span>
+                                      <span className={`text-[9px] px-2.5 py-1.5 rounded-lg border font-black uppercase tracking-widest text-center shadow-inner ${roleColors[semantic.phraseRole]}`}>
+                                        Papel: {roleLabels[semantic.phraseRole]} ({semantic.phraseRole})
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* 2. Contexto */}
+                                <div className="flex flex-col gap-2 bg-zinc-950/40 p-3 rounded-lg border border-zinc-900/60 text-[10px] font-bold text-zinc-400">
+                                  <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider mb-0.5">Metadados de Contexto</span>
+                                  <div className="flex justify-between border-b border-zinc-900/40 pb-1">
+                                    <span className="text-zinc-500 uppercase">Tonalidade Local:</span>
+                                    <span className="text-zinc-200">
+                                      {chord.state ? `${chord.state.root} ${chord.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '-'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between border-b border-zinc-900/40 pb-1">
+                                    <span className="text-zinc-500 uppercase">Função Diatônica:</span>
+                                    <span className="text-zinc-200">
+                                      {chord.harmonicFunction || "-"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-zinc-500 uppercase">Classificação Contextual:</span>
+                                    <span className="text-purple-300 font-extrabold">
+                                      {chord.contextualFunction || "PRIMARY"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 3. Evidências */}
+                                {semantic && (
+                                  <div className="flex flex-col gap-3 bg-zinc-950/20 p-3 rounded-lg border border-zinc-900/60">
+                                    {semantic.causes.length > 0 && (
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Causas Identificadas</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {semantic.causes.map((cause: string) => (
+                                            <span key={cause} className="text-[8px] font-bold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-300 uppercase">
+                                              {cause}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {semantic.supports.length > 0 && (
+                                      <div className="flex flex-col gap-1 border-t border-zinc-900/60 pt-2">
+                                        <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Evidências / Suportes</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {semantic.supports.map((sup: string) => (
+                                            <span key={sup} className="text-[8px] font-bold px-2 py-0.5 rounded bg-purple-950/20 border border-purple-900/20 text-purple-300 uppercase">
+                                              {sup}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* 4. Fatos (Audit Factual) */}
+                                <div className="flex flex-col gap-2 bg-zinc-950/40 p-3 rounded-lg border border-zinc-900/60 select-none">
+                                  <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1">
+                                    <Brain className="h-3 w-3 text-purple-400" />
+                                    Audit Factual (Professor de Harmonia)
+                                  </span>
+                                  
+                                  <ul className="text-xs text-zinc-300 font-semibold flex flex-col gap-2 leading-relaxed mt-1">
+                                    {(semantic?.explanation || []).map((item: string, fIdx: number) => (
+                                      <li key={fIdx} className="flex gap-2.5 items-start">
+                                        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>{item}</span>
+                                      </li>
+                                    ))}
+                                    {(!semantic || (semantic.explanation || []).length === 0) && (
+                                      <li className="text-zinc-500 italic">Nenhuma explicação disponível para este acorde.</li>
+                                    )}
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -385,235 +576,6 @@ export default function HarmonicNarrativeOverlayPanel() {
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {/* TAB 3: AUDITORIA DO ACORDE (CHORDS) */}
-          {activeTab === "chords" && (
-            <div className="animate-scale-up select-none">
-              {activeChord ? (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 py-2">
-                  
-                  {/* Left Column: Semantic Info & Badges */}
-                  <div className="md:col-span-5 flex flex-col gap-4 bg-zinc-950/40 p-4 rounded-xl border border-zinc-900">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-black text-white">{getChordDisplay(activeChord)}</span>
-                        <span className="text-[10px] bg-purple-900/40 border border-purple-800/40 px-2 py-0.5 rounded font-black text-purple-300 font-mono">
-                          {activeChord.romanNumeral || "-"}
-                        </span>
-                      </div>
-                      
-                      <button
-                        onClick={() => playChordAudio(getChordDisplay(activeChord))}
-                        className="flex items-center gap-1 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-purple-650 hover:bg-purple-550 text-white rounded-lg transition cursor-pointer active:scale-95 shadow-sm"
-                        title="Ouvir acorde"
-                      >
-                        <Volume2 className="h-3.5 w-3.5" />
-                        Ouvir
-                      </button>
-                    </div>
-
-                    {/* Metadata table */}
-                    <div className="flex flex-col gap-2 border-t border-zinc-900 pt-3 text-[10px] font-bold text-zinc-400">
-                      <div className="flex justify-between">
-                        <span className="text-zinc-500 uppercase">Tonalidade Local:</span>
-                        <span className="text-zinc-200">
-                          {activeChord.state ? `${activeChord.state.root} ${activeChord.state.mode === 'IONIAN' ? 'Maior' : 'Menor'}` : '-'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-zinc-500 uppercase">Função Diatônica:</span>
-                        <span className="text-zinc-200">
-                          {activeChord.harmonicFunction || "-"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-zinc-500 uppercase">Classificação Contextual:</span>
-                        <span className="text-purple-300">
-                          {activeChord.contextualFunction || "PRIMARY"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Intent & Role */}
-                    {activeChord.semantic && (
-                      <div className="flex flex-col gap-2.5 border-t border-zinc-900 pt-3 select-none">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Intenção Harmônica</span>
-                          <span className={`text-[10px] px-2.5 py-1.5 rounded-lg border font-black uppercase tracking-widest text-center shadow-inner ${intentColors[activeChord.semantic.intent]}`}>
-                            {intentLabels[activeChord.semantic.intent]} ({activeChord.semantic.intent})
-                          </span>
-                        </div>
-                        
-                        <div className="flex flex-col gap-1 mt-1">
-                          <span className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Papel Estrutural na Frase</span>
-                          <span className={`text-[10px] px-2.5 py-1.5 rounded-lg border font-black uppercase tracking-widest text-center shadow-inner ${roleColors[activeChord.semantic.phraseRole]}`}>
-                            {roleLabels[activeChord.semantic.phraseRole]} ({activeChord.semantic.phraseRole})
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Column: Explanatory Narrative Facts */}
-                  <div className="md:col-span-7 flex flex-col gap-4.5 bg-zinc-950/20 p-4 rounded-xl border border-zinc-900 relative">
-                    
-                    {/* Causes Badge Section */}
-                    {activeChord.semantic && activeChord.semantic.causes.length > 0 && (
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Causas Identificadas (Causes)</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {activeChord.semantic.causes.map((cause: string) => (
-                            <span key={cause} className="text-[8.5px] font-bold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 uppercase">
-                              {cause}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Supports Badge Section */}
-                    {activeChord.semantic && activeChord.semantic.supports.length > 0 && (
-                      <div className="flex flex-col gap-1.5 border-t border-zinc-900/60 pt-3">
-                        <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Evidências / Suportes (Supports)</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {activeChord.semantic.supports.map((sup: string) => (
-                            <span key={sup} className="text-[8.5px] font-bold px-2 py-0.5 rounded bg-purple-950/20 border border-purple-500/20 text-purple-300 uppercase">
-                              {sup}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Explanations List */}
-                    <div className="flex flex-col gap-2 border-t border-zinc-900/60 pt-3 select-none">
-                      <span className="text-[8.5px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1">
-                        <Brain className="h-3.5 w-3.5 text-purple-400" />
-                        Audit Factual (Professor de Harmonia)
-                      </span>
-                      
-                      <ul className="text-xs text-zinc-300 font-semibold flex flex-col gap-2 leading-relaxed mt-1">
-                        {(activeChord.semantic?.explanation || []).map((item: string, fIdx: number) => (
-                          <li key={fIdx} className="flex gap-2.5 items-start">
-                            <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                        {(!activeChord.semantic || (activeChord.semantic.explanation || []).length === 0) && (
-                          <li className="text-zinc-500 italic">Nenhuma explicação disponível para este acorde.</li>
-                        )}
-                      </ul>
-                    </div>
-
-                  </div>
-
-                </div>
-              ) : (
-                <div className="w-full flex flex-col items-center justify-center p-8 border border-dashed border-zinc-850 rounded-2xl text-zinc-500 text-xs italic gap-1 select-none">
-                  <HelpCircle className="h-6 w-6 text-zinc-700 animate-pulse" />
-                  <span>Selecione um acorde nas abas anteriores para auditar suas explicações.</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: CADÊNCIAS (CADENCES) */}
-          {activeTab === "cadences" && (
-            <div className="flex flex-col gap-4 animate-scale-up select-none">
-              {(analysis.cadences || []).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(analysis.cadences || []).map((cad, idx) => {
-                    const statusColors: Record<string, string> = {
-                      RESOLVED: "text-emerald-400 bg-emerald-950/30 border-emerald-900/40",
-                      DECEPTIVE: "text-purple-400 bg-purple-950/30 border-purple-900/40",
-                      EVADED: "text-rose-400 bg-rose-950/30 border-rose-900/40",
-                      INTERRUPTED: "text-amber-400 bg-amber-950/30 border-amber-900/40",
-                      DELAYED: "text-sky-400 bg-sky-950/30 border-sky-900/40"
-                    };
-
-                    const statusLabels: Record<string, string> = {
-                      RESOLVED: "Resolvida",
-                      DECEPTIVE: "Deceptiva (Falsa)",
-                      EVADED: "Evadida",
-                      INTERRUPTED: "Interrompida",
-                      DELAYED: "Atrasada/Suspensa"
-                    };
-
-                    const strengthLabels: Record<string, string> = {
-                      STRONG: "Forte",
-                      MODERATE: "Moderada",
-                      WEAK: "Fraca"
-                    };
-
-                    return (
-                      <div 
-                        key={idx} 
-                        className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-3 relative overflow-hidden"
-                      >
-                        {/* Title & Type */}
-                        <div className="flex justify-between items-start select-none">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">
-                              Cadência {cad.type}
-                            </span>
-                            <span className="text-xs font-black text-zinc-200 mt-0.5">{cad.name}</span>
-                          </div>
-
-                          <span className={`text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusColors[cad.resolution.status]}`}>
-                            {statusLabels[cad.resolution.status] || cad.resolution.status}
-                          </span>
-                        </div>
-
-                        {/* Metadados */}
-                        <div className="grid grid-cols-2 gap-2 mt-1 py-2 border-t border-b border-zinc-900 text-[10px] font-bold text-zinc-400">
-                          <div className="flex justify-between pr-2 border-r border-zinc-900">
-                            <span className="text-zinc-500 uppercase">Força:</span>
-                            <span className="text-zinc-200">{strengthLabels[cad.strength] || cad.strength}</span>
-                          </div>
-                          <div className="flex justify-between pl-2">
-                            <span className="text-zinc-500 uppercase">Intervalo:</span>
-                            <span className="text-zinc-200">{`Comp. ${cad.startIndex + 1}-${cad.endIndex + 1}`}</span>
-                          </div>
-                        </div>
-
-                        {/* Cadential Weight */}
-                        <div className="flex flex-col gap-1 mt-1">
-                          <div className="flex justify-between text-[8.5px] font-black uppercase text-zinc-500 tracking-wider">
-                            <span>Peso de Convicção (F7)</span>
-                            <span className="text-purple-300 font-extrabold">{Math.round((cad.cadentialWeight || 0.5) * 100)}%</span>
-                          </div>
-                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-                            <div 
-                              className="bg-gradient-to-r from-purple-600 to-pink-500 h-full rounded-full" 
-                              style={{ width: `${Math.round((cad.cadentialWeight || 0.5) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Explaining string */}
-                        {(() => {
-                          const targetChordObj = cad.resolution.targetChordIndex !== undefined ? analysis.chords[cad.resolution.targetChordIndex] : undefined;
-                          if (!targetChordObj) return null;
-                          const targetChordName = getChordDisplay(targetChordObj);
-                          return (
-                            <div className="text-[9.5px] text-zinc-400 font-medium italic mt-1.5 flex items-center gap-1 leading-normal select-none">
-                              <Clock className="h-3 w-3 text-purple-400 shrink-0" />
-                              <span>Resoluções esperadas em direção ao acorde <b className="text-zinc-300">{targetChordName}</b>.</span>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="w-full flex flex-col items-center justify-center p-8 border border-dashed border-zinc-850 rounded-2xl text-zinc-500 text-xs italic gap-1 select-none">
-                  <HelpCircle className="h-6 w-6 text-zinc-700 animate-pulse" />
-                  <span>Nenhuma cadência formal confirmada na progressão atual.</span>
-                </div>
-              )}
             </div>
           )}
 
