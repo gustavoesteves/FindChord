@@ -46,18 +46,20 @@ graph TD
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
 
-    subgraph "Fase 1: Significado Narrativo (Prioridade Máxima)"
+    subgraph "Trilha de Inteligência Core"
         I3["Infra-3: Narrative Fingerprint"]
         F10["Sprint F10: Similaridade Narrativa"]
     end
-    
-    subgraph "Fase 2: Analytics & Rearmonização"
-        C3["Sprint C3: Rearmonizador Inteligente"]
+
+    subgraph "Trilha de Integração (MuseScore)"
+        M1["Sprint M1: MuseScore Integration Foundation"]
+        M2["Sprint M2: Harmonic Overlay Layer"]
+        M3["Sprint M3: Narrative Assistant"]
+        M4["Sprint M4: Interactive Harmonic Search"]
     end
-
-
-
-    subgraph "Fase 3: Refinamentos Gramaticais & Condução"
+    
+    subgraph "Sprints Futuras Core & Rearmonização"
+        C3["Sprint C3: Rearmonizador Inteligente"]
         F2["Sprint F2: Funções Aparentes (sus, dim, m6)"]
         C2["Sprint C2: Voice-Leading Analysis Engine"]
         F3["Sprint F3: Equivalência Funcional & Substituições"]
@@ -84,6 +86,15 @@ graph TD
     F3 --> F8T
     F8T --> F5
     F5 --> FX
+    
+    F9 --> M1
+    M1 --> M2
+    M2 --> M3
+    M3 --> M4
+    I3 --> M4
+    F10 --> M4
+```
+
     FX --> C1
 ```
 
@@ -180,9 +191,48 @@ graph TD
 
 
 
+
+
+---
+
+## 🔌 Trilha de Integração (MuseScore Integration Track)
+
+---
+
+### Sprint M1: MuseScore Integration Foundation
+**Prioridade: MÉDIA**
+*   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord.
+*   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que extrai os acordes, durações e seções de um trecho selecionado da partitura e envia para o backend do Harmony Engine do Find Chord. O plugin recebe o DTO de análise e renderiza uma visão textual simples em um painel lateral integrado.
+*   **Valor**: Valida a viabilidade de usar o MuseScore como frontend do motor sem competir com editores existentes.
+
+---
+
+### Sprint M2: Harmonic Overlay Layer
+**Prioridade: MÉDIA**
+*   **Objetivo**: Desenhar anotações analíticas diretamente sobre a partitura do MuseScore de forma dinâmica.
+*   **Conceito**: Sobreescrever graficamente elementos visuais na partitura para plotar automaticamente áreas de frases, limites de períodos (antecedente/consequente), modulações e marcações de cadências de forma nativa.
+*   **Valor**: Substitui a análise harmônica de papel por uma camada visual analítica interativa no próprio editor.
+
+---
+
+### Sprint M3: Narrative Assistant
+**Prioridade: MÉDIA**
+*   **Objetivo**: Habilitar a auditoria semântica e pedagógica da F9 integrada ao fluxo de escrita no MuseScore.
+*   **Conceito**: Ao selecionar uma frase ou compasso, exibir balões de ajuda ou explicações detalhadas em linguagem natural sobre o *porquê* daquele acorde ter sido escolhido (ex: *"O acorde A7 é uma dominante secundária preparando Dm"*).
+*   **Valor**: Proporciona feedback imediato ao compositor ou estudante de harmonia enquanto ele está ativamente compondo.
+
+---
+
+### Sprint M4: Interactive Harmonic Search
+**Prioridade: MÉDIA**
+*   **Objetivo**: Integrar os recursos de busca de similaridade e recomendação de repertório no MuseScore.
+*   **Conceito**: Conectar a camada de fingerprints (`Infra-3`) e busca (`F10`) para que o usuário possa selecionar um trecho da sua própria partitura e pedir ao plugin para encontrar peças clássicas ou populares na literatura com a mesma assinatura narrativa.
+*   **Valor**: Transforma a partitura em uma central de descoberta e estudo musical interativo.
+
 ---
 
 ### Sprints Secundárias & Refinamentos Gramaticais
+
 
 *   **[F2] Funções Aparentes (Functional Substitution)**: Classificar acordes cuja estrutura física difere da função de superfície (ex: `Idim` atuando como `IV7`, `m6` como dominante implícito).
 *   **[C2] Voice-Leading Analysis Engine**: Analisar o movimento de vozes internas do input do usuário (soprano, contralto, tenor, baixo) e detectar conduções proibidas (oitavas/quintas paralelas, sensíveis não resolvidas).
