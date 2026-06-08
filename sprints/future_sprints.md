@@ -41,10 +41,10 @@ graph TD
         CS7["Sprint 7: Explanations DTO"]
         CF7["F7: Cadential Grammar"]
         F6["F6: Semantic Harmonic Context"]
+        F8["F8: Phrase Relationship Engine"]
     end
 
-    subgraph "Fase 1: Forma & Significado Narrativo (Prioridade Máxima)"
-        F8["Sprint F8: Phrase & Formal Structure Engine"]
+    subgraph "Fase 1: Significado Narrativo (Prioridade Máxima)"
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
     
@@ -112,18 +112,23 @@ graph TD
 
 ---
 
-### Sprint F8: Phrase & Formal Structure Engine
-**Prioridade: ALTA**
-*   **Objetivo**: Conectar a análise harmônica com a forma macro da peça musical, estruturando frases e seções formais (Antecedente, Consequente, Período, Sentença).
-*   **Conceito**: Identificar relações formais entre frases (antecedente, consequente, período, sentença, semifrase, turnarounds e extensões cadenciais) e mapear a macro-forma em seções (Introdução, Refrão, Ponte, etc.).
+### Sprint F8: Phrase Relationship Engine (Relações de Período)
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Conectar a análise harmônica com a estrutura formal de frases, identificando relações de período baseadas em comportamento cadencial.
+*   **Conceito**: Mapeia o pareamento formal entre frases adjacentes, classificando papéis estruturais (`ANTECEDENT`, `CONSEQUENT`) e construindo agrupamentos de períodos com cálculo de confiança de análise harmônica objetiva e suporte a `STANDALONE` fallback conservador.
 *   **Implementação**:
     ```typescript
-    interface FormalStructure {
-      phraseType: 'ANTECEDENT' | 'CONSEQUENT' | 'STANDALONE';
-      formType: 'PERIOD' | 'SENTENCE' | 'SECTIONAL';
-      sectionRole?: 'INTRO' | 'VERSE' | 'CHORUS' | 'BRIDGE' | 'OUTRO';
+    export type PhraseFormalRole = 'ANTECEDENT' | 'CONSEQUENT' | 'STANDALONE';
+    export type PhraseGroupType = 'PERIOD' | 'STANDALONE';
+    export interface PhraseGroup {
+      index: number;
+      type: PhraseGroupType;
+      phraseIndices: number[];
+      confidence: number;
+      name: string;
     }
     ```
+*   **Observação**: Elementos complexos de macro-forma (Sentenças, Verso, Refrão, Ponte) foram explicitamente adiados para a sprint **F11**, uma vez que requerem informações de similaridade melódica, temática e rítmica não presentes no motor atual.
 
 ---
 
