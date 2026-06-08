@@ -46,8 +46,12 @@ graph TD
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
 
-    subgraph "Trilha de Inteligência Core"
+    subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
         I3["Infra-3: Narrative Fingerprint"]
+        F11["Sprint F11: Functional Equivalence Engine"]
+        F12["Sprint F12: Apparent Functions Engine"]
+        F13["Sprint F13: Voice Leading Analysis"]
+        F14["Sprint F14: Blues & Extended Tonality Engine"]
         F10["Sprint F10: Similaridade Narrativa"]
     end
 
@@ -58,15 +62,10 @@ graph TD
         M3["Sprint M3: Narrative Assistant"]
         M4["Sprint M4: Interactive Harmonic Search"]
     end
-
     
     subgraph "Sprints Futuras Core & Rearmonização"
         C3["Sprint C3: Rearmonizador Inteligente"]
-        F2["Sprint F2: Funções Aparentes (sus, dim, m6)"]
-        C2["Sprint C2: Voice-Leading Analysis Engine"]
-        F3["Sprint F3: Equivalência Funcional & Substituições"]
         F8T["Sprint F8.5: Curva de Tensão Harmônica"]
-        F5["Sprint F5: Blues Engine"]
         FX["Sprint FX: Corpus & Statistical Learning"]
     end
 
@@ -79,15 +78,17 @@ graph TD
     F8 --> I2
     I2 --> F9
     F9 --> I3
-    I3 --> F10
+    
+    I3 --> F11
+    F11 --> F12
+    F12 --> F13
+    F13 --> F14
+    F14 --> F10
     F10 --> C3
-    C3 --> F2
-    F2 --> C2
-
-    C2 --> F3
-    F3 --> F8T
-    F8T --> F5
-    F5 --> FX
+    
+    C3 --> F8T
+    F8T --> FX
+    FX --> C1
     
     F9 --> IM0
     IM0 --> M1
@@ -96,6 +97,7 @@ graph TD
     M3 --> M4
     I3 --> M4
     F10 --> M4
+
 
 ```
 
@@ -173,13 +175,50 @@ graph TD
 
 ### Infra-3: Narrative Fingerprint
 **Prioridade: ALTA**
-*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências.
-*   **Conceito**: Dividir o fingerprint em 4 camadas analíticas:
-    1.  **Layer 1 — Structural Fingerprint**: Captura a pura lógica de tensão e resolução (`PROLONGATION`, `PREPARATION`, `TENSION`, `RESOLUTION`).
-    2.  **Layer 2 — Harmonic Fingerprint**: Captura os mecanismos de sintaxe harmônica utilizados (`SECONDARY_DOMINANT`, `MODAL_BORROWING`, `DECEPTIVE_CADENCE`).
-    3.  **Layer 3 — Formal Fingerprint**: Captura a arquitetura formal das frases (`phrasesCount`, `isPeriod`, `antecedentConsequent`).
-    4.  **Layer 4 — Regional Fingerprint**: Captura o caminho e relações tonais (`TONIC`, `RELATIVE_MINOR`, `TONIC` / `C_MAJOR`, `A_MINOR`, `C_MAJOR`).
+*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, projetada para ser modular e extensível.
+*   **Conceito**: Dividir o fingerprint em camadas analíticas, com estrutura flexível para expansões futuras:
+    *   **Layer 1 — Structural Fingerprint**: Captura a pura lógica de tensão e resolução (`PROLONGATION`, `PREPARATION`, `TENSION`, `RESOLUTION`).
+    *   **Layer 2 — Harmonic Fingerprint**: Captura os mecanismos de sintaxe harmônica utilizados (`SECONDARY_DOMINANT`, `MODAL_BORROWING`, `DECEPTIVE_CADENCE`).
+    *   **Layer 3 — Formal Fingerprint**: Captura a arquitetura formal das frases (`phrasesCount`, `isPeriod`, `antecedentConsequent`).
+    *   **Layer 4 — Regional Fingerprint**: Captura o caminho e relações tonais (`TONIC`, `RELATIVE_MINOR`, `TONIC` / `C_MAJOR`, `A_MINOR`, `C_MAJOR`).
+    *   *Futuras Camadas Planejadas (Expansões F11 a F14)*:
+        *   **Layer 5 — Functional Equivalence**: Mapeamento de acordes substitutos e classes funcionais equivalentes.
+        *   **Layer 6 — Voice Leading**: Movimentação melódica e notas comuns entre acordes adjacentes.
+        *   **Layer 7 — Modal Coloration**: Tons de empréstimo modal e alterações de cor de eixo.
+        *   **Layer 8 — Blues/Jazz Grammar**: Padrões cadenciais estendidos e turnarounds de jazz.
 *   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
+
+---
+
+### Sprint F11: Functional Equivalence Engine
+**Prioridade: ALTA**
+*   **Objetivo**: Criar um resolvedor de equivalência funcional para unificar representações estruturais de progressões com cifragens de superfície distintas.
+*   **Conceito**: Mapear acordes e encadeamentos semanticamente equivalentes (ex: `G7 ≈ Db7` por substituição de trítono; `B°7 ≈ G7(b9)` por equivalência de diminuto; `ii - V ≈ IV - V` por equivalência subdominante; `V7/V ≈ subV7/V`).
+*   **Valor**: Enriquece os fingerprints (F9/Infra-3) com agrupamento de classes funcionais, permitindo que a busca da F10 reconheça que duas progressões contam a mesma história estrutural mesmo usando acordes substitutos diferentes.
+
+---
+
+### Sprint F12: Apparent Functions Engine
+**Prioridade: ALTA**
+*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg.
+*   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
+*   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
+
+---
+
+### Sprint F13: Voice Leading Analysis
+**Prioridade: ALTA**
+*   **Objetivo**: Analisar melódica e fisicamente o movimento das vozes internas entre acordes adjacentes da timeline.
+*   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução (ex: *"o efeito de suavidade desta escolha composicional decorre da manutenção de três notas comuns entre os acordes"*).
+*   **Valor**: Fornece um novo nível de explicabilidade estética no compilador de narrativa (F9) e adiciona a camada de voice-leading ao fingerprint da Infra-3.
+
+---
+
+### Sprint F14: Blues & Extended Tonality Engine
+**Prioridade: ALTA**
+*   **Objetivo**: Expandir o resolvedor Viterbi e o grafo de conhecimento com regras específicas para Blues e tonalidade estendida do Jazz.
+*   **Conceito**: Adicionar suporte nativo à estrutura clássica de Blues de 12 compassos, tratamento de dominantes estáticas não funcionais (que não buscam resolução), acordes de *Backdoor Dominant* (bVII7) e turnarounds de jazz típicos.
+*   **Valor**: Aumenta a cobertura do motor de 5% para 90% em repertórios de jazz, blues e música popular moderna, permitindo a extração de fatos analíticos precisos nessas linguagens.
 
 ---
 
@@ -192,6 +231,7 @@ graph TD
     *   **Similaridade Formal** (foco no *Formal Fingerprint*): Compara a estrutura fraseológica (períodos, sementes sintáticas).
     *   **Similaridade Narrativa Completa**: Combinação ponderada de todas as camadas.
 *   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares (ex: *"Esta progressão apresenta um comportamento de período antecedente-consequente semelhante ao de Autumn Leaves ou a corais de Bach"*).
+
 
 
 
@@ -248,13 +288,9 @@ graph TD
 
 ### Sprints Secundárias & Refinamentos Gramaticais
 
-
-*   **[F2] Funções Aparentes (Functional Substitution)**: Classificar acordes cuja estrutura física difere da função de superfície (ex: `Idim` atuando como `IV7`, `m6` como dominante implícito).
-*   **[C2] Voice-Leading Analysis Engine**: Analisar o movimento de vozes internas do input do usuário (soprano, contralto, tenor, baixo) e detectar conduções proibidas (oitavas/quintas paralelas, sensíveis não resolvidas).
-*   **[F3] Equivalência Funcional & Substituições**: API que sugere rearmonizações equivalentes para cada ponto da timeline.
 *   **[F8.5] Curva de Tensão Harmônica (Tension Curve)**: Computar curva contínua de flutuação de dissonância e instabilidade tonal.
-*   **[F5] Blues Engine**: Identificar formas de Blues de 12 compassos e tratar dominantes como acordes estáticos sem falsa tensão dominante.
 *   **[FX] Corpus & Statistical Learning**: Adicionar probabilidade empírica baseada em corpora para desempate do resolvedor Viterbi.
+
 
 ---
 
