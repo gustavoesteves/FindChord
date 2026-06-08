@@ -47,12 +47,14 @@ graph TD
     end
 
     subgraph "Fase 1: Significado Narrativo (Prioridade Máxima)"
+        I3["Infra-3: Narrative Fingerprint"]
         F10["Sprint F10: Similaridade Narrativa"]
     end
     
     subgraph "Fase 2: Analytics & Rearmonização"
         C3["Sprint C3: Rearmonizador Inteligente"]
     end
+
 
 
     subgraph "Fase 3: Refinamentos Gramaticais & Condução"
@@ -72,10 +74,12 @@ graph TD
     F6 --> F8
     F8 --> I2
     I2 --> F9
-    F9 --> F10
+    F9 --> I3
+    I3 --> F10
     F10 --> C3
     C3 --> F2
     F2 --> C2
+
     C2 --> F3
     F3 --> F8T
     F8T --> F5
@@ -150,7 +154,18 @@ graph TD
 
 ---
 
+---
+
+### Infra-3: Narrative Fingerprint
+**Prioridade: ALTA**
+*   **Objetivo**: Criar uma assinatura estrutural abstrata e independente de tom (Narrative Fingerprint DTO) a partir de fatos harmônicos e perfis de cadência/região.
+*   **Conceito**: Consolidar a sequência de fatos, perfis rítmico-cadenciais e transições regionais em uma representação serializável ou vetorial simplificada (ex: assinaturas do tipo `[OPENING_PROLONGATION, SECONDARY_DOMINANT_PREPARATION, PRIMARY_DOMINANT_RESOLUTION]`).
+*   **Valor**: Desacopla completamente a lógica de comparação (F10) do idioma do compilador de texto (F9) e dos acordes literais de superfície, tornando a busca por similaridade 100% matemática e performática.
+
+---
+
 ### Sprint F10: Similaridade Narrativa (Harmonic Narrative Similarity)
+
 **Prioridade: MÉDIA**
 *   **Objetivo**: Mapear similaridades e pareamentos estruturais entre progressões com base em intenção harmônica e fatos narrativos em vez de apenas cifras de superfície.
 *   **Conceito**: Utilizar a sequência de fatos extraída da F9 (`NarrativeFacts`) para comparar músicas que compartilham a mesma narrativa funcional subjacente, mesmo que em tons ou graus secundários diferentes (ex: comparar um ciclo `I - V7/ii - ii - V - I` com `I - V7/vi - vi - V - I` como narrativas similares).
