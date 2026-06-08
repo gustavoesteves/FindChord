@@ -49,15 +49,15 @@ graph TD
     subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
         I3["Infra-3: Narrative Fingerprint Framework"]
         F11["Sprint F11: Functional Equivalence Engine"]
-        F12["Sprint F12: Apparent Functions Engine"]
         F13["Sprint F13: Voice Leading Analysis"]
+        F12["Sprint F12: Apparent Functions Engine"]
         F14["Sprint F14: Blues & Extended Tonality Engine"]
         F10["Sprint F10: Harmonic Discovery & Similarity Engine"]
     end
 
-
     subgraph "Trilha de Integração (MuseScore)"
         IM0["Sprint Infra-M0: Harmony Engine Adapter"]
+        IMX["Sprint Infra-MX: Canonical Score Format"]
         M1["Sprint M1: MuseScore Integration Foundation"]
         M2["Sprint M2: Harmonic Overlay Layer"]
         M3["Sprint M3: Narrative Assistant"]
@@ -81,9 +81,9 @@ graph TD
     F9 --> I3
     
     I3 --> F11
-    F11 --> F12
-    F12 --> F13
-    F13 --> F14
+    F11 --> F13
+    F13 --> F12
+    F12 --> F14
     F14 --> F10
     F10 --> C3
     
@@ -92,17 +92,15 @@ graph TD
     FX --> C1
     
     F9 --> IM0
-    IM0 --> M1
+    IM0 --> IMX
+    IMX --> M1
     M1 --> M2
     M2 --> M3
     M3 --> M4
     I3 --> M4
     F10 --> M4
-
-
 ```
 
-    FX --> C1
 ```
 
 ---
@@ -200,19 +198,20 @@ graph TD
 
 ---
 
-### Sprint F12: Apparent Functions Engine
-**Prioridade: ALTA**
-*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg.
-*   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
-*   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
-
----
-
 ### Sprint F13: Voice Leading Analysis
 **Prioridade: ALTA**
 *   **Objetivo**: Analisar melódica e fisicamente o movimento das vozes internas entre acordes adjacentes da timeline.
 *   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução (ex: *"o efeito de suavidade desta escolha composicional decorre da manutenção de três notas comuns entre os acordes"*).
 *   **Valor**: Fornece um novo nível de explicabilidade estética no compilador de narrativa (F9) e adiciona a camada de voice-leading ao fingerprint da Infra-3.
+
+---
+
+### Sprint F12: Apparent Functions Engine
+**Prioridade: ALTA**
+*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg e na análise linear de condução.
+*   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
+*   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
+
 
 ---
 
@@ -258,7 +257,16 @@ graph TD
 
 ---
 
+### Sprint Infra-MX: Canonical Score Format
+**Prioridade: ALTA**
+*   **Objetivo**: Definir uma estrutura de representação de partitura canônica, neutra e universal (`HarmonyEngineScore` JSON) para unificar diferentes formatos de entrada.
+*   **Conceito**: Criar um esquema de dados padrão que encapsule metadados, compassos (`Measure[]`), eventos harmônicos de cifra (`HarmonyEvent[]`) e notas melódicas (`NoteEvent[]`). Qualquer adaptador (MuseScore, Guitar Pro, importador de MIDI/MusicXML/ChordPro) será responsável apenas por traduzir seu formato proprietário para esta representação canônica antes de enviá-lo ao SDK da `Infra-M0`.
+*   **Valor**: Evita a explosão de acoplamento no motor analítico, permitindo adicionar novos clientes ou leitores de formatos de partitura no ecossistema sem tocar em uma única linha do Harmony Engine.
+
+---
+
 ### Sprint M1: MuseScore Integration Foundation
+
 **Prioridade: MÉDIA**
 *   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord de forma simplificada.
 *   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que lê a partitura atual, extrai os acordes brutos e durações, e os envia via API da `Infra-M0` para o motor do Find Chord. O resultado da análise harmônica e a visão geral são exibidos de forma puramente textual (texto/JSON) em um painel lateral integrado, sem qualquer overlay visual ou gráfico sofisticado.
