@@ -42,14 +42,14 @@ graph TD
         CF7["F7: Cadential Grammar"]
         F6["F6: Semantic Harmonic Context"]
         F8["F8: Phrase Relationship Engine"]
+        I2["Infra-2: Harmonic Knowledge Graph"]
     end
 
     subgraph "Fase 1: Significado Narrativo (Prioridade Máxima)"
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
     
-    subgraph "Fase 2: Infraestrutura, Analytics & Rearmonização"
-        I2["Infra-2: Harmonic Knowledge Graph (antiga C1.5)"]
+    subgraph "Fase 2: Analytics & Rearmonização"
         F10["Sprint F10: Comparative Harmonic Analytics"]
         C3["Sprint C3: Rearmonizador Inteligente"]
     end
@@ -132,11 +132,11 @@ graph TD
 
 ---
 
-### Infra-2: Harmonic Knowledge Graph (antiga C1.5)
-**Prioridade: ALTA (Infraestrutura)**
-*   **Objetivo**: Representar dependências funcionais, regiões, cadências, intenções e relações semânticas em um grafo de conhecimento interno estruturado (`Region -> Phrase -> Intent -> Cadence -> Resolution`), sem acoplamento visual ou de UI.
-*   **Conceito**: Funcionar como a espinha dorsal de dados para as sprints seguintes (F9 e F10), permitindo buscas harmônicas complexas, clustering e queries semânticas.
-*   **Valor**: Base essencial para o explicador linguístico (F9) percorrer a hierarquia formal e contextual da peça.
+### Infra-2: Harmonic Knowledge Graph Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Representar dependências funcionais, regiões, cadências, intenções e relações semânticas em um grafo de conhecimento interno estruturado e indexado, sem acoplamento visual ou de UI.
+*   **Conceito**: Mapeia todas as entidades em nós estáveis (formato `tipo:index`) e arestas direcionadas (hierárquicas, temporal-sequenciais `FOLLOWS`, e conexões harmônicas diretas `PREPARES` / `RESOLVES`). Serve como a espinha dorsal de travessia e consulta para a geração explicativa em linguagem natural (F9) e análises estatísticas comparativas (F10).
+*   **Valor**: Base essencial e motor de consulta para o explicador linguístico (F9) percorrer a rede de relações harmônicas da progressão.
 
 ---
 
