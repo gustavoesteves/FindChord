@@ -47,13 +47,14 @@ graph TD
     end
 
     subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
-        I3["Infra-3: Narrative Fingerprint"]
+        I3["Infra-3: Narrative Fingerprint Framework"]
         F11["Sprint F11: Functional Equivalence Engine"]
         F12["Sprint F12: Apparent Functions Engine"]
         F13["Sprint F13: Voice Leading Analysis"]
         F14["Sprint F14: Blues & Extended Tonality Engine"]
-        F10["Sprint F10: Similaridade Narrativa"]
+        F10["Sprint F10: Harmonic Discovery & Similarity Engine"]
     end
+
 
     subgraph "Trilha de Integração (MuseScore)"
         IM0["Sprint Infra-M0: Harmony Engine Adapter"]
@@ -173,7 +174,7 @@ graph TD
 
 ---
 
-### Infra-3: Narrative Fingerprint
+### Infra-3: Narrative Fingerprint Framework
 **Prioridade: ALTA**
 *   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, projetada para ser modular e extensível.
 *   **Conceito**: Dividir o fingerprint em camadas analíticas, com estrutura flexível para expansões futuras:
@@ -187,6 +188,7 @@ graph TD
         *   **Layer 7 — Modal Coloration**: Tons de empréstimo modal e alterações de cor de eixo.
         *   **Layer 8 — Blues/Jazz Grammar**: Padrões cadenciais estendidos e turnarounds de jazz.
 *   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
+
 
 ---
 
@@ -222,7 +224,7 @@ graph TD
 
 ---
 
-### Sprint F10: Similaridade Narrativa (Harmonic Narrative Similarity)
+### Sprint F10: Harmonic Discovery & Similarity Engine
 **Prioridade: MÉDIA**
 *   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
 *   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação:
@@ -231,6 +233,7 @@ graph TD
     *   **Similaridade Formal** (foco no *Formal Fingerprint*): Compara a estrutura fraseológica (períodos, sementes sintáticas).
     *   **Similaridade Narrativa Completa**: Combinação ponderada de todas as camadas.
 *   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares (ex: *"Esta progressão apresenta um comportamento de período antecedente-consequente semelhante ao de Autumn Leaves ou a corais de Bach"*).
+
 
 
 
@@ -247,10 +250,11 @@ graph TD
 **Prioridade: ALTA**
 *   **Objetivo**: Criar uma API pública de fachada estável e desacoplada (SDK/Adapter API) para expor as capacidades do motor a clientes externos.
 *   **Conceito**: Estruturar a interface de integração (SDK) em três níveis específicos:
-    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint`, `findSimilarWorks`).
+    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint(score, options)`, `findSimilarWorks`). A chamada `generateFingerprint` suportará opções para selecionar camadas específicas (ex: `layers: ['STRUCTURAL', 'HARMONIC']`) ou perfis analíticos/estilísticos (ex: `profile: 'PEDAGOGICAL' | 'JAZZ'`).
     2.  **Nível 2 — APIs de Explicabilidade**: Para tutores, overlays e assistentes pedagógicos (`explainChord`, `explainPhrase`, `explainCadence`).
     3.  **Nível 3 — APIs de Pesquisa**: Para descoberta e recomendação profunda de repertório (`compareFingerprints`, `searchByFingerprint`, `searchByNarrativeFacts`).
 *   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal, permitindo a evolução independente do motor.
+
 
 ---
 
