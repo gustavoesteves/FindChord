@@ -206,17 +206,19 @@ graph TD
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)
 **Prioridade: ALTA**
 *   **Objetivo**: Criar uma API pública de fachada estável e desacoplada (SDK/Adapter API) para expor as capacidades do motor a clientes externos.
-*   **Conceito**: Encapsular a análise, geração de fatos narrativos e geração de fingerprints em assinaturas de funções simples e padronizadas (ex: `analyzeScore(scoreData)`, `generateNarrative(scoreData)`, `generateFingerprint(scoreData)`). Qualquer aplicação (plugin MuseScore, Guitar Pro, extensão VS Code, web CLI) consumirá esta fachada, protegendo o núcleo analítico de acoplamentos com as representações ou formatos gráficos dos clientes.
-*   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal.
+*   **Conceito**: Estruturar a interface de integração (SDK) em três níveis específicos:
+    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint`, `findSimilarWorks`).
+    2.  **Nível 2 — APIs de Explicabilidade**: Para tutores, overlays e assistentes pedagógicos (`explainChord`, `explainPhrase`, `explainCadence`).
+    3.  **Nível 3 — APIs de Pesquisa**: Para descoberta e recomendação profunda de repertório (`compareFingerprints`, `searchByFingerprint`, `searchByNarrativeFacts`).
+*   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal, permitindo a evolução independente do motor.
 
 ---
 
 ### Sprint M1: MuseScore Integration Foundation
-
 **Prioridade: MÉDIA**
-*   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord.
-*   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que extrai os acordes, durações e seções de um trecho selecionado da partitura e envia para o backend do Harmony Engine do Find Chord. O plugin recebe o DTO de análise e renderiza uma visão textual simples em um painel lateral integrado.
-*   **Valor**: Valida a viabilidade de usar o MuseScore como frontend do motor sem competir com editores existentes.
+*   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord de forma simplificada.
+*   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que lê a partitura atual, extrai os acordes brutos e durações, e os envia via API da `Infra-M0` para o motor do Find Chord. O resultado da análise harmônica e a visão geral são exibidos de forma puramente textual (texto/JSON) em um painel lateral integrado, sem qualquer overlay visual ou gráfico sofisticado.
+*   **Valor**: Valida com o menor custo possível a viabilidade e a conectividade de ponta a ponta de toda a pipeline de dados.
 
 ---
 
