@@ -158,18 +158,26 @@ graph TD
 
 ### Infra-3: Narrative Fingerprint
 **Prioridade: ALTA**
-*   **Objetivo**: Criar uma assinatura estrutural abstrata e independente de tom (Narrative Fingerprint DTO) a partir de fatos harmônicos e perfis de cadência/região.
-*   **Conceito**: Consolidar a sequência de fatos, perfis rítmico-cadenciais e transições regionais em uma representação serializável ou vetorial simplificada (ex: assinaturas do tipo `[OPENING_PROLONGATION, SECONDARY_DOMINANT_PREPARATION, PRIMARY_DOMINANT_RESOLUTION]`).
-*   **Valor**: Desacopla completamente a lógica de comparação (F10) do idioma do compilador de texto (F9) e dos acordes literais de superfície, tornando a busca por similaridade 100% matemática e performática.
+*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências.
+*   **Conceito**: Dividir o fingerprint em 4 camadas analíticas:
+    1.  **Layer 1 — Structural Fingerprint**: Captura a pura lógica de tensão e resolução (`PROLONGATION`, `PREPARATION`, `TENSION`, `RESOLUTION`).
+    2.  **Layer 2 — Harmonic Fingerprint**: Captura os mecanismos de sintaxe harmônica utilizados (`SECONDARY_DOMINANT`, `MODAL_BORROWING`, `DECEPTIVE_CADENCE`).
+    3.  **Layer 3 — Formal Fingerprint**: Captura a arquitetura formal das frases (`phrasesCount`, `isPeriod`, `antecedentConsequent`).
+    4.  **Layer 4 — Regional Fingerprint**: Captura o caminho e relações tonais (`TONIC`, `RELATIVE_MINOR`, `TONIC` / `C_MAJOR`, `A_MINOR`, `C_MAJOR`).
+*   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
 
 ---
 
 ### Sprint F10: Similaridade Narrativa (Harmonic Narrative Similarity)
-
 **Prioridade: MÉDIA**
-*   **Objetivo**: Mapear similaridades e pareamentos estruturais entre progressões com base em intenção harmônica e fatos narrativos em vez de apenas cifras de superfície.
-*   **Conceito**: Utilizar a sequência de fatos extraída da F9 (`NarrativeFacts`) para comparar músicas que compartilham a mesma narrativa funcional subjacente, mesmo que em tons ou graus secundários diferentes (ex: comparar um ciclo `I - V7/ii - ii - V - I` com `I - V7/vi - vi - V - I` como narrativas similares).
-*   **Valor**: Permite ao sistema sugerir peças harmonicamente similares e criar conexões pedagógicas profundas, dizendo: *"Esta progressão possui uma narrativa funcional semelhante àquela encontrada em..."*.
+*   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
+*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação:
+    *   **Similaridade Funcional** (foco no *Structural Fingerprint*): Compara o encadeamento puro de tensão e repouso.
+    *   **Similaridade Harmônica** (foco no *Harmonic Fingerprint*): Compara o uso de recursos de cor (empréstimos, dominantes secundárias).
+    *   **Similaridade Formal** (foco no *Formal Fingerprint*): Compara a estrutura fraseológica (períodos, sementes sintáticas).
+    *   **Similaridade Narrativa Completa**: Combinação ponderada de todas as camadas.
+*   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares (ex: *"Esta progressão apresenta um comportamento de período antecedente-consequente semelhante ao de Autumn Leaves ou a corais de Bach"*).
+
 
 
 ---
