@@ -96,6 +96,22 @@ graph TD
 
 ---
 
+### Sprint F7: Cadential Grammar
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Identificar e rotular padrões de encadeamento cadencial na progressão.
+*   **Conceito**: Implementou a gramática sintática de cadências (Autêntica, Plagal, Semicadência, Frígia) com cálculo de peso de convicção (`cadentialWeight`) e status de resolução (Resolvida, Deceptiva, Evadida, Interrompida, Atrasada).
+*   **Valor**: Permite ao motor de explicabilidade destacar momentos formais de resolução e tensão sintática.
+
+---
+
+### Narrativa Harmônica UI (Dashboard de 2 Abas & Auditoria Inline)
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Substituir o modal estático de Campo Harmônico por uma central de inteligência explicativa moderna e fluida.
+*   **Conceito**: Estruturou o modal em duas áreas de abstração (Visão Geral/Cadências macro e timeline vertical com acordeão/inspeção de auditoria F6 inline). Adicionou suporte a multi-notação respeitando a DSL de cifragem ativa.
+*   **Valor**: Traz valor imediato ao usuário final, permitindo "ler" e estudar a narrativa pedagógica do motor.
+
+---
+
 ### Sprint F8: Phrase & Formal Structure Engine
 **Prioridade: ALTA**
 *   **Objetivo**: Conectar a análise harmônica com a forma macro da peça musical, estruturando frases e seções formais (Antecedente, Consequente, Período, Sentença).
