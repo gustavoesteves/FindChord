@@ -43,16 +43,17 @@ graph TD
         F6["F6: Semantic Harmonic Context"]
         F8["F8: Phrase Relationship Engine"]
         I2["Infra-2: Harmonic Knowledge Graph"]
+        F9["Sprint F9: Compositional Choice & Intent Explainer"]
     end
 
     subgraph "Fase 1: Significado Narrativo (Prioridade Máxima)"
-        F9["Sprint F9: Compositional Choice & Intent Explainer"]
+        F10["Sprint F10: Similaridade Narrativa"]
     end
     
     subgraph "Fase 2: Analytics & Rearmonização"
-        F10["Sprint F10: Comparative Harmonic Analytics"]
         C3["Sprint C3: Rearmonizador Inteligente"]
     end
+
 
     subgraph "Fase 3: Refinamentos Gramaticais & Condução"
         F2["Sprint F2: Funções Aparentes (sus, dim, m6)"]
@@ -141,18 +142,20 @@ graph TD
 ---
 
 ### Sprint F9: Compositional Choice & Intent Explainer
-**Prioridade: ALTA**
+**Status: ✅ CONCLUÍDA**
+
 *   **Objetivo**: Traduzir a análise estrutural e o grafo de conhecimento (Infra-2) em explicações musicais em linguagem natural fluida e pedagógica.
 *   **Conceito**: Consumir os dados do grafo semântico para gerar narrativas explicativas sobre escolhas composicionais (ex: *"O compositor utiliza A7 para intensificar a aproximação ao acorde de Ré menor antes da resolução da frase."*).
 *   **Valor**: Diferencial central para o usuário final que estuda teoria musical.
 
 ---
 
-### Sprint F10: Comparative Harmonic Analytics
+### Sprint F10: Similaridade Narrativa (Harmonic Narrative Similarity)
 **Prioridade: MÉDIA**
-*   **Objetivo**: Mapear similaridades e estatísticas analíticas comparativas entre progressões.
-*   **Conceito**: Calcular similaridade funcional contínua (ex: *"Esta progressão possui 78% de similaridade funcional com Autumn Leaves"*).
-*   **Valor**: Fornece recursos pedagógicos e sugestões de peças similares com base no comportamento de regiões e cadências em vez de apenas cifra.
+*   **Objetivo**: Mapear similaridades e pareamentos estruturais entre progressões com base em intenção harmônica e fatos narrativos em vez de apenas cifras de superfície.
+*   **Conceito**: Utilizar a sequência de fatos extraída da F9 (`NarrativeFacts`) para comparar músicas que compartilham a mesma narrativa funcional subjacente, mesmo que em tons ou graus secundários diferentes (ex: comparar um ciclo `I - V7/ii - ii - V - I` com `I - V7/vi - vi - V - I` como narrativas similares).
+*   **Valor**: Permite ao sistema sugerir peças harmonicamente similares e criar conexões pedagógicas profundas, dizendo: *"Esta progressão possui uma narrativa funcional semelhante àquela encontrada em..."*.
+
 
 ---
 
