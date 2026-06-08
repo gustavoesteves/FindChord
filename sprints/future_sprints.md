@@ -52,11 +52,13 @@ graph TD
     end
 
     subgraph "Trilha de Integração (MuseScore)"
+        IM0["Sprint Infra-M0: Harmony Engine Adapter"]
         M1["Sprint M1: MuseScore Integration Foundation"]
         M2["Sprint M2: Harmonic Overlay Layer"]
         M3["Sprint M3: Narrative Assistant"]
         M4["Sprint M4: Interactive Harmonic Search"]
     end
+
     
     subgraph "Sprints Futuras Core & Rearmonização"
         C3["Sprint C3: Rearmonizador Inteligente"]
@@ -87,12 +89,14 @@ graph TD
     F8T --> F5
     F5 --> FX
     
-    F9 --> M1
+    F9 --> IM0
+    IM0 --> M1
     M1 --> M2
     M2 --> M3
     M3 --> M4
     I3 --> M4
     F10 --> M4
+
 ```
 
     FX --> C1
@@ -199,7 +203,16 @@ graph TD
 
 ---
 
+### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)
+**Prioridade: ALTA**
+*   **Objetivo**: Criar uma API pública de fachada estável e desacoplada (SDK/Adapter API) para expor as capacidades do motor a clientes externos.
+*   **Conceito**: Encapsular a análise, geração de fatos narrativos e geração de fingerprints em assinaturas de funções simples e padronizadas (ex: `analyzeScore(scoreData)`, `generateNarrative(scoreData)`, `generateFingerprint(scoreData)`). Qualquer aplicação (plugin MuseScore, Guitar Pro, extensão VS Code, web CLI) consumirá esta fachada, protegendo o núcleo analítico de acoplamentos com as representações ou formatos gráficos dos clientes.
+*   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal.
+
+---
+
 ### Sprint M1: MuseScore Integration Foundation
+
 **Prioridade: MÉDIA**
 *   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord.
 *   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que extrai os acordes, durações e seções de um trecho selecionado da partitura e envia para o backend do Harmony Engine do Find Chord. O plugin recebe o DTO de análise e renderiza uma visão textual simples em um painel lateral integrado.
