@@ -1,11 +1,8 @@
 # 🚀 Catálogo de Sprints Futuras — Do Motor Analítico ao Engine de Significado
 
-Após a conclusão das sprints **F4**, **Infra-1**, **Sprint 7**, **F7** e **F6**, o Find Chord consolidou seu núcleo como um **Analisador Tonal, Modal e Semântico Hierárquico**. A maior parte da Prioridade 1 (Harmonia Funcional Clássica) e várias fundações de análise regional, cadencial e semântica avançadas foram concluídas.
+Após a conclusão da consolidação semântica e analítica, o Find Chord atingiu a maturidade em sua plataforma de explicabilidade. A trilogia de explicabilidade, causalidade e o espaço formal de transformações estão operando de forma integrada.
 
-Com a consolidação dessas camadas, o gargalo do motor mudou:
-> **O próximo gargalo não é mais "detectar coisas", mas sim "explicar o significado musical".**
-
-Este documento redefine e prioriza o roadmap futuro do Find Chord sob essa ótica semântica.
+Este documento formaliza a reestruturação do roadmap sob a ótica de espaço de busca e planejamento pedagógico de rearmonizações.
 
 ---
 
@@ -22,12 +19,13 @@ Este documento redefine e prioriza o roadmap futuro do Find Chord sob essa ótic
 | **Gramática cadencial** | ~100% | Quatro tipos objetivos (`AUTHENTIC`, `PLAGAL`, `HALF`, `PHRYGIAN`) com pesos e status de resolução. |
 | **DTO Explicável** | ~100% | Evidências físicas, notas comuns e caminhos Viterbi expostos diretamente no DTO público. |
 | **Contexto Semântico (F6)** | ~100% | AST semântica contendo intenção harmônica, papéis de frase, causas e suportes tipados. |
-| **Empréstimo modal** | ~60% | Identificação de acordes emprestados sem modulação formal. |
+| **Empréstimo modal** | ~100% | Identificação de acordes emprestados e suporte para desvios harmônicos. |
 | **Harmonia modal** | ~75% | resolvedor de eixos modais verdadeiro integrado ao Viterbi. |
-| **Funções aparentes (Volume 3)** | ~15% | Heurísticas básicas de diminutos inteligentes, mas sem reinterpretação via resolução. |
-| **Equivalência funcional / substituições** | ~10% | Agrupamento funcional básico, sem motor de substituição ou geração equivalente. |
+| **Funções aparentes (Volume 3)** | ~100% | Resoluções retrospectivas, diminutos inteligentes e sextas aumentadas integrados à Layer 7. |
+| **Equivalência funcional / substituições** | ~100% | Mapeamento de classes funcionais equivalentes e substituições na Layer 5. |
+| **Voice-leading** | ~100% | Análise de notas comuns, condução suave e movimentos lineares concluída na Layer 6. |
+| **Espaço de Transformação (F10-C.4/C.5)** | ~100% | Catálogo estático de templates de rearmonização, grafo de decisões e caminhos pedagógicos. |
 | **Blues** | ~5% | Parcialmente detectado como acordes dominantes avulsos, sem suporte estrutural formal. |
-| **Voice-leading** | ~15% | Condução linear na geração coralizada, mas sem análise de movimentos paralelos no input do usuário. |
 
 ---
 
@@ -35,445 +33,189 @@ Este documento redefine e prioriza o roadmap futuro do Find Chord sob essa ótic
 
 ```mermaid
 graph TD
-    subgraph "Sprints Concluídas (Consolidação do Motor)"
-        C4["F4: Modal Axis Solver"]
-        CI1["Infra-1: HarmonicRegion"]
-        CS7["Sprint 7: Explanations DTO"]
-        CF7["F7: Cadential Grammar"]
+    subgraph "PHASE 1 — Analysis Engine (✅ Concluída)"
+        F4["F4: Modal Axis Solver"]
+        Infra1["Infra-1: HarmonicRegion"]
+        Sprint7["Sprint 7: Explanations DTO"]
+        F7["F7: Cadential Grammar"]
         F6["F6: Semantic Harmonic Context"]
         F8["F8: Phrase Relationship Engine"]
-        I2["Infra-2: Harmonic Knowledge Graph"]
+        Infra2["Infra-2: Harmonic Knowledge Graph"]
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
-        I3["Infra-3: Narrative Fingerprint Framework"]
+        Infra3["Infra-3: Narrative Fingerprint Framework"]
         F11["Sprint F11: Functional Equivalence Engine"]
         F13["Sprint F13: Voice Leading Analysis"]
         F12["Sprint F12: Apparent Functions Engine"]
         F10["Sprint F10: Harmonic Discovery & Similarity Engine"]
+      
+        F4 --> Infra1 --> Sprint7 --> F7 --> F6 --> F8 --> Infra2 --> F9 --> Infra3
+        Infra3 --> F11 --> F13 --> F12 --> F10
     end
 
-    subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
-        F10C["Sprint F10-C: Explainability Engine"]
-        F12_1["Sprint F12.1: Resolution Confidence"]
-        F10D["Sprint F10-D: Pedagogical Transformations"]
-        F10E["Sprint F10-E: Corpus Expansion / Benchmark"]
-        F14["Sprint F14: Blues & Extended Tonality Engine"]
+    subgraph "PHASE 2 — Explainability Platform (✅ Concluída)"
+        F10C1["F10-C.1: Evidence Graph & Traceability"]
+        F10C2["F10-C.2: Evidence Attribution & Causal Ranking"]
+        F10C3["F10-C.3: Counterfactual Explainability"]
+        F10C4["F10-C.4: Recommendation Readiness"]
+      
+        F10 --> F10C1 --> F10C2 --> F10C3 --> F10C4
     end
 
-    subgraph "Trilha de Integração (MuseScore)"
-        IM0["Sprint Infra-M0: Harmony Engine Adapter"]
-        IMX["Sprint Infra-MX: Canonical Score Format"]
-        IMY["Sprint Infra-MY: Canonical Harmonic Event Model"]
-        IMZ["Sprint Infra-MZ: Realtime Analysis Protocol"]
-        M1["Sprint M1: MuseScore Integration Foundation"]
-        M2["Sprint M2: Harmonic Overlay Layer"]
-        M3["Sprint M3: Narrative Assistant"]
-        M4["Sprint M4: Interactive Harmonic Search"]
-    end
-    
-    subgraph "Trilha de Áudio (Audio Ingestion Track - Experimental)"
-        A1["Sprint A1: Audio Ingestion"]
-        A2["Sprint A2: Chord Transcription Adapter"]
-        A3["Sprint A3: Harmonic Discovery from Audio"]
-        A4["Sprint A4: Audio <-> Score Similarity"]
-    end
-    
-    subgraph "Sprints Futuras Core & Rearmonização"
-        C3["Sprint C3: Rearmonizador Inteligente"]
-        F8T["Sprint F8.5: Curva de Tensão Harmônica"]
-        FX["Sprint FX: Corpus & Statistical Learning"]
+    subgraph "PHASE 3 — Recommendation Engine (🔄 Em andamento)"
+        F12_1["F12.1: Resolution Confidence"]
+        F10C5["F10-C.5: Transformation Dependency Graph"]
+        F10C6["F10-C.6: Recommendation Scoring & Constraints"]
+        C31["C3.1: Transform Generator"]
+        C32["C3.2: Constraint-Based Reharmonization"]
+        C33["C3.3: Explainable Recommendations"]
+      
+        F10C4 --> F12_1 --> F10C5 --> F10C6 --> C31 --> C32 --> C33
     end
 
-    subgraph "Research / Experimental"
-        C1["Experimental: Schenker-Lite Visualizer"]
+    subgraph "PHASE 4 — Corpus & Benchmark"
+        F10E["F10-E: Corpus Expansion & Benchmark Suite"]
+        C33 --> F10E
     end
 
-    CF7 --> F6
-    F6 --> F8
-    F8 --> I2
-    I2 --> F9
-    F9 --> I3
-    
-    I3 --> F11
-    F11 --> F13
-    F13 --> F12
-    F12 --> F10
-    F10 --> F10C
-    F10C --> F12_1
-    F12_1 --> F10D
-    F10D --> F10E
-    F10E --> F14
-    
-    F14 --> C3
-    C3 --> F8T
-    F8T --> FX
-    FX --> C1
-    
-    F9 --> IM0
-    IM0 --> IMX
-    IMX --> IMY
-    IMY --> IMZ
-    IMZ --> M1
-    M1 --> M2
-    M2 --> M3
-    M3 --> M4
-    I3 --> M4
-    F10 --> M4
-```
+    subgraph "PHASE 5 — Extended Harmony"
+        F14["F14: Blues & Extended Tonality Engine"]
+        F10E --> F14
+    end
 
-
+    subgraph "PHASE 6 — Integrations (MuseScore & Audio)"
+        IM0["Infra-M0: Harmony Engine Adapter"]
+        IMX["Infra-MX: Canonical Score Format"]
+        IMY["Infra-MY: Canonical Harmonic Event Model"]
+        IMZ["Infra-MZ: Realtime Analysis Protocol"]
+        M1["M1: MuseScore Integration Foundation"]
+        M2["M2: Harmonic Overlay Layer"]
+        M3["M3: Narrative Assistant"]
+        M4["M4: Interactive Harmonic Search"]
+      
+        A1["A1: Audio Ingestion"]
+        A2["A2: Chord Transcription Adapter"]
+        A3["A3: Harmonic Discovery from Audio"]
+        A4["A4: Audio <-> Score Similarity"]
+      
+        F9 --> IM0 --> IMX --> IMY --> IMZ --> M1 --> M2 --> M3 --> M4
+        IMY --> A1 --> A2 --> A3 --> A4
+    end
 ```
 
 ---
 
 ## 🔑 Cronograma de Priorização Recomendado
 
----
-
-### Sprint F6: Semantic Harmonic Context Engine
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Mapear fatos e relações dinâmicas de significado e discurso musical diretamente nos acordes.
-*   **Conceito**: Implementou a tipagem semântica ortogonal (`HarmonicIntent`, `PhraseRole`, `SemanticCause`, `SemanticSupport`) e o motor de explicabilidade estrutural objetiva, fornecendo a AST semântica básica.
-*   **Valor**: Evita a geração prematura de textos, servindo como uma AST semântica pura a ser consumida pela futura F9.
+As sprints concluídas compõem o motor fundamental de análise e a plataforma de explicabilidade. As próximas focarão na probabilidade e no motor de recomendação.
 
 ---
 
-### Sprint F7: Cadential Grammar
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Identificar e rotular padrões de encadeamento cadencial na progressão.
-*   **Conceito**: Implementou a gramática sintática de cadências (Autêntica, Plagal, Semicadência, Frígia) com cálculo de peso de convicção (`cadentialWeight`) e status de resolução (Resolvida, Deceptiva, Evadida, Interrompida, Atrasada).
-*   **Valor**: Permite ao motor de explicabilidade destacar momentos formais de resolução e tensão sintática.
-
----
-
-### Narrativa Harmônica UI (Dashboard de 2 Abas & Auditoria Inline)
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Substituir o modal estático de Campo Harmônico por uma central de inteligência explicativa moderna e fluida.
-*   **Conceito**: Estruturou o modal em duas áreas de abstração (Visão Geral/Cadências macro e timeline vertical com acordeão/inspeção de auditoria F6 inline). Adicionou suporte a multi-notação respeitando a DSL de cifragem ativa.
-*   **Valor**: Traz valor imediato ao usuário final, permitindo "ler" e estudar a narrativa pedagógica do motor.
-
----
-
-### Sprint F8: Phrase Relationship Engine (Relações de Período)
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Conectar a análise harmônica com a estrutura formal de frases, identificando relações de período baseadas em comportamento cadencial.
-*   **Conceito**: Mapeia o pareamento formal entre frases adjacentes, classificando papéis estruturais (`ANTECEDENT`, `CONSEQUENT`) e construindo agrupamentos de períodos com cálculo de confiança de análise harmônica objetiva e suporte a `STANDALONE` fallback conservador.
-*   **Implementação**:
-    ```typescript
-    export type PhraseFormalRole = 'ANTECEDENT' | 'CONSEQUENT' | 'STANDALONE';
-    export type PhraseGroupType = 'PERIOD' | 'STANDALONE';
-    export interface PhraseGroup {
-      index: number;
-      type: PhraseGroupType;
-      phraseIndices: number[];
-      confidence: number;
-      name: string;
-    }
-    ```
-*   **Observação**: Elementos complexos de macro-forma (Sentenças, Verso, Refrão, Ponte) foram explicitamente adiados para a sprint **F11**, uma vez que requerem informações de similaridade melódica, temática e rítmica não presentes no motor atual.
-
----
-
-### Infra-2: Harmonic Knowledge Graph Engine
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Representar dependências funcionais, regiões, cadências, intenções e relações semânticas em um grafo de conhecimento interno estruturado e indexado, sem acoplamento visual ou de UI.
-*   **Conceito**: Mapeia todas as entidades em nós estáveis (formato `tipo:index`) e arestas direcionadas (hierárquicas, temporal-sequenciais `FOLLOWS`, e conexões harmônicas diretas `PREPARES` / `RESOLVES`). Serve como a espinha dorsal de travessia e consulta para a geração explicativa em linguagem natural (F9) e análises estatísticas comparativas (F10).
-*   **Valor**: Base essencial e motor de consulta para o explicador linguístico (F9) percorrer a rede de relações harmônicas da progressão.
-
----
-
-### Sprint F9: Compositional Choice & Intent Explainer
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Traduzir a análise estrutural e o grafo de conhecimento (Infra-2) em explicações musicais em linguagem natural fluida e pedagógica.
-*   **Conceito**: Consumir os dados do grafo semântico para gerar narrativas explicativas sobre escolhas composicionais (ex: *"O compositor utiliza A7 para intensificar a aproximação ao acorde de Ré menor antes da resolução da frase."*).
-*   **Valor**: Diferencial central para o usuário final que estuda teoria musical.
-
----
-
-### Infra-3: Narrative Fingerprint Framework
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, guiada pelo conceito de **Densidade Semântica**.
-*   **Visão Estratégica: Fingerprint Information Density Roadmap**
-    A evolução do fingerprint é estruturada de forma que cada camada adiciona uma dimensão específica de densidade semântica sobre a base:
-    ```text
-    Fingerprint Information Density Roadmap
-
-    Layer 1 — Structural
-    Layer 2 — Harmonic
-    Layer 3 — Formal
-    Layer 4 — Regional
-
-    (F9 baseline)
-
-    Layer 5 — Functional Equivalence (F11)
-    Layer 6 — Voice-Leading (F13)
-    Layer 7 — Apparent Functions (F12)
-    Layer 8 — Extended Tonality / Blues (F14)
-    ```
-    Onde cada camada atua em uma dimensão diferente de enriquecimento:
-    ```text
-    F11
-    ↑
-    aumenta a abstração (mapeamento de acordes substitutos e classes equivalentes)
-
-    F13
-    ↑
-    aumenta a resolução física (notas comuns e direção das vozes)
-
-    F12
-    ↑
-    aumenta a interpretação semântica (leitura retrospectiva baseada em voice-leading)
-
-    F14
-    ↑
-    aumenta a cobertura estilística (jazz, blues e tonalidade estendida)
-    ```
-*   **Conceito**: Dividir o fingerprint em camadas analíticas dinâmicas, com estrutura flexível para expansões futuras que aumentem progressivamente a densidade semântica da representação.
-*   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
-
----
-
-### Sprint F11: Functional Equivalence Engine
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Criar um resolvedor de equivalência funcional para unificar representações estruturais de progressões com cifragens de superfície distintas.
-*   **Conceito**: Mapear acordes e encadeamentos semanticamente equivalentes (ex: `G7 ≈ Db7` por substituição de trítono; `B°7 ≈ G7(b9)` por equivalência de diminuto; `ii - V ≈ IV - V` por equivalência subdominante; `V7/V ≈ subV7/V`).
-*   **Valor**: Enriquece os fingerprints (F9/Infra-3) com agrupamento de classes funcionais, permitindo que a busca da F10 reconheça que duas progressões contam a mesma história estrutural mesmo usando acordes substitutos diferentes.
-
----
-
-### Sprint F13: Voice Leading Analysis
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Analisar melódica e fisicamente o movimento das vozes internas entre acordes adjacentes da timeline.
-*   **Relação de Dependência**: O voice-leading é um pré-requisito técnico direto para a identificação de **Funções Aparentes (F12)**. Por exemplo, para descobrir se um acorde diminuto `B°7` atua como `vii°7/I`, `vii°7/V`, `SubV°`, ou apenas um acorde de passagem, é necessário analisar a condução física (resolução, notas comuns e direção das vozes). Portanto, F13 deve necessariamente preceder F12 no roadmap.
-*   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução.
-*   **Valor**: Fornece um novo nível de explicabilidade estética no compilador de narrativa (F9) e adiciona a camada de voice-leading ao fingerprint da Infra-3.
-
----
-
-### Sprint F12: Apparent Functions Engine
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg e na análise linear de condução obtida na F13.
-*   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
-*   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
-
----
-
-### Sprint F10: Harmonic Discovery & Similarity Engine
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
-*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação. O Discovery Engine é responsável por aplicar filtros de repertório, estilo, período histórico e corpus de forma independente do modelo abstrato do fingerprint.
-*   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares.
-
----
-
-### Sprint F10-C: Explainability Engine & Pedagogical Recommendations
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Traduzir a similaridade matemática e a condução de vozes em explicações e recomendações pedagógicas compreensíveis para humanos.
-*   **Conceito**:
-    *   **SimilarityInsight**: Estrutura intermediária contendo score, importância e evidências detalhadas de correspondência por eixo.
-    *   **PedagogicalTransformation**: Identifica a aplicação de transformações teóricas de rearmonização (mecanismos como substituição tritônica e empréstimo modal) e seus impactos físicos/perceptuais (efeitos como suavização de baixo e preservação de vozes-guia).
-    *   **Cadential Reinterpretation**: Descreve reinterpretações analíticas retrospectivas (ex: sexta aumentada e cadencial 6/4).
-    *   **Narrative Renderer**: Transforma a rede de insights em linguagem natural legível para estudantes de harmonia em português (com qualificadores de confiança linguística).
-*   **Valor**: Traz explicabilidade humana e valor pedagógico direto para a busca de similaridade do Find Chord.
-
----
-
-## 🗺️ Planejamento de Sprints Futuras: Blocos Estratégicos
-
-### Bloco A — Consolidação Analítica
-
-#### Sprint F12.1: Confidence Calibration & Continuous Probability
-**Prioridade: MÉDIA**
+### Sprint F12.1: Resolution Confidence & Continuous Probability
+**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
 *   **Objetivo**: Refinar os modelos de probabilidade contínua para calibrar e computar a confiança da resolução de dominantes e desvios tonais.
-*   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading, força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
-*   **Valor**: Garante gradações e calibragens finas na tomada de decisão retrospectiva da Layer 7.
-
-#### Sprint F10-C.1: Evidence Graph & Traceability
-**Prioridade: MÉDIA**
-*   **Objetivo**: Adicionar rastreabilidade analítica completa aos insights de similaridade harmônica.
-*   **Conceito**: Substituir explicações genéricas por arestas explícitas e nós de evidência (`insight.evidenceNodes[]`), como por exemplo: `['dominant_resolution', 'tritone_resolution', 'chromatic_bass_motion']`.
-*   **Valor**: Permite que a UI exiba exatamente quais elementos teóricos sustentam cada afirmação explicativa.
+*   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading (Layer 6), força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
+*   **Valor**: Garante gradações e calibragens finas na tomada de decisão retrospectiva da Layer 7, servindo de base matemática para a atribuição causal, ablações contrafactuais e o futuro motor de decisão de rearmonizações.
 
 ---
 
-### Bloco B — Recommendation & Transformation Engine (C3)
+### Sprint F10-C.5: Transformation Dependency Graph
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Organizar oportunidades isoladas em um espaço navegável de decisão de rearmonização.
+*   **Conceito**: Conectar nós de transformações a arestas direcionadas de dependência (`ENABLES`) e conflito bidirecional (`CONFLICTS_WITH`).
+*   **Valor**: Evita a sugestão de rearmonizações mutuamente exclusivas e mapeia caminhos pedagógicos lineares ordenados.
 
-Este bloco representa a inversão do pipeline do framework para responder ativamente à pergunta: *"O que posso fazer com esta progressão?"*
+---
 
-#### Sprint C3.1: Transform Generator
-**Prioridade: ALTA**
-*   **Objetivo**: Implementar gerador de variantes e rearmonizações estruturadas baseadas em regras pedagógicas.
-*   **Conceito**: Receber uma progressão de entrada (ex: `C - G - Am - F`) e gerar candidatas rearmonizadas válidas (ex: `C - Db7 - Am - Fm`) acompanhadas de justificativa analítica automática.
+### Sprint F10-C.6: Recommendation Scoring & Constraint Engine
+**Status: 🔄 PLANEJADA (Prioridade 2)**
+*   **Objetivo**: Transformar o grafo de transformações em um planejador de decisões orientado a restrições e objetivos pedagógicos.
+*   **Conceito**: Criar esquemas de restrições (`RecommendationConstraints`) e métricas de objetivos (`RecommendationObjective`) baseados em uma fórmula de pontuação de recomendação (`RecommendationScore`). A pontuação ponderará dinamicamente:
+    `Score = Musical Impact + Functional Preservation + Counterfactual Importance + Pedagogical Value - Physical Complexity`
+*   **Valor**: Permite filtrar e refinar sugestões com base no perfil do compositor (ex: *"Menor complexidade física com maior preservação funcional"* ou *"Máximo cromatismo"*).
 
-#### Sprint C3.2: Constraint-based Reharmonization
-**Prioridade: ALTA**
-*   **Objetivo**: Permitir ao usuário restringir parâmetros estéticos da rearmonização.
-*   **Conceito**: O compositor insere filtros como *"Quero mais tensão sem aumentar a dificuldade física de digitação"* e o motor filtra as transformações por meio de voice-leading (Layer 6) e funções aparentes (Layer 7).
+---
 
-#### Sprint C3.3: Explainable Recommendations
-**Prioridade: ALTA**
+### Sprint C3.1: Transform Generator
+**Status: 🔄 PLANEJADA (Prioridade 3)**
+*   **Objetivo**: Implementar o gerador de variantes e rearmonizações estruturadas baseadas no espaço de estados harmônicos.
+*   **Conceito**: Receber uma progressão de entrada e aplicar as transformações do grafo para gerar progressões alternativas válidas acompanhadas de justificativa automática.
+*   **Valor**: O primeiro motor ativo de geração musical do framework.
+
+---
+
+### Sprint C3.2: Constraint-based Reharmonization
+**Status: 🔄 PLANEJADA (Prioridade 4)**
+*   **Objetivo**: Permitir ao usuário restringir parâmetros estéticos da rearmonização por meio de interfaces.
+*   **Conceito**: Filtrar as transformações geradas usando a modelagem de voice-leading e funções aparentes sob as restrições fornecidas.
+
+---
+
+### Sprint C3.3: Explainable Recommendations
+**Status: 🔄 PLANEJADA (Prioridade 5)**
 *   **Objetivo**: Conectar o motor de rearmonização ao motor de explicabilidade (F10-C) nativamente.
-*   **Conceito**: Cada recomendação de substituição deve expor seu motivo principal (`primaryReason`), efeitos associados (ex: preservar função) e impactos físicos observáveis (ex: suavizar o movimento do baixo).
-
----
-
-### Bloco C — Visão de Longo Prazo
-
-#### Harmonic Style Space
-**Prioridade: BAIXA**
-*   **Objetivo**: Mapear progressões harmônicas como vetores em um espaço latente de estilo.
-*   **Conceito**: Projetar peças musicais em eixos contínuos de Tensão, Estabilidade, Cromaticismo, Densidade Funcional e Suavidade de Condução, permitindo navegar e categorizar repertórios por vizinhança geométrica.
-
-#### Harmonic Morphing
-**Prioridade: BAIXA**
-*   **Objetivo**: Transformar gradualmente uma progressão em outra preservando propriedades específicas.
-*   **Conceito**: Computar interpolações lineares ou caminhos de substituição passo-a-passo (ex: de um simples loop pop `I - V - vi - IV` a um turnaround de jazz `ii - V - I`).
-
-#### Educational Path Generator
-**Prioridade: BAIXA**
-*   **Objetivo**: Gerar jornadas de aprendizado musical personalizadas.
-*   **Conceito**: Utilizar fingerprints, similaridade e transformações para ordenar progressões pedagogicamente (ex: *"Para compreender a complexidade desta peça, aprenda primeiro estas três progressões base"*).
+*   **Conceito**: Cada recomendação gerada deve expor seu motivo principal (`primaryReason`), efeitos associados e impactos físicos observáveis no baixo e vozes internas.
 
 ---
 
 ### Sprint F10-E: Corpus Expansion & Benchmark Suite
-**Prioridade: MÉDIA**
-*   **Objetivo**: Expandir o corpus padrão com mais de 100 progressões clássicas, românticas, jazzísticas e de música popular, criando uma suíte automática de benchmarks de descoberta.
-*   **Conceito**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala de similaridade.
-*   **Valor**: Garante a cobertura de repertório real e robustez estatística do algoritmo de matching.
+**Status: 🔄 ADIADA (Pós-Geração)**
+*   **Objetivo**: Expandir o corpus com mais de 100 progressões clássicas, de jazz e populares.
+*   **Conceito**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala.
+*   **Valor**: Mudado para posterior ao gerador C3 para evitar retrabalho de calibração de modelos sobre uma base inflada de dados.
 
 ---
 
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
----
-
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)
-**Prioridade: ALTA**
-*   **Objetivo**: Criar uma API pública de fachada estável e desacoplada (SDK/Adapter API) para expor as capacidades do motor a clientes externos.
-*   **Conceito**: Estruturar a interface de integração (SDK) em três níveis específicos:
-    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint(score, options)`, `findSimilarWorks`). A chamada `generateFingerprint` suportará opções para selecionar camadas específicas (ex: `layers: ['STRUCTURAL', 'HARMONIC']`) ou níveis de densidade de informação (ex: `density: 'CORE' | 'STANDARD' | 'FULL'`).
-    2.  **Nível 2 — APIs de Explicabilidade**: Para tutores, overlays e assistentes pedagógicos (`explainChord`, `explainPhrase`, `explainCadence`).
-    3.  **Nível 3 — APIs de Pesquisa**: Para descoberta e recomendação profunda de repertório (`compareFingerprints`, `searchByFingerprint`, `searchByNarrativeFacts`).
-*   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal, permitindo a evolução independente do motor.
-
-
----
+*   **Objetivo**: Criar uma API pública de fachada estável e desacoplada para expor as capacidades do motor a clientes externos.
 
 ### Sprint Infra-MX: Canonical Score Format
-**Prioridade: ALTA**
-*   **Objetivo**: Definir uma estrutura de representação de partitura canônica, neutra e universal (`HarmonyEngineScore` JSON) para unificar diferentes formatos de entrada.
-*   **Conceito**: Criar um esquema de dados padrão que encapsule metadados, compassos (`Measure[]`), eventos harmônicos de cifra (`HarmonyEvent[]`) e notas melódicas (`NoteEvent[]`). Qualquer adaptador (MuseScore, Guitar Pro, importador de MIDI/MusicXML/ChordPro) será responsável apenas por traduzir seu formato proprietário para esta representação canônica antes de enviá-lo ao SDK da `Infra-M0`.
-*   **Valor**: Evita a explosão de acoplamento no motor analítico, permitindo adicionar novos clientes ou leitores de formatos de partitura no ecossistema sem tocar em uma única linha do Harmony Engine.
-
----
+*   **Objetivo**: Definir uma estrutura de representação de partitura canônica, neutra e universal (`HarmonyEngineScore` JSON).
 
 ### Sprint Infra-MY: Canonical Harmonic Event Model
-**Prioridade: ALTA**
-*   **Objetivo**: Definir um modelo canônico de eventos harmônicos baseado em tempo/offset (`HarmonicEvent[]`) para alimentar o motor a partir de dados de áudio ou cifras temporizadas (sem necessidade de partitura).
-*   **Conceito**: Criar uma estrutura de dados de eventos sequenciais temporizados (timestamp, duration, chord, notes, region, cadence). Permite que clientes de análise de áudio (ex: APIs do Spotify, Chordify, bases do MusicBrainz) possam mapear suas saídas de transcrição direta para o formato canônico do Harmony Engine, contornando a necessidade de representações de compassos ou notações de partitura rígidas.
-*   **Valor**: Abre a inteligência harmônica para o ecossistema de áudio digital e processamento de sinal (DSP), expandindo o mercado do Find Chord além do escopo de editores de partitura.
-
----
+*   **Objetivo**: Definir um modelo canônico de eventos harmônicos baseado em tempo/offset (`HarmonicEvent[]`) para alimentar o motor a partir de dados de áudio ou cifras temporizadas.
 
 ### Sprint Infra-MZ: Realtime Analysis Protocol
-**Prioridade: ALTA**
 *   **Objetivo**: Desenvolver um protocolo de reanálise incremental em tempo real para partituras longas durante a edição.
-*   **Conceito**: Implementar mecanismos de reanálise localizada baseada em diffs temporais ou marcações de compassos modificados. O editor de partitura envia eventos incrementais de alteração e o Harmony Engine recalcula apenas os nós e caminhos Viterbi afetados, atualizando dinamicamente a narrativa sem necessitar reprocessar a partitura inteira.
-*   **Valor**: Elimina gargalos de processamento, garantindo latência extremamente baixa e experiência em tempo real mesmo em partituras extensas.
-
-
----
 
 ### Sprint M1: MuseScore Integration Foundation
-
-
-**Prioridade: MÉDIA**
 *   **Objetivo**: Estabelecer a conectividade básica entre a partitura do MuseScore e o Harmony Engine do Find Chord de forma simplificada.
-*   **Conceito**: Desenvolver um adaptador/plugin leve no MuseScore que lê a partitura atual, extrai os acordes brutos e durações, e os envia via API da `Infra-M0` para o motor do Find Chord. O resultado da análise harmônica e a visão geral são exibidos de forma puramente textual (texto/JSON) em um painel lateral integrado, sem qualquer overlay visual ou gráfico sofisticado.
-*   **Valor**: Valida com o menor custo possível a viabilidade e a conectividade de ponta a ponta de toda a pipeline de dados.
-
----
 
 ### Sprint M2: Harmonic Overlay Layer
-**Prioridade: MÉDIA**
 *   **Objetivo**: Desenhar anotações analíticas diretamente sobre a partitura do MuseScore de forma dinâmica.
-*   **Conceito**: Sobreescrever graficamente elementos visuais na partitura para plotar automaticamente áreas de frases, limites de períodos (antecedente/consequente), modulações e marcações de cadências de forma nativa.
-*   **Valor**: Substitui a análise harmônica de papel por uma camada visual analítica interativa no próprio editor.
-
----
 
 ### Sprint M3: Narrative Assistant
-**Prioridade: MÉDIA**
 *   **Objetivo**: Habilitar a auditoria semântica e pedagógica da F9 integrada ao fluxo de escrita no MuseScore.
-*   **Conceito**: Ao selecionar uma frase ou compasso, exibir balões de ajuda ou explicações detalhadas em linguagem natural sobre o *porquê* daquele acorde ter sido escolhido (ex: *"O acorde A7 é uma dominante secundária preparando Dm"*).
-*   **Valor**: Proporciona feedback imediato ao compositor ou estudante de harmonia enquanto ele está ativamente compondo.
-
----
 
 ### Sprint M4: Interactive Harmonic Search
-**Prioridade: MÉDIA**
 *   **Objetivo**: Integrar os recursos de busca de similaridade e recomendação de repertório no MuseScore.
-*   **Conceito**: Conectar a camada de fingerprints (`Infra-3`) e busca (`F10`) para que o usuário possa selecionar um trecho da sua própria partitura e pedir ao plugin para encontrar peças clássicas ou populares na literatura com a mesma assinatura narrativa.
-*   **Valor**: Transforma a partitura em uma central de descoberta e estudo musical interativo.
 
 ---
 
 ## 🎧 Trilha de Áudio (Audio Ingestion Track - Experimental)
 
----
-
 ### Sprint A1: Audio Ingestion
-**Prioridade: BAIXA (Pesquisa/Experimental)**
 *   **Objetivo**: Estabelecer conectividade básica para processamento de sinais de áudio brutos e extração de características acústicas (chromagrams).
-*   **Conceito**: Desenvolver pipelines de entrada para ler arquivos de áudio (MP3, WAV) e computar a flutuação contínua de chroma pitch classes sobre janelas temporais.
-*   **Valor**: Base de dados essencial para transcrição automática.
-
----
 
 ### Sprint A2: Chord Transcription Adapter
-**Prioridade: BAIXA (Pesquisa/Experimental)**
 *   **Objetivo**: Mapear as características de áudio processadas em eventos harmônicos estruturados no formato canônico da `Infra-MY`.
-*   **Conceito**: Utilizar heurísticas analíticas e modelos acústicos de desambiguação para transcrever chromagrams em acordes temporizados (`HarmonicEvent[]`), validando as previsões através de coerência tonal.
-*   **Valor**: Habilita a ingestão direta de arquivos de áudio reais no motor do Find Chord.
-
----
 
 ### Sprint A3: Harmonic Discovery from Audio
-**Prioridade: BAIXA (Pesquisa/Experimental)**
 *   **Objetivo**: Permitir a extração de fingerprints narrativos diretamente a partir de áudios brutos gravados ou importados.
-*   **Conceito**: Integrar os resultados do transcritor (`A2`) com o framework de fingerprints da `Infra-3`.
-*   **Valor**: Permite a indexação automática de bases de dados de áudio (ex: Spotify, arquivos de MP3) em discursos harmônicos pesquisáveis.
-
----
 
 ### Sprint A4: Audio ↔ Score Similarity
-**Prioridade: BAIXA (Pesquisa/Experimental)**
 *   **Objetivo**: Mapear e parear correspondências cruzadas de similaridade entre arquivos de áudio e partituras escritas.
-*   **Conceito**: Confrontar fingerprints extraídos do áudio com fingerprints de partituras canônicas para busca semântica híbrida (ex: *"Esta gravação em áudio possui 85% de similaridade estrutural com esta partitura de Chopin"*).
-*   **Valor**: Consolida a busca universal e cruzada de conceitos harmônicos em bases de dados mistas de mídia.
-
 
 ---
 
-### Sprint C3: Recommendation & Transformation Engine
-**Prioridade: ALTA (Próximo Grande Marco)**
-*   **Objetivo**: Inverter o fluxo do motor analítico para aplicar ativamente transformações e rearmonizações didáticas estruturadas.
-*   **Conceito**: Habilitar a geração e modificação de progressões harmônicas guiadas por regras. O motor consome a infraestrutura de voice leading (F13), equivalência funcional (F11) e explicabilidade (F10-C) para gerar novas variantes a partir de solicitações do usuário:
-    *   *“Gere uma variante mantendo a função mas suavizando o baixo”* (Aplica inversões ou substituições e valida por voice leading físico).
-    *   *“Gere uma versão com maior cromatismo/tensão”* (Insere empréstimos modais e preparações secundárias).
-    *   *“Substitua acordes por equivalentes funcionais”* (Mapeia substituições tritônicas ou diminutos de passagem).
-*   **Valor**: Completa o ciclo de vida do framework: **Análise ➔ Fingerprint ➔ Similaridade ➔ Explicabilidade ➔ Geração**.
----
-
-
-### Sprints Secundárias & Refinamentos Gramaticais
+## Sprints Secundárias & Refinamentos Gramaticais
 
 *   **[F8.5] Curva de Tensão Harmônica (Tension Curve)**: Computar curva contínua de flutuação de dissonância e instabilidade tonal.
 *   **[FX] Corpus & Statistical Learning**: Adicionar probabilidade empírica baseada em corpora para desempate do resolvedor Viterbi.
 
-
 ---
 
-### Sprints Experimentais / Pesquisa
+## Sprints Experimentais / Pesquisa
 
-*   **[Experimental] Schenker-Lite Visualizer (antiga C1)**: Grafo de redução hierárquica gráfica aninhada ilustrando as camadas de redução da narrativa tonal. Removido do roadmap principal devido ao menor valor de produto comparado com a descrição textual de significado musical.
+*   **[Experimental] Schenker-Lite Visualizer**: Grafo de redução hierárquica gráfica aninhada ilustrando as camadas de redução da narrativa tonal.
