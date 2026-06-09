@@ -59,12 +59,19 @@ graph TD
         IM0["Sprint Infra-M0: Harmony Engine Adapter"]
         IMX["Sprint Infra-MX: Canonical Score Format"]
         IMY["Sprint Infra-MY: Canonical Harmonic Event Model"]
+        IMZ["Sprint Infra-MZ: Realtime Analysis Protocol"]
         M1["Sprint M1: MuseScore Integration Foundation"]
         M2["Sprint M2: Harmonic Overlay Layer"]
         M3["Sprint M3: Narrative Assistant"]
         M4["Sprint M4: Interactive Harmonic Search"]
     end
-
+    
+    subgraph "Trilha de Áudio (Audio Ingestion Track - Experimental)"
+        A1["Sprint A1: Audio Ingestion"]
+        A2["Sprint A2: Chord Transcription Adapter"]
+        A3["Sprint A3: Harmonic Discovery from Audio"]
+        A4["Sprint A4: Audio <-> Score Similarity"]
+    end
     
     subgraph "Sprints Futuras Core & Rearmonização"
         C3["Sprint C3: Rearmonizador Inteligente"]
@@ -96,7 +103,8 @@ graph TD
     F9 --> IM0
     IM0 --> IMX
     IMX --> IMY
-    IMY --> M1
+    IMY --> IMZ
+    IMZ --> M1
     M1 --> M2
     M2 --> M3
     M3 --> M4
@@ -167,35 +175,57 @@ graph TD
 
 ### Sprint F9: Compositional Choice & Intent Explainer
 **Status: ✅ CONCLUÍDA**
-
 *   **Objetivo**: Traduzir a análise estrutural e o grafo de conhecimento (Infra-2) em explicações musicais em linguagem natural fluida e pedagógica.
 *   **Conceito**: Consumir os dados do grafo semântico para gerar narrativas explicativas sobre escolhas composicionais (ex: *"O compositor utiliza A7 para intensificar a aproximação ao acorde de Ré menor antes da resolução da frase."*).
 *   **Valor**: Diferencial central para o usuário final que estuda teoria musical.
 
 ---
 
----
-
 ### Infra-3: Narrative Fingerprint Framework
-**Prioridade: ALTA**
-*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, projetada para ser modular e extensível.
-*   **Conceito**: Dividir o fingerprint em camadas analíticas, com estrutura flexível para expansões futuras:
-    *   **Layer 1 — Structural Fingerprint**: Captura a pura lógica de tensão e resolução (`PROLONGATION`, `PREPARATION`, `TENSION`, `RESOLUTION`).
-    *   **Layer 2 — Harmonic Fingerprint**: Captura os mecanismos de sintaxe harmônica utilizados (`SECONDARY_DOMINANT`, `MODAL_BORROWING`, `DECEPTIVE_CADENCE`).
-    *   **Layer 3 — Formal Fingerprint**: Captura a arquitetura formal das frases (`phrasesCount`, `isPeriod`, `antecedentConsequent`).
-    *   **Layer 4 — Regional Fingerprint**: Captura o caminho e relações tonais (`TONIC`, `RELATIVE_MINOR`, `TONIC` / `C_MAJOR`, `A_MINOR`, `C_MAJOR`).
-    *   *Futuras Camadas Planejadas (Expansões F11 a F14)*:
-        *   **Layer 5 — Functional Equivalence**: Mapeamento de acordes substitutos e classes funcionais equivalentes.
-        *   **Layer 6 — Voice Leading**: Movimentação melódica e notas comuns entre acordes adjacentes.
-        *   **Layer 7 — Modal Coloration**: Tons de empréstimo modal e alterações de cor de eixo.
-        *   **Layer 8 — Blues/Jazz Grammar**: Padrões cadenciais estendidos e turnarounds de jazz.
-*   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
+**Prioridade: CRÍTICA (Direcionador Estratégico)**
+*   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, guiada pelo conceito de **Densidade Semântica**.
+*   **Visão Estratégica: Fingerprint Information Density Roadmap**
+    A evolução do fingerprint é estruturada de forma que cada camada adiciona uma dimensão específica de densidade semântica sobre a base:
+    ```text
+    Fingerprint Information Density Roadmap
 
+    Layer 1 — Structural
+    Layer 2 — Harmonic
+    Layer 3 — Formal
+    Layer 4 — Regional
+
+    (F9 baseline)
+
+    Layer 5 — Functional Equivalence (F11)
+    Layer 6 — Voice-Leading (F13)
+    Layer 7 — Apparent Functions (F12)
+    Layer 8 — Extended Tonality / Blues (F14)
+    ```
+    Onde cada camada atua em uma dimensão diferente de enriquecimento:
+    ```text
+    F11
+    ↑
+    aumenta a abstração (mapeamento de acordes substitutos e classes equivalentes)
+
+    F13
+    ↑
+    aumenta a resolução física (notas comuns e direção das vozes)
+
+    F12
+    ↑
+    aumenta a interpretação semântica (leitura retrospectiva baseada em voice-leading)
+
+    F14
+    ↑
+    aumenta a cobertura estilística (jazz, blues e tonalidade estendida)
+    ```
+*   **Conceito**: Dividir o fingerprint em camadas analíticas dinâmicas, com estrutura flexível para expansões futuras que aumentem progressivamente a densidade semântica da representação.
+*   **Valor**: Permite comparar progressões sob diferentes prismas analíticos, garantindo que o motor de similaridade possa encontrar peças com correspondências estruturais, sintáticas ou formais sem acoplar com as cifras literais de superfície.
 
 ---
 
 ### Sprint F11: Functional Equivalence Engine
-**Prioridade: ALTA**
+**Prioridade: CRÍTICA**
 *   **Objetivo**: Criar um resolvedor de equivalência funcional para unificar representações estruturais de progressões com cifragens de superfície distintas.
 *   **Conceito**: Mapear acordes e encadeamentos semanticamente equivalentes (ex: `G7 ≈ Db7` por substituição de trítono; `B°7 ≈ G7(b9)` por equivalência de diminuto; `ii - V ≈ IV - V` por equivalência subdominante; `V7/V ≈ subV7/V`).
 *   **Valor**: Enriquece os fingerprints (F9/Infra-3) com agrupamento de classes funcionais, permitindo que a busca da F10 reconheça que duas progressões contam a mesma história estrutural mesmo usando acordes substitutos diferentes.
@@ -203,19 +233,19 @@ graph TD
 ---
 
 ### Sprint F13: Voice Leading Analysis
-**Prioridade: ALTA**
+**Prioridade: CRÍTICA (Pré-requisito de F12)**
 *   **Objetivo**: Analisar melódica e fisicamente o movimento das vozes internas entre acordes adjacentes da timeline.
-*   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução (ex: *"o efeito de suavidade desta escolha composicional decorre da manutenção de três notas comuns entre os acordes"*).
+*   **Relação de Dependência**: O voice-leading é um pré-requisito técnico direto para a identificação de **Funções Aparentes (F12)**. Por exemplo, para descobrir se um acorde diminuto `B°7` atua como `vii°7/I`, `vii°7/V`, `SubV°`, ou apenas um acorde de passagem, é necessário analisar a condução física (resolução, notas comuns e direção das vozes). Portanto, F13 deve necessariamente preceder F12 no roadmap.
+*   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução.
 *   **Valor**: Fornece um novo nível de explicabilidade estética no compilador de narrativa (F9) e adiciona a camada de voice-leading ao fingerprint da Infra-3.
 
 ---
 
 ### Sprint F12: Apparent Functions Engine
-**Prioridade: ALTA**
-*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg e na análise linear de condução.
+**Prioridade: CRÍTICA**
+*   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg e na análise linear de condução obtida na F13.
 *   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
 *   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
-
 
 ---
 
@@ -230,18 +260,13 @@ graph TD
 ### Sprint F10: Harmonic Discovery & Similarity Engine
 **Prioridade: MÉDIA**
 *   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
-*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação:
+*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação. O Discovery Engine é responsável por aplicar filtros de repertório, estilo, período histórico e corpus (ex: `repertoire: 'JAZZ'`, `corpus: 'CLASSICAL'`) de forma independente do modelo abstrato do fingerprint, permitindo cruzar correspondências funcionais de peças de estéticas distintas.
     *   **Similaridade Funcional** (foco no *Structural Fingerprint*): Compara o encadeamento puro de tensão e repouso.
     *   **Similaridade Harmônica** (foco no *Harmonic Fingerprint*): Compara o uso de recursos de cor (empréstimos, dominantes secundárias).
     *   **Similaridade Formal** (foco no *Formal Fingerprint*): Compara a estrutura fraseológica (períodos, sementes sintáticas).
     *   **Similaridade Narrativa Completa**: Combinação ponderada de todas as camadas.
+    *   **Similaridade de Voice Leading**: Compara padrões de movimentação de vozes (Layer 6).
 *   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares (ex: *"Esta progressão apresenta um comportamento de período antecedente-consequente semelhante ao de Autumn Leaves ou a corais de Bach"*).
-
-
-
-
-
-
 
 ---
 
@@ -253,7 +278,7 @@ graph TD
 **Prioridade: ALTA**
 *   **Objetivo**: Criar uma API pública de fachada estável e desacoplada (SDK/Adapter API) para expor as capacidades do motor a clientes externos.
 *   **Conceito**: Estruturar a interface de integração (SDK) em três níveis específicos:
-    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint(score, options)`, `findSimilarWorks`). A chamada `generateFingerprint` suportará opções para selecionar camadas específicas (ex: `layers: ['STRUCTURAL', 'HARMONIC']`) ou perfis analíticos/estilísticos (ex: `profile: 'PEDAGOGICAL' | 'JAZZ'`).
+    1.  **Nível 1 — APIs de Alto Nível**: Para a maioria dos clientes (`analyzeScore`, `generateNarrative`, `generateFingerprint(score, options)`, `findSimilarWorks`). A chamada `generateFingerprint` suportará opções para selecionar camadas específicas (ex: `layers: ['STRUCTURAL', 'HARMONIC']`) ou níveis de densidade de informação (ex: `density: 'CORE' | 'STANDARD' | 'FULL'`).
     2.  **Nível 2 — APIs de Explicabilidade**: Para tutores, overlays e assistentes pedagógicos (`explainChord`, `explainPhrase`, `explainCadence`).
     3.  **Nível 3 — APIs de Pesquisa**: Para descoberta e recomendação profunda de repertório (`compareFingerprints`, `searchByFingerprint`, `searchByNarrativeFacts`).
 *   **Valor**: Garante a reusabilidade do Find Chord como um "Harmony Intelligence Engine" plugável de forma universal, permitindo a evolução independente do motor.
@@ -274,6 +299,15 @@ graph TD
 *   **Objetivo**: Definir um modelo canônico de eventos harmônicos baseado em tempo/offset (`HarmonicEvent[]`) para alimentar o motor a partir de dados de áudio ou cifras temporizadas (sem necessidade de partitura).
 *   **Conceito**: Criar uma estrutura de dados de eventos sequenciais temporizados (timestamp, duration, chord, notes, region, cadence). Permite que clientes de análise de áudio (ex: APIs do Spotify, Chordify, bases do MusicBrainz) possam mapear suas saídas de transcrição direta para o formato canônico do Harmony Engine, contornando a necessidade de representações de compassos ou notações de partitura rígidas.
 *   **Valor**: Abre a inteligência harmônica para o ecossistema de áudio digital e processamento de sinal (DSP), expandindo o mercado do Find Chord além do escopo de editores de partitura.
+
+---
+
+### Sprint Infra-MZ: Realtime Analysis Protocol
+**Prioridade: ALTA**
+*   **Objetivo**: Desenvolver um protocolo de reanálise incremental em tempo real para partituras longas durante a edição.
+*   **Conceito**: Implementar mecanismos de reanálise localizada baseada em diffs temporais ou marcações de compassos modificados. O editor de partitura envia eventos incrementais de alteração e o Harmony Engine recalcula apenas os nós e caminhos Viterbi afetados, atualizando dinamicamente a narrativa sem necessitar reprocessar a partitura inteira.
+*   **Valor**: Elimina gargalos de processamento, garantindo latência extremamente baixa e experiência em tempo real mesmo em partituras extensas.
+
 
 ---
 
@@ -308,6 +342,43 @@ graph TD
 *   **Objetivo**: Integrar os recursos de busca de similaridade e recomendação de repertório no MuseScore.
 *   **Conceito**: Conectar a camada de fingerprints (`Infra-3`) e busca (`F10`) para que o usuário possa selecionar um trecho da sua própria partitura e pedir ao plugin para encontrar peças clássicas ou populares na literatura com a mesma assinatura narrativa.
 *   **Valor**: Transforma a partitura em uma central de descoberta e estudo musical interativo.
+
+---
+
+## 🎧 Trilha de Áudio (Audio Ingestion Track - Experimental)
+
+---
+
+### Sprint A1: Audio Ingestion
+**Prioridade: BAIXA (Pesquisa/Experimental)**
+*   **Objetivo**: Estabelecer conectividade básica para processamento de sinais de áudio brutos e extração de características acústicas (chromagrams).
+*   **Conceito**: Desenvolver pipelines de entrada para ler arquivos de áudio (MP3, WAV) e computar a flutuação contínua de chroma pitch classes sobre janelas temporais.
+*   **Valor**: Base de dados essencial para transcrição automática.
+
+---
+
+### Sprint A2: Chord Transcription Adapter
+**Prioridade: BAIXA (Pesquisa/Experimental)**
+*   **Objetivo**: Mapear as características de áudio processadas em eventos harmônicos estruturados no formato canônico da `Infra-MY`.
+*   **Conceito**: Utilizar heurísticas analíticas e modelos acústicos de desambiguação para transcrever chromagrams em acordes temporizados (`HarmonicEvent[]`), validando as previsões através de coerência tonal.
+*   **Valor**: Habilita a ingestão direta de arquivos de áudio reais no motor do Find Chord.
+
+---
+
+### Sprint A3: Harmonic Discovery from Audio
+**Prioridade: BAIXA (Pesquisa/Experimental)**
+*   **Objetivo**: Permitir a extração de fingerprints narrativos diretamente a partir de áudios brutos gravados ou importados.
+*   **Conceito**: Integrar os resultados do transcritor (`A2`) com o framework de fingerprints da `Infra-3`.
+*   **Valor**: Permite a indexação automática de bases de dados de áudio (ex: Spotify, arquivos de MP3) em discursos harmônicos pesquisáveis.
+
+---
+
+### Sprint A4: Audio ↔ Score Similarity
+**Prioridade: BAIXA (Pesquisa/Experimental)**
+*   **Objetivo**: Mapear e parear correspondências cruzadas de similaridade entre arquivos de áudio e partituras escritas.
+*   **Conceito**: Confrontar fingerprints extraídos do áudio com fingerprints de partituras canônicas para busca semântica híbrida (ex: *"Esta gravação em áudio possui 85% de similaridade estrutural com esta partitura de Chopin"*).
+*   **Valor**: Consolida a busca universal e cruzada de conceitos harmônicos em bases de dados mistas de mídia.
+
 
 ---
 

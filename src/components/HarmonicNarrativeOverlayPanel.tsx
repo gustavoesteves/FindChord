@@ -470,6 +470,179 @@ export default function HarmonicNarrativeOverlayPanel() {
                 </div>
               )}
 
+              {/* Narrative Fingerprint Section (Infra-3) */}
+              {analysis.fingerprint && (
+                <div className="flex flex-col gap-4 mt-2 border-t border-zinc-900/60 pt-5 select-none">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">
+                      Narrative Fingerprint — Assinatura Estrutural (Infra-3)
+                    </span>
+                    <span className="text-[9px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 font-bold font-mono">
+                      v{analysis.fingerprint.version}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Layer 1: Structural Tension Flow */}
+                    {analysis.fingerprint.layers.structural && (
+                      <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-3">
+                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">
+                          Camada 1: Fluxo de Tensão Estrutural
+                        </span>
+                        
+                        <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
+                          {analysis.fingerprint.layers.structural.events.map((event, eIdx) => {
+                            const chord = analysis.chords[event.chordIndex];
+                            const dispChord = chord ? getChordDisplay(chord) : '';
+                            
+                            const stateColors: Record<string, string> = {
+                              RESOLUTION: "bg-emerald-500 shadow-[0_0_8px_#10b981]",
+                              PROLONGATION: "bg-sky-500 shadow-[0_0_8px_#0ea5e9]",
+                              PREPARATION: "bg-amber-500 shadow-[0_0_8px_#f59e0b]",
+                              TENSION: "bg-rose-500 shadow-[0_0_8px_#f43f5e]",
+                              UNKNOWN: "bg-zinc-650"
+                            };
+
+                            const stateLabels: Record<string, string> = {
+                              RESOLUTION: "Resolução",
+                              PROLONGATION: "Prolong.",
+                              PREPARATION: "Prepar.",
+                              TENSION: "Tensão"
+                            };
+
+                            return (
+                              <div key={eIdx} className="flex items-center shrink-0">
+                                <div className="flex flex-col items-center p-2 rounded-lg bg-zinc-900/50 border border-zinc-850/60 w-[70px]">
+                                  <span className="text-[9px] font-bold text-zinc-300 truncate w-full text-center">
+                                    {dispChord}
+                                  </span>
+                                  <div className="my-1.5 flex flex-col items-center">
+                                    <span className={`w-2.5 h-2.5 rounded-full ${stateColors[event.state] || stateColors.UNKNOWN}`} />
+                                  </div>
+                                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wide">
+                                    {stateLabels[event.state] || 'Descon.'}
+                                  </span>
+                                  <span className="text-[8px] font-extrabold text-purple-400 mt-0.5 font-mono">
+                                    {Math.round(event.relativeTension * 100)}%
+                                  </span>
+                                </div>
+                                {eIdx < (analysis.fingerprint?.layers?.structural?.events?.length || 0) - 1 && (
+                                  <span className="text-zinc-700 text-xs mx-0.5 font-bold">➔</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Layer 2: Harmonic Colors */}
+                    {analysis.fingerprint.layers.harmonic && (
+                      <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-3">
+                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">
+                          Camada 2: Dispositivos de Cor Harmônica
+                        </span>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {analysis.fingerprint.layers.harmonic.devices.map((dev, dIdx) => {
+                            const deviceLabels: Record<string, string> = {
+                              SECONDARY_DOMINANT: "Dominante Secundária",
+                              TRITONE_SUBSTITUTION: "SubV7 (Subst. Trítono)",
+                              MODAL_BORROWING: "Empréstimo Modal",
+                              DECEPTIVE_CADENCE: "Cadência Deceptiva",
+                              PASSING_CHROMATIC: "Aproximação Cromática",
+                              DIATONIC: "Diatônico"
+                            };
+
+                            return (
+                              <span 
+                                key={dIdx} 
+                                className="inline-flex items-center gap-1 text-[8.5px] font-extrabold px-2 py-1 rounded bg-purple-950/20 border border-purple-900/25 text-purple-300"
+                              >
+                                {deviceLabels[dev.deviceType] || dev.deviceType}
+                                <span className="text-zinc-500 font-bold ml-1 font-mono">
+                                  ({dev.sourceDegree})
+                                </span>
+                              </span>
+                            );
+                          })}
+                          
+                          {analysis.fingerprint.layers.harmonic.devices.length === 0 && (
+                            <span className="text-[10px] text-zinc-500 italic mt-1">
+                              Nenhum recurso cromático/complexo detectado (diatônico puro).
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Layer 3: Formal Phrase Layout */}
+                    {analysis.fingerprint.layers.formal && (
+                      <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-2.5">
+                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">
+                          Camada 3: Arquitetura Fraseológica
+                        </span>
+
+                        <div className="flex flex-col gap-1.5">
+                          {analysis.fingerprint.layers.formal.phrases.map((phrase, pIdx) => {
+                            const roleLabels: Record<string, string> = {
+                              ANTECEDENT: "Antecedente (Suspensão)",
+                              CONSEQUENT: "Consequente (Resolução)",
+                              STANDALONE: "Independente"
+                            };
+
+                            return (
+                              <div key={pIdx} className="flex items-center justify-between text-[10px] bg-zinc-900/30 p-2 rounded-lg border border-zinc-900/60">
+                                <span className="font-bold text-zinc-300">
+                                  Frase {phrase.phraseIndex + 1}: <span className="text-purple-400 font-extrabold">{roleLabels[phrase.role] || phrase.role}</span>
+                                </span>
+                                <span className="text-zinc-500 text-[9px] font-bold">
+                                  Cadência: {phrase.cadenceType} ({phrase.cadenceResolution})
+                                </span>
+                              </div>
+                            );
+                          })}
+                          {analysis.fingerprint.layers.formal.phrases.length === 0 && (
+                            <span className="text-[10px] text-zinc-500 italic">
+                              Estrutura fraseológica indefinida.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Layer 4: Regional Modulations Route */}
+                    {analysis.fingerprint.layers.regional && (
+                      <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 flex flex-col gap-3">
+                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">
+                          Camada 4: Trajetória Regional Relativa
+                        </span>
+                        
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-lg bg-zinc-900/30 border border-zinc-900/50">
+                          {analysis.fingerprint.layers.regional.regionsVisited.map((region, rIdx) => {
+                            return (
+                              <div key={rIdx} className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded bg-purple-900/20 border border-purple-800/20 text-purple-300 font-mono">
+                                  {region}
+                                </span>
+                                {rIdx < (analysis.fingerprint?.layers?.regional?.regionsVisited?.length || 0) - 1 && (
+                                  <span className="text-[10px] text-zinc-600 font-bold select-none">➔</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {analysis.fingerprint.layers.regional.regionsVisited.length <= 1 && (
+                            <span className="text-[9px] text-zinc-500 italic ml-1">
+                              Sem modulações regionais (permanece na tônica original).
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Cadential Landmarks */}
               <div className="flex flex-col gap-3 mt-4 border-t border-zinc-900/60 pt-5">
                 <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider select-none">
