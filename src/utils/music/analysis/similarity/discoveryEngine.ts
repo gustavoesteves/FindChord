@@ -12,6 +12,7 @@ import { compareFingerprints } from './similarityEngine';
 import { generateExplainabilityReport } from './explainabilityEngine';
 import { renderExplanation } from './narrativeRenderer';
 import { attributePrimaryReason } from './evidenceRankingEngine';
+import { detectOpportunities } from './transformationSpaceEngine';
 
 /**
  * Pré-calcula e armazena em cache os fingerprints para os itens do corpus.
@@ -177,13 +178,17 @@ export function findSimilarProgressions(
       dominantAxis = 'VOICE_LEADING';
     }
 
+    const queryProgression = query.metadata.queryProgression;
+    const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
+
     const expReport = generateExplainabilityReport(query, itemFingerprint, report);
     const explanation = renderExplanation(
       expReport.insights,
       expReport.transformations,
       expReport.interpretiveInsights,
       expReport.causalExplanation,
-      expReport.sensitivityAnalysis
+      expReport.sensitivityAnalysis,
+      transformationOpportunities
     );
     const primaryReason = attributePrimaryReason(expReport.evidenceGraph, expReport.contributions);
 
@@ -204,7 +209,8 @@ export function findSimilarProgressions(
       explanationData: {
         dominantAxis,
         dominantScore
-      }
+      },
+      transformationOpportunities
     });
   }
 

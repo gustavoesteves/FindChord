@@ -55,7 +55,8 @@ export function generateFingerprint(analysis: FunctionalAnalysis, options?: Fing
       sourceKey,
       transpositionInvariant: true,
       chordsCount,
-      phrasesCount
+      phrasesCount,
+      queryProgression: analysis.chords.map(c => c.chordSymbol)
     },
     layers: {}
   };

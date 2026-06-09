@@ -32,6 +32,7 @@ export { DEFAULT_CORPUS } from './similarity/defaultCorpus';
 export { prepareCorpus, findSimilarProgressions } from './similarity/discoveryEngine';
 export { rankEvidence, attributePrimaryReason, buildCausalExplanation } from './similarity/evidenceRankingEngine';
 export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngine';
+export { TRANSFORMATION_TEMPLATES, detectOpportunities } from './similarity/transformationSpaceEngine';
 // ──────────────────────────────────────────────────────────────
 
 

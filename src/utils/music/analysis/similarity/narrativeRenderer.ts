@@ -3,7 +3,8 @@ import type {
   InterpretiveInsight, 
   PedagogicalTransformation,
   EvidenceExplanation,
-  SensitivityAnalysis
+  SensitivityAnalysis,
+  TransformationOpportunity
 } from '../models/Discovery';
 
 /**
@@ -126,7 +127,8 @@ export function renderExplanation(
   transformations: PedagogicalTransformation[],
   interpretive: InterpretiveInsight[],
   causal?: EvidenceExplanation,
-  sensitivity?: SensitivityAnalysis
+  sensitivity?: SensitivityAnalysis,
+  opportunities?: TransformationOpportunity[]
 ): string {
   const parts: string[] = [];
 
@@ -217,6 +219,29 @@ export function renderExplanation(
       }
     });
     parts.push(`**Análise de Sensibilidade Contrafactual (Ablação Virtual):**\n${sensParts.join('\n')}`);
+  }
+
+  // 5. Oportunidades de Transformação
+  if (opportunities && opportunities.length > 0) {
+    const oppParts = opportunities.map(opp => {
+      const pos = opp.chordIndex + 1;
+      const pct = Math.round(opp.expectedImpact * 100);
+      switch (opp.mechanism) {
+        case 'TRITONE_SUBSTITUTION':
+          return `- Esta progressão poderia admitir uma Substituição Tritônica no acorde dominante (posição ${pos}), preservando aproximadamente ${pct}% da função harmônica observada.`;
+        case 'MODAL_BORROWING':
+          return `- Esta progressão poderia admitir um Empréstimo Modal no acorde maior (posição ${pos}), preservando aproximadamente ${pct}% da função harmônica observada.`;
+        case 'CADENTIAL_REINTERPRETATION':
+          return `- Esta progressão poderia admitir uma Reinterpretação Cadencial (posição ${pos}), preservando aproximadamente ${pct}% da função harmônica observada.`;
+        case 'FUNCTIONAL_COMPRESSION':
+          return `- Esta progressão poderia admitir uma Compressão Funcional a partir da posição ${pos}, preservando aproximadamente ${pct}% da função harmônica observada.`;
+        case 'FUNCTIONAL_EXPANSION':
+          return `- Esta progressão poderia admitir uma Expansão Funcional a partir da posição ${pos}, preservando aproximadamente ${pct}% da função harmônica observada.`;
+        default:
+          return `- Oportunidade de ${opp.mechanism} na posição ${pos} (impacto esperado: ${pct}%).`;
+      }
+    });
+    parts.push(`**Oportunidades de Transformação:**\n${oppParts.join('\n')}`);
   }
 
   return parts.join('\n\n');

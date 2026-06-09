@@ -79,6 +79,7 @@ export interface HarmonicFingerprint {
     transpositionInvariant: boolean; // Sempre true para assinalar a invariância
     chordsCount: number;
     phrasesCount: number;
+    queryProgression?: string[];
   };
   layers: {
     structural?: StructuralLayerData;

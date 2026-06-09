@@ -47,7 +47,10 @@ console.log('\n🎵 Caso 1 — Substituição Tritônica');
     if (tritoneRes) {
       assert(tritoneRes.scoreImpact >= 0.20, `Tritone ablation impact is significant, got ${tritoneRes.scoreImpact}`);
       assert(tritoneRes.tier === 'CRITICAL' || tritoneRes.tier === 'HIGH', `Tritone tier is CRITICAL or HIGH, got ${tritoneRes.tier}`);
+      assert(tritoneRes.localImpact === tritoneRes.scoreImpact, 'localImpact matches scoreImpact');
+      assert(tritoneRes.globalImpact > 0, `globalImpact is positive, got ${tritoneRes.globalImpact}`);
     }
+    assert(sens.counterfactualFormulaVersion === 'F10C3-v1', `counterfactualFormulaVersion is F10C3-v1, got ${sens.counterfactualFormulaVersion}`);
 
     // Test narrative output
     const explanation = renderExplanation(

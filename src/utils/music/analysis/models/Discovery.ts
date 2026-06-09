@@ -71,9 +71,16 @@ export interface EvidenceLink {
   relation: EvidenceRelation;
 }
 
+export interface DependencyEdge {
+  from: string;
+  to: string;
+  strength: number;
+}
+
 export interface EvidenceGraph {
   nodes: EvidenceNode[];
   links: EvidenceLink[];
+  dependencyEdges?: DependencyEdge[];
 }
 
 export interface EvidenceTrace {
@@ -150,6 +157,22 @@ export interface PedagogicalTransformation {
   evidenceNodeIds?: EvidenceNodeId[];
 }
 
+export interface TransformationTemplate {
+  id: string;
+  mechanism: TransformationMechanism;
+  preconditions: string[];
+  effects: string[];
+  reversibility: number;
+  confidence: number;
+}
+
+export interface TransformationOpportunity {
+  chordIndex: number;
+  mechanism: TransformationMechanism;
+  confidence: number;
+  expectedImpact: number;
+}
+
 export type HarmonicCategory =
   | 'DIATONIC_AXIS'
   | 'CIRCLE_OF_FIFTHS'
@@ -219,11 +242,14 @@ export interface CounterfactualResult {
   impactPercentage: number;
   causalImportance: number;
   tier: SensitivityTier;
+  localImpact: number;
+  globalImpact: number;
 }
 
 export interface SensitivityAnalysis {
   results: CounterfactualResult[];
   dominantFactor?: string;
+  counterfactualFormulaVersion?: string;
 }
 
 export interface DiscoveryMatch {
@@ -244,4 +270,5 @@ export interface DiscoveryMatch {
     dominantAxis: DiscoveryStrategy;
     dominantScore: number;
   };
+  transformationOpportunities?: TransformationOpportunity[];
 }

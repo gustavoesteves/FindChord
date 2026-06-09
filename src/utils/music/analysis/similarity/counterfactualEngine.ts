@@ -185,6 +185,7 @@ export function analyzeSensitivity(
   contributions: EvidenceContribution[]
 ): SensitivityAnalysis {
   const results: CounterfactualResult[] = [];
+  const originalOverallScore = report.overallScore;
 
   // Filtra apenas nós lógicos passíveis de ablação (blindagem de OBSERVATION)
   const candidateNodes = graph.nodes.filter(
@@ -233,6 +234,9 @@ export function analyzeSensitivity(
     // Importância causal ponderada: 70% impacto de score contrafactual + 30% contribuição original
     const causalImportance = Number(((scoreImpact * 0.7) + (nodeContribution * 0.3)).toFixed(2));
 
+    const localImpact = scoreImpact;
+    const globalImpact = Number(Math.max(0, originalOverallScore - recomputedResult.overallScore).toFixed(4));
+
     results.push({
       nodeId: node.id,
       originalScore: originalAxisScore,
@@ -240,7 +244,9 @@ export function analyzeSensitivity(
       scoreImpact,
       impactPercentage,
       causalImportance,
-      tier
+      tier,
+      localImpact,
+      globalImpact
     });
   });
 
@@ -256,6 +262,7 @@ export function analyzeSensitivity(
 
   return {
     results,
-    dominantFactor
+    dominantFactor,
+    counterfactualFormulaVersion: 'F10C3-v1'
   };
 }
