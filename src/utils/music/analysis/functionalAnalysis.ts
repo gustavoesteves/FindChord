@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────
-// Sprint 12B — Functional Analysis Facade (Refactored)
+// Sprint 12B — Functional Analysis Facade (Refactored for Sprint F12)
 // ──────────────────────────────────────────────────────────────
 
 export { analyzeProgressionUnderKey } from './facade/analyzeProgressionUnderKey';
@@ -14,6 +14,20 @@ export type { HarmonicNodeType, HarmonicNode, HarmonicEdge, HarmonicEdgeRelation
 export { buildHarmonicKnowledgeGraph } from './narrative/knowledgeGraphBuilder';
 export { HarmonicGraphEngine } from './narrative/knowledgeGraphEngine';
 export * from './models/HarmonicNarrative';
+export * from './models/HarmonicFingerprint';
+export * from './models/FunctionalEquivalence';
+export * from './models/VoiceLeadingLayer';
+export * from './models/ApparentFunctionLayer';
+export * from './models/Similarity';
+export * from './models/Discovery';
+export { generateFingerprint } from './narrative/narrativeFingerprint';
+export { resolveFunctionalEquivalences } from './narrative/functionalEquivalenceEngine';
+export { resolveVoiceLeadingNarrative } from './narrative/voiceLeadingNarrativeEngine';
+export { resolveApparentFunctions } from './narrative/apparentFunctionsEngine';
+export { compareFingerprints } from './similarity/similarityEngine';
+export { DEFAULT_CORPUS } from './similarity/defaultCorpus';
+export { prepareCorpus, findSimilarProgressions } from './similarity/discoveryEngine';
 // ──────────────────────────────────────────────────────────────
+
 
 

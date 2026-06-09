@@ -206,7 +206,8 @@ export function buildHarmonicKnowledgeGraph(analysis: FunctionalAnalysis): Harmo
   // - PREPARES: dominante secundária ou aproximação preparando o alvo correspondente
   chords.forEach((c) => {
     if (c.secondary) {
-      const dist = c.secondary.contextualAnalysis.resolutionDistance;
+      const dist = c.secondary.contextualAnalysis?.resolutionDistance ?? 
+        (c.resolutionEvidence?.targetChordIndex !== undefined ? c.resolutionEvidence.targetChordIndex - c.index : 1);
       const targetIdx = c.index + dist;
       if (targetIdx < chords.length) {
         addEdge(`chord:${c.index}`, `chord:${targetIdx}`, 'PREPARES', {

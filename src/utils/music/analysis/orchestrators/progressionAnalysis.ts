@@ -28,6 +28,8 @@ import { analyzeFormalStructure } from '../narrative/formalStructureSolver';
 import { buildHarmonicKnowledgeGraph } from '../narrative/knowledgeGraphBuilder';
 import { extractNarrativeFacts } from '../narrative/narrativeFactEngine';
 import { compileNarrativeExplanation } from '../narrative/harmonicNarrativeCompiler';
+import { generateFingerprint } from '../narrative/narrativeFingerprint';
+
 
 
 /**
@@ -311,6 +313,9 @@ export function analyzeProgression(
 
   fullAnalysisDTO.narrativeFacts = narrativeFacts;
   fullAnalysisDTO.narrativeExplanation = narrativeExplanation;
+
+  const fingerprint = generateFingerprint(fullAnalysisDTO);
+  fullAnalysisDTO.fingerprint = fingerprint;
 
   return fullAnalysisDTO;
 

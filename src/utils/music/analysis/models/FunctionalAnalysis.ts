@@ -3,6 +3,7 @@
 // ──────────────────────────────────────────────────────────────
 import type { HarmonicKnowledgeGraph } from './HarmonicGraph';
 import type { HarmonicNarrativeFacts, HarmonicNarrativeExplanation } from './HarmonicNarrative';
+import type { HarmonicFingerprint } from './HarmonicFingerprint';
 
 
 /**
@@ -520,6 +521,9 @@ export interface FunctionalAnalysis {
 
   /** Explicação narrativa compilada em português (Sprint F9) */
   narrativeExplanation?: HarmonicNarrativeExplanation;
+
+  /** Assinatura estrutural em camadas da progressão (Sprint Infra-3) */
+  fingerprint?: HarmonicFingerprint;
 }
 
 
