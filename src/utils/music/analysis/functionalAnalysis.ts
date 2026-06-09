@@ -34,6 +34,7 @@ export { rankEvidence, attributePrimaryReason, buildCausalExplanation } from './
 export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngine';
 export { TRANSFORMATION_TEMPLATES, detectOpportunities } from './similarity/transformationSpaceEngine';
 export { buildTransformationGraph, generateRecommendedPaths } from './similarity/transformationGraphEngine';
+export { executePathTransformations } from './similarity/transformationExecutionEngine';
 // ──────────────────────────────────────────────────────────────
 
 

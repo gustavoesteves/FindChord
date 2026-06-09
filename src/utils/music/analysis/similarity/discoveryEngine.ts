@@ -14,6 +14,7 @@ import { renderExplanation } from './narrativeRenderer';
 import { attributePrimaryReason } from './evidenceRankingEngine';
 import { detectOpportunities } from './transformationSpaceEngine';
 import { buildTransformationGraph, generateRecommendedPaths } from './transformationGraphEngine';
+import { executePathTransformations } from './transformationExecutionEngine';
 
 /**
  * Pré-calcula e armazena em cache os fingerprints para os itens do corpus.
@@ -182,7 +183,17 @@ export function findSimilarProgressions(
     const queryProgression = query.metadata.queryProgression;
     const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
     const transformationGraph = transformationOpportunities ? buildTransformationGraph(transformationOpportunities) : undefined;
-    const recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph) : undefined;
+    let recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph) : undefined;
+
+    if (queryProgression && recommendedPaths && transformationOpportunities) {
+      recommendedPaths = recommendedPaths.map(path => {
+        const executionResult = executePathTransformations(queryProgression, path.steps, transformationOpportunities);
+        return {
+          ...path,
+          executionResult
+        };
+      });
+    }
 
     const expReport = generateExplainabilityReport(query, itemFingerprint, report);
     const explanation = renderExplanation(

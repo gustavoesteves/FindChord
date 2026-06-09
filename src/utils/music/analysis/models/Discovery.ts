@@ -222,10 +222,25 @@ export interface TransformationGraph {
   edges: TransformationEdge[];
 }
 
+export interface TransformationApplication {
+  transformationId: string;
+  originalProgression: string[];
+  transformedProgression: string[];
+  appliedAtChordIndex: number;
+  explanation: string;
+}
+
+export interface TransformationExecutionResult {
+  applications: TransformationApplication[];
+  finalProgression: string[];
+  confidence: number;
+}
+
 export interface RecommendationPath {
   steps: TransformationNode[];
   accumulatedImpact: number;
   accumulatedDifficulty: number;
+  executionResult?: TransformationExecutionResult;
 }
 
 export type HarmonicCategory =

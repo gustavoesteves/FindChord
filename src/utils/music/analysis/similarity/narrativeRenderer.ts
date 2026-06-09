@@ -281,5 +281,17 @@ export function renderExplanation(
     parts.push(`**Caminhos de Transformação Recomendados:**\n${pathParts.join('\n')}`);
   }
 
+  // 7. Transformação Sugerida Concreta (Sprint C3.1)
+  if (recommendedPaths && recommendedPaths.length > 0) {
+    const firstPath = recommendedPaths[0];
+    if (firstPath.executionResult && firstPath.executionResult.applications.length > 0) {
+      const execResult = firstPath.executionResult;
+      const originalText = execResult.applications[0].originalProgression.join(' – ');
+      const resultText = execResult.finalProgression.join(' – ');
+      const justifications = execResult.applications.map(app => `- ${app.explanation}`).join('\n');
+      parts.push(`**Transformação Sugerida:**\nOriginal:\n${originalText}\n\nResultado:\n${resultText}\n\nJustificativa:\n${justifications}`);
+    }
+  }
+
   return parts.join('\n\n');
 }
