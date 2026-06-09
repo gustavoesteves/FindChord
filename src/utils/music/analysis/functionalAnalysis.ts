@@ -35,6 +35,7 @@ export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngin
 export { TRANSFORMATION_TEMPLATES, detectOpportunities } from './similarity/transformationSpaceEngine';
 export { buildTransformationGraph, generateRecommendedPaths } from './similarity/transformationGraphEngine';
 export { executePathTransformations } from './similarity/transformationExecutionEngine';
+export { scoreTransformationForGoal, scorePathForGoal } from './similarity/goalMatchingEngine';
 // ──────────────────────────────────────────────────────────────
 
 

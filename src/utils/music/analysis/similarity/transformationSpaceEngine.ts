@@ -10,7 +10,14 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
     preconditions: ['DOMINANT_7TH', 'V7'],
     effects: ['VOICE_LEADING_PRESERVATION', 'FUNCTION_PRESERVATION'],
     reversibility: 0.9,
-    confidence: 0.95
+    confidence: 0.95,
+    expectedOutcome: {
+      tensionDelta: 0.7,
+      chromaticismDelta: 0.9,
+      bassSmoothnessDelta: 0.4,
+      functionalStabilityDelta: 0.3,
+      voiceLeadingDelta: 0.5
+    }
   },
   {
     id: 'template:modal_borrowing',
@@ -18,7 +25,14 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
     preconditions: ['MAJOR_CHORD', 'IV_DEGREE'],
     effects: ['FUNCTION_PRESERVATION', 'TENSION_PRESERVATION'],
     reversibility: 0.85,
-    confidence: 0.90
+    confidence: 0.90,
+    expectedOutcome: {
+      tensionDelta: 0.5,
+      chromaticismDelta: 0.6,
+      bassSmoothnessDelta: 0.5,
+      functionalStabilityDelta: 0.5,
+      voiceLeadingDelta: 0.4
+    }
   },
   {
     id: 'template:cadential_reinterpretation',
@@ -26,7 +40,14 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
     preconditions: ['CADENTIAL_64_RESOLUTION', 'I_V_MOTION'],
     effects: ['BASS_SMOOTHING', 'FUNCTION_PRESERVATION'],
     reversibility: 0.7,
-    confidence: 0.85
+    confidence: 0.85,
+    expectedOutcome: {
+      tensionDelta: 0.1,
+      chromaticismDelta: 0.2,
+      bassSmoothnessDelta: 0.8,
+      functionalStabilityDelta: 0.8,
+      voiceLeadingDelta: 0.7
+    }
   },
   {
     id: 'template:functional_compression',
@@ -34,7 +55,14 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
     preconditions: ['PREDOMINANT_DOMINANT_SEQUENCE', 'II_V_I'],
     effects: ['FUNCTION_PRESERVATION'],
     reversibility: 0.6,
-    confidence: 0.80
+    confidence: 0.80,
+    expectedOutcome: {
+      tensionDelta: -0.3,
+      chromaticismDelta: -0.2,
+      bassSmoothnessDelta: -0.1,
+      functionalStabilityDelta: 0.6,
+      voiceLeadingDelta: 0.2
+    }
   },
   {
     id: 'template:functional_expansion',
@@ -42,7 +70,14 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
     preconditions: ['DIRECT_TONIC_DOMINANT_MOTION'],
     effects: ['TENSION_PRESERVATION'],
     reversibility: 0.8,
-    confidence: 0.85
+    confidence: 0.85,
+    expectedOutcome: {
+      tensionDelta: 0.3,
+      chromaticismDelta: 0.0,
+      bassSmoothnessDelta: 0.7,
+      functionalStabilityDelta: 0.8,
+      voiceLeadingDelta: 0.8
+    }
   }
 ];
 

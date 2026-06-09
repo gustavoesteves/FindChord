@@ -157,6 +157,24 @@ export interface PedagogicalTransformation {
   evidenceNodeIds?: EvidenceNodeId[];
 }
 
+export type HarmonicGoal =
+  | 'INCREASE_TENSION'
+  | 'REDUCE_TENSION'
+  | 'INCREASE_CHROMATICISM'
+  | 'SMOOTHER_BASS'
+  | 'PRESERVE_FUNCTION'
+  | 'JAZZIFY'
+  | 'SIMPLIFY'
+  | 'INCREASE_DRAMA';
+
+export interface TransformationOutcome {
+  tensionDelta: number;
+  chromaticismDelta: number;
+  bassSmoothnessDelta: number;
+  functionalStabilityDelta: number;
+  voiceLeadingDelta: number;
+}
+
 export interface TransformationTemplate {
   id: string;
   mechanism: TransformationMechanism;
@@ -164,6 +182,7 @@ export interface TransformationTemplate {
   effects: string[];
   reversibility: number;
   confidence: number;
+  expectedOutcome: TransformationOutcome;
 }
 
 export type TransformationFamily =
@@ -291,6 +310,7 @@ export interface DiscoveryOptions {
     minChordsCount?: number;
     maxChordsCount?: number;
   };
+  goal?: HarmonicGoal;
 }
 
 export interface DiscoveryPrimaryReason {

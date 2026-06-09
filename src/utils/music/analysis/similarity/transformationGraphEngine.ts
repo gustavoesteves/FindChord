@@ -4,8 +4,10 @@ import type {
   TransformationEdge, 
   TransformationGraph, 
   RecommendationPath,
-  TransformationFamily
+  TransformationFamily,
+  HarmonicGoal
 } from '../models/Discovery';
+import { scorePathForGoal } from './goalMatchingEngine';
 
 /**
  * Mapeia o mecanismo de transformação para a respectiva família conceitual.
@@ -169,7 +171,8 @@ function findConflictFreeSubsets(
  */
 export function generateRecommendedPaths(
   opportunities: TransformationOpportunity[],
-  graph: TransformationGraph
+  graph: TransformationGraph,
+  goal?: HarmonicGoal
 ): RecommendationPath[] {
   const allSubsets: TransformationNode[][] = [];
   
@@ -193,13 +196,21 @@ export function generateRecommendedPaths(
     };
   });
 
-  // Ordenação Pedagógica: prioriza maior score pedagógico
-  // pedagogicalScore = accumulatedImpact - (accumulatedDifficulty * 0.5)
-  paths.sort((a, b) => {
-    const scoreA = a.accumulatedImpact - (a.accumulatedDifficulty * 0.5);
-    const scoreB = b.accumulatedImpact - (b.accumulatedDifficulty * 0.5);
-    return scoreB - scoreA;
-  });
+  // Ordenação baseada na presença ou ausência da meta harmônica
+  if (goal) {
+    paths.sort((a, b) => {
+      const scoreA = scorePathForGoal(goal, a.steps, opportunities) + a.accumulatedImpact - a.accumulatedDifficulty;
+      const scoreB = scorePathForGoal(goal, b.steps, opportunities) + b.accumulatedImpact - b.accumulatedDifficulty;
+      return scoreB - scoreA;
+    });
+  } else {
+    // Ordenação Pedagógica Padrão: prioriza maior score pedagógico
+    paths.sort((a, b) => {
+      const scoreA = a.accumulatedImpact - (a.accumulatedDifficulty * 0.5);
+      const scoreB = b.accumulatedImpact - (b.accumulatedDifficulty * 0.5);
+      return scoreB - scoreA;
+    });
+  }
 
   // Filtra caminhos vazios e limita às top 5 recomendações
   return paths.filter(p => p.steps.length > 0).slice(0, 5);

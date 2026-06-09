@@ -183,7 +183,7 @@ export function findSimilarProgressions(
     const queryProgression = query.metadata.queryProgression;
     const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
     const transformationGraph = transformationOpportunities ? buildTransformationGraph(transformationOpportunities) : undefined;
-    let recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph) : undefined;
+    let recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph, options?.goal) : undefined;
 
     if (queryProgression && recommendedPaths && transformationOpportunities) {
       recommendedPaths = recommendedPaths.map(path => {
@@ -203,7 +203,8 @@ export function findSimilarProgressions(
       expReport.causalExplanation,
       expReport.sensitivityAnalysis,
       transformationOpportunities,
-      recommendedPaths
+      recommendedPaths,
+      options?.goal
     );
     const primaryReason = attributePrimaryReason(expReport.evidenceGraph, expReport.contributions);
 

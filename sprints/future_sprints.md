@@ -62,19 +62,20 @@ graph TD
     end
 
     subgraph "PHASE 3 — Recommendation Engine (🔄 Em andamento)"
-        F12_1["F12.1: Resolution Confidence"]
         F10C5["F10-C.5: Transformation Dependency Graph"]
-        F10C6["F10-C.6: Recommendation Scoring & Constraints"]
-        C31["C3.1: Transform Generator"]
-        C32["C3.2: Constraint-Based Reharmonization"]
-        C33["C3.3: Explainable Recommendations"]
+        C31["C3.1: Transformation Execution Engine"]
+        C32A["C3.2-A: Goal-Oriented Recommendation Engine"]
+        C32B["C3.2-B: Constraint-Based Reharmonization"]
+        C33["C3.3: Explainable Recommendations 2.0"]
+        C34["C3.4: Multi-Objective Optimization"]
+        F12_1["F12.1: Resolution Confidence Calibration"]
       
-        F10C4 --> F12_1 --> F10C5 --> F10C6 --> C31 --> C32 --> C33
+        F10C4 --> F10C5 --> C31 --> C32A --> C32B --> C33 --> C34 --> F12_1
     end
 
     subgraph "PHASE 4 — Corpus & Benchmark"
         F10E["F10-E: Corpus Expansion & Benchmark Suite"]
-        C33 --> F10E
+        F12_1 --> F10E
     end
 
     subgraph "PHASE 5 — Extended Harmony"
@@ -106,59 +107,45 @@ graph TD
 
 ## 🔑 Cronograma de Priorização Recomendado
 
-As sprints concluídas compõem o motor fundamental de análise e a plataforma de explicabilidade. As próximas focarão na probabilidade e no motor de recomendação.
+As sprints concluídas compõem o motor fundamental de análise, a plataforma de explicabilidade e a fundação do recomendador. As próximas focarão em restrições, otimização e calibração de probabilidade.
 
 ---
 
-### Sprint F12.1: Resolution Confidence & Continuous Probability
+### Sprint C3.2-B: Constraint-Based Reharmonization
 **Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
+*   **Objetivo**: Permitir a imposição de restrições estéticas e físicas explícitas nas rearmonizações.
+*   **Conceito**: Implementar filtros de restrições harmônicas e físicas (`ReharmonizationConstraints`):
+    *   `preserveBassMotion`: Evita saltos desnecessários do baixo ou impõe direções.
+    *   `preserveCadences`: Impede modificações nas janelas cadenciais da progressão.
+    *   `maxPhysicalComplexity`: Filtra transformações com custo físico acima de um limiar.
+    *   `maxSimilarityLoss`: Descarta variantes cuja perda de similaridade original ultrapasse um delta tolerado.
+*   **Valor**: Permite refinar a busca baseada no perfil e nível técnico do compositor.
+
+---
+
+### Sprint C3.3: Explainable Recommendations 2.0
+**Status: 🔄 PLANEJADA (Prioridade 2)**
+*   **Objetivo**: Conectar as explicações estruturadas e contrafactuais diretamente às metas e restrições fornecidas.
+*   **Conceito**: A narrativa pedagógica passa a detalhar por que certas opções foram descartadas (violação de restrições) e como a progressão se alinha à intenção declarada.
+
+---
+
+### Sprint C3.4: Multi-Objective Optimization
+**Status: 🔄 PLANEJADA (Prioridade 3)**
+*   **Objetivo**: Buscar o conjunto de caminhos ótimos na fronteira de Pareto de múltiplos objetivos.
+*   **Conceito**: Resolver o conflito clássico: maior tensão harmônica vs menor complexidade física, gerando um espectro balanceado de opções de rearmonização.
+
+---
+
+### Sprint F12.1: Resolution Confidence Calibration
+**Status: 🔄 PLANEJADA (Prioridade 4)**
 *   **Objetivo**: Refinar os modelos de probabilidade contínua para calibrar e computar a confiança da resolução de dominantes e desvios tonais.
 *   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading (Layer 6), força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
-*   **Valor**: Garante gradações e calibragens finas na tomada de decisão retrospectiva da Layer 7, servindo de base matemática para a atribuição causal, ablações contrafactuais e o futuro motor de decisão de rearmonizações.
-
----
-
-### Sprint F10-C.5: Transformation Dependency Graph
-**Status: ✅ CONCLUÍDA**
-*   **Objetivo**: Organizar oportunidades isoladas em um espaço navegável de decisão de rearmonização.
-*   **Conceito**: Conectar nós de transformações a arestas direcionadas de dependência (`ENABLES`) e conflito bidirecional (`CONFLICTS_WITH`).
-*   **Valor**: Evita a sugestão de rearmonizações mutuamente exclusivas e mapeia caminhos pedagógicos lineares ordenados.
-
----
-
-### Sprint F10-C.6: Recommendation Scoring & Constraint Engine
-**Status: 🔄 PLANEJADA (Prioridade 2)**
-*   **Objetivo**: Transformar o grafo de transformações em um planejador de decisões orientado a restrições e objetivos pedagógicos.
-*   **Conceito**: Criar esquemas de restrições (`RecommendationConstraints`) e métricas de objetivos (`RecommendationObjective`) baseados em uma fórmula de pontuação de recomendação (`RecommendationScore`). A pontuação ponderará dinamicamente:
-    `Score = Musical Impact + Functional Preservation + Counterfactual Importance + Pedagogical Value - Physical Complexity`
-*   **Valor**: Permite filtrar e refinar sugestões com base no perfil do compositor (ex: *"Menor complexidade física com maior preservação funcional"* ou *"Máximo cromatismo"*).
-
----
-
-### Sprint C3.1: Transform Generator
-**Status: 🔄 PLANEJADA (Prioridade 3)**
-*   **Objetivo**: Implementar o gerador de variantes e rearmonizações estruturadas baseadas no espaço de estados harmônicos.
-*   **Conceito**: Receber uma progressão de entrada e aplicar as transformações do grafo para gerar progressões alternativas válidas acompanhadas de justificativa automática.
-*   **Valor**: O primeiro motor ativo de geração musical do framework.
-
----
-
-### Sprint C3.2: Constraint-based Reharmonization
-**Status: 🔄 PLANEJADA (Prioridade 4)**
-*   **Objetivo**: Permitir ao usuário restringir parâmetros estéticos da rearmonização por meio de interfaces.
-*   **Conceito**: Filtrar as transformações geradas usando a modelagem de voice-leading e funções aparentes sob as restrições fornecidas.
-
----
-
-### Sprint C3.3: Explainable Recommendations
-**Status: 🔄 PLANEJADA (Prioridade 5)**
-*   **Objetivo**: Conectar o motor de rearmonização ao motor de explicabilidade (F10-C) nativamente.
-*   **Conceito**: Cada recomendação gerada deve expor seu motivo principal (`primaryReason`), efeitos associados e impactos físicos observáveis no baixo e vozes internas.
 
 ---
 
 ### Sprint F10-E: Corpus Expansion & Benchmark Suite
-**Status: 🔄 ADIADA (Pós-Geração)**
+**Status: 🔄 ADIADA (Pós-Otimização)**
 *   **Objetivo**: Expandir o corpus com mais de 100 progressões clássicas, de jazz e populares.
 *   **Conceito**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala.
 *   **Valor**: Mudado para posterior ao gerador C3 para evitar retrabalho de calibração de modelos sobre uma base inflada de dados.

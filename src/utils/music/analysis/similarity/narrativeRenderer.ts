@@ -6,8 +6,37 @@ import type {
   SensitivityAnalysis,
   TransformationOpportunity,
   RecommendationPath,
-  TransformationFamily
+  TransformationFamily,
+  HarmonicGoal
 } from '../models/Discovery';
+import { TRANSFORMATION_TEMPLATES } from './transformationSpaceEngine';
+import { scoreTransformationForGoal } from './goalMatchingEngine';
+
+/**
+ * Traduz a meta harmônica para um nome legível em português.
+ */
+function formatGoalName(goal: string): string {
+  switch (goal) {
+    case 'INCREASE_TENSION':
+      return 'Aumentar tensão harmônica';
+    case 'REDUCE_TENSION':
+      return 'Reduzir tensão harmônica';
+    case 'INCREASE_CHROMATICISM':
+      return 'Aumentar cromatismo';
+    case 'SMOOTHER_BASS':
+      return 'Suavizar linha do baixo';
+    case 'PRESERVE_FUNCTION':
+      return 'Preservar função harmônica';
+    case 'JAZZIFY':
+      return 'Jazzificar (adicionar tensões e cromatismo)';
+    case 'SIMPLIFY':
+      return 'Simplificar progressão';
+    case 'INCREASE_DRAMA':
+      return 'Aumentar contraste/dramatismo';
+    default:
+      return goal;
+  }
+}
 
 /**
  * Retorna um qualificador linguístico com base na confiança contínua da resolução.
@@ -131,9 +160,14 @@ export function renderExplanation(
   causal?: EvidenceExplanation,
   sensitivity?: SensitivityAnalysis,
   opportunities?: TransformationOpportunity[],
-  recommendedPaths?: RecommendationPath[]
+  recommendedPaths?: RecommendationPath[],
+  goal?: HarmonicGoal
 ): string {
   const parts: string[] = [];
+
+  if (goal) {
+    parts.push(`**Objetivo:** ${formatGoalName(goal)}`);
+  }
 
   // 1. Introdução de Similaridade ou Atribuição Causal
   if (causal) {
@@ -281,15 +315,74 @@ export function renderExplanation(
     parts.push(`**Caminhos de Transformação Recomendados:**\n${pathParts.join('\n')}`);
   }
 
-  // 7. Transformação Sugerida Concreta (Sprint C3.1)
+  // 7. Transformação Sugerida Concreta (Sprint C3.1 / C3.2-A)
   if (recommendedPaths && recommendedPaths.length > 0) {
     const firstPath = recommendedPaths[0];
     if (firstPath.executionResult && firstPath.executionResult.applications.length > 0) {
       const execResult = firstPath.executionResult;
       const originalText = execResult.applications[0].originalProgression.join(' – ');
       const resultText = execResult.finalProgression.join(' – ');
-      const justifications = execResult.applications.map(app => `- ${app.explanation}`).join('\n');
-      parts.push(`**Transformação Sugerida:**\nOriginal:\n${originalText}\n\nResultado:\n${resultText}\n\nJustificativa:\n${justifications}`);
+      
+      const justifications = execResult.applications.map(app => {
+        let pctSuffix = '';
+        if (goal) {
+          const template = TRANSFORMATION_TEMPLATES.find(t => 
+            app.transformationId.toLowerCase().includes(t.mechanism.toLowerCase())
+          );
+          if (template) {
+            const stepScore = scoreTransformationForGoal(goal, template.expectedOutcome);
+            const pct = Math.max(0, Math.round(stepScore * 100));
+            pctSuffix = `\n  (Alinhamento com o objetivo: ${pct}%)`;
+          }
+        }
+        return `- ${app.explanation}${pctSuffix}`;
+      }).join('\n');
+
+      // Calcular o resultado previsto acumulado para este caminho de rearmonização
+      let tensionDelta = 0;
+      let chromaticismDelta = 0;
+      let bassSmoothnessDelta = 0;
+      let functionalStabilityDelta = 0;
+      let voiceLeadingDelta = 0;
+
+      for (const app of execResult.applications) {
+        const template = TRANSFORMATION_TEMPLATES.find(t => 
+          app.transformationId.toLowerCase().includes(t.mechanism.toLowerCase())
+        );
+        if (template) {
+          tensionDelta += template.expectedOutcome.tensionDelta;
+          chromaticismDelta += template.expectedOutcome.chromaticismDelta;
+          bassSmoothnessDelta += template.expectedOutcome.bassSmoothnessDelta;
+          functionalStabilityDelta += template.expectedOutcome.functionalStabilityDelta;
+          voiceLeadingDelta += template.expectedOutcome.voiceLeadingDelta;
+        }
+      }
+
+      const predictedOutcomes: string[] = [];
+      if (chromaticismDelta > 0.3) {
+        predictedOutcomes.push('✓ Mais cromatismo');
+      }
+      if (tensionDelta > 0.3) {
+        predictedOutcomes.push('✓ Maior atração dominante / tensão');
+      } else if (tensionDelta < -0.1) {
+        predictedOutcomes.push('✓ Menos tensão / resolução mais suave');
+      }
+      if (functionalStabilityDelta > 0.3) {
+        predictedOutcomes.push('✓ Função harmônica preservada');
+      }
+      if (bassSmoothnessDelta > 0.3) {
+        predictedOutcomes.push('✓ Suavização da linha do baixo');
+      }
+      if (voiceLeadingDelta > 0.3) {
+        predictedOutcomes.push('✓ Condução de vozes (voice leading) fluida');
+      }
+
+      let predictedBlock = '';
+      if (predictedOutcomes.length > 0) {
+        predictedBlock = `\n\n**Resultado Previsto:**\n${predictedOutcomes.join('\n')}`;
+      }
+
+      parts.push(`**Transformação Sugerida:**\nOriginal:\n${originalText}\n\nResultado:\n${resultText}\n\nJustificativa:\n${justifications}${predictedBlock}`);
     }
   }
 
