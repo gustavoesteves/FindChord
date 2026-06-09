@@ -132,7 +132,7 @@ console.log('\n🔍 Integração do pipeline e Narrative Renderer');
     assert(explanation !== undefined, 'Natural language explanation is generated');
     if (explanation) {
       assert(explanation.includes('poderia admitir uma Substituição Tritônica'), 'Narrative includes suggested tritone opportunity');
-      assert(explanation.includes('preservando aproximadamente 91%'), 'Narrative includes expected preservation impact');
+      assert(explanation.includes('preservando aproximadamente 80%'), 'Narrative includes expected preservation impact');
       console.log('  Narrativa Sugerida:\n', explanation.substring(explanation.indexOf('**Oportunidades de Transformação')));
     }
   }

@@ -4,7 +4,9 @@ import type {
   PedagogicalTransformation,
   EvidenceExplanation,
   SensitivityAnalysis,
-  TransformationOpportunity
+  TransformationOpportunity,
+  RecommendationPath,
+  TransformationFamily
 } from '../models/Discovery';
 
 /**
@@ -128,7 +130,8 @@ export function renderExplanation(
   interpretive: InterpretiveInsight[],
   causal?: EvidenceExplanation,
   sensitivity?: SensitivityAnalysis,
-  opportunities?: TransformationOpportunity[]
+  opportunities?: TransformationOpportunity[],
+  recommendedPaths?: RecommendationPath[]
 ): string {
   const parts: string[] = [];
 
@@ -136,15 +139,15 @@ export function renderExplanation(
   if (causal) {
     const partsCausal: string[] = [];
     if (causal.primaryEvidence.summaries.length > 0) {
-      const cleanPrimary = causal.primaryEvidence.summaries.map(s => s.replace(/\*\*/g, '').replace(/:\s*$/, ''));
+      const cleanPrimary = causal.primaryEvidence.summaries.map((s: string) => s.replace(/\*\*/g, '').replace(/:\s*$/, ''));
       partsCausal.push(`O principal fator de similaridade é ${cleanPrimary.join(', ')}.`);
     }
     if (causal.secondaryEvidence.summaries.length > 0) {
-      const cleanSecondary = causal.secondaryEvidence.summaries.map(s => s.replace(/\*\*/g, '').replace(/:\s*$/, '').replace(/^\w/, (c) => c.toLowerCase()));
+      const cleanSecondary = causal.secondaryEvidence.summaries.map((s: string) => s.replace(/\*\*/g, '').replace(/:\s*$/, '').replace(/^\w/, (c: string) => c.toLowerCase()));
       partsCausal.push(`${cleanSecondary.join(', ')} contribui de forma secundária.`);
     }
     if (causal.supportingEvidence.summaries.length > 0) {
-      const cleanSupporting = causal.supportingEvidence.summaries.map(s => s.replace(/\*\*/g, '').replace(/:\s*$/, '').replace(/^\w/, (c) => c.toLowerCase()));
+      const cleanSupporting = causal.supportingEvidence.summaries.map((s: string) => s.replace(/\*\*/g, '').replace(/:\s*$/, '').replace(/^\w/, (c: string) => c.toLowerCase()));
       partsCausal.push(`Fatores adicionais como ${cleanSupporting.join(', ')} atuam como reforço contextual.`);
     }
     if (partsCausal.length > 0) {
@@ -225,7 +228,7 @@ export function renderExplanation(
   if (opportunities && opportunities.length > 0) {
     const oppParts = opportunities.map(opp => {
       const pos = opp.chordIndex + 1;
-      const pct = Math.round(opp.expectedImpact * 100);
+      const pct = Math.round(opp.musicalImpact * 100);
       switch (opp.mechanism) {
         case 'TRITONE_SUBSTITUTION':
           return `- Esta progressão poderia admitir uma Substituição Tritônica no acorde dominante (posição ${pos}), preservando aproximadamente ${pct}% da função harmônica observada.`;
@@ -242,6 +245,40 @@ export function renderExplanation(
       }
     });
     parts.push(`**Oportunidades de Transformação:**\n${oppParts.join('\n')}`);
+  }
+
+  // 6. Caminhos de Transformação Recomendados
+  if (recommendedPaths && recommendedPaths.length > 0) {
+    const formatFamilyName = (family: TransformationFamily): string => {
+      switch (family) {
+        case 'TENSION_INJECTION':
+          return 'Expansão Funcional';
+        case 'CADENTIAL_REINTERPRETATION':
+          return 'Reinterpretação Cadencial';
+        case 'FUNCTIONAL_SUBSTITUTION':
+          return 'Substituição Funcional';
+        case 'MODAL_REINTERPRETATION':
+          return 'Reinterpretação Modal';
+        case 'PATH_OPTIMIZATION':
+          return 'Otimização de Caminho';
+        default:
+          return family;
+      }
+    };
+
+    const formatDifficultyLabel = (diff: number): string => {
+      if (diff <= 0.6) return 'Baixa';
+      if (diff <= 1.2) return 'Média';
+      return 'Alta';
+    };
+
+    const pathParts = recommendedPaths.map((path, idx) => {
+      const stepsText = path.steps.map(s => formatFamilyName(s.family)).join(' -> ');
+      const pct = Math.round(path.accumulatedImpact * 100);
+      const diffLabel = formatDifficultyLabel(path.accumulatedDifficulty);
+      return `${idx + 1}. ${stepsText}\n   Impacto acumulado: ${pct}% | Dificuldade: ${diffLabel}`;
+    });
+    parts.push(`**Caminhos de Transformação Recomendados:**\n${pathParts.join('\n')}`);
   }
 
   return parts.join('\n\n');

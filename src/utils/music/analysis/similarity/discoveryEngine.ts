@@ -13,6 +13,7 @@ import { generateExplainabilityReport } from './explainabilityEngine';
 import { renderExplanation } from './narrativeRenderer';
 import { attributePrimaryReason } from './evidenceRankingEngine';
 import { detectOpportunities } from './transformationSpaceEngine';
+import { buildTransformationGraph, generateRecommendedPaths } from './transformationGraphEngine';
 
 /**
  * Pré-calcula e armazena em cache os fingerprints para os itens do corpus.
@@ -180,6 +181,8 @@ export function findSimilarProgressions(
 
     const queryProgression = query.metadata.queryProgression;
     const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
+    const transformationGraph = transformationOpportunities ? buildTransformationGraph(transformationOpportunities) : undefined;
+    const recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph) : undefined;
 
     const expReport = generateExplainabilityReport(query, itemFingerprint, report);
     const explanation = renderExplanation(
@@ -188,7 +191,8 @@ export function findSimilarProgressions(
       expReport.interpretiveInsights,
       expReport.causalExplanation,
       expReport.sensitivityAnalysis,
-      transformationOpportunities
+      transformationOpportunities,
+      recommendedPaths
     );
     const primaryReason = attributePrimaryReason(expReport.evidenceGraph, expReport.contributions);
 
@@ -210,7 +214,9 @@ export function findSimilarProgressions(
         dominantAxis,
         dominantScore
       },
-      transformationOpportunities
+      transformationOpportunities,
+      transformationGraph,
+      recommendedPaths
     });
   }
 

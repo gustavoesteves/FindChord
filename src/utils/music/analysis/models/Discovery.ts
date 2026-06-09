@@ -166,11 +166,66 @@ export interface TransformationTemplate {
   confidence: number;
 }
 
+export type TransformationFamily =
+  | 'FUNCTIONAL_SUBSTITUTION'
+  | 'MODAL_REINTERPRETATION'
+  | 'CADENTIAL_REINTERPRETATION'
+  | 'PATH_OPTIMIZATION'
+  | 'TENSION_INJECTION';
+
 export interface TransformationOpportunity {
+  id: string;
   chordIndex: number;
   mechanism: TransformationMechanism;
   confidence: number;
-  expectedImpact: number;
+  musicalImpact: number;
+  similarityImpact: number;
+  pedagogicalValue: number;
+  physicalComplexity: number;
+  prerequisiteOpportunities?: string[];
+  conflictingOpportunities?: string[];
+  evidenceNodeIds?: string[];
+  references?: number[];
+}
+
+export interface TransformationState {
+  appliedTransformations: string[];
+}
+
+export interface TransformationNode {
+  id: string;
+  opportunityId: string;
+  family: TransformationFamily;
+  confidence: number;
+  musicalImpact: number;
+  similarityImpact: number;
+  physicalComplexity: number;
+  pedagogicalDifficulty: number;
+  references?: number[];
+}
+
+export type TransformationRelation =
+  | 'ENABLES'
+  | 'CONFLICTS_WITH'
+  | 'REINFORCES'
+  | 'WEAKENS';
+
+export interface TransformationEdge {
+  from: string;
+  to: string;
+  relation: TransformationRelation;
+  stateDelta?: string[];
+}
+
+export interface TransformationGraph {
+  nodes: TransformationNode[];
+  edges: TransformationEdge[];
+}
+
+export interface RecommendationPath {
+  steps: TransformationNode[];
+  accumulatedImpact: number;
+  accumulatedDifficulty: number;
 }
 
 export type HarmonicCategory =
@@ -271,4 +326,6 @@ export interface DiscoveryMatch {
     dominantScore: number;
   };
   transformationOpportunities?: TransformationOpportunity[];
+  transformationGraph?: TransformationGraph;
+  recommendedPaths?: RecommendationPath[];
 }

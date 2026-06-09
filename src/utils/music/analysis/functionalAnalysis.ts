@@ -33,6 +33,7 @@ export { prepareCorpus, findSimilarProgressions } from './similarity/discoveryEn
 export { rankEvidence, attributePrimaryReason, buildCausalExplanation } from './similarity/evidenceRankingEngine';
 export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngine';
 export { TRANSFORMATION_TEMPLATES, detectOpportunities } from './similarity/transformationSpaceEngine';
+export { buildTransformationGraph, generateRecommendedPaths } from './similarity/transformationGraphEngine';
 // ──────────────────────────────────────────────────────────────
 
 

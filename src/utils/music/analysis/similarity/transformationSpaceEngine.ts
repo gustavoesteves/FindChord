@@ -59,26 +59,58 @@ export function detectOpportunities(progression: string[]): TransformationOpport
     // Se o acorde for uma dominante (ex: G7, C7, D7, E7, A7, etc.)
     if (/^[A-G][#b]?7$/.test(chord)) {
       opportunities.push({
+        id: `opp:tritone_substitution:${i}`,
         chordIndex: i,
         mechanism: 'TRITONE_SUBSTITUTION',
         confidence: 0.91,
-        expectedImpact: 0.91
+        musicalImpact: 0.8,
+        similarityImpact: 0.6,
+        pedagogicalValue: 0.9,
+        physicalComplexity: 0.8,
+        evidenceNodeIds: [`layer5:function:${i}`, `evidence:tritone:${i}`],
+        references: i > 0 && /^(Dm|F|Dm7|Fmaj7|Fm|Fm7)$/.test(progression[i - 1]) ? [i - 1] : []
       });
     }
 
     // 2. MODAL_BORROWING
-    // Se o acorde for um acorde maior (como F, C, G, Db, Eb, Ab, Bb, etc.) e puder ser menorizado
+    // Se o acorde for um acorde maior ou dominante (como F, C, G, G7, Db, Eb, Ab, Bb, etc.) e puder ser menorizado
     // Evita o primeiro acorde (comumente a tônica) para não sugerir modal borrowing na tônica inicial
-    if (i > 0 && /^[A-G][#b]?$/.test(chord)) {
+    if (i > 0 && /^[A-G][#b]?(7)?$/.test(chord)) {
       opportunities.push({
+        id: `opp:modal_borrowing:${i}`,
         chordIndex: i,
         mechanism: 'MODAL_BORROWING',
         confidence: 0.88,
-        expectedImpact: 0.85
+        musicalImpact: 0.7,
+        similarityImpact: 0.4,
+        pedagogicalValue: 0.8,
+        physicalComplexity: 0.5,
+        evidenceNodeIds: [`layer5:function:${i}`, `evidence:modal:${i}`],
+        references: []
       });
     }
 
-    // 3. FUNCTIONAL_COMPRESSION
+    // 3. CADENTIAL_REINTERPRETATION
+    // Se o acorde for dominante (ex: G7, G) e o anterior for um predominante (ex: Dm, F)
+    if (i > 0 && /^(G|G7|G9|Bdim|Bdim7)$/.test(chord)) {
+      const prevChord = progression[i - 1];
+      if (/^(Dm|F|Dm7|Fmaj7|Fm|Fm7)$/.test(prevChord)) {
+        opportunities.push({
+          id: `opp:cadential_reinterpretation:${i}`,
+          chordIndex: i,
+          mechanism: 'CADENTIAL_REINTERPRETATION',
+          confidence: 0.85,
+          musicalImpact: 0.6,
+          similarityImpact: 0.5,
+          pedagogicalValue: 0.85,
+          physicalComplexity: 0.6,
+          evidenceNodeIds: [`layer5:function:${i}`, `evidence:cadential:${i}`],
+          references: [i - 1]
+        });
+      }
+    }
+
+    // 4. FUNCTIONAL_COMPRESSION
     // Se tivermos uma sequência ii - V ou IV - V (ex: Dm -> G7, F -> G7, Dm7 -> G7)
     if (i < progression.length - 1) {
       const nextChord = progression[i + 1];
@@ -86,30 +118,52 @@ export function detectOpportunities(progression: string[]): TransformationOpport
       const isDominant = /^(G|G7|G9|Bdim|Bdim7)$/.test(nextChord);
       if (isPredominant && isDominant) {
         opportunities.push({
+          id: `opp:functional_compression:${i}`,
           chordIndex: i,
           mechanism: 'FUNCTIONAL_COMPRESSION',
           confidence: 0.82,
-          expectedImpact: 0.75
+          musicalImpact: 0.4,
+          similarityImpact: 0.7,
+          pedagogicalValue: 0.7,
+          physicalComplexity: 0.3,
+          evidenceNodeIds: [`layer5:function:${i}`, `evidence:compression:${i}`],
+          references: [i + 1]
         });
       }
     }
 
-    // 4. FUNCTIONAL_EXPANSION
-    // Se tivermos um movimento direto de Tônica para Dominante (ex: C -> G7)
+    // 5. FUNCTIONAL_EXPANSION
+    // Se tivermos um movimento direto de Tônica para Dominante ou Tônica para Predominante
     if (i < progression.length - 1) {
       const nextChord = progression[i + 1];
       const isTonic = /^(C|Cmaj7|Am|Am7)$/.test(chord);
-      const isDominant = /^(G|G7|G9)$/.test(nextChord);
-      if (isTonic && isDominant) {
+      const isDominantOrPredominant = /^(G|G7|G9|Dm|Dm7|F|Fmaj7)$/.test(nextChord);
+      if (isTonic && isDominantOrPredominant) {
         opportunities.push({
-          chordIndex: i,
+          id: `opp:functional_expansion:${i + 1}`,
+          chordIndex: i + 1,
           mechanism: 'FUNCTIONAL_EXPANSION',
           confidence: 0.85,
-          expectedImpact: 0.80
+          musicalImpact: 0.5,
+          similarityImpact: 0.8,
+          pedagogicalValue: 0.75,
+          physicalComplexity: 0.4,
+          evidenceNodeIds: [`layer5:function:${i + 1}`, `evidence:expansion:${i + 1}`],
+          references: [i]
         });
       }
     }
   }
+
+  // Preenche opcionalmente conflitos do mesmo acorde
+  opportunities.forEach(opp1 => {
+    const conflicts = opportunities
+      .filter(opp2 => opp2.id !== opp1.id && opp2.chordIndex === opp1.chordIndex)
+      .map(opp2 => opp2.id);
+    if (conflicts.length > 0) {
+      opp1.conflictingOpportunities = conflicts;
+    }
+  });
 
   return opportunities;
 }
