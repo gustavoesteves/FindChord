@@ -7,7 +7,9 @@ import type {
   ApparentRole, 
   ApparentSubtype,
   ResolutionAnalysis,
-  ResolutionStrength
+  ResolutionStrength,
+  ApparentResolutionType,
+  ResolutionConfidenceFactors
 } from '../models/ApparentFunctionLayer';
 import { getPitchClass } from '../../core/pitch';
 import { parseChord } from '../../theory/chordParser';
@@ -20,6 +22,53 @@ function safeModulo(n: number, m: number): number {
 
 function normalizeScaleDegree(sd: string): string {
   return sd.replace(/[7°øø7maj/]/g, '').replace(/m$/, '');
+}
+
+function calculateResolutionConfidence(
+  status: ApparentResolutionType,
+  strength: ResolutionStrength,
+  distance: number,
+  apparentRole: ApparentRole,
+  isDeceptiveClassic?: boolean
+): { confidence: number; confidenceFactors: ResolutionConfidenceFactors } {
+  if (status === 'UNCONFIRMED') {
+    return {
+      confidence: 0.20,
+      confidenceFactors: { voiceLeading: 0.0, distance: 0.0, expectationStrength: 0.20 }
+    };
+  }
+
+  if (status === 'INTERRUPTED') {
+    const confidence = isDeceptiveClassic ? 0.90 : 0.55;
+    return {
+      confidence,
+      confidenceFactors: { voiceLeading: 0.40, distance: 1.0, expectationStrength: 1.0 }
+    };
+  }
+
+  // RESOLVED or DEFERRED
+  let voiceLeading = 0.40;
+  if (strength === 'STRONG') voiceLeading = 1.0;
+  else if (strength === 'MODERATE') voiceLeading = 0.75;
+
+  let distConf = 0.60;
+  if (distance === 1) distConf = 1.0;
+  else if (distance === 2) distConf = 0.80;
+
+  let expConf = 0.50;
+  if (apparentRole === 'DOMINANT') expConf = 1.0;
+  else if (apparentRole === 'DOMINANT_PROLONGATION') expConf = 0.80;
+  else if (apparentRole === 'PREDOMINANT') expConf = 0.70;
+
+  const confidence = Number(((voiceLeading * 0.5) + (distConf * 0.3) + (expConf * 0.2)).toFixed(2));
+  return {
+    confidence,
+    confidenceFactors: {
+      voiceLeading,
+      distance: distConf,
+      expectationStrength: expConf
+    }
+  };
 }
 
 export function resolveApparentFunctions(
@@ -85,7 +134,10 @@ export function resolveApparentFunctions(
       status: 'UNCONFIRMED',
       strength: 'NONE',
       distance: 0,
-      evidence: 'No retrospective resolution observed within lookahead window.'
+      evidence: 'No retrospective resolution observed within lookahead window.',
+      confidence: 0.20,
+      confidenceFactors: { voiceLeading: 0.0, distance: 0.0, expectationStrength: 0.20 },
+      confidenceFormulaVersion: 'F12C-v1'
     };
 
     let apparentSubtype: ApparentSubtype | undefined = undefined;
@@ -109,12 +161,16 @@ export function resolveApparentFunctions(
         if (apparentRole === 'DOMINANT') {
           const sd = normalizeScaleDegree(targetChord.scaleDegree);
           if (sd === 'vi' || sd === 'bVI') {
+            const confData = calculateResolutionConfidence('INTERRUPTED', 'WEAK', k, apparentRole, true);
             resolution = {
               status: 'INTERRUPTED',
               strength: 'WEAK',
               distance: k,
               targetChordIndex: i + k,
-              evidence: `Deceptive resolution to ${targetChord.chordSymbol} (vi/bVI) instead of expected tonic.`
+              evidence: `Deceptive resolution to ${targetChord.chordSymbol} (vi/bVI) instead of expected tonic.`,
+              confidence: confData.confidence,
+              confidenceFactors: confData.confidenceFactors,
+              confidenceFormulaVersion: 'F12C-v1'
             };
             apparentSubtype = 'DECEPTIVE_RESOLUTION';
             break;
@@ -166,14 +222,20 @@ export function resolveApparentFunctions(
             }
           }
 
+          const status = k === 1 ? 'RESOLVED' : 'DEFERRED';
+          const confData = calculateResolutionConfidence(status, strength, k, apparentRole);
+
           resolution = {
-            status: k === 1 ? 'RESOLVED' : 'DEFERRED',
+            status,
             strength,
             distance: k,
             targetChordIndex: i + k,
             leadingToneResolved,
             seventhResolved,
-            evidence: `Resolved to expected target ${targetChord.chordSymbol} at index ${i + k}. Voice leading strength: ${strength}.`
+            evidence: `Resolved to expected target ${targetChord.chordSymbol} at index ${i + k}. Voice leading strength: ${strength}.`,
+            confidence: confData.confidence,
+            confidenceFactors: confData.confidenceFactors,
+            confidenceFormulaVersion: 'F12C-v1'
           };
           break;
         }
@@ -184,7 +246,10 @@ export function resolveApparentFunctions(
         status: 'RESOLVED',
         strength: 'STRONG',
         distance: 0,
-        evidence: 'Tonic/linear stable state.'
+        evidence: 'Tonic/linear stable state.',
+        confidence: 1.0,
+        confidenceFactors: { voiceLeading: 1.0, distance: 1.0, expectationStrength: 1.0 },
+        confidenceFormulaVersion: 'F12C-v1'
       };
     }
 
@@ -287,7 +352,14 @@ function checkAugmentedSixth(
                 targetChordIndex: chordIndex + 1,
                 leadingToneResolved: true,
                 seventhResolved: true,
-                evidence: `Augmented sixth interval (${mA.fromNote}-${mB.fromNote}) resolved outwards to octave/unison (${mA.toNote}) at target chord.`
+                evidence: `Augmented sixth interval (${mA.fromNote}-${mB.fromNote}) resolved outwards to octave/unison (${mA.toNote}) at target chord.`,
+                confidence: 0.94,
+                confidenceFactors: {
+                  voiceLeading: 1.0,
+                  distance: 1.0,
+                  expectationStrength: 0.70
+                },
+                confidenceFormulaVersion: 'F12C-v1'
               }
             };
           }
@@ -327,7 +399,14 @@ function checkCadential64(
               strength: 'STRONG',
               distance: 1,
               targetChordIndex: chordIndex + 1,
-              evidence: `Cadential 6/4 chord (bass ${bassNote} matches dominant root ${nextChordRoot}) resolving to dominant.`
+              evidence: `Cadential 6/4 chord (bass ${bassNote} matches dominant root ${nextChordRoot}) resolving to dominant.`,
+              confidence: 0.96,
+              confidenceFactors: {
+                voiceLeading: 1.0,
+                distance: 1.0,
+                expectationStrength: 0.80
+              },
+              confidenceFormulaVersion: 'F12C-v1'
             }
           };
         }

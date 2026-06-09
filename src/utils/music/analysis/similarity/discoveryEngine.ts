@@ -4,11 +4,14 @@ import type {
   PrepareCorpusOptions, 
   DiscoveryOptions, 
   DiscoveryMatch,
-  DiscoveryStrategy 
+  DiscoveryStrategy
 } from '../models/Discovery';
 import { analyzeProgression } from '../orchestrators/progressionAnalysis';
 import { generateFingerprint } from '../narrative/narrativeFingerprint';
 import { compareFingerprints } from './similarityEngine';
+import { generateExplainabilityReport } from './explainabilityEngine';
+import { renderExplanation } from './narrativeRenderer';
+import { attributePrimaryReason } from './evidenceRankingEngine';
 
 /**
  * Pré-calcula e armazena em cache os fingerprints para os itens do corpus.
@@ -77,7 +80,10 @@ export function findSimilarProgressions(
     }
 
     // 2. Resolução do Fingerprint com Cache
-    const requiredDensity: FingerprintDensity = (strategy === 'FUNCTIONAL' || strategy === 'VOICE_LEADING') ? 'STANDARD' : 'CORE';
+    const requiredDensity: FingerprintDensity = 
+      (strategy === 'FUNCTIONAL' || strategy === 'VOICE_LEADING' || query.layers.extendedLayers) 
+        ? 'STANDARD' 
+        : 'CORE';
     let itemFingerprint: HarmonicFingerprint | undefined = undefined;
 
     const cache = item.cachedFingerprint;
@@ -171,15 +177,15 @@ export function findSimilarProgressions(
       dominantAxis = 'VOICE_LEADING';
     }
 
-    const axisLabel = dominantAxis === 'STRUCTURAL' ? 'estrutural de tensão' :
-                      dominantAxis === 'HARMONIC' ? 'de recursos harmônicos' :
-                      dominantAxis === 'FORMAL' ? 'formal de frases' :
-                      dominantAxis === 'REGIONAL' ? 'regional modulatório' :
-                      dominantAxis === 'FUNCTIONAL' ? 'de equivalência funcional' : 'de voice leading';
-
-    const explanation = score === 1.0 
-      ? `Correspondência exata encontrada com base no critério selecionado.`
-      : `Alta similaridade no eixo ${axisLabel} (${dominantScore.toFixed(2)}).`;
+    const expReport = generateExplainabilityReport(query, itemFingerprint, report);
+    const explanation = renderExplanation(
+      expReport.insights,
+      expReport.transformations,
+      expReport.interpretiveInsights,
+      expReport.causalExplanation,
+      expReport.sensitivityAnalysis
+    );
+    const primaryReason = attributePrimaryReason(expReport.evidenceGraph, expReport.contributions);
 
     matches.push({
       item,
@@ -187,6 +193,14 @@ export function findSimilarProgressions(
       report,
       fingerprint: itemFingerprint,
       explanation,
+      topInsights: expReport.insights,
+      interpretiveInsights: expReport.interpretiveInsights,
+      transformations: expReport.transformations,
+      primaryReason,
+      evidenceGraph: expReport.evidenceGraph,
+      causalExplanation: expReport.causalExplanation,
+      contributions: expReport.contributions,
+      sensitivityAnalysis: expReport.sensitivityAnalysis,
       explanationData: {
         dominantAxis,
         dominantScore

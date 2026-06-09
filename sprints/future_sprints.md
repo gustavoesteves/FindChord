@@ -266,30 +266,72 @@ graph TD
 ---
 
 ### Sprint F10-C: Explainability Engine & Pedagogical Recommendations
-**Prioridade: ALTA (Em Execução)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Traduzir a similaridade matemática e a condução de vozes em explicações e recomendações pedagógicas compreensíveis para humanos.
 *   **Conceito**:
     *   **SimilarityInsight**: Estrutura intermediária contendo score, importância e evidências detalhadas de correspondência por eixo.
     *   **PedagogicalTransformation**: Identifica a aplicação de transformações teóricas de rearmonização (mecanismos como substituição tritônica e empréstimo modal) e seus impactos físicos/perceptuais (efeitos como suavização de baixo e preservação de vozes-guia).
     *   **Cadential Reinterpretation**: Descreve reinterpretações analíticas retrospectivas (ex: sexta aumentada e cadencial 6/4).
-    *   **Narrative Renderer**: Transforma a rede de insights em linguagem natural legível para estudantes de harmonia.
+    *   **Narrative Renderer**: Transforma a rede de insights em linguagem natural legível para estudantes de harmonia em português (com qualificadores de confiança linguística).
 *   **Valor**: Traz explicabilidade humana e valor pedagógico direto para a busca de similaridade do Find Chord.
 
 ---
 
-### Sprint F12.1: Resolution Confidence & Continuous Probability
+## 🗺️ Planejamento de Sprints Futuras: Blocos Estratégicos
+
+### Bloco A — Consolidação Analítica
+
+#### Sprint F12.1: Confidence Calibration & Continuous Probability
 **Prioridade: MÉDIA**
-*   **Objetivo**: Implementar modelos matemáticos de probabilidade contínua para computar a confiança da resolução de dominantes e desvios tonais.
-*   **Conceito**: Estender a `ResolutionAnalysis` com cálculo de confiança baseado no alinhamento de voice-leading, distância temporal e força da expectativa funcional, permitindo gradações linguísticas robustas (ex: "Alta confiança" vs "Resolução fraca").
-*   **Valor**: Melhora a robustez interpretativa diante de progressões ambíguas.
+*   **Objetivo**: Refinar os modelos de probabilidade contínua para calibrar e computar a confiança da resolução de dominantes e desvios tonais.
+*   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading, força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
+*   **Valor**: Garante gradações e calibragens finas na tomada de decisão retrospectiva da Layer 7.
+
+#### Sprint F10-C.1: Evidence Graph & Traceability
+**Prioridade: MÉDIA**
+*   **Objetivo**: Adicionar rastreabilidade analítica completa aos insights de similaridade harmônica.
+*   **Conceito**: Substituir explicações genéricas por arestas explícitas e nós de evidência (`insight.evidenceNodes[]`), como por exemplo: `['dominant_resolution', 'tritone_resolution', 'chromatic_bass_motion']`.
+*   **Valor**: Permite que a UI exiba exatamente quais elementos teóricos sustentam cada afirmação explicativa.
 
 ---
 
-### Sprint F10-D: Pedagogical Transformations
-**Prioridade: MÉDIA**
-*   **Objetivo**: Mapear e sugerir transformações e rearmonizações ativas para o usuário final com base no corpus de referência.
-*   **Conceito**: Encontrar rearmonizações equivalentes (ex: sugerir substituição tritônica ou empréstimo modal para uma progressão simples inserida pelo usuário).
-*   **Valor**: Atua como um gerador ativo de ideias harmônicas pedagógicas para compositores.
+### Bloco B — Recommendation & Transformation Engine (C3)
+
+Este bloco representa a inversão do pipeline do framework para responder ativamente à pergunta: *"O que posso fazer com esta progressão?"*
+
+#### Sprint C3.1: Transform Generator
+**Prioridade: ALTA**
+*   **Objetivo**: Implementar gerador de variantes e rearmonizações estruturadas baseadas em regras pedagógicas.
+*   **Conceito**: Receber uma progressão de entrada (ex: `C - G - Am - F`) e gerar candidatas rearmonizadas válidas (ex: `C - Db7 - Am - Fm`) acompanhadas de justificativa analítica automática.
+
+#### Sprint C3.2: Constraint-based Reharmonization
+**Prioridade: ALTA**
+*   **Objetivo**: Permitir ao usuário restringir parâmetros estéticos da rearmonização.
+*   **Conceito**: O compositor insere filtros como *"Quero mais tensão sem aumentar a dificuldade física de digitação"* e o motor filtra as transformações por meio de voice-leading (Layer 6) e funções aparentes (Layer 7).
+
+#### Sprint C3.3: Explainable Recommendations
+**Prioridade: ALTA**
+*   **Objetivo**: Conectar o motor de rearmonização ao motor de explicabilidade (F10-C) nativamente.
+*   **Conceito**: Cada recomendação de substituição deve expor seu motivo principal (`primaryReason`), efeitos associados (ex: preservar função) e impactos físicos observáveis (ex: suavizar o movimento do baixo).
+
+---
+
+### Bloco C — Visão de Longo Prazo
+
+#### Harmonic Style Space
+**Prioridade: BAIXA**
+*   **Objetivo**: Mapear progressões harmônicas como vetores em um espaço latente de estilo.
+*   **Conceito**: Projetar peças musicais em eixos contínuos de Tensão, Estabilidade, Cromaticismo, Densidade Funcional e Suavidade de Condução, permitindo navegar e categorizar repertórios por vizinhança geométrica.
+
+#### Harmonic Morphing
+**Prioridade: BAIXA**
+*   **Objetivo**: Transformar gradualmente uma progressão em outra preservando propriedades específicas.
+*   **Conceito**: Computar interpolações lineares ou caminhos de substituição passo-a-passo (ex: de um simples loop pop `I - V - vi - IV` a um turnaround de jazz `ii - V - I`).
+
+#### Educational Path Generator
+**Prioridade: BAIXA**
+*   **Objetivo**: Gerar jornadas de aprendizado musical personalizadas.
+*   **Conceito**: Utilizar fingerprints, similaridade e transformações para ordenar progressões pedagogicamente (ex: *"Para compreender a complexidade desta peça, aprenda primeiro estas três progressões base"*).
 
 ---
 
@@ -412,6 +454,17 @@ graph TD
 
 
 ---
+
+### Sprint C3: Recommendation & Transformation Engine
+**Prioridade: ALTA (Próximo Grande Marco)**
+*   **Objetivo**: Inverter o fluxo do motor analítico para aplicar ativamente transformações e rearmonizações didáticas estruturadas.
+*   **Conceito**: Habilitar a geração e modificação de progressões harmônicas guiadas por regras. O motor consome a infraestrutura de voice leading (F13), equivalência funcional (F11) e explicabilidade (F10-C) para gerar novas variantes a partir de solicitações do usuário:
+    *   *“Gere uma variante mantendo a função mas suavizando o baixo”* (Aplica inversões ou substituições e valida por voice leading físico).
+    *   *“Gere uma versão com maior cromatismo/tensão”* (Insere empréstimos modais e preparações secundárias).
+    *   *“Substitua acordes por equivalentes funcionais”* (Mapeia substituições tritônicas ou diminutos de passagem).
+*   **Valor**: Completa o ciclo de vida do framework: **Análise ➔ Fingerprint ➔ Similaridade ➔ Explicabilidade ➔ Geração**.
+---
+
 
 ### Sprints Secundárias & Refinamentos Gramaticais
 

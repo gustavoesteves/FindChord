@@ -24,9 +24,14 @@ export { generateFingerprint } from './narrative/narrativeFingerprint';
 export { resolveFunctionalEquivalences } from './narrative/functionalEquivalenceEngine';
 export { resolveVoiceLeadingNarrative } from './narrative/voiceLeadingNarrativeEngine';
 export { resolveApparentFunctions } from './narrative/apparentFunctionsEngine';
+export { generateSimilarityInsights, generateInterpretiveInsights, detectPedagogicalTransformations, generateExplainabilityReport } from './similarity/explainabilityEngine';
+export { buildEvidenceGraph, findEvidenceTraces } from './similarity/evidenceGraphBuilder';
+export { renderExplanation } from './similarity/narrativeRenderer';
 export { compareFingerprints } from './similarity/similarityEngine';
 export { DEFAULT_CORPUS } from './similarity/defaultCorpus';
 export { prepareCorpus, findSimilarProgressions } from './similarity/discoveryEngine';
+export { rankEvidence, attributePrimaryReason, buildCausalExplanation } from './similarity/evidenceRankingEngine';
+export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngine';
 // ──────────────────────────────────────────────────────────────
 
 

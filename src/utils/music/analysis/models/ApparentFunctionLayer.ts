@@ -19,6 +19,12 @@ export type ApparentSubtype =
   | 'CADENTIAL_64'
   | 'DECEPTIVE_RESOLUTION';
 
+export interface ResolutionConfidenceFactors {
+  voiceLeading: number;        // physical confidence [0.0 - 1.0]
+  distance: number;            // temporal distance confidence [0.0 - 1.0]
+  expectationStrength: number; // functional expectation strength [0.0 - 1.0]
+}
+
 export interface ResolutionAnalysis {
   status: ApparentResolutionType;
   strength: ResolutionStrength;
@@ -27,6 +33,9 @@ export interface ResolutionAnalysis {
   leadingToneResolved?: boolean;
   seventhResolved?: boolean;
   evidence: string; // Detail on the physical/functional voice leading resolution
+  confidence: number; // continuous resolution probability score [0.0 - 1.0]
+  confidenceFactors?: ResolutionConfidenceFactors;
+  confidenceFormulaVersion?: string; // e.g., "F12C-v1" for historical compatibility
 }
 
 export interface ApparentFunctionEvent {
