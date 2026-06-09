@@ -44,15 +44,19 @@ graph TD
         F8["F8: Phrase Relationship Engine"]
         I2["Infra-2: Harmonic Knowledge Graph"]
         F9["Sprint F9: Compositional Choice & Intent Explainer"]
-    end
-
-    subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
         I3["Infra-3: Narrative Fingerprint Framework"]
         F11["Sprint F11: Functional Equivalence Engine"]
         F13["Sprint F13: Voice Leading Analysis"]
         F12["Sprint F12: Apparent Functions Engine"]
-        F14["Sprint F14: Blues & Extended Tonality Engine"]
         F10["Sprint F10: Harmonic Discovery & Similarity Engine"]
+    end
+
+    subgraph "Trilha de Inteligência Core (Evolução & Cobertura)"
+        F10C["Sprint F10-C: Explainability Engine"]
+        F12_1["Sprint F12.1: Resolution Confidence"]
+        F10D["Sprint F10-D: Pedagogical Transformations"]
+        F10E["Sprint F10-E: Corpus Expansion / Benchmark"]
+        F14["Sprint F14: Blues & Extended Tonality Engine"]
     end
 
     subgraph "Trilha de Integração (MuseScore)"
@@ -92,10 +96,14 @@ graph TD
     I3 --> F11
     F11 --> F13
     F13 --> F12
-    F12 --> F14
-    F14 --> F10
-    F10 --> C3
+    F12 --> F10
+    F10 --> F10C
+    F10C --> F12_1
+    F12_1 --> F10D
+    F10D --> F10E
+    F10E --> F14
     
+    F14 --> C3
     C3 --> F8T
     F8T --> FX
     FX --> C1
@@ -182,7 +190,7 @@ graph TD
 ---
 
 ### Infra-3: Narrative Fingerprint Framework
-**Prioridade: CRÍTICA (Direcionador Estratégico)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Criar uma assinatura estrutural em camadas (Narrative Fingerprint DTO), abstrata e independente de tom, a partir de fatos harmônicos, frases, regiões e cadências, guiada pelo conceito de **Densidade Semântica**.
 *   **Visão Estratégica: Fingerprint Information Density Roadmap**
     A evolução do fingerprint é estruturada de forma que cada camada adiciona uma dimensão específica de densidade semântica sobre a base:
@@ -225,7 +233,7 @@ graph TD
 ---
 
 ### Sprint F11: Functional Equivalence Engine
-**Prioridade: CRÍTICA**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Criar um resolvedor de equivalência funcional para unificar representações estruturais de progressões com cifragens de superfície distintas.
 *   **Conceito**: Mapear acordes e encadeamentos semanticamente equivalentes (ex: `G7 ≈ Db7` por substituição de trítono; `B°7 ≈ G7(b9)` por equivalência de diminuto; `ii - V ≈ IV - V` por equivalência subdominante; `V7/V ≈ subV7/V`).
 *   **Valor**: Enriquece os fingerprints (F9/Infra-3) com agrupamento de classes funcionais, permitindo que a busca da F10 reconheça que duas progressões contam a mesma história estrutural mesmo usando acordes substitutos diferentes.
@@ -233,7 +241,7 @@ graph TD
 ---
 
 ### Sprint F13: Voice Leading Analysis
-**Prioridade: CRÍTICA (Pré-requisito de F12)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Analisar melódica e fisicamente o movimento das vozes internas entre acordes adjacentes da timeline.
 *   **Relação de Dependência**: O voice-leading é um pré-requisito técnico direto para a identificação de **Funções Aparentes (F12)**. Por exemplo, para descobrir se um acorde diminuto `B°7` atua como `vii°7/I`, `vii°7/V`, `SubV°`, ou apenas um acorde de passagem, é necessário analisar a condução física (resolução, notas comuns e direção das vozes). Portanto, F13 deve necessariamente preceder F12 no roadmap.
 *   **Conceito**: Mapear notas comuns mantidas, aproximações cromáticas e tipos de movimento linear (paralelo, contrário, oblíquo). Emitir fatos estruturados (`VoiceLeadingFact`) que explicam o nível de suavidade e condução.
@@ -242,31 +250,54 @@ graph TD
 ---
 
 ### Sprint F12: Apparent Functions Engine
-**Prioridade: CRÍTICA**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Interpretar acordes não-diatônicos e ambíguos a partir de seu comportamento de resolução (análise retrospectiva), baseando-se nas teorias de Schoenberg e na análise linear de condução obtida na F13.
 *   **Conceito**: Tratar acordes com cifragens exóticas (ex: acorde de sexta aumentada alemã/italiana/francesa ou acordes alterados) avaliando sua condução linear de resolução em vez de apenas sua origem no campo diatônico, rotulando-os como funções aparentes dominantes.
 *   **Valor**: Eleva drasticamente a precisão da narrativa harmônica (F9) e a detecção de tensões em peças do classicismo tardio, romantismo e música erudita do início do século XX.
 
 ---
 
-### Sprint F14: Blues & Extended Tonality Engine
-**Prioridade: ALTA**
-*   **Objetivo**: Expandir o resolvedor Viterbi e o grafo de conhecimento com regras específicas para Blues e tonalidade estendida do Jazz.
-*   **Conceito**: Adicionar suporte nativo à estrutura clássica de Blues de 12 compassos, tratamento de dominantes estáticas não funcionais (que não buscam resolução), acordes de *Backdoor Dominant* (bVII7) e turnarounds de jazz típicos.
-*   **Valor**: Aumenta a cobertura do motor de 5% para 90% em repertórios de jazz, blues e música popular moderna, permitindo a extração de fatos analíticos precisos nessas linguagens.
+### Sprint F10: Harmonic Discovery & Similarity Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
+*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação. O Discovery Engine é responsável por aplicar filtros de repertório, estilo, período histórico e corpus de forma independente do modelo abstrato do fingerprint.
+*   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares.
 
 ---
 
-### Sprint F10: Harmonic Discovery & Similarity Engine
+### Sprint F10-C: Explainability Engine & Pedagogical Recommendations
+**Prioridade: ALTA (Em Execução)**
+*   **Objetivo**: Traduzir a similaridade matemática e a condução de vozes em explicações e recomendações pedagógicas compreensíveis para humanos.
+*   **Conceito**:
+    *   **SimilarityInsight**: Estrutura intermediária contendo score, importância e evidências detalhadas de correspondência por eixo.
+    *   **PedagogicalTransformation**: Identifica a aplicação de transformações teóricas de rearmonização (mecanismos como substituição tritônica e empréstimo modal) e seus impactos físicos/perceptuais (efeitos como suavização de baixo e preservação de vozes-guia).
+    *   **Cadential Reinterpretation**: Descreve reinterpretações analíticas retrospectivas (ex: sexta aumentada e cadencial 6/4).
+    *   **Narrative Renderer**: Transforma a rede de insights em linguagem natural legível para estudantes de harmonia.
+*   **Valor**: Traz explicabilidade humana e valor pedagógico direto para a busca de similaridade do Find Chord.
+
+---
+
+### Sprint F12.1: Resolution Confidence & Continuous Probability
 **Prioridade: MÉDIA**
-*   **Objetivo**: Construir o resolvedor de similaridade musical em camadas e integrá-lo a um motor de recomendação pedagógica de repertório.
-*   **Conceito**: Utilizar os fingerprints estruturados da `Infra-3` para oferecer diferentes modalidades de comparação. O Discovery Engine é responsável por aplicar filtros de repertório, estilo, período histórico e corpus (ex: `repertoire: 'JAZZ'`, `corpus: 'CLASSICAL'`) de forma independente do modelo abstrato do fingerprint, permitindo cruzar correspondências funcionais de peças de estéticas distintas.
-    *   **Similaridade Funcional** (foco no *Structural Fingerprint*): Compara o encadeamento puro de tensão e repouso.
-    *   **Similaridade Harmônica** (foco no *Harmonic Fingerprint*): Compara o uso de recursos de cor (empréstimos, dominantes secundárias).
-    *   **Similaridade Formal** (foco no *Formal Fingerprint*): Compara a estrutura fraseológica (períodos, sementes sintáticas).
-    *   **Similaridade Narrativa Completa**: Combinação ponderada de todas as camadas.
-    *   **Similaridade de Voice Leading**: Compara padrões de movimentação de vozes (Layer 6).
-*   **Valor**: Transforma a similaridade em um professor de repertório ativo, sugerindo peças famosas com discursos harmônicos similares (ex: *"Esta progressão apresenta um comportamento de período antecedente-consequente semelhante ao de Autumn Leaves ou a corais de Bach"*).
+*   **Objetivo**: Implementar modelos matemáticos de probabilidade contínua para computar a confiança da resolução de dominantes e desvios tonais.
+*   **Conceito**: Estender a `ResolutionAnalysis` com cálculo de confiança baseado no alinhamento de voice-leading, distância temporal e força da expectativa funcional, permitindo gradações linguísticas robustas (ex: "Alta confiança" vs "Resolução fraca").
+*   **Valor**: Melhora a robustez interpretativa diante de progressões ambíguas.
+
+---
+
+### Sprint F10-D: Pedagogical Transformations
+**Prioridade: MÉDIA**
+*   **Objetivo**: Mapear e sugerir transformações e rearmonizações ativas para o usuário final com base no corpus de referência.
+*   **Conceito**: Encontrar rearmonizações equivalentes (ex: sugerir substituição tritônica ou empréstimo modal para uma progressão simples inserida pelo usuário).
+*   **Valor**: Atua como um gerador ativo de ideias harmônicas pedagógicas para compositores.
+
+---
+
+### Sprint F10-E: Corpus Expansion & Benchmark Suite
+**Prioridade: MÉDIA**
+*   **Objetivo**: Expandir o corpus padrão com mais de 100 progressões clássicas, românticas, jazzísticas e de música popular, criando uma suíte automática de benchmarks de descoberta.
+*   **Conceito**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala de similaridade.
+*   **Valor**: Garante a cobertura de repertório real e robustez estatística do algoritmo de matching.
 
 ---
 
