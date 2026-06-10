@@ -9,6 +9,8 @@ export interface FrontierEntropyResult {
   effectiveFrontierSize: number;
   ambiguityFactor: number;
   informationGain: number;
+  maxProbability: number;
+  entropyCompressionRatio: number;
 }
 
 /**
@@ -27,7 +29,9 @@ export function calculateFrontierEntropy(
       normalizedEntropy: 0.0,
       effectiveFrontierSize: 1.0,
       ambiguityFactor: 0.0,
-      informationGain: 1.0
+      informationGain: 1.0,
+      maxProbability: 1.0,
+      entropyCompressionRatio: 1.0
     };
   }
 
@@ -37,7 +41,9 @@ export function calculateFrontierEntropy(
       normalizedEntropy: 0.0,
       effectiveFrontierSize: 1.0,
       ambiguityFactor: 0.0,
-      informationGain: 1.0
+      informationGain: 1.0,
+      maxProbability: 1.0,
+      entropyCompressionRatio: 1.0
     };
   }
 
@@ -93,12 +99,16 @@ export function calculateFrontierEntropy(
   const effectiveSize = Number(Math.max(1.0, Math.min(n, Math.pow(2, H))).toFixed(4));
   const ambiguityFactor = normalizedH;
   const informationGain = Number((1.0 - normalizedH).toFixed(4));
+  const maxProbability = Number(Math.max(...p).toFixed(4));
+  const entropyCompressionRatio = Number((H_norm).toFixed(4)); // Como H_norm = H / H_max, esse é exatamente o entropyCompressionRatio!
 
   return {
     frontierEntropy: shannonEntropy,
     normalizedEntropy: normalizedH,
     effectiveFrontierSize: effectiveSize,
     ambiguityFactor,
-    informationGain
+    informationGain,
+    maxProbability,
+    entropyCompressionRatio
   };
 }

@@ -7,9 +7,9 @@
     "goalAlignmentWeight": 0.1,
     "geometryWeight": 0.46,
     "ambiguityWeight": 0.29,
-    "optimizationScore": 0.33922,
+    "optimizationScore": 0.343618,
     "population": 25,
     "lastOptimized": "2026-06-10",
-    "brierScore": 0.027945
+    "brierScore": 0.031853
   }
 }

@@ -1804,6 +1804,8 @@ console.log(`              Avg Spacing = ${analytics.averageSpacing?.toFixed(4)}
 console.log(`              Avg FCR = ${analytics.averageFrontierCompressionRatio?.toFixed(4)}`);
 console.log(`              Avg FOI = ${analytics.averageFrontierOccupancyIndex?.toFixed(4)}`);
 console.log(`              Avg Entropia = ${analytics.averageFrontierEntropy?.toFixed(4)}`);
+console.log(`              Avg Max Probability = ${analytics.averageMaxProbability?.toFixed(4)} (± ${analytics.maxProbabilityStdDev?.toFixed(4)})`);
+console.log(`              Avg Entropy Compression = ${analytics.averageEntropyCompressionRatio?.toFixed(4)}`);
 console.log(`==================================================`);
 
 // Mapeamento de distribuição de mecanismos recomendados
@@ -2162,6 +2164,8 @@ diagMd += `
 - **Média Entropia da Fronteira (H)**: \`${analytics.averageFrontierEntropy?.toFixed(4)}\`
 - **Média Entropia Normalizada (Hnorm)**: \`${analytics.averageNormalizedEntropy?.toFixed(4)}\`
 - **Média Effective Frontier Size (Neff)**: \`${analytics.averageEffectiveFrontierSize?.toFixed(4)}\`
+- **Média Max Probability (p_max)**: \`${analytics.averageMaxProbability?.toFixed(4)}\` (± \`${analytics.maxProbabilityStdDev?.toFixed(4)}\`)
+- **Média Entropy Compression Ratio**: \`${analytics.averageEntropyCompressionRatio?.toFixed(4)}\`
 
 ---
 

@@ -76,6 +76,8 @@ export function computeRecommendationAnalytics(
     informationGains?: number[];
     ambiguitiesRaw?: number[];
     ambiguitiesWeighted?: number[];
+    maxProbabilities?: number[];
+    entropyCompressionRatios?: number[];
   }
  ): RecommendationAnalytics {
   const typeDist: Record<RecommendationMechanism, number> = {
@@ -341,6 +343,13 @@ export function computeRecommendationAnalytics(
   const ambiguitiesWeighted = options?.ambiguitiesWeighted || [];
   const averageAmbiguityWeighted = ambiguitiesWeighted.length > 0 ? Number((ambiguitiesWeighted.reduce((a, b) => a + b, 0) / ambiguitiesWeighted.length).toFixed(4)) : 0.0;
 
+  const maxProbabilities = options?.maxProbabilities || [];
+  const averageMaxProbability = maxProbabilities.length > 0 ? Number((maxProbabilities.reduce((a, b) => a + b, 0) / maxProbabilities.length).toFixed(4)) : 1.0;
+  const maxProbabilityStdDev = calculateStdDev(maxProbabilities, averageMaxProbability);
+
+  const entropyCompressionRatios = options?.entropyCompressionRatios || [];
+  const averageEntropyCompressionRatio = entropyCompressionRatios.length > 0 ? Number((entropyCompressionRatios.reduce((a, b) => a + b, 0) / entropyCompressionRatios.length).toFixed(4)) : 1.0;
+
   return {
     recommendationTypeDistribution: typeDist,
     dominantFactorDistribution: factorDist,
@@ -386,7 +395,10 @@ export function computeRecommendationAnalytics(
     averageAmbiguityFactor,
     averageInformationGain,
     averageAmbiguityRaw,
-    averageAmbiguityWeighted
+    averageAmbiguityWeighted,
+    averageMaxProbability,
+    maxProbabilityStdDev,
+    averageEntropyCompressionRatio
   };
 }
 
@@ -421,6 +433,8 @@ export function computeDiscoveryAnalytics(
   const informationGains: number[] = [];
   const ambiguitiesRaw: number[] = [];
   const ambiguitiesWeighted: number[] = [];
+  const maxProbabilities: number[] = [];
+  const entropyCompressionRatios: number[] = [];
 
   for (const match of matches) {
     if (match.recommendedPaths && match.recommendedPaths.length > 0) {
@@ -447,6 +461,8 @@ export function computeDiscoveryAnalytics(
       if (typeof match.paretoFrontier.effectiveFrontierSize === 'number') effectiveFrontierSizes.push(match.paretoFrontier.effectiveFrontierSize);
       if (typeof match.paretoFrontier.ambiguityFactor === 'number') ambiguityFactors.push(match.paretoFrontier.ambiguityFactor);
       if (typeof match.paretoFrontier.informationGain === 'number') informationGains.push(match.paretoFrontier.informationGain);
+      if (typeof match.paretoFrontier.maxProbability === 'number') maxProbabilities.push(match.paretoFrontier.maxProbability);
+      if (typeof match.paretoFrontier.entropyCompressionRatio === 'number') entropyCompressionRatios.push(match.paretoFrontier.entropyCompressionRatio);
     }
 
     if (match.recommendationDecision) {
@@ -494,6 +510,8 @@ export function computeDiscoveryAnalytics(
     ambiguityFactors,
     informationGains,
     ambiguitiesRaw,
-    ambiguitiesWeighted
+    ambiguitiesWeighted,
+    maxProbabilities,
+    entropyCompressionRatios
   });
 }

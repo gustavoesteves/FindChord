@@ -339,6 +339,8 @@ export function explainRecommendationDecision(
   const effectiveFrontierSize = paretoFrontier?.effectiveFrontierSize ?? 1.0;
   const ambiguityFactor = paretoFrontier?.ambiguityFactor ?? 0.0;
   const informationGain = paretoFrontier?.informationGain ?? 1.0;
+  const maxProbability = paretoFrontier?.maxProbability ?? 1.0;
+  const entropyCompressionRatio = paretoFrontier?.entropyCompressionRatio ?? 1.0;
 
   // Nova formulação linear contínua aditiva com ganho de informação
   const rawConfidence = (scoreGap * wGap) + (goalAlignmentValue * wGoal) + (geometryFactor * wGeom) + (informationGain * wAmb);
@@ -379,6 +381,8 @@ export function explainRecommendationDecision(
     normalizedEntropy,
     effectiveFrontierSize,
     ambiguityFactor,
-    informationGain
+    informationGain,
+    maxProbability,
+    entropyCompressionRatio
   };
 }

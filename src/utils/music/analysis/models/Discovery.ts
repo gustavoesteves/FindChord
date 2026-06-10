@@ -362,6 +362,8 @@ export interface ParetoFrontier {
   effectiveFrontierSize?: number;
   ambiguityFactor?: number;
   informationGain?: number;
+  maxProbability?: number;
+  entropyCompressionRatio?: number;
 }
 
 export type OptimizationProfile =
@@ -438,6 +440,9 @@ export interface RecommendationAnalytics {
   averageInformationGain?: number;
   averageAmbiguityRaw?: number;
   averageAmbiguityWeighted?: number;
+  averageMaxProbability?: number;
+  maxProbabilityStdDev?: number;
+  averageEntropyCompressionRatio?: number;
 }
 
 export interface DiscardedAlternative {
@@ -497,6 +502,8 @@ export interface RecommendationDecision {
   effectiveFrontierSize?: number;
   ambiguityFactor?: number;
   informationGain?: number;
+  maxProbability?: number;
+  entropyCompressionRatio?: number;
 }
 
 export interface TransformationExecutionResult {
