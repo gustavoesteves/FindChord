@@ -249,10 +249,11 @@ console.log('\n🎵 Caso 4 — Testar cálculo de confiança');
   // scoreGap = 0.85 - 0.65 = 0.20
   // constraintMargin = 1.0 - 0.1 = 0.90
   // goalAlignment = 0.80
-  // rawConfidence = (0.20 * 0.4) + (0.90 * 0.3) + (0.80 * 0.3) = 0.08 + 0.27 + 0.24 = 0.59
+  // geometryFactor = 1.0 (default fallback since no paretoFrontier is passed)
+  // rawConfidence = (0.20 * 0.3) + (0.90 * 0.25) + (0.80 * 0.25) + (1.0 * 0.2) = 0.06 + 0.225 + 0.20 + 0.20 = 0.685
   const decision = explainRecommendationDecision(pathA, [pathA, pathB], 'INCREASE_TENSION');
   
-  assert(Math.abs(decision.confidence - 0.59) < 0.001, `Confiança calculada corretamente: ${decision.confidence} (esperado 0.59)`);
+  assert(Math.abs((decision.rawConfidence ?? 0) - 0.685) < 0.001, `Confiança bruta calculada corretamente: ${decision.rawConfidence} (esperado 0.685)`);
   assert(decision.confidence >= 0.0 && decision.confidence <= 1.0, 'Confiança está no intervalo [0.0 - 1.0]');
 }
 

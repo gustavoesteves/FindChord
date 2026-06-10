@@ -6,7 +6,8 @@ import type {
   DiscardedAlternative,
   RecommendationTradeoff,
   DominantDecisionFactor,
-  HarmonicConstraintMetric
+  HarmonicConstraintMetric,
+  ParetoFrontier
 } from '../models/Discovery';
 import calibrationModel from './calibration_model.json' with { type: 'json' };
 
@@ -65,7 +66,8 @@ export function explainRecommendationDecision(
   selectedPath: RecommendationPath,
   candidatePaths: RecommendationPath[],
   goal?: HarmonicGoal,
-  _constraints?: HarmonicConstraint[]
+  _constraints?: HarmonicConstraint[],
+  paretoFrontier?: ParetoFrontier
 ): RecommendationDecision {
   const selectedPathId = selectedPath.steps.map(s => s.id).join('+') || 'no-transform';
   const selectionReasons: string[] = [];
@@ -296,7 +298,32 @@ export function explainRecommendationDecision(
   // goalAlignment = alinhamento do vencedor. Se sem meta, vale 1.0.
   const goalAlignmentValue = goal ? breakdown.goalAlignment : 1.0;
 
-  const rawConfidence = (scoreGap * 0.4) + (constraintMargin * 0.3) + (goalAlignmentValue * 0.3);
+  // Geometry evaluation based on Pareto frontier metrics
+  let geometryFactor = 1.0;
+  let paretoAmbiguity = 0.0;
+  if (paretoFrontier) {
+    const frontierSize = paretoFrontier.frontierSize ?? paretoFrontier.paths?.length ?? 1;
+    const hypervolume = paretoFrontier.hypervolume ?? 0;
+    const spacing = paretoFrontier.spacing ?? 0;
+
+    // 1. Pareto Size Score (decreases as size increases)
+    const sizePenalty = Math.min(1.0, (frontierSize - 1) * 0.05);
+    const sizeScore = 1.0 - sizePenalty;
+
+    // 2. Hypervolume Score (decreases as hypervolume increases, avoiding quick saturation)
+    const hvPenalty = Math.min(0.5, Math.sqrt(hypervolume));
+    const hvScore = 1.0 - hvPenalty;
+
+    // 3. Spacing Score (decreases as spacing increases)
+    const spacingPenalty = Math.min(0.5, spacing * 1.0);
+    const spacingScore = 1.0 - spacingPenalty;
+
+    // Combine geometry metrics
+    geometryFactor = (sizeScore * 0.4) + (hvScore * 0.3) + (spacingScore * 0.3);
+    paretoAmbiguity = ((1.0 - sizeScore) * 0.4) + ((1.0 - hvScore) * 0.3) + ((1.0 - spacingScore) * 0.3);
+  }
+
+  const rawConfidence = (scoreGap * 0.3) + (constraintMargin * 0.25) + (goalAlignmentValue * 0.25) + (geometryFactor * 0.2);
   
   // Platt Scaling Calibration
   const CALIBRATION_COEFFICIENTS = {
@@ -314,6 +341,7 @@ export function explainRecommendationDecision(
     dominantFactor,
     scoreBreakdown: breakdown,
     confidence,
-    rawConfidence
+    rawConfidence,
+    paretoAmbiguity: Number(paretoAmbiguity.toFixed(4))
   };
 }

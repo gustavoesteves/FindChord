@@ -116,7 +116,8 @@ export function findSimilarProgressions(
       recommendedPaths[0],
       recommendedPaths,
       options?.goal,
-      options?.constraints
+      options?.constraints,
+      paretoFrontier
     );
     // Filtra caminhos inválidos da lista exposta publicamente no match
     filteredRecommendedPaths = recommendedPaths.filter(p => p.executionResult?.constraintEvaluation?.passed !== false);

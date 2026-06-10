@@ -1118,6 +1118,9 @@ const predictedConfidences: number[] = [];
 const normalizedScores: number[] = [];
 const calibrationErrors: number[] = [];
 const rawConfidences: number[] = [];
+const matchFrontierSizes: number[] = [];
+const matchSpacings: number[] = [];
+const matchHypervolumes: number[] = [];
 
 // 1. Extrair confianças brutas de todos os cenários executados
 for (const run of results) {
@@ -1126,6 +1129,13 @@ for (const run of results) {
     const scoreNorm = run.score / 5;
     rawConfidences.push(rawConf);
     normalizedScores.push(scoreNorm);
+
+    const frontierSize = run.match.paretoFrontier?.frontierSize ?? run.match.paretoFrontier?.paths?.length ?? 1;
+    const spacing = run.match.paretoFrontier?.spacing ?? 0;
+    const hypervolume = run.match.paretoFrontier?.hypervolume ?? 0;
+    matchFrontierSizes.push(frontierSize);
+    matchSpacings.push(spacing);
+    matchHypervolumes.push(hypervolume);
   }
 }
 
@@ -1310,6 +1320,16 @@ for (const run of results) {
     }
   }
 }
+
+// Calcular as correlações entre a confiança final e as variáveis da geometria de Pareto
+const corrConfFrontierSize = pearsonCorrelation(predictedConfidences, matchFrontierSizes);
+const corrConfSpacing = pearsonCorrelation(predictedConfidences, matchSpacings);
+const corrConfHypervolume = pearsonCorrelation(predictedConfidences, matchHypervolumes);
+
+console.log('\n📊 Correlações da Geometria de Pareto com a Confiança da Recomendação:');
+console.log(`   ├─ Corr(Confidence, FrontierSize): ${corrConfFrontierSize.toFixed(4)}`);
+console.log(`   ├─ Corr(Confidence, Spacing): ${corrConfSpacing.toFixed(4)}`);
+console.log(`   └─ Corr(Confidence, Hypervolume): ${corrConfHypervolume.toFixed(4)}`);
 
 // Recomputar analytics com as confianças calibradas atualizadas para incluir métricas de discriminação corretas
 analytics = computeDiscoveryAnalytics(allMatches, { targets: normalizedScores });
@@ -1929,6 +1949,14 @@ if ((analytics.averageFrontierCompressionRatio ?? 0) >= 1.05) {
 }
 if ((analytics.hypervolumeStdDev ?? 0) >= 0.20) {
   throw new Error(`Benchmark falhou: Desvio padrão do Hypervolume (${analytics.hypervolumeStdDev}) deve ser inferior a 0.20.`);
+}
+
+// Asserções de Correlação Geométrica Negativa (F12.4)
+if (corrConfFrontierSize >= -0.10) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e tamanho da fronteira (${corrConfFrontierSize.toFixed(4)}) deve ser menor que -0.10.`);
+}
+if (corrConfHypervolume >= -0.10) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e hypervolume (${corrConfHypervolume.toFixed(4)}) deve ser menor que -0.10.`);
 }
 
 console.log('🎉 BENCHMARK APROVADO COM SUCESSO!');
