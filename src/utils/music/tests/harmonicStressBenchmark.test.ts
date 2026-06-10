@@ -189,12 +189,20 @@ interface ScenarioResult {
       dominantFactor: string;
       confidence: number;
       winnerPath: string;
+      hypervolume: number;
+      spread: number;
+      spacing: number;
+      fcr: number;
     }
   };
   fsr: number;
   churn: number;
   dominantFactorConsistency: number;
   passed: boolean;
+  avgHV: number;
+  avgSpread: number;
+  avgSpacing: number;
+  avgFCR: number;
 }
 
 const scenarioResults: ScenarioResult[] = [];
@@ -222,6 +230,10 @@ for (const scenario of SCENARIOS) {
       const paretoSize = match.paretoFrontier ? match.paretoFrontier.frontierSize : 0;
       const dominantFactor = match.recommendationDecision?.dominantFactor ?? 'GOAL_ALIGNMENT';
       const confidence = match.recommendationDecision?.confidence ?? 0;
+      const hypervolume = match.paretoFrontier?.hypervolume ?? 0;
+      const spread = match.paretoFrontier?.spread ?? 0;
+      const spacing = match.paretoFrontier?.spacing ?? 0;
+      const fcr = match.paretoFrontier?.frontierCompressionRatio ?? 0;
       
       const winnerPath = match.recommendedPaths && match.recommendedPaths.length > 0
         ? match.recommendedPaths[0].steps.map(s => s.id).join(' + ')
@@ -231,7 +243,11 @@ for (const scenario of SCENARIOS) {
         paretoSize,
         dominantFactor,
         confidence,
-        winnerPath
+        winnerPath,
+        hypervolume,
+        spread,
+        spacing,
+        fcr
       };
 
       if (match.paretoFrontier) {
@@ -246,14 +262,17 @@ for (const scenario of SCENARIOS) {
         paretoSize: 0,
         dominantFactor: 'N/A',
         confidence: 0,
-        winnerPath: 'FAIL'
+        winnerPath: 'FAIL',
+        hypervolume: 0,
+        spread: 0,
+        spacing: 0,
+        fcr: 0
       };
       pathSets.push(new Set<string>());
       factors.push('N/A');
     }
   }
 
-  // Interseção de caminhos ótimos da fronteira
   const intersection = new Set<string>();
   if (pathSets.length > 0) {
     for (const pathId of pathSets[0]) {
@@ -263,7 +282,6 @@ for (const scenario of SCENARIOS) {
     }
   }
 
-  // União de caminhos ótimos
   const union = new Set<string>();
   for (const set of pathSets) {
     for (const pathId of set) {
@@ -274,7 +292,6 @@ for (const scenario of SCENARIOS) {
   const fsr = union.size > 0 ? intersection.size / union.size : 0;
   const churn = 1 - fsr;
 
-  // Consistência do fator dominante
   const factorCounts: { [key: string]: number } = {};
   for (const f of factors) {
     if (f !== 'N/A') {
@@ -284,7 +301,30 @@ for (const scenario of SCENARIOS) {
   const maxCount = Object.keys(factorCounts).length > 0 ? Math.max(...Object.values(factorCounts)) : 0;
   const dominantFactorConsistency = maxCount / 5;
 
-  const passed = runsPassed === 5; // Sobreviveu aos 5 perfis estéticos
+  const passed = runsPassed === 5;
+
+  // Geometry aggregations for the scenario
+  let sumHV = 0;
+  let sumSpread = 0;
+  let sumSpacing = 0;
+  let sumFCR = 0;
+  let validProfileRuns = 0;
+
+  for (const profile of profiles) {
+    const data = profilesData[profile];
+    if (data.winnerPath !== 'FAIL') {
+      sumHV += data.hypervolume;
+      sumSpread += data.spread;
+      sumSpacing += data.spacing;
+      sumFCR += data.fcr;
+      validProfileRuns++;
+    }
+  }
+
+  const avgHV = validProfileRuns > 0 ? sumHV / validProfileRuns : 0;
+  const avgSpread = validProfileRuns > 0 ? sumSpread / validProfileRuns : 0;
+  const avgSpacing = validProfileRuns > 0 ? sumSpacing / validProfileRuns : 0;
+  const avgFCR = validProfileRuns > 0 ? sumFCR / validProfileRuns : 0;
 
   scenarioResults.push({
     scenario,
@@ -292,10 +332,15 @@ for (const scenario of SCENARIOS) {
     fsr,
     churn,
     dominantFactorConsistency,
-    passed
-  });
+    passed,
+    avgHV,
+    avgSpread,
+    avgSpacing,
+    avgFCR
+  } as any);
 
   console.log(`   └─ Estabilidade da Fronteira (FSR): ${(fsr * 100).toFixed(2)}% | Churn: ${(churn * 100).toFixed(2)}% | Consistência de Fator: ${(dominantFactorConsistency * 100).toFixed(0)}%`);
+  console.log(`      Geometria: HV = ${avgHV.toFixed(4)} | Spread = ${avgSpread.toFixed(4)} | Spacing = ${avgSpacing.toFixed(4)} | FCR = ${avgFCR.toFixed(4)}`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -304,9 +349,9 @@ for (const scenario of SCENARIOS) {
 const appDataDir = '/Users/gustavoesteves/.gemini/antigravity-ide';
 const stressReportPath = path.join(appDataDir, 'brain/f6477136-2b69-47c8-8b1f-1aa05a2947ab/harmonic_stress_benchmark_report.md');
 
-let reportMd = `# Relatório de Estresse Harmônico Avançado (Sprint C3.5)
+let reportMd = `# Relatório de Estresse Harmônico Avançado (Sprint F12.3)
 
-Este relatório compila a validação de robustez do recomendador harmônico sob condições de estresse estrutural extremo, modulações recursivas e terças coltraneanas simétricas. Ele documenta o comportamento do resolvedor multiobjetivo por meio de indicadores de estabilidade de Pareto.
+Este relatório compila a validação de robustez do recomendador harmônico sob condições de estresse estrutural extremo, modulações recursivas e terças coltraneanas simétricas. Ele documenta o comportamento do resolvedor multiobjetivo por meio de indicadores de estabilidade de Pareto e as novas métricas geométricas da fronteira.
 
 ---
 
@@ -317,6 +362,10 @@ Este relatório compila a validação de robustez do recomendador harmônico sob
 | **Frontier Stability Ratio (FSR)** | ${(scenarioResults.reduce((sum, r) => sum + r.fsr, 0) / scenarioResults.length * 100).toFixed(2)}% | ${(Math.min(...scenarioResults.map(r => r.fsr)) * 100).toFixed(2)}% | ${(Math.max(...scenarioResults.map(r => r.fsr)) * 100).toFixed(2)}% |
 | **Pareto Churn** | ${(scenarioResults.reduce((sum, r) => sum + r.churn, 0) / scenarioResults.length * 100).toFixed(2)}% | ${(Math.min(...scenarioResults.map(r => r.churn)) * 100).toFixed(2)}% | ${(Math.max(...scenarioResults.map(r => r.churn)) * 100).toFixed(2)}% |
 | **Dominant Factor Consistency** | ${(scenarioResults.reduce((sum, r) => sum + r.dominantFactorConsistency, 0) / scenarioResults.length * 100).toFixed(2)}% | ${(Math.min(...scenarioResults.map(r => r.dominantFactorConsistency)) * 100).toFixed(0)}% | ${(Math.max(...scenarioResults.map(r => r.dominantFactorConsistency)) * 100).toFixed(0)}% |
+| **Hypervolume (HV)** | ${(scenarioResults.reduce((sum, r) => sum + r.avgHV, 0) / scenarioResults.length).toFixed(4)} | ${(Math.min(...scenarioResults.map(r => r.avgHV))).toFixed(4)} | ${(Math.max(...scenarioResults.map(r => r.avgHV))).toFixed(4)} |
+| **Spread (Delta)** | ${(scenarioResults.reduce((sum, r) => sum + r.avgSpread, 0) / scenarioResults.length).toFixed(4)} | ${(Math.min(...scenarioResults.map(r => r.avgSpread))).toFixed(4)} | ${(Math.max(...scenarioResults.map(r => r.avgSpread))).toFixed(4)} |
+| **Spacing (S)** | ${(scenarioResults.reduce((sum, r) => sum + r.avgSpacing, 0) / scenarioResults.length).toFixed(4)} | ${(Math.min(...scenarioResults.map(r => r.avgSpacing))).toFixed(4)} | ${(Math.max(...scenarioResults.map(r => r.avgSpacing))).toFixed(4)} |
+| **Frontier Compression Ratio (FCR)** | ${(scenarioResults.reduce((sum, r) => sum + r.avgFCR, 0) / scenarioResults.length).toFixed(4)} | ${(Math.min(...scenarioResults.map(r => r.avgFCR))).toFixed(4)} | ${(Math.max(...scenarioResults.map(r => r.avgFCR))).toFixed(4)} |
 
 ---
 
@@ -331,14 +380,15 @@ for (const res of scenarioResults) {
   reportMd += `- **FSR (Frontier Stability Ratio):** \`${(res.fsr * 100).toFixed(2)}%\` (medida de interseção de Pareto)\n`;
   reportMd += `- **Pareto Churn:** \`${(res.churn * 100).toFixed(2)}%\` (grau de variabilidade da fronteira)\n`;
   reportMd += `- **Consistência do Fator Dominante:** \`${(res.dominantFactorConsistency * 100).toFixed(0)}%\` (motivação de escolha estável)\n`;
+  reportMd += `- **Geometria Pareto Média:** HV=\`${res.avgHV.toFixed(4)}\` | Spread=\`${res.avgSpread.toFixed(4)}\` | Spacing=\`${res.avgSpacing.toFixed(4)}\` | FCR=\`${res.avgFCR.toFixed(4)}\`\n`;
   reportMd += `- **Sobrevivência de Geração:** ${res.passed ? '✅ Aprovado (Sobreviveu aos 5 Perfis)' : '❌ Regressão (Falhou em pelo menos 1 Perfil)'}\n\n`;
   
-  reportMd += `| Perfil de Otimização | Tamanho da Fronteira | Fator Dominante Selecionado | Confiança | Caminho Vencedor Recomendado |\n`;
-  reportMd += `| :--- | :---: | :---: | :---: | :--- |\n`;
+  reportMd += `| Perfil de Otimização | Tamanho da Fronteira | Fator Dominante Selecionado | Confiança | HV | Spread | Spacing | FCR | Caminho Vencedor Recomendado |\n`;
+  reportMd += `| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n`;
   
   for (const profile of profiles) {
     const data = res.profilesData[profile];
-    reportMd += `| \`${profile}\` | ${data.paretoSize} | \`${data.dominantFactor}\` | ${(data.confidence * 100).toFixed(0)}% | \`${data.winnerPath}\` |\n`;
+    reportMd += `| \`${profile}\` | ${data.paretoSize} | \`${data.dominantFactor}\` | ${(data.confidence * 100).toFixed(0)}% | ${data.hypervolume?.toFixed(4) ?? '0.0000'} | ${data.spread?.toFixed(4) ?? '0.0000'} | ${data.spacing?.toFixed(4) ?? '0.0000'} | ${data.fcr?.toFixed(4) ?? '0.0000'} | \`${data.winnerPath}\` |\n`;
   }
   reportMd += `\n---\n\n`;
 }
@@ -351,7 +401,7 @@ try {
 }
 
 // Asserções Estritas de Validação de Estresse
-console.log('\n⚖️ Validando critérios de aceitação da Sprint C3.5...');
+console.log('\n⚖️ Validando critérios de aceitação da Sprint F12.3...');
 
 const totalPassedScenarios = scenarioResults.filter(r => r.passed).length;
 if (totalPassedScenarios < SCENARIOS.length) {
@@ -360,7 +410,6 @@ if (totalPassedScenarios < SCENARIOS.length) {
 console.log(`  ✅ Sobrevivência Total (12/12 cenários gerados com sucesso nos 5 perfis)`);
 
 const averageFSR = scenarioResults.reduce((sum, r) => sum + r.fsr, 0) / scenarioResults.length;
-// Esperamos que haja pelo menos alguma estabilidade (FSR > 0.05) indicando núcleo comum de caminhos
 if (averageFSR < 0.05) {
   console.warn(`  ⚠️ Alerta de Pesquisa: Estabilidade de Fronteira média muito baixa (${(averageFSR * 100).toFixed(2)}%). As soluções mudam radicalmente por perfil.`);
 } else {
@@ -373,4 +422,4 @@ if (averageConsistency < 0.40) {
 }
 console.log(`  ✅ Consistência de Fator Dominante adequada (${(averageConsistency * 100).toFixed(2)}%)`);
 
-console.log('\n🎉 SPRINT C3.5 APROVADA COM SUCESSO!');
+console.log('\n🎉 SPRINT F12.3 APROVADA COM SUCESSO!');

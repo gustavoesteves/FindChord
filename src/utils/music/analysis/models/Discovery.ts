@@ -349,6 +349,14 @@ export interface ParetoFrontier {
     bestBassSmoothness: number;
     bestPedagogicalImpact: number;
   };
+  hypervolume?: number;
+  hypervolumeStdError?: number;
+  spread?: number;
+  spacing?: number;
+  candidateCount?: number;
+  frontierCount?: number;
+  frontierCompressionRatio?: number;
+  frontierOccupancyIndex?: number;
 }
 
 export type OptimizationProfile =
@@ -402,6 +410,14 @@ export interface RecommendationAnalytics {
   confidenceP90MinusP10: number;
   confidenceResolution: number;
   occupiedReliabilityBins: number;
+  averageHypervolume?: number;
+  hypervolumeStdDev?: number;
+  averageSpread?: number;
+  spreadStdDev?: number;
+  averageSpacing?: number;
+  spacingStdDev?: number;
+  averageFrontierCompressionRatio?: number;
+  averageFrontierOccupancyIndex?: number;
 }
 
 export interface DiscardedAlternative {

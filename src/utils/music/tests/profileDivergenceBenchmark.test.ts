@@ -219,6 +219,11 @@ for (const scenario of SCENARIOS) {
   const profileWinnersData: Record<string, any> = {};
 
   let hasPaths = false;
+  let sumHV = 0;
+  let sumSpread = 0;
+  let sumSpacing = 0;
+  let sumFCR = 0;
+  let validProfileRuns = 0;
 
   for (const profile of profiles) {
     const match = runQuery(scenario.progression, {
@@ -235,6 +240,16 @@ for (const scenario of SCENARIOS) {
 
       const dominantFactor = match.recommendationDecision?.dominantFactor ?? 'N/A';
       const score = winner.finalScore ?? 0;
+      const hypervolume = match.paretoFrontier?.hypervolume ?? 0;
+      const spread = match.paretoFrontier?.spread ?? 0;
+      const spacing = match.paretoFrontier?.spacing ?? 0;
+      const fcr = match.paretoFrontier?.frontierCompressionRatio ?? 0;
+
+      sumHV += hypervolume;
+      sumSpread += spread;
+      sumSpacing += spacing;
+      sumFCR += fcr;
+      validProfileRuns++;
 
       let hasRunnerUp = false;
       let deltas: MetricDelta | undefined = undefined;
@@ -257,7 +272,6 @@ for (const scenario of SCENARIOS) {
           goalAchievement: Number((wObj.goalAchievement - rObj.goalAchievement).toFixed(4))
         };
 
-        // Acumular deltas para auditoria
         totalDeltasByMetric.tension += deltas.tension;
         totalDeltasByMetric.chromaticism += deltas.chromaticism;
         totalDeltasByMetric.bassSmoothness += deltas.bassSmoothness;
@@ -274,7 +288,11 @@ for (const scenario of SCENARIOS) {
         score,
         dominantFactor,
         hasRunnerUp,
-        deltas
+        deltas,
+        hypervolume,
+        spread,
+        spacing,
+        fcr
       };
     } else {
       scenarioWinners.push('FAIL');
@@ -282,12 +300,15 @@ for (const scenario of SCENARIOS) {
         pathId: 'FAIL',
         score: 0,
         dominantFactor: 'N/A',
-        hasRunnerUp: false
+        hasRunnerUp: false,
+        hypervolume: 0,
+        spread: 0,
+        spacing: 0,
+        fcr: 0
       };
     }
   }
 
-  // Estatísticas do cenário
   let dw = 0;
   let pdr = 0;
   let wcr = 0;
@@ -298,7 +319,6 @@ for (const scenario of SCENARIOS) {
     dw = uniqueWinners.size;
     pdr = (dw - 1) / 4;
 
-    // Calcular WCR (Winner Concentration Ratio)
     const winnerCounts: Record<string, number> = {};
     for (const w of validWinners) {
       winnerCounts[w] = (winnerCounts[w] || 0) + 1;
@@ -313,8 +333,12 @@ for (const scenario of SCENARIOS) {
     dw,
     pdr,
     wcr,
-    passed: hasPaths
-  });
+    passed: hasPaths,
+    avgHV: validProfileRuns > 0 ? sumHV / validProfileRuns : 0,
+    avgSpread: validProfileRuns > 0 ? sumSpread / validProfileRuns : 0,
+    avgSpacing: validProfileRuns > 0 ? sumSpacing / validProfileRuns : 0,
+    avgFCR: validProfileRuns > 0 ? sumFCR / validProfileRuns : 0
+  } as any);
 
   console.log(`   └─ Vencedores Distintos: ${dw} | Divergência (PDR): ${(pdr * 100).toFixed(0)}% | Concentração (WCR): ${(wcr * 100).toFixed(0)}%`);
 }
@@ -330,6 +354,10 @@ const validResults = results.filter(r => r.passed);
 const avgDW = validResults.reduce((sum, r) => sum + r.dw, 0) / validResults.length;
 const avgPDR = validResults.reduce((sum, r) => sum + r.pdr, 0) / validResults.length;
 const avgWCR = validResults.reduce((sum, r) => sum + r.wcr, 0) / validResults.length;
+const avgHV = validResults.reduce((sum, r) => sum + (r as any).avgHV, 0) / validResults.length;
+const avgSpread = validResults.reduce((sum, r) => sum + (r as any).avgSpread, 0) / validResults.length;
+const avgSpacing = validResults.reduce((sum, r) => sum + (r as any).avgSpacing, 0) / validResults.length;
+const avgFCR = validResults.reduce((sum, r) => sum + (r as any).avgFCR, 0) / validResults.length;
 
 // Médias da auditoria de dominância
 const avgDeltas: MetricDelta = {
@@ -343,9 +371,9 @@ const avgDeltas: MetricDelta = {
   goalAchievement: deltaCount > 0 ? Number((totalDeltasByMetric.goalAchievement / deltaCount).toFixed(4)) : 0
 };
 
-let reportMd = `# Relatório de Divergência de Perfis (Sprint C3.5-B)
+let reportMd = `# Relatório de Divergência de Perfis (Sprint F12.3)
 
-Este relatório investiga quantitativamente a **sensibilidade e a divergência de decisões** do motor do Find Chord sob diferentes perfis de otimização, auditando o impacto de dominância métrica e sugerindo melhorias na modelagem da função objetivo.
+Este relatório investiga quantitativamente a **sensibilidade e a divergência de decisões** do motor do Find Chord sob diferentes perfis de otimização, acompanhado de diagnósticos detalhados sobre a geometria das fronteiras de Pareto.
 
 ---
 
@@ -356,6 +384,10 @@ Este relatório investiga quantitativamente a **sensibilidade e a divergência d
 | **Distinct Winners (DW)** | **${avgDW.toFixed(2)}** / 5 | Quantidade média de caminhos vencedores diferentes recomendados nos 5 perfis. |
 | **Profile Divergence Ratio (PDR)** | **${(avgPDR * 100).toFixed(2)}%** | Percentual normalizado de divergência de decisão (0% = consenso, 100% = divergência total). |
 | **Winner Concentration Ratio (WCR)** | **${(avgWCR * 100).toFixed(2)}%** | Proporção média de vitórias do caminho vencedor mais dominante (100% = rigidez extrema). |
+| **Hypervolume (HV)** | **${avgHV.toFixed(4)}** | Volume dominado médio da fronteira de Pareto (L2 normalizado). |
+| **Spread (Delta)** | **${avgSpread.toFixed(4)}** | Grau de dispersão e cobertura dos extremos observados. |
+| **Spacing (S)** | **${avgSpacing.toFixed(4)}** | Uniformidade das distâncias entre soluções vizinhas (L2). |
+| **Frontier Compression Ratio (FCR)** | **${avgFCR.toFixed(4)}** | Proporção média de caminhos candidatos retidos na fronteira final. |
 
 ---
 
@@ -407,7 +439,7 @@ for (const res of results) {
 }
 
 // Adicionar conclusões analíticas científicas baseadas nas hipóteses
-reportMd += `## 🔬 Conclusões Científicas & Diagnósticos da C3.5-B
+reportMd += `## 🔬 Conclusões Científicas & Diagnósticos da F12.3
 
 ### 1. Rigidez de Escolha & Consenso Sistemático
 Com base nas métricas observadas:
@@ -442,7 +474,7 @@ try {
 }
 
 // Validação final de aceitação
-console.log('\n⚖️ Validando critérios de aceitação da Sprint C3.5-B...');
+console.log('\n⚖️ Validando critérios de aceitação da Sprint F12.3 (Divergência)...');
 
 const totalPassed = results.filter(r => r.passed).length;
 if (totalPassed < SCENARIOS.length) {
@@ -463,4 +495,4 @@ if (avgPDR < 0.15) {
   console.log(`  ✅ Nível de divergência ativa detectada: ${(avgPDR * 100).toFixed(2)}%`);
 }
 
-console.log('\n🎉 SPRINT C3.5-B EXECUÇÃO DO BENCHMARK CONCLUÍDA COM SUCESSO!');
+console.log('\n🎉 SPRINT F12.3 EXECUÇÃO DO BENCHMARK CONCLUÍDA COM SUCESSO!');

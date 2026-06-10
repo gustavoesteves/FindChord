@@ -1495,6 +1495,11 @@ console.log(`              Conf Entropy = ${analytics.confidenceEntropy.toFixed(
               Conf P90-P10 = ${analytics.confidenceP90MinusP10.toFixed(4)}
               Conf Resolution = ${analytics.confidenceResolution.toFixed(4)}
               Conf Occupied Bins = ${analytics.occupiedReliabilityBins}`);
+console.log(`📊 GEOMETRY:  Avg Hypervolume = ${analytics.averageHypervolume?.toFixed(4)} (± ${analytics.hypervolumeStdDev?.toFixed(4)})`);
+console.log(`              Avg Spread = ${analytics.averageSpread?.toFixed(4)} (± ${analytics.spreadStdDev?.toFixed(4)})`);
+console.log(`              Avg Spacing = ${analytics.averageSpacing?.toFixed(4)} (± ${analytics.spacingStdDev?.toFixed(4)})`);
+console.log(`              Avg FCR = ${analytics.averageFrontierCompressionRatio?.toFixed(4)}`);
+console.log(`              Avg FOI = ${analytics.averageFrontierOccupancyIndex?.toFixed(4)}`);
 console.log(`==================================================`);
 
 // Mapeamento de distribuição de mecanismos recomendados
@@ -1521,7 +1526,7 @@ if (fs.existsSync(driftHistoryPath)) {
 }
 
 const currentRunEntry = {
-  sprint: "C3.4-F",
+  sprint: "F12.3",
   timestamp: new Date().toISOString().split('T')[0],
   meanCalibrationError: Number(meanCalibrationError.toFixed(4)),
   mechanismEntropy: Number(analytics.mechanismEntropy.toFixed(4)),
@@ -1535,10 +1540,18 @@ const currentRunEntry = {
   confidenceDynamicRange: Number(analytics.confidenceDynamicRange.toFixed(4)),
   confidenceP90MinusP10: Number(analytics.confidenceP90MinusP10.toFixed(4)),
   confidenceResolution: Number(analytics.confidenceResolution.toFixed(4)),
-  occupiedReliabilityBins: Number(analytics.occupiedReliabilityBins)
+  occupiedReliabilityBins: Number(analytics.occupiedReliabilityBins),
+  averageHypervolume: Number((analytics.averageHypervolume ?? 0).toFixed(4)),
+  hypervolumeStdDev: Number((analytics.hypervolumeStdDev ?? 0).toFixed(4)),
+  averageSpread: Number((analytics.averageSpread ?? 0).toFixed(4)),
+  spreadStdDev: Number((analytics.spreadStdDev ?? 0).toFixed(4)),
+  averageSpacing: Number((analytics.averageSpacing ?? 0).toFixed(4)),
+  spacingStdDev: Number((analytics.spacingStdDev ?? 0).toFixed(4)),
+  averageFrontierCompressionRatio: Number((analytics.averageFrontierCompressionRatio ?? 0).toFixed(4)),
+  averageFrontierOccupancyIndex: Number((analytics.averageFrontierOccupancyIndex ?? 0).toFixed(4))
 };
 
-const existingIdx = history.findIndex(h => h.sprint === "C3.4-F");
+const existingIdx = history.findIndex(h => h.sprint === "F12.3");
 if (existingIdx !== -1) {
   history[existingIdx] = currentRunEntry;
 } else {
@@ -1580,8 +1593,8 @@ else if (dominanceRatio < 0.60) dominanceQualitative = 'Moderado';
 
 // Tabela de Drift Histórico
 let driftTableMd = `### 🕒 Série Temporal de Drift Histórico\n\n`;
-driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Conf Entropy | Conf StdDev | Conf DynRange | Conf P90-P10 | Conf Resolution | Bins Occupied | Mech Entropy | Mech Dominance Ratio |\n`;
-driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
+driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Conf Entropy | Conf StdDev | Conf DynRange | Conf P90-P10 | Bins Occupied | Mech Entropy | Mech Dominance Ratio | Avg HV | Avg Spread | Avg Spacing | Avg FCR | Avg FOI |\n`;
+driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
 for (const entry of history) {
   const errorPct = (entry.meanCalibrationError * 100).toFixed(2) + '%';
   const dominancePct = entry.mechanismDominanceRatio !== undefined 
@@ -1600,13 +1613,18 @@ for (const entry of history) {
   const cStd = entry.confidenceStdDev !== undefined ? entry.confidenceStdDev.toFixed(4) : 'N/A';
   const cRange = entry.confidenceDynamicRange !== undefined ? entry.confidenceDynamicRange.toFixed(4) : 'N/A';
   const cP90P10 = entry.confidenceP90MinusP10 !== undefined ? entry.confidenceP90MinusP10.toFixed(4) : 'N/A';
-  const cRes = entry.confidenceResolution !== undefined ? entry.confidenceResolution.toFixed(4) : 'N/A';
   const cBins = entry.occupiedReliabilityBins !== undefined ? entry.occupiedReliabilityBins : 'N/A';
 
-  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${cEnt} | ${cStd} | ${cRange} | ${cP90P10} | ${cRes} | ${cBins} | ${entry.mechanismEntropy.toFixed(2)} | ${dominancePct} |\n`;
+  const avgHV = entry.averageHypervolume !== undefined ? entry.averageHypervolume.toFixed(4) : 'N/A';
+  const avgSpread = entry.averageSpread !== undefined ? entry.averageSpread.toFixed(4) : 'N/A';
+  const avgSpacing = entry.averageSpacing !== undefined ? entry.averageSpacing.toFixed(4) : 'N/A';
+  const avgFCR = entry.averageFrontierCompressionRatio !== undefined ? entry.averageFrontierCompressionRatio.toFixed(4) : 'N/A';
+  const avgFOI = entry.averageFrontierOccupancyIndex !== undefined ? entry.averageFrontierOccupancyIndex.toFixed(4) : 'N/A';
+
+  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${cEnt} | ${cStd} | ${cRange} | ${cP90P10} | ${cBins} | ${entry.mechanismEntropy.toFixed(2)} | ${dominancePct} | ${avgHV} | ${avgSpread} | ${avgSpacing} | ${avgFCR} | ${avgFOI} |\n`;
 }
 
-let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint C3.4-F)
+let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint F12.3)
 
 Este relatório compila a validação qualitativa do recomendador do Find Chord após a incorporação da otimização multiobjetivo (fronteira de Pareto), explicabilidade de decisão e analytics de recomendação.
 
@@ -1654,6 +1672,11 @@ Estatísticas Contínuas:
 - Resolução de Confiança (Brier Resolution): ${analytics.confidenceResolution.toFixed(4)}
 - Bins de Confiabilidade Ocupados: ${analytics.occupiedReliabilityBins} (Esperado >= 4)
 - Taxa de Dominância de Mecanismos: ${(analytics.mechanismDominanceRatio * 100).toFixed(2)}% (${dominanceQualitative.toUpperCase()})
+- Média Hypervolume (HV): ${analytics.averageHypervolume?.toFixed(4)} (± ${analytics.hypervolumeStdDev?.toFixed(4)})
+- Média Spread (Delta): ${analytics.averageSpread?.toFixed(4)} (± ${analytics.spreadStdDev?.toFixed(4)})
+- Média Spacing (S): ${analytics.averageSpacing?.toFixed(4)} (± ${analytics.spacingStdDev?.toFixed(4)})
+- Média Frontier Compression Ratio (FCR): ${analytics.averageFrontierCompressionRatio?.toFixed(4)}
+- Média Frontier Occupancy Index (FOI): ${analytics.averageFrontierOccupancyIndex?.toFixed(4)}
 
 Hard Constraint Failure Rate:
 - ${hardFailurePct}%
@@ -1693,8 +1716,8 @@ top10Candidates.forEach((c, idx) => {
   candidatesTableMd += `| **#${idx + 1}** | ${c.a.toFixed(2)} | ${c.b.toFixed(2)} | ${c.score.toFixed(4)} | ${(c.mce * 100).toFixed(2)}% | ${(c.ece * 100).toFixed(2)}% | ${c.entropy.toFixed(4)} | ${c.stdDev.toFixed(4)} | ${c.dynamicRange.toFixed(4)} | ${c.occupiedBins} |\n`;
 });
 
-// Geração do Relatório de Diagnóstico C3.4-F
-let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint C3.4-F)
+// Geração do Relatório de Diagnóstico F12.3
+let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint F12.3)
 
 Este relatório apresenta análises estatísticas e qualitativas avançadas sobre o comportamento do recomendador harmônico do Find Chord, com foco em calibração de confiança, correlação de métricas e diversidade de mecanismos.
 
@@ -1797,6 +1820,11 @@ diagMd += `
 - **Resolução de Confiança (\`confidenceResolution\`)**: \`${analytics.confidenceResolution.toFixed(4)}\`
 - **Bins de Confiabilidade Ocupados (\`occupiedReliabilityBins\`)**: \`${analytics.occupiedReliabilityBins}\` (Métrica: \`>= 4\`)
 - **Classificação de Calibração**: **${calibrationQualitative.toUpperCase()}** (Métrica: \`< 10%\` Excelente, \`< 20%\` Bom, \`< 30%\` Aceitável, \`> 30%\` Descalibrado)
+- **Média Hypervolume (HV)**: \`${analytics.averageHypervolume?.toFixed(4)}\` (± \`${analytics.hypervolumeStdDev?.toFixed(4)}\`)
+- **Média Spread (Delta)**: \`${analytics.averageSpread?.toFixed(4)}\` (± \`${analytics.spreadStdDev?.toFixed(4)}\`)
+- **Média Spacing (S)**: \`${analytics.averageSpacing?.toFixed(4)}\` (± \`${analytics.spacingStdDev?.toFixed(4)}\`)
+- **Média Frontier Compression Ratio (FCR)**: \`${analytics.averageFrontierCompressionRatio?.toFixed(4)}\`
+- **Média Frontier Occupancy Index (FOI)**: \`${analytics.averageFrontierOccupancyIndex?.toFixed(4)}\`
 
 ---
 
@@ -1884,6 +1912,23 @@ if (analytics.confidenceResolution <= 0.0) {
 
 if (analytics.occupiedReliabilityBins < 4) {
   throw new Error(`Benchmark falhou: Bins de confiabilidade ocupados (${analytics.occupiedReliabilityBins}) é inferior a 4.`);
+}
+
+// 5 Novas Asserções da Sprint F12.3 (Geometria Pareto)
+if ((analytics.averageHypervolume ?? 0) <= 0.0) {
+  throw new Error(`Benchmark falhou: Média de Hypervolume (${analytics.averageHypervolume}) deve ser superior a 0.0.`);
+}
+if ((analytics.averageSpread ?? 0) <= 0.0) {
+  throw new Error(`Benchmark falhou: Média de Spread (${analytics.averageSpread}) deve ser superior a 0.0.`);
+}
+if ((analytics.averageSpacing ?? 0) <= 0.0) {
+  throw new Error(`Benchmark falhou: Média de Spacing (${analytics.averageSpacing}) deve ser superior a 0.0.`);
+}
+if ((analytics.averageFrontierCompressionRatio ?? 0) >= 1.05) {
+  throw new Error(`Benchmark falhou: Média do Frontier Compression Ratio (${analytics.averageFrontierCompressionRatio}) deve ser inferior a 1.05.`);
+}
+if ((analytics.hypervolumeStdDev ?? 0) >= 0.20) {
+  throw new Error(`Benchmark falhou: Desvio padrão do Hypervolume (${analytics.hypervolumeStdDev}) deve ser inferior a 0.20.`);
 }
 
 console.log('🎉 BENCHMARK APROVADO COM SUCESSO!');

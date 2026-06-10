@@ -56,8 +56,13 @@ export function computeRecommendationAnalytics(
     decisionConfidences?: number[];
     playabilities?: number[];
     targets?: number[];
+    hypervolumes?: number[];
+    spreads?: number[];
+    spacings?: number[];
+    compressionRatios?: number[];
+    occupancyIndices?: number[];
   }
-): RecommendationAnalytics {
+ ): RecommendationAnalytics {
   const typeDist: Record<RecommendationMechanism, number> = {
     MODAL_BORROWING: 0,
     TRITONE_SUBSTITUTION: 0,
@@ -91,7 +96,6 @@ export function computeRecommendationAnalytics(
   let countVoiceLeading = 0;
 
   for (const exec of executions) {
-    // Collect mechanisms from applications
     if (exec.applications) {
       for (const app of exec.applications) {
         const mech = normalizeMechanism(app.transformationId);
@@ -99,13 +103,11 @@ export function computeRecommendationAnalytics(
       }
     }
 
-    // Goal Achievement
     if (exec.goalAchievement) {
       sumGoalAchievement += exec.goalAchievement.score;
       countGoalAchievement++;
     }
 
-    // Constraint evaluation & failures
     if (exec.constraintEvaluation) {
       sumConstraintPenalty += exec.constraintEvaluation.totalPenalty;
       countConstraintPenalty++;
@@ -116,7 +118,6 @@ export function computeRecommendationAnalytics(
       }
     }
 
-    // State Profile Metrics
     if (exec.stateTransition?.after) {
       const after = exec.stateTransition.after;
       if (typeof after.functionalStability === 'number') {
@@ -134,38 +135,24 @@ export function computeRecommendationAnalytics(
     }
   }
 
-  // Pareto Size
-  let sumParetoSize = 0;
   const paretoSizes = options?.paretoSizes || [];
-  for (const size of paretoSizes) {
-    sumParetoSize += size;
-  }
+  const sumParetoSize = paretoSizes.reduce((a, b) => a + b, 0);
   const averageParetoSize = paretoSizes.length > 0 ? sumParetoSize / paretoSizes.length : 0;
 
-  // Decision Confidence
-  let sumConfidence = 0;
   const decisionConfidences = options?.decisionConfidences || [];
-  for (const conf of decisionConfidences) {
-    sumConfidence += conf;
-  }
+  const sumConfidence = decisionConfidences.reduce((a, b) => a + b, 0);
   const averageDecisionConfidence = decisionConfidences.length > 0 ? sumConfidence / decisionConfidences.length : 0;
 
-  // Playability
-  let sumPlayability = 0;
   const playabilities = options?.playabilities || [];
-  for (const play of playabilities) {
-    sumPlayability += play;
-  }
+  const sumPlayability = playabilities.reduce((a, b) => a + b, 0);
   const averagePlayability = playabilities.length > 0 ? sumPlayability / playabilities.length : 0;
 
-  // Dominant Factors distribution
   const dominantFactors = options?.dominantFactors || [];
   for (const factor of dominantFactors) {
     const normFactor = normalizeDominantFactor(factor);
     factorDist[normFactor]++;
   }
 
-  // Calculate final averages
   const averageGoalAchievement = countGoalAchievement > 0 ? sumGoalAchievement / countGoalAchievement : 0;
   const averageConstraintPenalty = countConstraintPenalty > 0 ? sumConstraintPenalty / countConstraintPenalty : 0;
   const hardConstraintFailureRate = countConstraintEvaluations > 0 ? countHardConstraintFailures / countConstraintEvaluations : 0;
@@ -174,7 +161,6 @@ export function computeRecommendationAnalytics(
   const averageTension = countTension > 0 ? sumTension / countTension : 0;
   const averageVoiceLeading = countVoiceLeading > 0 ? sumVoiceLeading / countVoiceLeading : 0;
 
-  // Shannon Entropy and Effective Mechanism Count
   const totalApps = Object.values(typeDist).reduce((sum, count) => sum + count, 0);
   let entropy = 0;
   if (totalApps > 0) {
@@ -191,7 +177,6 @@ export function computeRecommendationAnalytics(
   const maxCount = Math.max(...Object.values(typeDist));
   const mechanismDominanceRatio = totalApps > 0 ? Number((maxCount / totalApps).toFixed(4)) : 0;
 
-  // Path length calculations
   let sumPathLength = 0;
   const pathLengthDist: Record<number, number> = {};
   for (const exec of executions) {
@@ -201,7 +186,6 @@ export function computeRecommendationAnalytics(
   }
   const averagePathLength = executions.length > 0 ? Number((sumPathLength / executions.length).toFixed(4)) : 0;
 
-  // Helper for linear interpolation percentile
   const getPercentile = (sorted: number[], p: number): number => {
     if (sorted.length === 0) return 0;
     const idx = (p / 100) * (sorted.length - 1);
@@ -209,6 +193,12 @@ export function computeRecommendationAnalytics(
     const high = Math.ceil(idx);
     const weight = idx - low;
     return (1 - weight) * sorted[low] + weight * sorted[high];
+  };
+
+  const calculateStdDev = (vals: number[], avg: number): number => {
+    if (vals.length === 0) return 0.0;
+    const variance = vals.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / vals.length;
+    return Number(Math.sqrt(variance).toFixed(4));
   };
 
   // Discrimination metrics
@@ -221,8 +211,7 @@ export function computeRecommendationAnalytics(
 
   if (decisionConfidences.length > 0) {
     const avg = decisionConfidences.reduce((sum, v) => sum + v, 0) / decisionConfidences.length;
-    const variance = decisionConfidences.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / decisionConfidences.length;
-    confidenceStdDev = Number(Math.sqrt(variance).toFixed(4));
+    confidenceStdDev = calculateStdDev(decisionConfidences, avg);
 
     const max = Math.max(...decisionConfidences);
     const min = Math.min(...decisionConfidences);
@@ -250,7 +239,6 @@ export function computeRecommendationAnalytics(
     const p10 = getPercentile(sorted, 10);
     confidenceP90MinusP10 = Number((p90 - p10).toFixed(4));
 
-    // Resolution = variance(binSuccessRates)
     const resolutionBins: { target: number }[][] = Array.from({ length: 10 }, () => []);
     for (let i = 0; i < decisionConfidences.length; i++) {
       const conf = decisionConfidences[i];
@@ -274,6 +262,25 @@ export function computeRecommendationAnalytics(
     }
   }
 
+  // Geometry Metrics Aggregations
+  const hypervolumes = options?.hypervolumes || [];
+  const averageHypervolume = hypervolumes.length > 0 ? Number((hypervolumes.reduce((a, b) => a + b, 0) / hypervolumes.length).toFixed(4)) : 0.0;
+  const hypervolumeStdDev = calculateStdDev(hypervolumes, averageHypervolume);
+
+  const spreads = options?.spreads || [];
+  const averageSpread = spreads.length > 0 ? Number((spreads.reduce((a, b) => a + b, 0) / spreads.length).toFixed(4)) : 0.0;
+  const spreadStdDev = calculateStdDev(spreads, averageSpread);
+
+  const spacings = options?.spacings || [];
+  const averageSpacing = spacings.length > 0 ? Number((spacings.reduce((a, b) => a + b, 0) / spacings.length).toFixed(4)) : 0.0;
+  const spacingStdDev = calculateStdDev(spacings, averageSpacing);
+
+  const compressionRatios = options?.compressionRatios || [];
+  const averageFrontierCompressionRatio = compressionRatios.length > 0 ? Number((compressionRatios.reduce((a, b) => a + b, 0) / compressionRatios.length).toFixed(4)) : 0.0;
+
+  const occupancyIndices = options?.occupancyIndices || [];
+  const averageFrontierOccupancyIndex = occupancyIndices.length > 0 ? Number((occupancyIndices.reduce((a, b) => a + b, 0) / occupancyIndices.length).toFixed(4)) : 0.0;
+
   return {
     recommendationTypeDistribution: typeDist,
     dominantFactorDistribution: factorDist,
@@ -296,13 +303,18 @@ export function computeRecommendationAnalytics(
     confidenceDynamicRange,
     confidenceP90MinusP10,
     confidenceResolution,
-    occupiedReliabilityBins
+    occupiedReliabilityBins,
+    averageHypervolume,
+    hypervolumeStdDev,
+    averageSpread,
+    spreadStdDev,
+    averageSpacing,
+    spacingStdDev,
+    averageFrontierCompressionRatio,
+    averageFrontierOccupancyIndex
   };
 }
 
-/**
- * Adapter that computes recommendation analytics over a list of DiscoveryMatches.
- */
 export function computeDiscoveryAnalytics(
   matches: DiscoveryMatch[],
   options?: { targets?: number[] }
@@ -312,6 +324,11 @@ export function computeDiscoveryAnalytics(
   const dominantFactors: DominantDecisionFactor[] = [];
   const decisionConfidences: number[] = [];
   const playabilities: number[] = [];
+  const hypervolumes: number[] = [];
+  const spreads: number[] = [];
+  const spacings: number[] = [];
+  const compressionRatios: number[] = [];
+  const occupancyIndices: number[] = [];
 
   for (const match of matches) {
     if (match.recommendedPaths && match.recommendedPaths.length > 0) {
@@ -320,7 +337,6 @@ export function computeDiscoveryAnalytics(
         executions.push(winner.executionResult);
       }
       
-      // Calculate playability as (1.0 - max physicalComplexity of steps)
       const maxComplexity = winner.steps.length > 0
         ? Math.max(...winner.steps.map(s => s.physicalComplexity))
         : 0;
@@ -329,6 +345,11 @@ export function computeDiscoveryAnalytics(
 
     if (match.paretoFrontier) {
       paretoSizes.push(match.paretoFrontier.frontierSize);
+      if (typeof match.paretoFrontier.hypervolume === 'number') hypervolumes.push(match.paretoFrontier.hypervolume);
+      if (typeof match.paretoFrontier.spread === 'number') spreads.push(match.paretoFrontier.spread);
+      if (typeof match.paretoFrontier.spacing === 'number') spacings.push(match.paretoFrontier.spacing);
+      if (typeof match.paretoFrontier.frontierCompressionRatio === 'number') compressionRatios.push(match.paretoFrontier.frontierCompressionRatio);
+      if (typeof match.paretoFrontier.frontierOccupancyIndex === 'number') occupancyIndices.push(match.paretoFrontier.frontierOccupancyIndex);
     }
 
     if (match.recommendationDecision) {
@@ -342,6 +363,11 @@ export function computeDiscoveryAnalytics(
     dominantFactors,
     decisionConfidences,
     playabilities,
-    targets: options?.targets
+    targets: options?.targets,
+    hypervolumes,
+    spreads,
+    spacings,
+    compressionRatios,
+    occupancyIndices
   });
 }

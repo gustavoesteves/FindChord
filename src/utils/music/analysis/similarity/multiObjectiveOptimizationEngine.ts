@@ -202,6 +202,151 @@ export function computeCrowdingDistance(paths: ParetoPath[]): void {
   }
 }
 
+const GEOMETRY_OBJECTIVE_KEYS: (keyof ObjectiveVector)[] = [
+  'tension',
+  'chromaticism',
+  'bassSmoothness',
+  'functionalStability',
+  'voiceLeading',
+  'playability',
+  'pedagogicalImpact',
+  'goalAchievement'
+];
+
+/**
+ * Computa o Hypervolume (HV) da fronteira de Pareto usando estimativa de Monte Carlo.
+ * Utiliza 20.000 amostras na região [0.0, 1.0]^8 dos percentis empíricos.
+ */
+export function computeHypervolume(paths: ParetoPath[], sampleCount: number = 20000): { hv: number; stdError: number } {
+  if (paths.length === 0) {
+    return { hv: 0.0, stdError: 0.0 };
+  }
+
+  let dominatedSamples = 0;
+  for (let s = 0; s < sampleCount; s++) {
+    const sample: number[] = [];
+    for (let d = 0; d < GEOMETRY_OBJECTIVE_KEYS.length; d++) {
+      sample.push(Math.random());
+    }
+
+    let isDominated = false;
+    for (let i = 0; i < paths.length; i++) {
+      let dominatesSample = true;
+      const objectives = paths[i].objectives;
+      for (let d = 0; d < GEOMETRY_OBJECTIVE_KEYS.length; d++) {
+        if (objectives[GEOMETRY_OBJECTIVE_KEYS[d]] < sample[d]) {
+          dominatesSample = false;
+          break;
+        }
+      }
+      if (dominatesSample) {
+        isDominated = true;
+        break;
+      }
+    }
+    if (isDominated) {
+      dominatedSamples++;
+    }
+  }
+
+  const hv = Number((dominatedSamples / sampleCount).toFixed(4));
+  const stdError = Number(Math.sqrt((hv * (1 - hv)) / sampleCount).toFixed(4));
+  return { hv, stdError };
+}
+
+/**
+ * Computa o Spacing (S) usando distância Euclidiana (L2) para vizinhos mais próximos.
+ */
+export function computeSpacing(paths: ParetoPath[]): number {
+  const n = paths.length;
+  if (n <= 1) {
+    return 0.0;
+  }
+
+  const distances: number[] = [];
+  for (let i = 0; i < n; i++) {
+    let minDist = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      let sumSq = 0;
+      for (const key of GEOMETRY_OBJECTIVE_KEYS) {
+        sumSq += Math.pow(paths[i].objectives[key] - paths[j].objectives[key], 2);
+      }
+      const dist = Math.sqrt(sumSq);
+      if (dist < minDist) {
+        minDist = dist;
+      }
+    }
+    distances.push(minDist);
+  }
+
+  const meanDist = distances.reduce((a, b) => a + b, 0) / n;
+  const sumSqDiff = distances.reduce((sum, d) => sum + Math.pow(d - meanDist, 2), 0);
+  const variance = sumSqDiff / (n - 1);
+  return Number(Math.sqrt(variance).toFixed(4));
+}
+
+/**
+ * Computa o Spread (Delta) usando os extremos observados da própria fronteira como âncoras.
+ */
+export function computeSpread(paths: ParetoPath[]): number {
+  const n = paths.length;
+  if (n === 0) return 0.0;
+  if (n === 1) return 1.0; // Penalidade máxima para fronteira de ponto único
+
+  // 1. Encontra os extremos observados da fronteira (E_max e E_min)
+  const eMax: Record<string, number> = {};
+  const eMin: Record<string, number> = {};
+  for (const key of GEOMETRY_OBJECTIVE_KEYS) {
+    const vals = paths.map(p => p.objectives[key]);
+    eMax[key] = Math.max(...vals);
+    eMin[key] = Math.min(...vals);
+  }
+
+  // 2. Calcula d_f (distância ao extremo máximo) e d_l (distância ao extremo mínimo)
+  let df = Infinity;
+  let dl = Infinity;
+  for (let i = 0; i < n; i++) {
+    let sumSqMax = 0;
+    let sumSqMin = 0;
+    for (const key of GEOMETRY_OBJECTIVE_KEYS) {
+      sumSqMax += Math.pow(eMax[key] - paths[i].objectives[key], 2);
+      sumSqMin += Math.pow(paths[i].objectives[key] - eMin[key], 2);
+    }
+    const distMax = Math.sqrt(sumSqMax);
+    const distMin = Math.sqrt(sumSqMin);
+    if (distMax < df) df = distMax;
+    if (distMin < dl) dl = distMin;
+  }
+
+  // 3. Calcula d_i para cada solução (distância Euclidiana ao vizinho mais próximo)
+  const distances: number[] = [];
+  for (let i = 0; i < n; i++) {
+    let minDist = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      let sumSq = 0;
+      for (const key of GEOMETRY_OBJECTIVE_KEYS) {
+        sumSq += Math.pow(paths[i].objectives[key] - paths[j].objectives[key], 2);
+      }
+      const dist = Math.sqrt(sumSq);
+      if (dist < minDist) {
+        minDist = dist;
+      }
+    }
+    distances.push(minDist);
+  }
+
+  const meanDist = distances.reduce((a, b) => a + b, 0) / n;
+  const sumDiff = distances.reduce((sum, d) => sum + Math.abs(d - meanDist), 0);
+
+  const numerator = df + dl + sumDiff;
+  const denominator = df + dl + (n * meanDist);
+
+  if (denominator < 1e-9) return 0.0;
+  return Number((numerator / denominator).toFixed(4));
+}
+
 /**
  * Computa a fronteira de Pareto (soluções não dominadas) a partir dos caminhos candidatos.
  */
@@ -262,6 +407,14 @@ export function computeParetoFrontier(candidatePaths: RecommendationPath[], useP
     bestPedagogicalImpact = Math.max(...rank1Paths.map(p => p.objectives.pedagogicalImpact));
   }
 
+  const { hv, stdError } = computeHypervolume(rank1Paths);
+  const spread = computeSpread(rank1Paths);
+  const spacing = computeSpacing(rank1Paths);
+  const candidateCount = candidatePaths.length;
+  const frontierCount = rank1Paths.length;
+  const frontierCompressionRatio = candidateCount > 0 ? Number((frontierCount / candidateCount).toFixed(4)) : 0.0;
+  const frontierOccupancyIndex = Number((hv * spread).toFixed(4));
+
   return {
     paths: rank1Paths,
     frontierSize: rank1Paths.length,
@@ -275,7 +428,15 @@ export function computeParetoFrontier(candidatePaths: RecommendationPath[], useP
       bestChromaticism: Number(bestChromaticism.toFixed(4)),
       bestBassSmoothness: Number(bestBassSmoothness.toFixed(4)),
       bestPedagogicalImpact: Number(bestPedagogicalImpact.toFixed(4))
-    }
+    },
+    hypervolume: hv,
+    hypervolumeStdError: stdError,
+    spread,
+    spacing,
+    candidateCount,
+    frontierCount,
+    frontierCompressionRatio,
+    frontierOccupancyIndex
   };
 }
 
