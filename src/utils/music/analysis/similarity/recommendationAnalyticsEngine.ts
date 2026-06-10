@@ -217,6 +217,7 @@ export function computeRecommendationAnalytics(
   let confidenceEntropy = 0;
   let confidenceP90MinusP10 = 0;
   let confidenceResolution = 0;
+  let occupiedReliabilityBins = 0;
 
   if (decisionConfidences.length > 0) {
     const avg = decisionConfidences.reduce((sum, v) => sum + v, 0) / decisionConfidences.length;
@@ -242,6 +243,7 @@ export function computeRecommendationAnalytics(
       }
     }
     confidenceEntropy = Number(entropy.toFixed(4));
+    occupiedReliabilityBins = bins.filter(count => count > 0).length;
 
     const sorted = [...decisionConfidences].sort((a, b) => a - b);
     const p90 = getPercentile(sorted, 90);
@@ -293,7 +295,8 @@ export function computeRecommendationAnalytics(
     confidenceStdDev,
     confidenceDynamicRange,
     confidenceP90MinusP10,
-    confidenceResolution
+    confidenceResolution,
+    occupiedReliabilityBins
   };
 }
 

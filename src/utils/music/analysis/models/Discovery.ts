@@ -401,6 +401,7 @@ export interface RecommendationAnalytics {
   confidenceDynamicRange: number;
   confidenceP90MinusP10: number;
   confidenceResolution: number;
+  occupiedReliabilityBins: number;
 }
 
 export interface DiscardedAlternative {
