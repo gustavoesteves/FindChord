@@ -1,7 +1,7 @@
 {
   "method": "platt",
-  "A": 29.95,
-  "B": -14.5,
+  "A": 29.55,
+  "B": -13.3,
   "trainingDate": "2026-06-10",
   "benchmarkVersion": "C3.4-F"
 }

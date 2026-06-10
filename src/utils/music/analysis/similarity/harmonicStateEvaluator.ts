@@ -15,19 +15,19 @@ const harmonicStateCache = new Map<string, HarmonicStateProfile>();
  * Avalia a qualidade da condução de vozes (voice leading) de uma progressão
  * usando a distância média de transição gerada pelo resolvedor Viterbi.
  */
-export function evaluateVoiceLeadingQuality(progression: string[]): number {
+export function evaluateVoiceLeadingQuality(progression: string[], maxCandidatesLimit?: number): number {
   if (progression.length < 2) {
     return 1.0;
   }
   
   const cacheKey = progression.join(',');
-  if (voiceLeadingQualityCache.has(cacheKey)) {
+  if (maxCandidatesLimit === undefined && voiceLeadingQualityCache.has(cacheKey)) {
     return voiceLeadingQualityCache.get(cacheKey)!;
   }
   
   try {
     const tuning = ['E', 'A', 'D', 'G', 'B', 'E']; // Afinação padrão de guitarra
-    const result = findAutoVoicingsAdvanced(progression, tuning, false);
+    const result = findAutoVoicingsAdvanced(progression, tuning, false, undefined, maxCandidatesLimit);
     const totalCost = result.solution.transitions.reduce((sum, t) => sum + t.voiceLeadingCost, 0);
     const averageCost = totalCost / (progression.length - 1);
     

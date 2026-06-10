@@ -311,7 +311,8 @@ export function findAutoVoicingsAdvanced(
   chords: string[],
   tuning: string[],
   includeAlternatives: boolean = false,
-  candidatesOverride?: AnalyzedVoicing[][]
+  candidatesOverride?: AnalyzedVoicing[][],
+  maxCandidatesLimit: number = 20
 ): {
   solution: ResolvedProgression;
   alternatives?: ResolvedProgression[];
@@ -329,7 +330,7 @@ export function findAutoVoicingsAdvanced(
     const targetPCs = chordInfo.notes.map(n => getPitchClass(n));
     const bassPC = chordInfo.bass ? getPitchClass(chordInfo.bass) : null;
     const generatedShapes = generateVoicings(chordName, root, targetPCs, tuning, chordInfo.quality, bassPC);
-    return generatedShapes.slice(0, 6).map(shape => buildAnalyzedVoicing(shape, tuning));
+    return generatedShapes.slice(0, maxCandidatesLimit).map(shape => buildAnalyzedVoicing(shape, tuning));
   });
 
   if (chordCandidatesList.some(list => list.length === 0)) {

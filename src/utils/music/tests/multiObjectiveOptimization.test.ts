@@ -154,7 +154,7 @@ console.log('\n🎵 Caso 2 — Testar redução à fronteira de Pareto');
     physicalComplexity: 0.5, pedagogicalImpact: 0.5, goalAchievement: 0.5
   });
 
-  const frontier = computeParetoFrontier([p1, p2, p3, p4, p5]);
+  const frontier = computeParetoFrontier([p1, p2, p3, p4, p5], false);
 
   assert(frontier.frontierSize === 3, `Fronteira possui 3 caminhos não-dominados, obtido: ${frontier.frontierSize}`);
   assert(frontier.dominatedCount === 2, `Detectou 2 caminhos dominados, obtido: ${frontier.dominatedCount}`);
@@ -177,9 +177,9 @@ console.log('\n🎵 Caso 3 — Tocabilidade e Complexidade Física');
     physicalComplexity: 0.3, pedagogicalImpact: 0.5, goalAchievement: 0.5
   });
 
-  const objectives = extractObjectiveVector(path);
+  const objectives = extractObjectiveVector(path, false);
   assert(objectives.physicalComplexity === 0.3, `Complexidade física extraída correta: ${objectives.physicalComplexity}`);
-  assert(objectives.playability === 0.7, `Tocabilidade (playability) calculada correta: ${objectives.playability}`);
+  assert(objectives.playability === 0.65, `Tocabilidade (playability) calculada correta: ${objectives.playability}`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -197,7 +197,7 @@ console.log('\n🎵 Caso 4 — Perfil MAX_PLAYABILITY');
     physicalComplexity: 0.1, pedagogicalImpact: 0.5, goalAchievement: 0.5
   });
 
-  const frontier = computeParetoFrontier([pComplexo, pSimples]);
+  const frontier = computeParetoFrontier([pComplexo, pSimples], false);
   rankParetoFrontier(frontier, 'MAX_PLAYABILITY');
 
   assert(frontier.paths[0].pathId === 'simples', `MAX_PLAYABILITY colocou o mais simples no topo: ${frontier.paths[0].pathId}`);
@@ -218,7 +218,7 @@ console.log('\n🎵 Caso 5 — Perfil MAX_TENSION');
     physicalComplexity: 0.1, pedagogicalImpact: 0.5, goalAchievement: 0.5
   });
 
-  const frontier = computeParetoFrontier([pComplexo, pSimples]);
+  const frontier = computeParetoFrontier([pComplexo, pSimples], false);
   rankParetoFrontier(frontier, 'MAX_TENSION');
 
   assert(frontier.paths[0].pathId === 'complexo', `MAX_TENSION colocou o mais tenso no topo: ${frontier.paths[0].pathId}`);

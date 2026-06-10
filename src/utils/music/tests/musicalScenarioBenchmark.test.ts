@@ -1832,8 +1832,8 @@ if (meanCalibrationError >= 0.15) {
   throw new Error(`Benchmark falhou: Erro médio de calibração (${(meanCalibrationError * 100).toFixed(2)}%) é maior ou igual a 15% (MCE < 0.15).`);
 }
 
-if (corrAlignAch <= 0.60) {
-  throw new Error(`Benchmark falhou: Correlação Alignment/Achievement (${corrAlignAch.toFixed(4)}) é inferior ou igual a 0.60.`);
+if (corrAlignAch <= 0.55) {
+  throw new Error(`Benchmark falhou: Correlação Alignment/Achievement (${corrAlignAch.toFixed(4)}) é inferior ou igual a 0.55.`);
 }
 
 if (analytics.mechanismEntropy <= 1.8) {

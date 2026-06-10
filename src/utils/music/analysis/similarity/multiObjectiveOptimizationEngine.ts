@@ -5,13 +5,74 @@ import type {
   ParetoFrontier,
   OptimizationProfile
 } from '../models/Discovery';
+import metricDistributions from './metric_distributions.json' with { type: 'json' };
 
 const PEDAGOGY_SATURATION = 0.6;
 
+interface PercentilePoint {
+  val: number;
+  pct: number;
+}
+
+const percentileCache: Record<string, PercentilePoint[]> = {};
+
+// Inicializa o cache de percentis a partir do arquivo JSON importado
+if (metricDistributions && metricDistributions.percentiles) {
+  for (const [metricName, dist] of Object.entries(metricDistributions.percentiles)) {
+    const d = dist as any;
+    const points: PercentilePoint[] = [
+      { val: d.min, pct: 0 },
+      { val: d.p10, pct: 10 },
+      { val: d.p25, pct: 25 },
+      { val: d.p50, pct: 50 },
+      { val: d.p75, pct: 75 },
+      { val: d.p90, pct: 90 },
+      { val: d.p95, pct: 95 },
+      { val: d.p99, pct: 99 },
+      { val: d.max, pct: 100 }
+    ];
+    points.sort((a, b) => a.val - b.val);
+    percentileCache[metricName] = points;
+  }
+}
+
 /**
- * Extrai o vetor de objetivos normalizados a partir de um caminho de recomendação.
+ * Converte um valor numérico bruto em sua classificação percentílica empírica [0.0 - 1.0].
+ * Suporta proteção contra NaN, pontos explícitos P0/P100 e percentis degenerados.
  */
-export function extractObjectiveVector(path: RecommendationPath): ObjectiveVector {
+export function getPercentileForMetric(metricName: string, value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0.0;
+  }
+
+  const points = percentileCache[metricName];
+  if (!points || points.length === 0) {
+    return value;
+  }
+
+  if (value <= points[0].val) return 0.0;
+  if (value >= points[points.length - 1].val) return 1.0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    if (value >= p1.val && value <= p2.val) {
+      if (Math.abs(p2.val - p1.val) < 1e-9) {
+        return Number((p2.pct / 100).toFixed(4));
+      }
+      const pct = p1.pct + ((value - p1.val) / (p2.val - p1.val)) * (p2.pct - p1.pct);
+      return Number((pct / 100).toFixed(4));
+    }
+  }
+
+  return value;
+}
+
+/**
+ * Extrai o vetor de objetivos a partir de um caminho de recomendação.
+ * Por padrão, mapeia os valores brutos para seus percentis populacionais.
+ */
+export function extractObjectiveVector(path: RecommendationPath, usePercentiles: boolean = true): ObjectiveVector {
   const transition = path.executionResult?.stateTransition;
   const goalAchievement = path.executionResult?.goalAchievement;
   const accumulatedImpact = path.accumulatedImpact ?? 0;
@@ -24,19 +85,40 @@ export function extractObjectiveVector(path: RecommendationPath): ObjectiveVecto
     ? (path.steps.reduce((sum, s) => sum + s.physicalComplexity, 0) / path.steps.length)
     : 0;
 
-  const playability = Math.max(0.0, 1.0 - avgComplexity - 0.05 * path.steps.length);
-  const pedagogicalImpact = Number((1.0 - Math.exp(-PEDAGOGY_SATURATION * accumulatedImpact)).toFixed(4));
+  const rawPlayability = Math.max(0.0, 1.0 - avgComplexity - 0.05 * path.steps.length);
+  const rawPedagogicalImpact = Number((1.0 - Math.exp(-PEDAGOGY_SATURATION * accumulatedImpact)).toFixed(4));
+
+  const rawTension = transition?.after.tension ?? 0;
+  const rawChromaticism = transition?.after.chromaticism ?? 0;
+  const rawBassSmoothness = transition?.after.bassSmoothness ?? 0;
+  const rawFunctionalStability = transition?.after.functionalStability ?? 0;
+  const rawVoiceLeading = transition?.after.voiceLeadingQuality ?? 0;
+  const rawGoalAchievement = goalAchievement?.score ?? 0;
+
+  if (usePercentiles) {
+    return {
+      tension: getPercentileForMetric('tension', rawTension),
+      chromaticism: getPercentileForMetric('chromaticism', rawChromaticism),
+      bassSmoothness: getPercentileForMetric('bassSmoothness', rawBassSmoothness),
+      functionalStability: getPercentileForMetric('functionalStability', rawFunctionalStability),
+      voiceLeading: getPercentileForMetric('voiceLeading', rawVoiceLeading),
+      physicalComplexity,
+      playability: getPercentileForMetric('playability', Number(rawPlayability.toFixed(4))),
+      pedagogicalImpact: getPercentileForMetric('pedagogicalImpact', rawPedagogicalImpact),
+      goalAchievement: getPercentileForMetric('goalAchievement', rawGoalAchievement)
+    };
+  }
 
   return {
-    tension: transition?.after.tension ?? 0,
-    chromaticism: transition?.after.chromaticism ?? 0,
-    bassSmoothness: transition?.after.bassSmoothness ?? 0,
-    functionalStability: transition?.after.functionalStability ?? 0,
-    voiceLeading: transition?.after.voiceLeadingQuality ?? 0,
+    tension: rawTension,
+    chromaticism: rawChromaticism,
+    bassSmoothness: rawBassSmoothness,
+    functionalStability: rawFunctionalStability,
+    voiceLeading: rawVoiceLeading,
     physicalComplexity,
-    playability: Number(playability.toFixed(4)),
-    pedagogicalImpact,
-    goalAchievement: goalAchievement?.score ?? 0
+    playability: Number(rawPlayability.toFixed(4)),
+    pedagogicalImpact: rawPedagogicalImpact,
+    goalAchievement: rawGoalAchievement
   };
 }
 
@@ -123,10 +205,10 @@ export function computeCrowdingDistance(paths: ParetoPath[]): void {
 /**
  * Computa a fronteira de Pareto (soluções não dominadas) a partir dos caminhos candidatos.
  */
-export function computeParetoFrontier(candidatePaths: RecommendationPath[]): ParetoFrontier {
+export function computeParetoFrontier(candidatePaths: RecommendationPath[], usePercentiles: boolean = true): ParetoFrontier {
   const allParetoPaths: ParetoPath[] = candidatePaths.map(path => {
     const pathId = path.steps.map(s => s.id).join('+') || 'no-transform';
-    const objectives = extractObjectiveVector(path);
+    const objectives = extractObjectiveVector(path, usePercentiles);
     return {
       pathId,
       objectives,

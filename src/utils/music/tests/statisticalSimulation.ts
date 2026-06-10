@@ -182,7 +182,7 @@ for (let i = 0; i < samplingSpace.length; i++) {
       if (matches.length > 0 && matches[0].recommendedPaths) {
         // Coleta TODOS os caminhos candidatos válidos da query
         for (const path of matches[0].recommendedPaths) {
-          const objectives = extractObjectiveVector(path);
+          const objectives = extractObjectiveVector(path, false);
           collectedPathsObjectives.push(objectives);
           collectedSteps.push(path.steps.length);
           pathsCount++;
