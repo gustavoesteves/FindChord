@@ -357,6 +357,11 @@ export interface ParetoFrontier {
   frontierCount?: number;
   frontierCompressionRatio?: number;
   frontierOccupancyIndex?: number;
+  frontierEntropy?: number;
+  normalizedEntropy?: number;
+  effectiveFrontierSize?: number;
+  ambiguityFactor?: number;
+  informationGain?: number;
 }
 
 export type OptimizationProfile =
@@ -426,6 +431,13 @@ export interface RecommendationAnalytics {
   averageGoalAlignmentWeighted?: number;
   averageGeometryRaw?: number;
   averageGeometryWeighted?: number;
+  averageFrontierEntropy?: number;
+  averageNormalizedEntropy?: number;
+  averageEffectiveFrontierSize?: number;
+  averageAmbiguityFactor?: number;
+  averageInformationGain?: number;
+  averageAmbiguityRaw?: number;
+  averageAmbiguityWeighted?: number;
 }
 
 export interface DiscardedAlternative {
@@ -459,6 +471,8 @@ export interface ConfidenceBreakdown {
   goalAlignmentWeighted: number;
   geometryRaw: number;
   geometryWeighted: number;
+  ambiguityRaw: number;
+  ambiguityWeighted: number;
 }
 
 export interface RecommendationDecision {
@@ -478,6 +492,11 @@ export interface RecommendationDecision {
   rawConfidence?: number;
   paretoAmbiguity?: number;
   confidenceBreakdown?: ConfidenceBreakdown;
+  frontierEntropy?: number;
+  normalizedEntropy?: number;
+  effectiveFrontierSize?: number;
+  ambiguityFactor?: number;
+  informationGain?: number;
 }
 
 export interface TransformationExecutionResult {

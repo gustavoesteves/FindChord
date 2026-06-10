@@ -10,7 +10,7 @@ import type {
   ParetoFrontier
 } from '../models/Discovery';
 import calibrationModel from './calibration_model.json' with { type: 'json' };
-import confidenceWeightModel from './confidence_weight_model.json' with { type: 'json' };
+import { inferConfidenceContext, selectConfidenceWeights } from './contextAwareConfidenceEngine';
 
 function formatGoalName(goal: string): string {
   switch (goal) {
@@ -312,7 +312,7 @@ export function explainRecommendationDecision(
     const sizeScore = 1.0 - sizePenalty;
 
     // 2. Hypervolume Score (decreases as hypervolume increases, avoiding quick saturation)
-    const hvPenalty = Math.min(0.5, Math.sqrt(hypervolume));
+    const hvPenalty = Math.min(0.8, Math.sqrt(hypervolume) * 2.0);
     const hvScore = 1.0 - hvPenalty;
 
     // 3. Spacing Score (decreases as spacing increases)
@@ -320,15 +320,28 @@ export function explainRecommendationDecision(
     const spacingScore = 1.0 - spacingPenalty;
 
     // Combine geometry metrics
-    geometryFactor = (sizeScore * 0.4) + (hvScore * 0.3) + (spacingScore * 0.3);
-    paretoAmbiguity = ((1.0 - sizeScore) * 0.4) + ((1.0 - hvScore) * 0.3) + ((1.0 - spacingScore) * 0.3);
+    geometryFactor = (sizeScore * 0.3) + (hvScore * 0.5) + (spacingScore * 0.2);
+    paretoAmbiguity = ((1.0 - sizeScore) * 0.3) + ((1.0 - hvScore) * 0.5) + ((1.0 - spacingScore) * 0.2);
   }
 
-  const wGap = confidenceWeightModel.scoreGapWeight;
-  const wGoal = confidenceWeightModel.goalAlignmentWeight;
-  const wGeom = confidenceWeightModel.geometryWeight;
+  const frontierSize = paretoFrontier ? (paretoFrontier.frontierSize ?? paretoFrontier.paths?.length ?? 1) : 1;
+  const context = inferConfidenceContext(frontierSize);
+  const weights = selectConfidenceWeights(context);
 
-  const rawConfidence = (scoreGap * wGap) + (goalAlignmentValue * wGoal) + (geometryFactor * wGeom);
+  const wGap = weights.scoreGapWeight;
+  const wGoal = weights.goalAlignmentWeight;
+  const wGeom = weights.geometryWeight;
+  const wAmb = weights.ambiguityWeight;
+
+  // Extrair métricas contínuas de entropia e ganho de informação da fronteira de Pareto
+  const frontierEntropy = paretoFrontier?.frontierEntropy ?? 0.0;
+  const normalizedEntropy = paretoFrontier?.normalizedEntropy ?? 0.0;
+  const effectiveFrontierSize = paretoFrontier?.effectiveFrontierSize ?? 1.0;
+  const ambiguityFactor = paretoFrontier?.ambiguityFactor ?? 0.0;
+  const informationGain = paretoFrontier?.informationGain ?? 1.0;
+
+  // Nova formulação linear contínua aditiva com ganho de informação
+  const rawConfidence = (scoreGap * wGap) + (goalAlignmentValue * wGoal) + (geometryFactor * wGeom) + (informationGain * wAmb);
   
   const confidenceBreakdown = {
     scoreGapRaw: Number(scoreGap.toFixed(4)),
@@ -338,7 +351,9 @@ export function explainRecommendationDecision(
     goalAlignmentRaw: Number(goalAlignmentValue.toFixed(4)),
     goalAlignmentWeighted: Number((goalAlignmentValue * wGoal).toFixed(4)),
     geometryRaw: Number(geometryFactor.toFixed(4)),
-    geometryWeighted: Number((geometryFactor * wGeom).toFixed(4))
+    geometryWeighted: Number((geometryFactor * wGeom).toFixed(4)),
+    ambiguityRaw: Number(ambiguityFactor.toFixed(4)),
+    ambiguityWeighted: Number((ambiguityFactor * wAmb).toFixed(4))
   };
 
   // Platt Scaling Calibration
@@ -359,6 +374,11 @@ export function explainRecommendationDecision(
     confidence,
     rawConfidence,
     paretoAmbiguity: Number(paretoAmbiguity.toFixed(4)),
-    confidenceBreakdown
+    confidenceBreakdown,
+    frontierEntropy,
+    normalizedEntropy,
+    effectiveFrontierSize,
+    ambiguityFactor,
+    informationGain
   };
 }

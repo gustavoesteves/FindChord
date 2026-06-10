@@ -6,6 +6,7 @@ import type {
   OptimizationProfile
 } from '../models/Discovery';
 import metricDistributions from './metric_distributions.json' with { type: 'json' };
+import { calculateFrontierEntropy } from './frontierEntropyEngine';
 
 const PEDAGOGY_SATURATION = 0.6;
 
@@ -415,7 +416,7 @@ export function computeParetoFrontier(candidatePaths: RecommendationPath[], useP
   const frontierCompressionRatio = candidateCount > 0 ? Number((frontierCount / candidateCount).toFixed(4)) : 0.0;
   const frontierOccupancyIndex = Number((hv * spread).toFixed(4));
 
-  return {
+  const frontier: ParetoFrontier = {
     paths: rank1Paths,
     frontierSize: rank1Paths.length,
     dominatedCount,
@@ -437,6 +438,13 @@ export function computeParetoFrontier(candidatePaths: RecommendationPath[], useP
     frontierCount,
     frontierCompressionRatio,
     frontierOccupancyIndex
+  };
+
+  const entropyMetrics = calculateFrontierEntropy(frontier);
+
+  return {
+    ...frontier,
+    ...entropyMetrics
   };
 }
 

@@ -69,6 +69,13 @@ export function computeRecommendationAnalytics(
     goalAlignmentsWeighted?: number[];
     geometriesRaw?: number[];
     geometriesWeighted?: number[];
+    frontierEntropies?: number[];
+    normalizedEntropies?: number[];
+    effectiveFrontierSizes?: number[];
+    ambiguityFactors?: number[];
+    informationGains?: number[];
+    ambiguitiesRaw?: number[];
+    ambiguitiesWeighted?: number[];
   }
  ): RecommendationAnalytics {
   const typeDist: Record<RecommendationMechanism, number> = {
@@ -313,6 +320,27 @@ export function computeRecommendationAnalytics(
   const geometriesWeighted = options?.geometriesWeighted || [];
   const averageGeometryWeighted = geometriesWeighted.length > 0 ? Number((geometriesWeighted.reduce((a, b) => a + b, 0) / geometriesWeighted.length).toFixed(4)) : 0.0;
 
+  const frontierEntropies = options?.frontierEntropies || [];
+  const averageFrontierEntropy = frontierEntropies.length > 0 ? Number((frontierEntropies.reduce((a, b) => a + b, 0) / frontierEntropies.length).toFixed(4)) : 0.0;
+
+  const normalizedEntropies = options?.normalizedEntropies || [];
+  const averageNormalizedEntropy = normalizedEntropies.length > 0 ? Number((normalizedEntropies.reduce((a, b) => a + b, 0) / normalizedEntropies.length).toFixed(4)) : 0.0;
+
+  const effectiveFrontierSizes = options?.effectiveFrontierSizes || [];
+  const averageEffectiveFrontierSize = effectiveFrontierSizes.length > 0 ? Number((effectiveFrontierSizes.reduce((a, b) => a + b, 0) / effectiveFrontierSizes.length).toFixed(4)) : 1.0;
+
+  const ambiguityFactors = options?.ambiguityFactors || [];
+  const averageAmbiguityFactor = ambiguityFactors.length > 0 ? Number((ambiguityFactors.reduce((a, b) => a + b, 0) / ambiguityFactors.length).toFixed(4)) : 0.0;
+
+  const informationGains = options?.informationGains || [];
+  const averageInformationGain = informationGains.length > 0 ? Number((informationGains.reduce((a, b) => a + b, 0) / informationGains.length).toFixed(4)) : 1.0;
+
+  const ambiguitiesRaw = options?.ambiguitiesRaw || [];
+  const averageAmbiguityRaw = ambiguitiesRaw.length > 0 ? Number((ambiguitiesRaw.reduce((a, b) => a + b, 0) / ambiguitiesRaw.length).toFixed(4)) : 0.0;
+
+  const ambiguitiesWeighted = options?.ambiguitiesWeighted || [];
+  const averageAmbiguityWeighted = ambiguitiesWeighted.length > 0 ? Number((ambiguitiesWeighted.reduce((a, b) => a + b, 0) / ambiguitiesWeighted.length).toFixed(4)) : 0.0;
+
   return {
     recommendationTypeDistribution: typeDist,
     dominantFactorDistribution: factorDist,
@@ -351,7 +379,14 @@ export function computeRecommendationAnalytics(
     averageGoalAlignmentRaw,
     averageGoalAlignmentWeighted,
     averageGeometryRaw,
-    averageGeometryWeighted
+    averageGeometryWeighted,
+    averageFrontierEntropy,
+    averageNormalizedEntropy,
+    averageEffectiveFrontierSize,
+    averageAmbiguityFactor,
+    averageInformationGain,
+    averageAmbiguityRaw,
+    averageAmbiguityWeighted
   };
 }
 
@@ -379,6 +414,14 @@ export function computeDiscoveryAnalytics(
   const geometriesRaw: number[] = [];
   const geometriesWeighted: number[] = [];
 
+  const frontierEntropies: number[] = [];
+  const normalizedEntropies: number[] = [];
+  const effectiveFrontierSizes: number[] = [];
+  const ambiguityFactors: number[] = [];
+  const informationGains: number[] = [];
+  const ambiguitiesRaw: number[] = [];
+  const ambiguitiesWeighted: number[] = [];
+
   for (const match of matches) {
     if (match.recommendedPaths && match.recommendedPaths.length > 0) {
       const winner = match.recommendedPaths[0];
@@ -399,6 +442,11 @@ export function computeDiscoveryAnalytics(
       if (typeof match.paretoFrontier.spacing === 'number') spacings.push(match.paretoFrontier.spacing);
       if (typeof match.paretoFrontier.frontierCompressionRatio === 'number') compressionRatios.push(match.paretoFrontier.frontierCompressionRatio);
       if (typeof match.paretoFrontier.frontierOccupancyIndex === 'number') occupancyIndices.push(match.paretoFrontier.frontierOccupancyIndex);
+      if (typeof match.paretoFrontier.frontierEntropy === 'number') frontierEntropies.push(match.paretoFrontier.frontierEntropy);
+      if (typeof match.paretoFrontier.normalizedEntropy === 'number') normalizedEntropies.push(match.paretoFrontier.normalizedEntropy);
+      if (typeof match.paretoFrontier.effectiveFrontierSize === 'number') effectiveFrontierSizes.push(match.paretoFrontier.effectiveFrontierSize);
+      if (typeof match.paretoFrontier.ambiguityFactor === 'number') ambiguityFactors.push(match.paretoFrontier.ambiguityFactor);
+      if (typeof match.paretoFrontier.informationGain === 'number') informationGains.push(match.paretoFrontier.informationGain);
     }
 
     if (match.recommendationDecision) {
@@ -415,6 +463,8 @@ export function computeDiscoveryAnalytics(
         goalAlignmentsWeighted.push(cb.goalAlignmentWeighted);
         geometriesRaw.push(cb.geometryRaw);
         geometriesWeighted.push(cb.geometryWeighted);
+        if (typeof cb.ambiguityRaw === 'number') ambiguitiesRaw.push(cb.ambiguityRaw);
+        if (typeof cb.ambiguityWeighted === 'number') ambiguitiesWeighted.push(cb.ambiguityWeighted);
       }
     }
   }
@@ -437,6 +487,13 @@ export function computeDiscoveryAnalytics(
     goalAlignmentsRaw,
     goalAlignmentsWeighted,
     geometriesRaw,
-    geometriesWeighted
+    geometriesWeighted,
+    frontierEntropies,
+    normalizedEntropies,
+    effectiveFrontierSizes,
+    ambiguityFactors,
+    informationGains,
+    ambiguitiesRaw,
+    ambiguitiesWeighted
   });
 }

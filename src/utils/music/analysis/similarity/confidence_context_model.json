@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "softmaxTemperature": 25
+  },
+  "global": {
+    "scoreGapWeight": 0.15,
+    "goalAlignmentWeight": 0.1,
+    "geometryWeight": 0.46,
+    "ambiguityWeight": 0.29,
+    "optimizationScore": 0.33922,
+    "population": 25,
+    "lastOptimized": "2026-06-10",
+    "brierScore": 0.027945
+  }
+}

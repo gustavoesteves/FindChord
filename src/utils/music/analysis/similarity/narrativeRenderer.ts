@@ -521,7 +521,17 @@ export function renderExplanation(
     }
 
     const confPct = Math.round(recommendationDecision.confidence * 100);
-    decisionParts.push(`**Confiança da Recomendação**\n${confPct}%`);
+    let confStr = `**Confiança da Recomendação**\n${confPct}%`;
+
+    if (recommendationDecision.normalizedEntropy !== undefined) {
+      const hNorm = recommendationDecision.normalizedEntropy;
+      if (hNorm <= 0.40) {
+        confStr += `\nA recomendação apresenta elevada confiança porque a fronteira de Pareto possui baixa ambiguidade estrutural.`;
+      } else {
+        confStr += `\nExistem múltiplas soluções harmonicamente equivalentes, reduzindo a certeza estatística da recomendação.`;
+      }
+    }
+    decisionParts.push(confStr);
 
     parts.push(decisionParts.join('\n\n'));
   }

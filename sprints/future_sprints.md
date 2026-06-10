@@ -84,15 +84,20 @@ graph TD
         F12_5 --> F12_6
     end
 
-    subgraph "PHASE 5 — Context-Aware Optimization (🔄 Em andamento)"
+    subgraph "PHASE 5 — Context-Aware Optimization (✅ Concluída)"
         F12_7["F12.7: Context-Aware Confidence Weights"]
         F12_6 --> F12_7
-        F10E["F10-E: Corpus Expansion & Benchmark Suite"]
-        F12_7 --> F10E
     end
 
-    subgraph "PHASE 6 — Extended Harmony"
+    subgraph "PHASE 5.5 — Probabilistic Modeling (🔄 Em andamento)"
+        F12_8["F12.8: Probabilistic Confidence Modeling"]
+        F12_7 --> F12_8
+    end
+
+    subgraph "PHASE 6 — Extended Harmony & Corpus"
+        F10E["F10-E: Corpus Expansion & Benchmark Suite"]
         F14["F14: Blues & Extended Tonality Engine"]
+        F12_8 --> F10E
         F10E --> F14
     end
 
@@ -215,7 +220,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F12.7: Context-Aware Confidence Weights
-**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Aprender e aplicar vetores de pesos de confiança condicionados ao contexto harmônico, incorporando o Brier Score como métrica de validação probabilística integral.
 *   **Conceito**:
     *   **Brier Score como KPI Principal**: Promover o **Brier Score** ($BS = \frac{1}{N} \sum_{i=1}^N (p_i - o_i)^2$) a indicador primário de qualidade do recomendador (avaliando simultaneamente linearidade, calibração e discriminação).
@@ -225,19 +230,25 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F12.8: Probabilistic Confidence Modeling
-**Status: 🔄 PLANEJADA**
+**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
 *   **Objetivo**: Modelar continuamente a confiança a partir de um estimador de probabilidade contínua baseado nas características geométricas da fronteira.
 *   **Conceito**:
-    *   **Entropia de Pareto**: Integrar a métrica de **Entropia da Fronteira** ($H = -\sum p_i \log p_i$, onde $p_i$ é a relevância relativa ou crowding distance de cada solução ótima) para diferenciar entre fronteiras com soluções redundantes (baixa entropia) e soluções altamente diversas/competitivas (alta entropia).
+    *   **Entropia de Pareto**: Integrar a métrica de **Entropia da Fronteira** ($H = -\sum p_i \log p_i$, onde $p_i$ é a relevância relative ou crowding distance de cada solução ótima) para diferenciar entre fronteiras com soluções redundantes (baixa entropia) e soluções altamente diversas/competitivas (alta entropia).
     *   **Estimador de Densidade Contínuo**: Substituir as decisões discretas por contexto da F12.7 por uma função de inferência contínua (regressão probabilística), interpolando os pesos de confiança diretamente a partir da entropia e volume da fronteira de Pareto.
 
 ---
 
 ### Sprint F10-E: Corpus Expansion & Benchmark Suite
-**Status: 🔄 ADIADA (Pós-Otimização)**
-*   **Objetivo**: Expandir o corpus com mais de 100 progressões clássicas, de jazz e populares.
-*   **Conceito**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala.
-*   **Valor**: Mudado para posterior ao gerador C3 para evitar retrabalho de calibração de modelos sobre uma base inflada de dados.
+**Status: 🔄 PLANEJADA (Pós-F12.8)**
+*   **Objetivo**: Expandir o corpus com mais de 100 progressões clássicas, de jazz e populares e validar a cobertura de contextos.
+*   **Conceito**:
+    *   **Indexação e Densidade**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala.
+    *   **Métricas de Cobertura de Contexto (Coverage Metrics)**: Implementar métricas formais no benchmark de expansão para diagnosticar a cobertura real e mitigar a concentração de baixa ambiguidade:
+        *   `clusterPopulation`: contagem de cenários classificados em cada cluster de ambiguidade harmônica.
+        *   `ambiguityDistribution`: dispersão e percentis de Pareto de ambiguidade estrutural.
+        *   `frontierSizeDistribution`: histograma de tamanhos de fronteiras obtidos.
+        *   `hypervolumeDistribution`: distribuição de volume coberto por Pareto.
+        *   `contextCoverageScore`: score sintético indicando a proporção de contextos cobertos com significância estatística ($N \ge 10$).
 
 ---
 
