@@ -1164,6 +1164,19 @@ function getPercentile(sorted: number[], p: number): number {
 }
 
 // 2. Otimização de Platt Scaling com Restrições de Discriminação (Grid Search)
+interface CandidateCalibration {
+  a: number;
+  b: number;
+  score: number;
+  mce: number;
+  ece: number;
+  entropy: number;
+  stdDev: number;
+  dynamicRange: number;
+  occupiedBins: number;
+}
+const top10Candidates: CandidateCalibration[] = [];
+
 let bestOptA = 4.5;
 let bestOptB = -1.2;
 let bestScore = -999999;
@@ -1207,6 +1220,34 @@ for (let a = 0.1; a <= 30.0; a += 0.05) {
     if (p90p10Diff < 0.15) score -= 1000;
     if (occupiedBins < 4) score -= 1000;
     if (mce >= 0.15) score -= 1000;
+
+    // ECE calculation inside grid search loop for diagnostics tracking
+    let eceSum = 0;
+    for (const binSamples of localBins) {
+      const count = binSamples.length;
+      if (count > 0) {
+        const avgConfidence = binSamples.reduce((sum, s) => sum + s.predicted, 0) / count;
+        const avgTarget = binSamples.reduce((sum, s) => sum + s.target, 0) / count;
+        eceSum += (count / calibrated.length) * Math.abs(avgConfidence - avgTarget);
+      }
+    }
+    const ece = eceSum;
+
+    top10Candidates.push({
+      a,
+      b,
+      score,
+      mce,
+      ece,
+      entropy: ent,
+      stdDev: std,
+      dynamicRange: range,
+      occupiedBins
+    });
+    top10Candidates.sort((x, y) => y.score - x.score);
+    if (top10Candidates.length > 10) {
+      top10Candidates.pop();
+    }
     
     if (score > bestScore) {
       bestScore = score;
@@ -1640,6 +1681,14 @@ results.forEach(r => {
 fs.writeFileSync(artifactPath, mdContent);
 console.log(`📝 Relatório de benchmark gerado em: [musical_benchmark_report.md](file://${artifactPath})`);
 
+// Geração da Tabela de Top-10 candidatos de calibração
+let candidatesTableMd = `### 🏆 Top-10 Candidatos de Calibração (Grid Search)\n\n`;
+candidatesTableMd += `| Rank | A | B | Score Otimização | Mean Calibration Error (MCE) | ECE | Entropy | Std Dev | Dynamic Range | Bins Occupied |\n`;
+candidatesTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
+top10Candidates.forEach((c, idx) => {
+  candidatesTableMd += `| **#${idx + 1}** | ${c.a.toFixed(2)} | ${c.b.toFixed(2)} | ${c.score.toFixed(4)} | ${(c.mce * 100).toFixed(2)}% | ${(c.ece * 100).toFixed(2)}% | ${c.entropy.toFixed(4)} | ${c.stdDev.toFixed(4)} | ${c.dynamicRange.toFixed(4)} | ${c.occupiedBins} |\n`;
+});
+
 // Geração do Relatório de Diagnóstico C3.4-F
 let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint C3.4-F)
 
@@ -1752,6 +1801,10 @@ ${binTableMd}
 ---
 
 ${mechTableMd}
+
+---
+
+${candidatesTableMd}
 
 ---
 
