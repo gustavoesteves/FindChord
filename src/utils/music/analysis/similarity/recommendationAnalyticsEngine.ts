@@ -200,6 +200,53 @@ export function computeRecommendationAnalytics(
   }
   const averagePathLength = executions.length > 0 ? Number((sumPathLength / executions.length).toFixed(4)) : 0;
 
+  // Helper for linear interpolation percentile
+  const getPercentile = (sorted: number[], p: number): number => {
+    if (sorted.length === 0) return 0;
+    const idx = (p / 100) * (sorted.length - 1);
+    const low = Math.floor(idx);
+    const high = Math.ceil(idx);
+    const weight = idx - low;
+    return (1 - weight) * sorted[low] + weight * sorted[high];
+  };
+
+  // Discrimination metrics
+  let confidenceStdDev = 0;
+  let confidenceDynamicRange = 0;
+  let confidenceEntropy = 0;
+  let confidenceP90MinusP10 = 0;
+
+  if (decisionConfidences.length > 0) {
+    const avg = decisionConfidences.reduce((sum, v) => sum + v, 0) / decisionConfidences.length;
+    const variance = decisionConfidences.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / decisionConfidences.length;
+    confidenceStdDev = Number(Math.sqrt(variance).toFixed(4));
+
+    const max = Math.max(...decisionConfidences);
+    const min = Math.min(...decisionConfidences);
+    confidenceDynamicRange = Number((max - min).toFixed(4));
+
+    const bins = Array(10).fill(0);
+    for (const v of decisionConfidences) {
+      let bIdx = Math.floor(v * 10);
+      if (bIdx >= 10) bIdx = 9;
+      if (bIdx < 0) bIdx = 0;
+      bins[bIdx]++;
+    }
+    let entropy = 0;
+    for (const count of bins) {
+      if (count > 0) {
+        const p = count / decisionConfidences.length;
+        entropy -= p * Math.log2(p);
+      }
+    }
+    confidenceEntropy = Number(entropy.toFixed(4));
+
+    const sorted = [...decisionConfidences].sort((a, b) => a - b);
+    const p90 = getPercentile(sorted, 90);
+    const p10 = getPercentile(sorted, 10);
+    confidenceP90MinusP10 = Number((p90 - p10).toFixed(4));
+  }
+
   return {
     recommendationTypeDistribution: typeDist,
     dominantFactorDistribution: factorDist,
@@ -216,7 +263,11 @@ export function computeRecommendationAnalytics(
     effectiveMechanismCount,
     averagePathLength,
     pathLengthDistribution: pathLengthDist,
-    mechanismDominanceRatio
+    mechanismDominanceRatio,
+    confidenceEntropy,
+    confidenceStdDev,
+    confidenceDynamicRange,
+    confidenceP90MinusP10
   };
 }
 

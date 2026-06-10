@@ -1091,7 +1091,7 @@ const failedScenarios = results.filter(r => r.score < 3).length;
 const failedCriticals = results.filter(r => r.critical && r.score < 3);
 
 // Computar analytics usando o novo motor
-const analytics = computeDiscoveryAnalytics(allMatches);
+let analytics = computeDiscoveryAnalytics(allMatches);
 
 const totalFactors = Object.values(analytics.dominantFactorDistribution).reduce((sum, c) => sum + c, 0);
 const getFactorPct = (factor: keyof typeof analytics.dominantFactorDistribution) => {
@@ -1129,28 +1129,83 @@ for (const run of results) {
   }
 }
 
-// 2. Otimização de Platt Scaling (Grid Search)
+// Helper functions for discrimination metrics
+function stdDev(vals: number[]): number {
+  const avg = vals.reduce((sum, v) => sum + v, 0) / vals.length;
+  const variance = vals.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / vals.length;
+  return Math.sqrt(variance);
+}
+
+function entropy10Bins(vals: number[]): number {
+  const localBins = Array(10).fill(0);
+  for (const v of vals) {
+    let bIdx = Math.floor(v * 10);
+    if (bIdx >= 10) bIdx = 9;
+    if (bIdx < 0) bIdx = 0;
+    localBins[bIdx]++;
+  }
+  let entropy = 0;
+  for (const count of localBins) {
+    if (count > 0) {
+      const p = count / vals.length;
+      entropy -= p * Math.log2(p);
+    }
+  }
+  return entropy;
+}
+
+function getPercentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const idx = (p / 100) * (sorted.length - 1);
+  const low = Math.floor(idx);
+  const high = Math.ceil(idx);
+  const weight = idx - low;
+  return (1 - weight) * sorted[low] + weight * sorted[high];
+}
+
+// 2. Otimização de Platt Scaling com Restrições de Discriminação (Grid Search)
 let bestOptA = 4.5;
 let bestOptB = -1.2;
-let minOptErr = 999;
-for (let a = 1.0; a <= 30.0; a += 0.05) {
-  for (let b = -20.0; b <= 0.0; b += 0.05) {
+let bestScore = -999999;
+
+for (let a = 0.1; a <= 30.0; a += 0.05) {
+  for (let b = -20.0; b <= 20.0; b += 0.05) {
+    const calibrated = rawConfidences.map(raw => 1.0 / (1.0 + Math.exp(-(a * raw + b))));
+    
+    // Mean Calibration Error
     let sumErr = 0;
-    for (let k = 0; k < rawConfidences.length; k++) {
-      const raw = rawConfidences[k];
-      const target = normalizedScores[k];
-      const cal = 1.0 / (1.0 + Math.exp(-(a * raw + b)));
-      sumErr += Math.abs(cal - target);
+    for (let k = 0; k < calibrated.length; k++) {
+      sumErr += Math.abs(calibrated[k] - normalizedScores[k]);
     }
-    const avgErr = sumErr / rawConfidences.length;
-    if (avgErr < minOptErr) {
-      minOptErr = avgErr;
+    const mce = sumErr / calibrated.length;
+    
+    // Discrimination Metrics
+    const std = stdDev(calibrated);
+    const range = Math.max(...calibrated) - Math.min(...calibrated);
+    const ent = entropy10Bins(calibrated);
+    
+    const sorted = [...calibrated].sort((a, b) => a - b);
+    const p90 = getPercentile(sorted, 90);
+    const p10 = getPercentile(sorted, 10);
+    const p90p10Diff = p90 - p10;
+    
+    // Penalty structure for failing to meet discrimination guidelines
+    let penalty = 0;
+    if (std < 0.10) penalty += (0.10 - std) * 10.0;
+    if (range < 0.30) penalty += (0.30 - range) * 5.0;
+    if (ent < 1.0) penalty += (1.0 - ent) * 5.0;
+    if (p90p10Diff < 0.15) penalty += (0.15 - p90p10Diff) * 5.0;
+    
+    const score = -mce - penalty;
+    if (score > bestScore) {
+      bestScore = score;
       bestOptA = a;
       bestOptB = b;
     }
   }
 }
-console.log(`\n🔍 Platt Scaling Optimizer found: A = ${bestOptA.toFixed(2)}, B = ${bestOptB.toFixed(2)} with Min MCE = ${(minOptErr * 100).toFixed(2)}%\n`);
+const finalOptMCE = rawConfidences.reduce((sum, raw, idx) => sum + Math.abs((1.0 / (1.0 + Math.exp(-(bestOptA * raw + bestOptB)))) - normalizedScores[idx]), 0) / rawConfidences.length;
+console.log(`\n🔍 Platt Scaling Constrained Optimizer found: A = ${bestOptA.toFixed(2)}, B = ${bestOptB.toFixed(2)} with score = ${bestScore.toFixed(4)}, MCE = ${(finalOptMCE * 100).toFixed(2)}%\n`);
 
 // 3. Persistir os coeficientes Platt otimizados para sincronizar com execuções subsequentes
 const modelPath = path.join(__dirname, '../analysis/similarity/calibration_model.json');
@@ -1159,7 +1214,7 @@ const modelContent = {
   A: Number(bestOptA.toFixed(4)),
   B: Number(bestOptB.toFixed(4)),
   trainingDate: new Date().toISOString().split('T')[0],
-  benchmarkVersion: "C3.4-E"
+  benchmarkVersion: "C3.4-F"
 };
 try {
   fs.writeFileSync(modelPath, JSON.stringify(modelContent, null, 2));
@@ -1203,6 +1258,9 @@ for (const run of results) {
     }
   }
 }
+
+// Recomputar analytics com as confianças calibradas atualizadas para incluir métricas de discriminação corretas
+analytics = computeDiscoveryAnalytics(allMatches);
 
 // 5. Reliability Diagram Bins & ECE / MCE
 interface CalibrationBin {
@@ -1375,6 +1433,10 @@ console.log(`              Effective Mechanisms = ${analytics.effectiveMechanism
 console.log(`              Calibration Error = ${(meanCalibrationError * 100).toFixed(2)}% (${calibrationQualitative.toUpperCase()})`);
 console.log(`              ECE = ${(expectedCalibrationError * 100).toFixed(2)}%`);
 console.log(`              MCE = ${(maximumCalibrationError * 100).toFixed(2)}%`);
+console.log(`              Conf Entropy = ${analytics.confidenceEntropy.toFixed(4)}`);
+console.log(`              Conf StdDev = ${analytics.confidenceStdDev.toFixed(4)}`);
+console.log(`              Conf DynRange = ${analytics.confidenceDynamicRange.toFixed(4)}`);
+console.log(`              Conf P90-P10 = ${analytics.confidenceP90MinusP10.toFixed(4)}`);
 console.log(`==================================================`);
 
 // Mapeamento de distribuição de mecanismos recomendados
@@ -1401,7 +1463,7 @@ if (fs.existsSync(driftHistoryPath)) {
 }
 
 const currentRunEntry = {
-  sprint: "C3.4-E",
+  sprint: "C3.4-F",
   timestamp: new Date().toISOString().split('T')[0],
   meanCalibrationError: Number(meanCalibrationError.toFixed(4)),
   mechanismEntropy: Number(analytics.mechanismEntropy.toFixed(4)),
@@ -1409,10 +1471,14 @@ const currentRunEntry = {
   averageParetoSize: Number(analytics.averageParetoSize.toFixed(4)),
   mechanismDominanceRatio: Number(analytics.mechanismDominanceRatio.toFixed(4)),
   A: Number(bestOptA.toFixed(4)),
-  B: Number(bestOptB.toFixed(4))
+  B: Number(bestOptB.toFixed(4)),
+  confidenceEntropy: Number(analytics.confidenceEntropy.toFixed(4)),
+  confidenceStdDev: Number(analytics.confidenceStdDev.toFixed(4)),
+  confidenceDynamicRange: Number(analytics.confidenceDynamicRange.toFixed(4)),
+  confidenceP90MinusP10: Number(analytics.confidenceP90MinusP10.toFixed(4))
 };
 
-const existingIdx = history.findIndex(h => h.sprint === "C3.4-E");
+const existingIdx = history.findIndex(h => h.sprint === "C3.4-F");
 if (existingIdx !== -1) {
   history[existingIdx] = currentRunEntry;
 } else {
@@ -1420,6 +1486,17 @@ if (existingIdx !== -1) {
   if (dIdx !== -1) {
     if (history[dIdx].A === undefined) history[dIdx].A = 30.0;
     if (history[dIdx].B === undefined) history[dIdx].B = -10.0;
+    if (history[dIdx].confidenceEntropy === undefined) history[dIdx].confidenceEntropy = 0.0;
+    if (history[dIdx].confidenceStdDev === undefined) history[dIdx].confidenceStdDev = 0.0;
+    if (history[dIdx].confidenceDynamicRange === undefined) history[dIdx].confidenceDynamicRange = 0.0;
+    if (history[dIdx].confidenceP90MinusP10 === undefined) history[dIdx].confidenceP90MinusP10 = 0.0;
+  }
+  const eIdx = history.findIndex(h => h.sprint === "C3.4-E");
+  if (eIdx !== -1) {
+    if (history[eIdx].confidenceEntropy === undefined) history[eIdx].confidenceEntropy = 0.0;
+    if (history[eIdx].confidenceStdDev === undefined) history[eIdx].confidenceStdDev = 0.0;
+    if (history[eIdx].confidenceDynamicRange === undefined) history[eIdx].confidenceDynamicRange = 0.0;
+    if (history[eIdx].confidenceP90MinusP10 === undefined) history[eIdx].confidenceP90MinusP10 = 0.0;
   }
   history.push(currentRunEntry);
 }
@@ -1439,8 +1516,8 @@ else if (dominanceRatio < 0.60) dominanceQualitative = 'Moderado';
 
 // Tabela de Drift Histórico
 let driftTableMd = `### 🕒 Série Temporal de Drift Histórico\n\n`;
-driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Mechanism Entropy | Effective Mechanism Count | Average Pareto Size | Mechanism Dominance Ratio |\n`;
-driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
+driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Conf Entropy | Conf StdDev | Conf DynRange | Conf P90-P10 | Mech Entropy | Mech Dominance Ratio |\n`;
+driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
 for (const entry of history) {
   const errorPct = (entry.meanCalibrationError * 100).toFixed(2) + '%';
   const dominancePct = entry.mechanismDominanceRatio !== undefined 
@@ -1455,10 +1532,15 @@ for (const entry of history) {
   if (entry.B !== undefined && entry.B !== null) plattB = entry.B.toFixed(2);
   else if (entry.sprint === 'C3.4-D') plattB = '-10.00';
 
-  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${entry.mechanismEntropy.toFixed(2)} | ${entry.effectiveMechanismCount.toFixed(2)} | ${entry.averageParetoSize.toFixed(2)} | ${dominancePct} |\n`;
+  const cEnt = entry.confidenceEntropy !== undefined ? entry.confidenceEntropy.toFixed(4) : 'N/A';
+  const cStd = entry.confidenceStdDev !== undefined ? entry.confidenceStdDev.toFixed(4) : 'N/A';
+  const cRange = entry.confidenceDynamicRange !== undefined ? entry.confidenceDynamicRange.toFixed(4) : 'N/A';
+  const cP90P10 = entry.confidenceP90MinusP10 !== undefined ? entry.confidenceP90MinusP10.toFixed(4) : 'N/A';
+
+  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${cEnt} | ${cStd} | ${cRange} | ${cP90P10} | ${entry.mechanismEntropy.toFixed(2)} | ${dominancePct} |\n`;
 }
 
-let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint C3.4-E)
+let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint C3.4-F)
 
 Este relatório compila a validação qualitativa do recomendador do Find Chord após a incorporação da otimização multiobjetivo (fronteira de Pareto), explicabilidade de decisão e analytics de recomendação.
 
@@ -1499,6 +1581,10 @@ Estatísticas Contínuas:
 - Erro Médio de Calibração: ${(meanCalibrationError * 100).toFixed(2)}% (${calibrationQualitative.toUpperCase()})
 - Expected Calibration Error (ECE): ${(expectedCalibrationError * 100).toFixed(2)}%
 - Maximum Calibration Error (MCE): ${(maximumCalibrationError * 100).toFixed(2)}%
+- Entropia de Confiança (Discriminação): ${analytics.confidenceEntropy.toFixed(4)} (Esperado > 1.0)
+- Desvio Padrão de Confiança: ${analytics.confidenceStdDev.toFixed(4)} (Esperado > 0.10)
+- Intervalo Dinâmico de Confiança: ${analytics.confidenceDynamicRange.toFixed(4)} (Esperado > 0.30)
+- Diferença P90-P10 de Confiança: ${analytics.confidenceP90MinusP10.toFixed(4)} (Esperado > 0.15)
 - Taxa de Dominância de Mecanismos: ${(analytics.mechanismDominanceRatio * 100).toFixed(2)}% (${dominanceQualitative.toUpperCase()})
 
 Hard Constraint Failure Rate:
@@ -1531,8 +1617,8 @@ results.forEach(r => {
 fs.writeFileSync(artifactPath, mdContent);
 console.log(`📝 Relatório de benchmark gerado em: [musical_benchmark_report.md](file://${artifactPath})`);
 
-// Geração do Relatório de Diagnóstico C3.4-E
-let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint C3.4-E)
+// Geração do Relatório de Diagnóstico C3.4-F
+let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint C3.4-F)
 
 Este relatório apresenta análises estatísticas e qualitativas avançadas sobre o comportamento do recomendador harmônico do Find Chord, com foco em calibração de confiança, correlação de métricas e diversidade de mecanismos.
 
@@ -1628,6 +1714,10 @@ diagMd += `
 - **Erro Médio de Calibração (\`meanCalibrationError\`)**: \`${(meanCalibrationError * 100).toFixed(2)}%\`
 - **Expected Calibration Error (\`ECE\`)**: \`${(expectedCalibrationError * 100).toFixed(2)}%\`
 - **Maximum Calibration Error (\`MCE\`)**: \`${(maximumCalibrationError * 100).toFixed(2)}%\`
+- **Entropia de Confiança (\`confidenceEntropy\`)**: \`${analytics.confidenceEntropy.toFixed(4)}\` (Métrica: \`> 1.0\`)
+- **Desvio Padrão de Confiança (\`confidenceStdDev\`)**: \`${analytics.confidenceStdDev.toFixed(4)}\` (Métrica: \`> 0.10\`)
+- **Intervalo Dinâmico de Confiança (\`confidenceDynamicRange\`)**: \`${analytics.confidenceDynamicRange.toFixed(4)}\` (Métrica: \`> 0.30\`)
+- **Diferença P90-P10 de Confiança (\`confidenceP90MinusP10\`)**: \`${analytics.confidenceP90MinusP10.toFixed(4)}\` (Métrica: \`> 0.15\`)
 - **Classificação de Calibração**: **${calibrationQualitative.toUpperCase()}** (Métrica: \`< 10%\` Excelente, \`< 20%\` Bom, \`< 30%\` Aceitável, \`> 30%\` Descalibrado)
 
 ---
@@ -1655,7 +1745,7 @@ if (failedCriticals.length > 0) {
   throw new Error(`Benchmark falhou: ${failedCriticals.length} cenários críticos obtiveram score inferior a 3.`);
 }
 
-// 6 Asserções Estritas de Aceitação da Sprint C3.4-D (mantidas na Sprint C3.4-E)
+// 6 Asserções Estritas de Aceitação da Sprint C3.4-D (mantidas na Sprint C3.4-E e F)
 if (meanCalibrationError >= 0.15) {
   throw new Error(`Benchmark falhou: Erro médio de calibração (${(meanCalibrationError * 100).toFixed(2)}%) é maior ou igual a 15% (MCE < 0.15).`);
 }
@@ -1687,6 +1777,23 @@ if (analytics.averageDecisionConfidence <= 0.4) {
 
 if (analytics.hardConstraintFailureRate >= 0.5) {
   throw new Error(`Benchmark falhou: Taxa de falha de restrições estritas (${(analytics.hardConstraintFailureRate * 100).toFixed(0)}%) é superior ou igual a 50%.`);
+}
+
+// 4 Novas Asserções de Discriminação da Sprint C3.4-F
+if (analytics.confidenceEntropy <= 1.0) {
+  throw new Error(`Benchmark falhou: Entropia de confiança (${analytics.confidenceEntropy.toFixed(4)}) é inferior ou igual a 1.0.`);
+}
+
+if (analytics.confidenceStdDev <= 0.10) {
+  throw new Error(`Benchmark falhou: Desvio padrão de confiança (${analytics.confidenceStdDev.toFixed(4)}) é inferior ou igual a 0.10.`);
+}
+
+if (analytics.confidenceDynamicRange <= 0.30) {
+  throw new Error(`Benchmark falhou: Intervalo dinâmico de confiança (${analytics.confidenceDynamicRange.toFixed(4)}) é inferior ou igual a 0.30.`);
+}
+
+if (analytics.confidenceP90MinusP10 <= 0.15) {
+  throw new Error(`Benchmark falhou: Diferença P90-P10 de confiança (${analytics.confidenceP90MinusP10.toFixed(4)}) é inferior ou igual a 0.15.`);
 }
 
 console.log('🎉 BENCHMARK APROVADO COM SUCESSO!');

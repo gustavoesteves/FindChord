@@ -396,6 +396,10 @@ export interface RecommendationAnalytics {
   averagePathLength: number;
   pathLengthDistribution: Record<number, number>;
   mechanismDominanceRatio: number;
+  confidenceEntropy: number;
+  confidenceStdDev: number;
+  confidenceDynamicRange: number;
+  confidenceP90MinusP10: number;
 }
 
 export interface DiscardedAlternative {
