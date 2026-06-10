@@ -6,6 +6,8 @@ import type {
   OptimizationProfile
 } from '../models/Discovery';
 
+const PEDAGOGY_SATURATION = 0.6;
+
 /**
  * Extrai o vetor de objetivos normalizados a partir de um caminho de recomendação.
  */
@@ -18,6 +20,13 @@ export function extractObjectiveVector(path: RecommendationPath): ObjectiveVecto
     ? Math.max(...path.steps.map(s => s.physicalComplexity)) 
     : 0;
 
+  const avgComplexity = path.steps.length > 0
+    ? (path.steps.reduce((sum, s) => sum + s.physicalComplexity, 0) / path.steps.length)
+    : 0;
+
+  const playability = Math.max(0.0, 1.0 - avgComplexity - 0.05 * path.steps.length);
+  const pedagogicalImpact = Number((1.0 - Math.exp(-PEDAGOGY_SATURATION * accumulatedImpact)).toFixed(4));
+
   return {
     tension: transition?.after.tension ?? 0,
     chromaticism: transition?.after.chromaticism ?? 0,
@@ -25,8 +34,8 @@ export function extractObjectiveVector(path: RecommendationPath): ObjectiveVecto
     functionalStability: transition?.after.functionalStability ?? 0,
     voiceLeading: transition?.after.voiceLeadingQuality ?? 0,
     physicalComplexity,
-    playability: Number((1.0 - physicalComplexity).toFixed(4)),
-    pedagogicalImpact: accumulatedImpact,
+    playability: Number(playability.toFixed(4)),
+    pedagogicalImpact,
     goalAchievement: goalAchievement?.score ?? 0
   };
 }
