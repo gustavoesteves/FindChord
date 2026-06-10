@@ -400,6 +400,7 @@ export interface RecommendationAnalytics {
   confidenceStdDev: number;
   confidenceDynamicRange: number;
   confidenceP90MinusP10: number;
+  confidenceResolution: number;
 }
 
 export interface DiscardedAlternative {

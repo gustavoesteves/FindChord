@@ -55,6 +55,7 @@ export function computeRecommendationAnalytics(
     dominantFactors?: (DominantDecisionFactor | string)[];
     decisionConfidences?: number[];
     playabilities?: number[];
+    targets?: number[];
   }
 ): RecommendationAnalytics {
   const typeDist: Record<RecommendationMechanism, number> = {
@@ -215,6 +216,7 @@ export function computeRecommendationAnalytics(
   let confidenceDynamicRange = 0;
   let confidenceEntropy = 0;
   let confidenceP90MinusP10 = 0;
+  let confidenceResolution = 0;
 
   if (decisionConfidences.length > 0) {
     const avg = decisionConfidences.reduce((sum, v) => sum + v, 0) / decisionConfidences.length;
@@ -245,6 +247,29 @@ export function computeRecommendationAnalytics(
     const p90 = getPercentile(sorted, 90);
     const p10 = getPercentile(sorted, 10);
     confidenceP90MinusP10 = Number((p90 - p10).toFixed(4));
+
+    // Resolution = variance(binSuccessRates)
+    const resolutionBins: { target: number }[][] = Array.from({ length: 10 }, () => []);
+    for (let i = 0; i < decisionConfidences.length; i++) {
+      const conf = decisionConfidences[i];
+      const target = options?.targets?.[i] ?? executions[i]?.goalAchievement?.score ?? 0;
+      let bIdx = Math.floor(conf * 10);
+      if (bIdx >= 10) bIdx = 9;
+      if (bIdx < 0) bIdx = 0;
+      resolutionBins[bIdx].push({ target });
+    }
+    const successRates: number[] = [];
+    for (const bin of resolutionBins) {
+      if (bin.length > 0) {
+        const avgTarget = bin.reduce((sum, s) => sum + s.target, 0) / bin.length;
+        successRates.push(avgTarget);
+      }
+    }
+    if (successRates.length > 0) {
+      const avgRate = successRates.reduce((sum, r) => sum + r, 0) / successRates.length;
+      const vr = successRates.reduce((sum, r) => sum + Math.pow(r - avgRate, 2), 0) / successRates.length;
+      confidenceResolution = Number(vr.toFixed(4));
+    }
   }
 
   return {
@@ -267,14 +292,18 @@ export function computeRecommendationAnalytics(
     confidenceEntropy,
     confidenceStdDev,
     confidenceDynamicRange,
-    confidenceP90MinusP10
+    confidenceP90MinusP10,
+    confidenceResolution
   };
 }
 
 /**
  * Adapter that computes recommendation analytics over a list of DiscoveryMatches.
  */
-export function computeDiscoveryAnalytics(matches: DiscoveryMatch[]): RecommendationAnalytics {
+export function computeDiscoveryAnalytics(
+  matches: DiscoveryMatch[],
+  options?: { targets?: number[] }
+): RecommendationAnalytics {
   const executions: TransformationExecutionResult[] = [];
   const paretoSizes: number[] = [];
   const dominantFactors: DominantDecisionFactor[] = [];
@@ -309,6 +338,7 @@ export function computeDiscoveryAnalytics(matches: DiscoveryMatch[]): Recommenda
     paretoSizes,
     dominantFactors,
     decisionConfidences,
-    playabilities
+    playabilities,
+    targets: options?.targets
   });
 }
