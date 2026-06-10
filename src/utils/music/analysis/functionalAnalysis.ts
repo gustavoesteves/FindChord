@@ -35,8 +35,25 @@ export { ablateNode, analyzeSensitivity } from './similarity/counterfactualEngin
 export { TRANSFORMATION_TEMPLATES, detectOpportunities } from './similarity/transformationSpaceEngine';
 export { buildTransformationGraph, generateRecommendedPaths } from './similarity/transformationGraphEngine';
 export { executePathTransformations } from './similarity/transformationExecutionEngine';
+export { explainRecommendationDecision } from './similarity/recommendationExplanationEngine';
+export { computeParetoFrontier, extractObjectiveVector, rankParetoFrontier, dominates } from './similarity/multiObjectiveOptimizationEngine';
 export { scoreTransformationForGoal, scorePathForGoal } from './similarity/goalMatchingEngine';
+export { 
+  evaluateVoiceLeadingQuality, 
+  evaluateHarmonicState, 
+  evaluateTransition, 
+  calculateGoalAchievement 
+} from './similarity/harmonicStateEvaluator';
+export { 
+  evaluateConstraint, 
+  evaluatePathConstraints 
+} from './similarity/constraintEvaluationEngine';
+export {
+  computeRecommendationAnalytics,
+  computeDiscoveryAnalytics
+} from './similarity/recommendationAnalyticsEngine';
 // ──────────────────────────────────────────────────────────────
+
 
 
 

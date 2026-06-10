@@ -5,9 +5,11 @@ import type {
   TransformationGraph, 
   RecommendationPath,
   TransformationFamily,
-  HarmonicGoal
+  HarmonicGoal,
+  HarmonicConstraint
 } from '../models/Discovery';
 import { scorePathForGoal } from './goalMatchingEngine';
+import { executePathTransformations } from './transformationExecutionEngine';
 
 /**
  * Mapeia o mecanismo de transformação para a respectiva família conceitual.
@@ -172,7 +174,10 @@ function findConflictFreeSubsets(
 export function generateRecommendedPaths(
   opportunities: TransformationOpportunity[],
   graph: TransformationGraph,
-  goal?: HarmonicGoal
+  goal?: HarmonicGoal,
+  constraints?: HarmonicConstraint[],
+  originalProgression?: string[],
+  keepFailedConstraints: boolean = false
 ): RecommendationPath[] {
   const allSubsets: TransformationNode[][] = [];
   
@@ -185,7 +190,7 @@ export function generateRecommendedPaths(
 
   findConflictFreeSubsets(sortedNodes, [], graph.edges, allSubsets);
 
-  const paths: RecommendationPath[] = allSubsets.map(nodes => {
+  let paths: RecommendationPath[] = allSubsets.map(nodes => {
     const accumulatedImpact = Number(nodes.reduce((sum, n) => sum + n.musicalImpact, 0).toFixed(4));
     const accumulatedDifficulty = Number(nodes.reduce((sum, n) => sum + n.pedagogicalDifficulty, 0).toFixed(4));
 
@@ -196,21 +201,65 @@ export function generateRecommendedPaths(
     };
   });
 
-  // Ordenação baseada na presença ou ausência da meta harmônica
-  if (goal) {
-    paths.sort((a, b) => {
-      const scoreA = scorePathForGoal(goal, a.steps, opportunities) + a.accumulatedImpact - a.accumulatedDifficulty;
-      const scoreB = scorePathForGoal(goal, b.steps, opportunities) + b.accumulatedImpact - b.accumulatedDifficulty;
-      return scoreB - scoreA;
+  // Otimização heurística: se houver muitos caminhos candidatos, ordena preliminarmente
+  // pelo alinhamento da meta e impacto pedagógico para executar a análise cara (Viterbi/VL) apenas nos top 20
+  if (paths.length > 20) {
+    paths.forEach(p => {
+      const goalAlignment = goal ? scorePathForGoal(goal, p.steps, opportunities) : 0.0;
+      const normalizedGoalAlignment = 1 - Math.exp(-Math.max(0, goalAlignment));
+      p.finalScore = Number((normalizedGoalAlignment + p.accumulatedImpact - (p.accumulatedDifficulty * 0.5)).toFixed(4));
     });
-  } else {
-    // Ordenação Pedagógica Padrão: prioriza maior score pedagógico
-    paths.sort((a, b) => {
-      const scoreA = a.accumulatedImpact - (a.accumulatedDifficulty * 0.5);
-      const scoreB = b.accumulatedImpact - (b.accumulatedDifficulty * 0.5);
-      return scoreB - scoreA;
+    paths.sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
+    paths = paths.slice(0, 20);
+  }
+
+  // Se originalProgression estiver presente, executa e cacheia o resultado
+  if (originalProgression) {
+    paths = paths.map(path => {
+      const executionResult = executePathTransformations(originalProgression, path.steps, opportunities, goal, constraints);
+      return {
+        ...path,
+        executionResult
+      };
     });
   }
+
+  // Preenche finalScore e scoreBreakdown em cada path para rastreabilidade e exibição
+  paths.forEach(p => {
+    const goalAlignment = goal ? scorePathForGoal(goal, p.steps, opportunities) : 0.0;
+    const normalizedGoalAlignment = 1 - Math.exp(-Math.max(0, goalAlignment));
+    const pedagogicalScore = p.accumulatedImpact;
+    const goalAchievement = p.executionResult?.goalAchievement?.score ?? 0.0;
+    const constraintPenalty = p.executionResult?.constraintEvaluation?.totalPenalty ?? 0.0;
+
+    if (p.executionResult?.constraintEvaluation?.passed === false) {
+      p.finalScore = -999.0;
+    } else if (constraints && constraints.length > 0 && originalProgression) {
+      p.finalScore = Number(((normalizedGoalAlignment * 0.5) + (pedagogicalScore * 0.3) + (goalAchievement * 0.2) - constraintPenalty).toFixed(4));
+    } else if (goal) {
+      p.finalScore = Number((normalizedGoalAlignment + pedagogicalScore - p.accumulatedDifficulty).toFixed(4));
+    } else {
+      p.finalScore = Number((pedagogicalScore - (p.accumulatedDifficulty * 0.5)).toFixed(4));
+    }
+
+    p.scoreBreakdown = {
+      goalAlignment: Number(normalizedGoalAlignment.toFixed(4)),
+      pedagogicalScore: Number(pedagogicalScore.toFixed(4)),
+      goalAchievement: Number(goalAchievement.toFixed(4)),
+      constraintPenalty: Number(constraintPenalty.toFixed(4)),
+      finalScore: p.finalScore
+    };
+  });
+
+  // Filtragem de Hard Constraints se avaliado e não keepFailedConstraints
+  if (!keepFailedConstraints && constraints && constraints.length > 0 && originalProgression) {
+    paths = paths.filter(path => {
+      return path.executionResult?.constraintEvaluation?.passed !== false;
+    });
+  }
+
+  // Ordenação baseada no finalScore pré-calculado
+  paths.sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
 
   // Filtra caminhos vazios e limita às top 5 recomendações
   return paths.filter(p => p.steps.length > 0).slice(0, 5);

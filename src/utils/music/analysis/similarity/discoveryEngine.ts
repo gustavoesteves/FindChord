@@ -15,6 +15,8 @@ import { attributePrimaryReason } from './evidenceRankingEngine';
 import { detectOpportunities } from './transformationSpaceEngine';
 import { buildTransformationGraph, generateRecommendedPaths } from './transformationGraphEngine';
 import { executePathTransformations } from './transformationExecutionEngine';
+import { explainRecommendationDecision } from './recommendationExplanationEngine';
+import { computeParetoFrontier, rankParetoFrontier } from './multiObjectiveOptimizationEngine';
 
 /**
  * Pré-calcula e armazena em cache os fingerprints para os itens do corpus.
@@ -71,6 +73,54 @@ export function findSimilarProgressions(
   }
 
   const matches: DiscoveryMatch[] = [];
+
+  const queryProgression = query.metadata.queryProgression;
+  const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
+  const transformationGraph = transformationOpportunities ? buildTransformationGraph(transformationOpportunities) : undefined;
+  let recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph, options?.goal, options?.constraints, queryProgression, true) : undefined;
+
+  if (queryProgression && recommendedPaths && transformationOpportunities) {
+    recommendedPaths = recommendedPaths.map(path => {
+      const executionResult = path.executionResult || executePathTransformations(queryProgression, path.steps, transformationOpportunities, options?.goal, options?.constraints);
+      return {
+        ...path,
+        executionResult
+      };
+    });
+  }
+
+  let paretoFrontier;
+  if (queryProgression && recommendedPaths && recommendedPaths.length > 0) {
+    paretoFrontier = computeParetoFrontier(recommendedPaths);
+    rankParetoFrontier(paretoFrontier, options?.optimizationProfile);
+
+    // Reordenar recommendedPaths públicos para corresponder ao ranking da fronteira
+    const orderedPathIds = paretoFrontier.paths.map(p => p.pathId);
+    recommendedPaths.sort((a, b) => {
+      const idA = a.steps.map(s => s.id).join('+') || 'no-transform';
+      const idB = b.steps.map(s => s.id).join('+') || 'no-transform';
+      const indexA = orderedPathIds.indexOf(idA);
+      const indexB = orderedPathIds.indexOf(idB);
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }
+
+  let recommendationDecision;
+  let filteredRecommendedPaths = recommendedPaths;
+  if (queryProgression && recommendedPaths && recommendedPaths.length > 0) {
+    recommendationDecision = explainRecommendationDecision(
+      recommendedPaths[0],
+      recommendedPaths,
+      options?.goal,
+      options?.constraints
+    );
+    // Filtra caminhos inválidos da lista exposta publicamente no match
+    filteredRecommendedPaths = recommendedPaths.filter(p => p.executionResult?.constraintEvaluation?.passed !== false);
+  }
 
   for (const item of corpus) {
     // 1. Filtragem preliminar (por categorias e quantidade de acordes)
@@ -180,21 +230,6 @@ export function findSimilarProgressions(
       dominantAxis = 'VOICE_LEADING';
     }
 
-    const queryProgression = query.metadata.queryProgression;
-    const transformationOpportunities = queryProgression ? detectOpportunities(queryProgression) : undefined;
-    const transformationGraph = transformationOpportunities ? buildTransformationGraph(transformationOpportunities) : undefined;
-    let recommendedPaths = (transformationOpportunities && transformationGraph) ? generateRecommendedPaths(transformationOpportunities, transformationGraph, options?.goal) : undefined;
-
-    if (queryProgression && recommendedPaths && transformationOpportunities) {
-      recommendedPaths = recommendedPaths.map(path => {
-        const executionResult = executePathTransformations(queryProgression, path.steps, transformationOpportunities);
-        return {
-          ...path,
-          executionResult
-        };
-      });
-    }
-
     const expReport = generateExplainabilityReport(query, itemFingerprint, report);
     const explanation = renderExplanation(
       expReport.insights,
@@ -203,8 +238,11 @@ export function findSimilarProgressions(
       expReport.causalExplanation,
       expReport.sensitivityAnalysis,
       transformationOpportunities,
-      recommendedPaths,
-      options?.goal
+      filteredRecommendedPaths,
+      options?.goal,
+      recommendationDecision,
+      paretoFrontier,
+      options?.optimizationProfile
     );
     const primaryReason = attributePrimaryReason(expReport.evidenceGraph, expReport.contributions);
 
@@ -228,7 +266,9 @@ export function findSimilarProgressions(
       },
       transformationOpportunities,
       transformationGraph,
-      recommendedPaths
+      recommendedPaths: filteredRecommendedPaths,
+      recommendationDecision,
+      paretoFrontier
     });
   }
 

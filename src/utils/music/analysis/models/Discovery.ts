@@ -249,10 +249,201 @@ export interface TransformationApplication {
   explanation: string;
 }
 
+export interface HarmonicStateProfile {
+  tension: number;
+  chromaticism: number;
+  bassSmoothness: number;
+  functionalStability: number;
+  voiceLeadingQuality: number;
+}
+
+export interface HarmonicStateTransition {
+  before: HarmonicStateProfile;
+  after: HarmonicStateProfile;
+  tensionDelta: number;
+  chromaticismDelta: number;
+  bassSmoothnessDelta: number;
+  functionalStabilityDelta: number;
+  voiceLeadingQualityDelta: number;
+}
+
+export interface GoalAchievement {
+  score: number;
+  confidence: number;
+}
+
+export type HarmonicConstraintMetric =
+  | 'TENSION'
+  | 'CHROMATICISM'
+  | 'BASS_SMOOTHNESS'
+  | 'FUNCTIONAL_STABILITY'
+  | 'VOICE_LEADING'
+  | 'PHYSICAL_COMPLEXITY';
+
+export type ConstraintOperator =
+  | 'GREATER_THAN'
+  | 'LESS_THAN'
+  | 'PRESERVE';
+
+export interface HarmonicConstraint {
+  id?: string;
+  metric: HarmonicConstraintMetric;
+  operator: ConstraintOperator;
+  value: number;
+  weight?: number;
+  strict?: boolean;
+}
+
+export interface ConstraintProfile {
+  name: string;
+  constraints: HarmonicConstraint[];
+}
+
+export interface ConstraintEvaluation {
+  constraint: HarmonicConstraint;
+  satisfied: boolean;
+  violation: number;
+  metricValue: number;
+  reason?: string;
+}
+
+export interface ConstraintEvaluationResult {
+  passed: boolean;
+  hardViolations: number;
+  softViolations: number;
+  totalPenalty: number;
+  evaluations: ConstraintEvaluation[];
+}
+
+export interface ObjectiveVector {
+  tension: number;
+  chromaticism: number;
+  bassSmoothness: number;
+  functionalStability: number;
+  voiceLeading: number;
+  physicalComplexity: number;
+  playability: number; // 1.0 - physicalComplexity
+  pedagogicalImpact: number;
+  goalAchievement: number;
+}
+
+export interface ParetoPath {
+  pathId: string;
+  score?: number; // Preenchido dinamicamente pelo perfil de otimização selecionado
+  objectives: ObjectiveVector;
+  dominanceRank: number;
+  crowdingDistance: number;
+}
+
+export interface ParetoFrontier {
+  paths: ParetoPath[];
+  frontierSize: number;
+  dominatedCount: number; // Quantidade de caminhos descartados por dominância
+  objectiveSummary: {
+    bestTension: number;
+    bestVoiceLeading: number;
+    bestStability: number;
+    lowestComplexity: number;
+    bestGoalAchievement: number;
+    bestChromaticism: number;
+    bestBassSmoothness: number;
+    bestPedagogicalImpact: number;
+  };
+}
+
+export type OptimizationProfile =
+  | 'BALANCED'
+  | 'MAX_TENSION'
+  | 'MAX_STABILITY'
+  | 'MAX_PLAYABILITY'
+  | 'MAX_VOICE_LEADING'
+  | 'MAX_PEDAGOGY';
+
+export interface MultiObjectiveOptions {
+  profile?: OptimizationProfile;
+}
+
+export type DominantDecisionFactor =
+  | 'GOAL_ALIGNMENT'
+  | 'GOAL_ACHIEVEMENT'
+  | 'CONSTRAINTS'
+  | 'PEDAGOGICAL_IMPACT'
+  | 'PARETO_RANKING';
+
+export type RecommendationMechanism =
+  | 'MODAL_BORROWING'
+  | 'TRITONE_SUBSTITUTION'
+  | 'FUNCTIONAL_EXPANSION'
+  | 'SECONDARY_DOMINANT'
+  | 'CADENTIAL_REINTERPRETATION'
+  | 'FUNCTIONAL_COMPRESSION'
+  | 'OTHER';
+
+export interface RecommendationAnalytics {
+  recommendationTypeDistribution: Record<RecommendationMechanism, number>;
+  dominantFactorDistribution: Record<DominantDecisionFactor, number>;
+  averageGoalAchievement: number;
+  averageConstraintPenalty: number;
+  averageParetoSize: number;
+  averageDecisionConfidence: number;
+  averageFunctionalStability: number;
+  averageTension: number;
+  averageVoiceLeading: number;
+  averagePlayability: number;
+  hardConstraintFailureRate: number;
+  mechanismEntropy: number;
+  effectiveMechanismCount: number;
+  averagePathLength: number;
+  pathLengthDistribution: Record<number, number>;
+  mechanismDominanceRatio: number;
+}
+
+export interface DiscardedAlternative {
+  pathId: string;
+  reason:
+    | 'LOWER_GOAL_ALIGNMENT'
+    | 'HIGHER_CONSTRAINT_PENALTY'
+    | 'HARD_CONSTRAINT_FAILURE'
+    | 'LOWER_PEDAGOGICAL_SCORE'
+    | 'LOWER_GOAL_ACHIEVEMENT';
+  scoreDifference: number;
+  description: string;
+  violatedConstraintDescription?: string;
+}
+
+export interface RecommendationTradeoff {
+  comparisonPathId: string;
+  metric: HarmonicConstraintMetric;
+  lostMetric: HarmonicConstraintMetric;
+  gained: number;
+  lost: number;
+  explanation: string;
+}
+
+export interface RecommendationDecision {
+  selectedPathId: string;
+  selectionReasons: string[];
+  discardedAlternatives: DiscardedAlternative[];
+  tradeoffs: RecommendationTradeoff[];
+  dominantFactor: DominantDecisionFactor;
+  scoreBreakdown: {
+    goalAlignment: number;
+    pedagogicalScore: number;
+    goalAchievement: number;
+    constraintPenalty: number;
+    finalScore: number;
+  };
+  confidence: number;
+  rawConfidence?: number;
+}
+
 export interface TransformationExecutionResult {
   applications: TransformationApplication[];
   finalProgression: string[];
   confidence: number;
+  stateTransition?: HarmonicStateTransition;
+  goalAchievement?: GoalAchievement;
+  constraintEvaluation?: ConstraintEvaluationResult;
 }
 
 export interface RecommendationPath {
@@ -260,6 +451,14 @@ export interface RecommendationPath {
   accumulatedImpact: number;
   accumulatedDifficulty: number;
   executionResult?: TransformationExecutionResult;
+  finalScore?: number;
+  scoreBreakdown?: {
+    goalAlignment: number;
+    pedagogicalScore: number;
+    goalAchievement: number;
+    constraintPenalty: number;
+    finalScore: number;
+  };
 }
 
 export type HarmonicCategory =
@@ -311,6 +510,8 @@ export interface DiscoveryOptions {
     maxChordsCount?: number;
   };
   goal?: HarmonicGoal;
+  constraints?: HarmonicConstraint[];
+  optimizationProfile?: OptimizationProfile;
 }
 
 export interface DiscoveryPrimaryReason {
@@ -363,4 +564,6 @@ export interface DiscoveryMatch {
   transformationOpportunities?: TransformationOpportunity[];
   transformationGraph?: TransformationGraph;
   recommendedPaths?: RecommendationPath[];
+  recommendationDecision?: RecommendationDecision;
+  paretoFrontier?: ParetoFrontier;
 }

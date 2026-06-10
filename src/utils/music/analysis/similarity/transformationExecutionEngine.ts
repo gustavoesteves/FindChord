@@ -2,8 +2,13 @@ import type {
   TransformationNode, 
   TransformationOpportunity,
   TransformationExecutionResult,
-  TransformationApplication
+  TransformationApplication,
+  HarmonicGoal,
+  HarmonicConstraint,
+  RecommendationPath
 } from '../models/Discovery';
+import { evaluateTransition, calculateGoalAchievement } from './harmonicStateEvaluator';
+import { evaluatePathConstraints } from './constraintEvaluationEngine';
 
 /**
  * Retorna a substituição tritônica para um acorde dominante.
@@ -93,13 +98,25 @@ function getRelatedIi7(dominantChord: string): string {
 }
 
 /**
+ * Retorna o acorde correspondente a uma dominante secundária 7.
+ */
+function getSecondaryDominantChord(chord: string): string {
+  const match = chord.match(/^([A-G][#b]?)(.*)$/);
+  if (!match) return chord;
+  const [_, root] = match;
+  return root + '7';
+}
+
+/**
  * Executa as transformações harmônicas de um caminho recomendado de ponta a ponta.
  * Resolve deslocamentos de índices ordenando as execuções de trás para frente.
  */
 export function executePathTransformations(
   originalProgression: string[],
   steps: TransformationNode[],
-  opportunities: TransformationOpportunity[]
+  opportunities: TransformationOpportunity[],
+  goal?: HarmonicGoal,
+  constraints?: HarmonicConstraint[]
 ): TransformationExecutionResult {
   // Mapeia os passos para recuperar índice e mecanismo das oportunidades correspondentes
   const mappedSteps = steps.map(step => {
@@ -181,6 +198,14 @@ export function executePathTransformations(
         explanation = `Expansão Funcional insere o acorde de aproximação ${ii7Chord} antes de ${dominant} na posição ${chordIndex + 1}, criando uma cadência ii - V.`;
         break;
       }
+      case 'SECONDARY_DOMINANT': {
+        const original = currentProgression[chordIndex];
+        const transformedChord = getSecondaryDominantChord(original);
+        currentProgression[chordIndex] = transformedChord;
+        transformedProgression = [...currentProgression];
+        explanation = `Dominante Secundária no acorde ${original} (posição ${chordIndex + 1}) por ${transformedChord}, adicionando tensão e direcionando a resolução para o acorde seguinte.`;
+        break;
+      }
       default:
         transformedProgression = [...currentProgression];
         explanation = `Transformação desconhecida aplicada na posição ${chordIndex + 1}.`;
@@ -201,9 +226,25 @@ export function executePathTransformations(
   // Restaura a ordem cronológica (esquerda para a direita) das aplicações
   applications.reverse();
 
-  return {
+  const stateTransition = evaluateTransition(originalProgression, currentProgression);
+  const goalAchievement = goal ? calculateGoalAchievement(goal, stateTransition) : undefined;
+
+  const result: TransformationExecutionResult = {
     applications,
     finalProgression: currentProgression,
-    confidence: Number(confidenceProduct.toFixed(4))
+    confidence: Number(confidenceProduct.toFixed(4)),
+    stateTransition,
+    goalAchievement
   };
+
+  if (constraints && constraints.length > 0) {
+    const path: RecommendationPath = {
+      steps,
+      accumulatedImpact: Number(steps.reduce((sum, n) => sum + n.musicalImpact, 0).toFixed(4)),
+      accumulatedDifficulty: Number(steps.reduce((sum, n) => sum + n.pedagogicalDifficulty, 0).toFixed(4))
+    };
+    result.constraintEvaluation = evaluatePathConstraints(path, result, constraints);
+  }
+
+  return result;
 }

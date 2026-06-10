@@ -65,12 +65,15 @@ graph TD
         F10C5["F10-C.5: Transformation Dependency Graph"]
         C31["C3.1: Transformation Execution Engine"]
         C32A["C3.2-A: Goal-Oriented Recommendation Engine"]
-        C32B["C3.2-B: Constraint-Based Reharmonization"]
+        C32B["C3.2-B: Harmonic State Evaluation Engine"]
+        C32C["C3.2-C: Constraint Satisfaction Engine"]
         C33["C3.3: Explainable Recommendations 2.0"]
         C34["C3.4: Multi-Objective Optimization"]
+        C34A["C3.4-A: Real Scenario Benchmark"]
+        C34B["C3.4-B: Recommendation Analytics"]
         F12_1["F12.1: Resolution Confidence Calibration"]
       
-        F10C4 --> F10C5 --> C31 --> C32A --> C32B --> C33 --> C34 --> F12_1
+        F10C4 --> F10C5 --> C31 --> C32A --> C32B --> C32C --> C33 --> C34 --> C34A --> C34B --> F12_1
     end
 
     subgraph "PHASE 4 — Corpus & Benchmark"
@@ -111,34 +114,59 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
-### Sprint C3.2-B: Constraint-Based Reharmonization
-**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
-*   **Objetivo**: Permitir a imposição de restrições estéticas e físicas explícitas nas rearmonizações.
-*   **Conceito**: Implementar filtros de restrições harmônicas e físicas (`ReharmonizationConstraints`):
-    *   `preserveBassMotion`: Evita saltos desnecessários do baixo ou impõe direções.
-    *   `preserveCadences`: Impede modificações nas janelas cadenciais da progressão.
-    *   `maxPhysicalComplexity`: Filtra transformações com custo físico acima de um limiar.
-    *   `maxSimilarityLoss`: Descarta variantes cuja perda de similaridade original ultrapasse um delta tolerado.
-*   **Valor**: Permite refinar a busca baseada no perfil e nível técnico do compositor.
+### Sprint C3.2-B: Harmonic State Evaluation Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Introduzir inteligência de circuito fechado para avaliar as consequências harmônicas reais de rearmonizações executadas.
+*   **Conceito**: Implementação de perfis dinâmicos de transição de estado harmônico (`HarmonicStateProfile` e `HarmonicStateTransition`) e aferição de alinhamento com a meta harmônica (`GoalAchievement`) com score e confiança da análise.
+
+---
+
+### Sprint C3.2-C: Constraint Satisfaction Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Permitir que o usuário imponha restrições reais de contorno físico e musical sobre o motor de rearmonização.
+*   **Conceito**: Implementação do sistema de restrições harmônicas e físicas (`HarmonicConstraint`):
+    *   Métricas: `TENSION` | `CHROMATICISM` | `BASS_SMOOTHNESS` | `FUNCTIONAL_STABILITY` | `VOICE_LEADING` | `PHYSICAL_COMPLEXITY`.
+    *   Operadores: `GREATER_THAN` | `LESS_THAN` | `PRESERVE`.
+    *   Fórmula do Ranking: `finalScore = (goalAlignment * 0.5) + (pedagogicalScore * 0.3) + (goalAchievement * 0.2) - constraintPenalty`.
+    *   Traceability com `constraintId` e `reason` de violação.
+    *   Filtragem automática de Hard Constraints e caching do `executionResult`.
 
 ---
 
 ### Sprint C3.3: Explainable Recommendations 2.0
-**Status: 🔄 PLANEJADA (Prioridade 2)**
-*   **Objetivo**: Conectar as explicações estruturadas e contrafactuais diretamente às metas e restrições fornecidas.
-*   **Conceito**: A narrativa pedagógica passa a detalhar por que certas opções foram descartadas (violação de restrições) e como a progressão se alinha à intenção declarada.
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Conectar as explicações estruturadas e restrições diretamente às metas harmônicas e de contorno fornecidas pelo recomendador.
+*   **Conceito**: Implementação do Decision Explanation Engine (`explainRecommendationDecision`), que calcula o fator de decisão dominante (`dominantFactor`), razões de seleção (`selectionReasons`), descartes por restrições hard (`HARD_CONSTRAINT_FAILURE`) e alinhamentos alternativos, trade-offs de ganho/perda de métricas harmônicas e física, além de confiança ponderada contínua. As novas seções analíticas em português foram acopladas ao renderizador de narrativa (`narrativeRenderer.ts`).
 
 ---
 
 ### Sprint C3.4: Multi-Objective Optimization
-**Status: 🔄 PLANEJADA (Prioridade 3)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Buscar o conjunto de caminhos ótimos na fronteira de Pareto de múltiplos objetivos.
-*   **Conceito**: Resolver o conflito clássico: maior tensão harmônica vs menor complexidade física, gerando um espectro balanceado de opções de rearmonização.
+*   **Conceito**: Implementação do Multi-Objective Optimization Engine (`multiObjectiveOptimizationEngine.ts`) que mapeia os vetores de objetivos reais (`ObjectiveVector`), realiza checagens de dominância de Pareto e aplica a distância de aglomeração do NSGA-II (`computeCrowdingDistance`) para garantir diversidade de soluções. Adicionamos a estratégia de perfis lineares (`BALANCED`, `MAX_TENSION`, `MAX_STABILITY`, `MAX_PLAYABILITY`, `MAX_VOICE_LEADING`, `MAX_PEDAGOGY`) e a integração no pipeline de busca, permitindo reordenação pública de caminhos e narratives detalhadas em português (`narrativeRenderer.ts`).
+
+---
+
+### Sprint C3.4-A: Real Musical Scenario Benchmark
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Validar qualitativamente o recomendador de acordes através de 30 cenários em 10 categorias estruturais, intenções do usuário e consistência narrativa.
+*   **Conceito**: Implementação de uma suíte de testes de benchmark (`musicalScenarioBenchmark.test.ts`) que valida o alinhamento musical, casos regressivos históricos, empate de Pareto (NSGA-II) e consistência narrativa (com validação em português no renderizador).
+    *   Métricas: Aferição de média aritmética > 4.2 e restrição de nenhum cenário crítico (cadência autêntica, tritone substitution, teste do professor e MAX_PLAYABILITY) abaixo de 3.
+    *   Resultados salvos no artefato `musical_benchmark_report.md` com métricas globais e distribuição de mecanismos para detecção de vieses.
+
+---
+
+### Sprint C3.4-B: Recommendation Analytics
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Implementar o motor de analytics do recomendador para medir comportamentos qualitativos do recomendador e tendências do motor.
+*   **Conceito**: Desenvolvimento do calculador de analytics (`recommendationAnalyticsEngine.ts`) operando sobre execuções e correspondências de descoberta (adapter).
+    *   Métricas: Tamanho médio de Pareto, taxas de falhas de restrições estritas e confiança média do recomendador.
+    *   Validação: Aferição de asserções de robustez no benchmark (`averageParetoSize > 1.0`, `averageDecisionConfidence > 0.4`, `hardConstraintFailureRate < 0.5`) e geração automática do relatório `musical_benchmark_report.md` contendo a seção "Tendências do Motor" com dados quantitativos e mecanismos normalizados de rearmonização.
 
 ---
 
 ### Sprint F12.1: Resolution Confidence Calibration
-**Status: 🔄 PLANEJADA (Prioridade 4)**
+**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
 *   **Objetivo**: Refinar os modelos de probabilidade contínua para calibrar e computar a confiança da resolução de dominantes e desvios tonais.
 *   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading (Layer 6), força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
 

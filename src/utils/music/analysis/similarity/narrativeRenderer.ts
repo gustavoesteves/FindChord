@@ -7,7 +7,10 @@ import type {
   TransformationOpportunity,
   RecommendationPath,
   TransformationFamily,
-  HarmonicGoal
+  HarmonicGoal,
+  RecommendationDecision,
+  ParetoFrontier,
+  OptimizationProfile
 } from '../models/Discovery';
 import { TRANSFORMATION_TEMPLATES } from './transformationSpaceEngine';
 import { scoreTransformationForGoal } from './goalMatchingEngine';
@@ -150,6 +153,21 @@ function getFriendlyNodeName(nodeId: string): string {
 }
 
 /**
+ * Traduz as métricas de restrição para termos amigáveis em português.
+ */
+function formatMetricLabel(metric: string): string {
+  switch (metric) {
+    case 'TENSION': return 'tensão harmônica';
+    case 'CHROMATICISM': return 'cromatismo';
+    case 'BASS_SMOOTHNESS': return 'suavidade do baixo';
+    case 'FUNCTIONAL_STABILITY': return 'estabilidade funcional';
+    case 'VOICE_LEADING': return 'condução de vozes (voice leading)';
+    case 'PHYSICAL_COMPLEXITY': return 'simplicidade física';
+    default: return metric;
+  }
+}
+
+/**
  * Renderiza uma explicação consolidada em linguagem natural (Português)
  * baseada nos insights analíticos estruturados e transformações pedagógicas detectadas.
  */
@@ -161,7 +179,10 @@ export function renderExplanation(
   sensitivity?: SensitivityAnalysis,
   opportunities?: TransformationOpportunity[],
   recommendedPaths?: RecommendationPath[],
-  goal?: HarmonicGoal
+  goal?: HarmonicGoal,
+  recommendationDecision?: RecommendationDecision,
+  paretoFrontier?: ParetoFrontier,
+  activeProfile?: OptimizationProfile
 ): string {
   const parts: string[] = [];
 
@@ -382,8 +403,184 @@ export function renderExplanation(
         predictedBlock = `\n\n**Resultado Previsto:**\n${predictedOutcomes.join('\n')}`;
       }
 
-      parts.push(`**Transformação Sugerida:**\nOriginal:\n${originalText}\n\nResultado:\n${resultText}\n\nJustificativa:\n${justifications}${predictedBlock}`);
+      let measuredBlock = '';
+      if (execResult.stateTransition) {
+        const st = execResult.stateTransition;
+        const formatDelta = (delta: number) => {
+          const pct = Math.round(delta * 100);
+          return pct >= 0 ? `+${pct}%` : `${pct}%`;
+        };
+        measuredBlock = `\n\n**Resultado Medido:**\n` +
+          `- Tensão: ${formatDelta(st.tensionDelta)} (${Math.round(st.before.tension * 100)}% ➔ ${Math.round(st.after.tension * 100)}%)\n` +
+          `- Cromatismo: ${formatDelta(st.chromaticismDelta)} (${Math.round(st.before.chromaticism * 100)}% ➔ ${Math.round(st.after.chromaticism * 100)}%)\n` +
+          `- Suavidade do Baixo: ${formatDelta(st.bassSmoothnessDelta)} (${Math.round(st.before.bassSmoothness * 100)}% ➔ ${Math.round(st.after.bassSmoothness * 100)}%)\n` +
+          `- Estabilidade Funcional: ${formatDelta(st.functionalStabilityDelta)} (${Math.round(st.before.functionalStability * 100)}% ➔ ${Math.round(st.after.functionalStability * 100)}%)\n` +
+          `- Condução de Vozes: ${formatDelta(st.voiceLeadingQualityDelta)} (${Math.round(st.before.voiceLeadingQuality * 100)}% ➔ ${Math.round(st.after.voiceLeadingQuality * 100)}%)`;
+      }
+
+      let goalBlock = '';
+      if (execResult.goalAchievement) {
+        const ga = execResult.goalAchievement;
+        goalBlock = `\n\n**Meta Atingida:**\n` +
+          `- Alinhamento: ${Math.round(ga.score * 100)}%\n` +
+          `- Confiança: ${Math.round(ga.confidence * 100)}%`;
+      }
+
+      let constraintsBlock = '';
+      if (execResult.constraintEvaluation) {
+        const ce = execResult.constraintEvaluation;
+        const formatMetricName = (metric: string) => {
+          switch (metric) {
+            case 'TENSION': return 'Tensão';
+            case 'CHROMATICISM': return 'Cromatismo';
+            case 'BASS_SMOOTHNESS': return 'Suavidade do Baixo';
+            case 'FUNCTIONAL_STABILITY': return 'Estabilidade Funcional';
+            case 'VOICE_LEADING': return 'Condução de Vozes';
+            case 'PHYSICAL_COMPLEXITY': return 'Complexidade Física';
+            default: return metric;
+          }
+        };
+
+        const formatEvaluation = (ev: any) => {
+          const status = ev.satisfied ? '✓' : '✗';
+          const metricLabel = formatMetricName(ev.constraint.metric);
+          let targetText = '';
+          switch (ev.constraint.operator) {
+            case 'GREATER_THAN':
+              targetText = `≥ ${Math.round(ev.constraint.value * 100)}%`;
+              break;
+            case 'LESS_THAN':
+              targetText = `≤ ${Math.round(ev.constraint.value * 100)}%`;
+              break;
+            case 'PRESERVE':
+              targetText = ['CHROMATICISM', 'PHYSICAL_COMPLEXITY'].includes(ev.constraint.metric) ? 'preservado' : 'preservada';
+              break;
+          }
+          let detail = '';
+          if (!ev.satisfied) {
+            detail = ` | Resultado obtido: ${Math.round(ev.metricValue * 100)}%`;
+            if (ev.reason) {
+              detail += ` (${ev.reason})`;
+            }
+          } else {
+            detail = ` (obtido: ${Math.round(ev.metricValue * 100)}%)`;
+          }
+          return `${status} ${metricLabel} ${targetText}${detail}`;
+        };
+
+        const listStr = ce.evaluations.map((ev: any) => `- ${formatEvaluation(ev)}`).join('\n');
+        constraintsBlock = `\n\n**Restrições Aplicadas:**\n${listStr}\n\n**Penalidade Total:** ${ce.totalPenalty}`;
+        
+        if (firstPath.finalScore !== undefined) {
+          constraintsBlock += `\n**Score Final:** ${firstPath.finalScore}`;
+        }
+      }
+
+      parts.push(`**Transformação Sugerida:**\nOriginal:\n${originalText}\n\nResultado:\n${resultText}\n\nJustificativa:\n${justifications}${predictedBlock}${measuredBlock}${goalBlock}${constraintsBlock}`);
     }
+  }
+
+  if (recommendationDecision) {
+    const decisionParts: string[] = [];
+
+    const factorTranslation = (factor: string): string => {
+      switch (factor) {
+        case 'GOAL_ALIGNMENT': return 'Alinhamento com a Meta';
+        case 'CONSTRAINT_PENALTY': return 'Penalidade de Restrições';
+        case 'GOAL_ACHIEVEMENT': return 'Alcance da Meta';
+        case 'PEDAGOGICAL_SCORE': return 'Pontuação Pedagógica';
+        default: return factor;
+      }
+    };
+
+    const reasons = recommendationDecision.selectionReasons.map(r => `• ${r}`).join('\n');
+    decisionParts.push(`**Por que esta recomendação foi escolhida?**\n${reasons}\n• Fator Dominante: ${factorTranslation(recommendationDecision.dominantFactor)}`);
+
+    if (recommendationDecision.discardedAlternatives && recommendationDecision.discardedAlternatives.length > 0) {
+      const altParts = recommendationDecision.discardedAlternatives.map(alt => {
+        let text = `✗ ${alt.pathId}\n  Motivo: ${alt.description} (Diferença de score: ${alt.scoreDifference >= 0 ? '+' : ''}${alt.scoreDifference.toFixed(4)})`;
+        if (alt.violatedConstraintDescription) {
+          text += `\n  ✗ Violou: ${alt.violatedConstraintDescription}`;
+        }
+        return text;
+      });
+      decisionParts.push(`**Alternativas Consideradas**\n${altParts.join('\n')}`);
+    }
+
+    if (recommendationDecision.tradeoffs && recommendationDecision.tradeoffs.length > 0) {
+      const tradeParts = recommendationDecision.tradeoffs.map(t => {
+        const gainedLabel = formatMetricLabel(t.metric);
+        const lostLabel = formatMetricLabel(t.lostMetric);
+        const gainPct = Math.round(t.gained * 100);
+        const lossPct = Math.round(t.lost * 100);
+        return `• +${gainPct}% ${gainedLabel} comparado a ${t.comparisonPathId}.\n` +
+               `• -${lossPct}% ${lostLabel} comparado a ${t.comparisonPathId}.\n` +
+               `• ${t.explanation}`;
+      });
+      decisionParts.push(`**Trade-offs Identificados**\n${tradeParts.join('\n')}`);
+    }
+
+    const confPct = Math.round(recommendationDecision.confidence * 100);
+    decisionParts.push(`**Confiança da Recomendação**\n${confPct}%`);
+
+    parts.push(decisionParts.join('\n\n'));
+  }
+
+  if (paretoFrontier) {
+    const frontierParts: string[] = [];
+
+    const pathList = paretoFrontier.paths.map((p, idx) => {
+      const stepsFormatted = p.pathId.split('+').map(id => {
+        if (id.includes('tritone_substitution')) return 'Substituição Tritônica';
+        if (id.includes('modal_borrowing')) return 'Empréstimo Modal';
+        if (id.includes('cadential_reinterpretation')) return 'Reinterpretação Cadencial';
+        if (id.includes('functional_compression')) return 'Compressão Funcional';
+        if (id.includes('functional_expansion')) return 'Expansão Funcional';
+        if (id.includes('secondary_dominant')) return 'Dominante Secundária';
+        if (id.includes('chromatic_predominant')) return 'Pré-Dominante Cromática';
+        return id;
+      }).join(' -> ') || 'Nenhuma transformação';
+
+      const t = Math.round(p.objectives.tension * 100);
+      const play = Math.round(p.objectives.playability * 100);
+      const stab = Math.round(p.objectives.functionalStability * 100);
+      const vl = Math.round(p.objectives.voiceLeading * 100);
+
+      return `${idx + 1}. ${stepsFormatted}\n` +
+             `   • Tensão: ${t}% | Tocabilidade: ${play}% | Estabilidade: ${stab}% | Condução: ${vl}%`;
+    });
+
+    frontierParts.push(`**Fronteira de Pareto**\nO sistema encontrou ${paretoFrontier.frontierSize} soluções ótimas não-dominadas (${paretoFrontier.dominatedCount} soluções foram descartadas por dominância).\n${pathList.join('\n')}`);
+
+    const profile = activeProfile || 'BALANCED';
+
+    const profileName = (p: string): string => {
+      switch (p) {
+        case 'BALANCED': return 'BALANCED (Equilibrado)';
+        case 'MAX_TENSION': return 'MAX_TENSION (Tensão Máxima)';
+        case 'MAX_STABILITY': return 'MAX_STABILITY (Estabilidade Máxima)';
+        case 'MAX_PLAYABILITY': return 'MAX_PLAYABILITY (Tocabilidade Máxima)';
+        case 'MAX_VOICE_LEADING': return 'MAX_VOICE_LEADING (Condução de Vozes Máxima)';
+        case 'MAX_PEDAGOGY': return 'MAX_PEDAGOGY (Impacto Pedagógico Máximo)';
+        default: return p;
+      }
+    };
+
+    const profileText = (p: string): string => {
+      switch (p) {
+        case 'BALANCED': return 'A solução escolhida favorece um equilíbrio ponderado entre todos os critérios de complexidade física e riqueza harmônica.';
+        case 'MAX_TENSION': return 'A solução escolhida favorece a tensão máxima e a atração dominante em detrimento de outros critérios.';
+        case 'MAX_STABILITY': return 'A solução escolhida favorece a estabilidade funcional e a clareza tonal em detrimento de outros critérios.';
+        case 'MAX_PLAYABILITY': return 'Esta recomendação foi escolhida porque, dentro do perfil MAX_PLAYABILITY, ela apresentou o melhor equilíbrio entre tocabilidade física e objetivos harmônicos.';
+        case 'MAX_VOICE_LEADING': return 'A solução escolhida favorece uma condução de vozes (voice leading) linear extremamente fluida e suave do baixo.';
+        case 'MAX_PEDAGOGY': return 'A solução escolhida favorece o impacto pedagógico e a riqueza de transformações para fins educacionais.';
+        default: return '';
+      }
+    };
+
+    frontierParts.push(`**Perfil de Otimização**\n${profileName(profile)}\n${profileText(profile)}`);
+
+    parts.push(frontierParts.join('\n\n'));
   }
 
   return parts.join('\n\n');

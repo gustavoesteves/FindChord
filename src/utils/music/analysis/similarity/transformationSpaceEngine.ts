@@ -78,8 +78,36 @@ export const TRANSFORMATION_TEMPLATES: TransformationTemplate[] = [
       functionalStabilityDelta: 0.8,
       voiceLeadingDelta: 0.8
     }
+  },
+  {
+    id: 'template:secondary_dominant',
+    mechanism: 'SECONDARY_DOMINANT',
+    preconditions: ['DIATONIC_CHORD', 'PREPARATION_FOR_RESOLUTION'],
+    effects: ['FUNCTION_PRESERVATION', 'VOICE_LEADING_PRESERVATION'],
+    reversibility: 0.8,
+    confidence: 0.90,
+    expectedOutcome: {
+      tensionDelta: 0.5,
+      chromaticismDelta: 0.7,
+      bassSmoothnessDelta: 0.5,
+      functionalStabilityDelta: 0.6,
+      voiceLeadingDelta: 0.6
+    }
   }
 ];
+
+/**
+ * Restringe a detecção de dominantes secundárias apenas aos alvos diatônicos funcionais.
+ */
+export function isSecondaryDominantTarget(currentRoot: string, nextChord: string): boolean {
+  const nextClean = nextChord.replace(/maj7|Maj7|7|9/g, ''); // Dm, Em, F, G, Am
+  if (nextClean === 'Dm' && currentRoot === 'A') return true;
+  if (nextClean === 'Em' && currentRoot === 'B') return true;
+  if (nextClean === 'F' && currentRoot === 'C') return true;
+  if (nextClean === 'G' && currentRoot === 'D') return true;
+  if (nextClean === 'Am' && currentRoot === 'E') return true;
+  return false;
+}
 
 /**
  * Detecta oportunidades de transformações harmônicas baseadas nos acordes de uma progressão.
@@ -186,6 +214,32 @@ export function detectOpportunities(progression: string[]): TransformationOpport
           evidenceNodeIds: [`layer5:function:${i + 1}`, `evidence:expansion:${i + 1}`],
           references: [i]
         });
+      }
+    }
+
+    // 6. SECONDARY_DOMINANT
+    if (i < progression.length - 1) {
+      const nextChord = progression[i + 1];
+      const currentRootMatch = chord.match(/^([A-G][#b]?)/);
+      if (currentRootMatch) {
+        const currentRoot = currentRootMatch[1];
+        if (isSecondaryDominantTarget(currentRoot, nextChord)) {
+          // Apenas se o acorde atual não for já uma dominante com 7 (ex: evitar D7 -> G)
+          if (!chord.endsWith('7') || chord.includes('maj') || chord.includes('Maj')) {
+            opportunities.push({
+              id: `opp:secondary_dominant:${i}`,
+              chordIndex: i,
+              mechanism: 'SECONDARY_DOMINANT',
+              confidence: 0.89,
+              musicalImpact: 0.75,
+              similarityImpact: 0.5,
+              pedagogicalValue: 0.8,
+              physicalComplexity: 0.6,
+              evidenceNodeIds: [`layer5:function:${i}`, `evidence:secondary_dominant:${i}`],
+              references: [i + 1]
+            });
+          }
+        }
       }
     }
   }
