@@ -1,0 +1,203 @@
+{
+  "percentiles": {
+    "tension": {
+      "mean": 0.2703,
+      "std": 0.1486,
+      "min": 0.05,
+      "max": 0.725,
+      "p10": 0.0875,
+      "p25": 0.125,
+      "p50": 0.275,
+      "p75": 0.3833,
+      "p90": 0.4667,
+      "p95": 0.5214,
+      "p99": 0.6125
+    },
+    "chromaticism": {
+      "mean": 0.2649,
+      "std": 0.1554,
+      "min": 0,
+      "max": 0.7875,
+      "p10": 0,
+      "p25": 0.175,
+      "p50": 0.2387,
+      "p75": 0.375,
+      "p90": 0.45,
+      "p95": 0.55,
+      "p99": 0.6375
+    },
+    "bassSmoothness": {
+      "mean": 0.5262,
+      "std": 0.1623,
+      "min": 0.1429,
+      "max": 0.9286,
+      "p10": 0.2857,
+      "p25": 0.4286,
+      "p50": 0.5238,
+      "p75": 0.619,
+      "p90": 0.7619,
+      "p95": 0.8571,
+      "p99": 0.8571
+    },
+    "functionalStability": {
+      "mean": 0.5807,
+      "std": 0.2016,
+      "min": 0,
+      "max": 1,
+      "p10": 0.3,
+      "p25": 0.45,
+      "p50": 0.6,
+      "p75": 0.7,
+      "p90": 0.84,
+      "p95": 0.8857,
+      "p99": 1
+    },
+    "voiceLeading": {
+      "mean": 0.7049,
+      "std": 0.1805,
+      "min": 0,
+      "max": 1,
+      "p10": 0.4604,
+      "p25": 0.6,
+      "p50": 0.73,
+      "p75": 0.84,
+      "p90": 0.92,
+      "p95": 0.9733,
+      "p99": 1
+    },
+    "playability": {
+      "mean": 0.3169,
+      "std": 0.1092,
+      "min": 0.1,
+      "max": 0.55,
+      "p10": 0.15,
+      "p25": 0.25,
+      "p50": 0.35,
+      "p75": 0.4,
+      "p90": 0.45,
+      "p95": 0.45,
+      "p99": 0.45
+    },
+    "pedagogicalImpact": {
+      "mean": 0.5832,
+      "std": 0.1573,
+      "min": 0.2592,
+      "max": 0.8914,
+      "p10": 0.343,
+      "p25": 0.3812,
+      "p50": 0.581,
+      "p75": 0.7163,
+      "p90": 0.7484,
+      "p95": 0.8136,
+      "p99": 0.8847
+    },
+    "goalAchievement": {
+      "mean": 0.1368,
+      "std": 0.2691,
+      "min": 0,
+      "max": 1,
+      "p10": 0,
+      "p25": 0,
+      "p50": 0,
+      "p75": 0.125,
+      "p90": 0.6347,
+      "p95": 0.9523,
+      "p99": 1
+    }
+  },
+  "steps": {
+    "mean": 2.2187,
+    "std": 0.9815,
+    "min": 1,
+    "max": 5,
+    "p10": 1,
+    "p25": 1,
+    "p50": 2,
+    "p75": 3,
+    "p90": 3,
+    "p95": 4,
+    "p99": 5
+  },
+  "correlation_matrix": {
+    "tension": {
+      "tension": 1,
+      "chromaticism": 0.4185,
+      "bassSmoothness": 0.3491,
+      "functionalStability": -0.2404,
+      "voiceLeading": 0.3839,
+      "playability": -0.7063,
+      "pedagogicalImpact": 0.0388,
+      "goalAchievement": 0.4632
+    },
+    "chromaticism": {
+      "tension": 0.4185,
+      "chromaticism": 1,
+      "bassSmoothness": 0.3302,
+      "functionalStability": -0.7183,
+      "voiceLeading": -0.1017,
+      "playability": -0.4007,
+      "pedagogicalImpact": 0.2713,
+      "goalAchievement": 0.2344
+    },
+    "bassSmoothness": {
+      "tension": 0.3491,
+      "chromaticism": 0.3302,
+      "bassSmoothness": 1,
+      "functionalStability": -0.2424,
+      "voiceLeading": -0.2894,
+      "playability": -0.4629,
+      "pedagogicalImpact": 0.137,
+      "goalAchievement": 0.4081
+    },
+    "functionalStability": {
+      "tension": -0.2404,
+      "chromaticism": -0.7183,
+      "bassSmoothness": -0.2424,
+      "functionalStability": 1,
+      "voiceLeading": 0.1524,
+      "playability": 0.2233,
+      "pedagogicalImpact": -0.1558,
+      "goalAchievement": -0.1284
+    },
+    "voiceLeading": {
+      "tension": 0.3839,
+      "chromaticism": -0.1017,
+      "bassSmoothness": -0.2894,
+      "functionalStability": 0.1524,
+      "voiceLeading": 1,
+      "playability": -0.0657,
+      "pedagogicalImpact": -0.1381,
+      "goalAchievement": 0.0608
+    },
+    "playability": {
+      "tension": -0.7063,
+      "chromaticism": -0.4007,
+      "bassSmoothness": -0.4629,
+      "functionalStability": 0.2233,
+      "voiceLeading": -0.0657,
+      "playability": 1,
+      "pedagogicalImpact": -0.3934,
+      "goalAchievement": -0.4638
+    },
+    "pedagogicalImpact": {
+      "tension": 0.0388,
+      "chromaticism": 0.2713,
+      "bassSmoothness": 0.137,
+      "functionalStability": -0.1558,
+      "voiceLeading": -0.1381,
+      "playability": -0.3934,
+      "pedagogicalImpact": 1,
+      "goalAchievement": 0.0442
+    },
+    "goalAchievement": {
+      "tension": 0.4632,
+      "chromaticism": 0.2344,
+      "bassSmoothness": 0.4081,
+      "functionalStability": -0.1284,
+      "voiceLeading": 0.0608,
+      "playability": -0.4638,
+      "pedagogicalImpact": 0.0442,
+      "goalAchievement": 1
+    }
+  }
+}

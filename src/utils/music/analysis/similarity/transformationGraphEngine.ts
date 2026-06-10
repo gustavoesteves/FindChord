@@ -202,15 +202,15 @@ export function generateRecommendedPaths(
   });
 
   // Otimização heurística: se houver muitos caminhos candidatos, ordena preliminarmente
-  // pelo alinhamento da meta e impacto pedagógico para executar a análise cara (Viterbi/VL) apenas nos top 20
-  if (paths.length > 20) {
+  // pelo alinhamento da meta e impacto pedagógico para executar a análise cara (Viterbi/VL) apenas nos top 10
+  if (paths.length > 10) {
     paths.forEach(p => {
       const goalAlignment = goal ? scorePathForGoal(goal, p.steps, opportunities) : 0.0;
       const normalizedGoalAlignment = 1 - Math.exp(-Math.max(0, goalAlignment));
       p.finalScore = Number((normalizedGoalAlignment + p.accumulatedImpact - (p.accumulatedDifficulty * 0.5)).toFixed(4));
     });
     paths.sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
-    paths = paths.slice(0, 20);
+    paths = paths.slice(0, 10);
   }
 
   // Se originalProgression estiver presente, executa e cacheia o resultado
