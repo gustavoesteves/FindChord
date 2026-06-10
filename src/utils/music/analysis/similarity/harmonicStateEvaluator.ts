@@ -8,6 +8,9 @@ import { analyzeProgression } from '../orchestrators/progressionAnalysis';
 import { findAutoVoicingsAdvanced } from '../../voiceLeading/voiceLeading';
 import { parseChord } from '../../theory/chordParser';
 
+const voiceLeadingQualityCache = new Map<string, number>();
+const harmonicStateCache = new Map<string, HarmonicStateProfile>();
+
 /**
  * Avalia a qualidade da condução de vozes (voice leading) de uma progressão
  * usando a distância média de transição gerada pelo resolvedor Viterbi.
@@ -17,13 +20,20 @@ export function evaluateVoiceLeadingQuality(progression: string[]): number {
     return 1.0;
   }
   
+  const cacheKey = progression.join(',');
+  if (voiceLeadingQualityCache.has(cacheKey)) {
+    return voiceLeadingQualityCache.get(cacheKey)!;
+  }
+  
   try {
     const tuning = ['E', 'A', 'D', 'G', 'B', 'E']; // Afinação padrão de guitarra
     const result = findAutoVoicingsAdvanced(progression, tuning, false);
     const totalCost = result.solution.transitions.reduce((sum, t) => sum + t.voiceLeadingCost, 0);
     const averageCost = totalCost / (progression.length - 1);
     
-    return Math.max(0.0, Math.min(1.0, 1.0 - (averageCost / 25.0)));
+    const quality = Math.max(0.0, Math.min(1.0, 1.0 - (averageCost / 25.0)));
+    voiceLeadingQualityCache.set(cacheKey, quality);
+    return quality;
   } catch (error) {
     console.error('Erro ao avaliar voice leading:', error);
     return 0.5; // Fallback neutro
@@ -42,6 +52,11 @@ export function evaluateHarmonicState(progression: string[]): HarmonicStateProfi
       functionalStability: 1.0,
       voiceLeadingQuality: 1.0
     };
+  }
+
+  const cacheKey = progression.join(',');
+  if (harmonicStateCache.has(cacheKey)) {
+    return harmonicStateCache.get(cacheKey)!;
   }
 
   const analysis = analyzeProgression(progression);
@@ -166,14 +181,15 @@ export function evaluateHarmonicState(progression: string[]): HarmonicStateProfi
 
   // 5. Voice Leading Quality
   const voiceLeadingQuality = Number(evaluateVoiceLeadingQuality(progression).toFixed(4));
-
-  return {
+  const profile = {
     tension,
     chromaticism,
     bassSmoothness,
     functionalStability,
     voiceLeadingQuality
   };
+  harmonicStateCache.set(cacheKey, profile);
+  return profile;
 }
 
 /**
