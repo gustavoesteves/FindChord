@@ -457,6 +457,7 @@ export interface RecommendationDecision {
   };
   confidence: number;
   rawConfidence?: number;
+  paretoAmbiguity?: number;
 }
 
 export interface TransformationExecutionResult {
