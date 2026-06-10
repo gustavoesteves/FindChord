@@ -218,9 +218,18 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 **Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
 *   **Objetivo**: Aprender e aplicar vetores de pesos de confiança condicionados ao contexto harmônico, incorporando o Brier Score como métrica de validação probabilística integral.
 *   **Conceito**:
-    *   **Brier Score**: Codificar e rastrear o **Brier Score** ($BS = \frac{1}{N} \sum_{i=1}^N (p_i - o_i)^2$) como métrica unificada de calibração, discriminação e refinamento contínuo da incerteza.
-    *   **Regionalização de Pesos**: Segmentar os cenários de benchmark em clusters ou contextos harmônicos (ex: por Perfil Estético de otimização, complexidade da fronteira de Pareto ou modulações de longa distância) e rodar o otimizador híbrido para obter vetores de pesos de confiança contextualizados ($w_{\text{context}}$).
-    *   **Inferência Contextual**: Adaptar o motor de explicabilidade para detectar em tempo de execução o contexto ativo e carregar o respectivo vetor de pesos correspondente para calcular a confiança final.
+    *   **Brier Score como KPI Principal**: Promover o **Brier Score** ($BS = \frac{1}{N} \sum_{i=1}^N (p_i - o_i)^2$) a indicador primário de qualidade do recomendador (avaliando simultaneamente linearidade, calibração e discriminação).
+    *   **Percentis Dinâmicos de Ambiguidade**: Segmentar os cenários em clusters baseados nos percentis observados de Pareto ($P_{33}$ e $P_{66}$ para tamanho de fronteira e volume) e obter vetores de pesos específicos ($w_{\text{context}}$) via otimização regional.
+    *   **Persistência Seletiva**: Gravar em `confidence_context_model.json` apenas os contextos com população validada ($N \ge 3$), usando a chave `"global"` como fallback padrão em runtime.
+
+---
+
+### Sprint F12.8: Probabilistic Confidence Modeling
+**Status: 🔄 PLANEJADA**
+*   **Objetivo**: Modelar continuamente a confiança a partir de um estimador de probabilidade contínua baseado nas características geométricas da fronteira.
+*   **Conceito**:
+    *   **Entropia de Pareto**: Integrar a métrica de **Entropia da Fronteira** ($H = -\sum p_i \log p_i$, onde $p_i$ é a relevância relativa ou crowding distance de cada solução ótima) para diferenciar entre fronteiras com soluções redundantes (baixa entropia) e soluções altamente diversas/competitivas (alta entropia).
+    *   **Estimador de Densidade Contínuo**: Substituir as decisões discretas por contexto da F12.7 por uma função de inferência contínua (regressão probabilística), interpolando os pesos de confiança diretamente a partir da entropia e volume da fronteira de Pareto.
 
 ---
 
