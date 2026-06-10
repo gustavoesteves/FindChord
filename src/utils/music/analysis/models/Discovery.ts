@@ -418,6 +418,14 @@ export interface RecommendationAnalytics {
   spacingStdDev?: number;
   averageFrontierCompressionRatio?: number;
   averageFrontierOccupancyIndex?: number;
+  averageScoreGapRaw?: number;
+  averageScoreGapWeighted?: number;
+  averageConstraintMarginRaw?: number;
+  averageConstraintMarginWeighted?: number;
+  averageGoalAlignmentRaw?: number;
+  averageGoalAlignmentWeighted?: number;
+  averageGeometryRaw?: number;
+  averageGeometryWeighted?: number;
 }
 
 export interface DiscardedAlternative {
@@ -442,6 +450,17 @@ export interface RecommendationTradeoff {
   explanation: string;
 }
 
+export interface ConfidenceBreakdown {
+  scoreGapRaw: number;
+  scoreGapWeighted: number;
+  constraintMarginRaw: number;
+  constraintMarginWeighted: number;
+  goalAlignmentRaw: number;
+  goalAlignmentWeighted: number;
+  geometryRaw: number;
+  geometryWeighted: number;
+}
+
 export interface RecommendationDecision {
   selectedPathId: string;
   selectionReasons: string[];
@@ -458,6 +477,7 @@ export interface RecommendationDecision {
   confidence: number;
   rawConfidence?: number;
   paretoAmbiguity?: number;
+  confidenceBreakdown?: ConfidenceBreakdown;
 }
 
 export interface TransformationExecutionResult {

@@ -10,6 +10,7 @@ import type {
   ParetoFrontier
 } from '../models/Discovery';
 import calibrationModel from './calibration_model.json' with { type: 'json' };
+import confidenceWeightModel from './confidence_weight_model.json' with { type: 'json' };
 
 function formatGoalName(goal: string): string {
   switch (goal) {
@@ -323,8 +324,23 @@ export function explainRecommendationDecision(
     paretoAmbiguity = ((1.0 - sizeScore) * 0.4) + ((1.0 - hvScore) * 0.3) + ((1.0 - spacingScore) * 0.3);
   }
 
-  const rawConfidence = (scoreGap * 0.3) + (constraintMargin * 0.25) + (goalAlignmentValue * 0.25) + (geometryFactor * 0.2);
+  const wGap = confidenceWeightModel.scoreGapWeight;
+  const wGoal = confidenceWeightModel.goalAlignmentWeight;
+  const wGeom = confidenceWeightModel.geometryWeight;
+
+  const rawConfidence = (scoreGap * wGap) + (goalAlignmentValue * wGoal) + (geometryFactor * wGeom);
   
+  const confidenceBreakdown = {
+    scoreGapRaw: Number(scoreGap.toFixed(4)),
+    scoreGapWeighted: Number((scoreGap * wGap).toFixed(4)),
+    constraintMarginRaw: Number(constraintMargin.toFixed(4)),
+    constraintMarginWeighted: 0.0,
+    goalAlignmentRaw: Number(goalAlignmentValue.toFixed(4)),
+    goalAlignmentWeighted: Number((goalAlignmentValue * wGoal).toFixed(4)),
+    geometryRaw: Number(geometryFactor.toFixed(4)),
+    geometryWeighted: Number((geometryFactor * wGeom).toFixed(4))
+  };
+
   // Platt Scaling Calibration
   const CALIBRATION_COEFFICIENTS = {
     A: calibrationModel.A,
@@ -342,6 +358,7 @@ export function explainRecommendationDecision(
     scoreBreakdown: breakdown,
     confidence,
     rawConfidence,
-    paretoAmbiguity: Number(paretoAmbiguity.toFixed(4))
+    paretoAmbiguity: Number(paretoAmbiguity.toFixed(4)),
+    confidenceBreakdown
   };
 }

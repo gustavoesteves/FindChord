@@ -1,0 +1,9 @@
+{
+  "scoreGapWeight": 0.68,
+  "goalAlignmentWeight": 0.12,
+  "geometryWeight": 0.2,
+  "optimizationScore": 0.149247,
+  "pearson": 0.174839,
+  "spearman": 0.089533,
+  "lastOptimized": "2026-06-10"
+}

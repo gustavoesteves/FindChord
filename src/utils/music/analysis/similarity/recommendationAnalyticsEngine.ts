@@ -61,6 +61,14 @@ export function computeRecommendationAnalytics(
     spacings?: number[];
     compressionRatios?: number[];
     occupancyIndices?: number[];
+    scoreGapsRaw?: number[];
+    scoreGapsWeighted?: number[];
+    constraintMarginsRaw?: number[];
+    constraintMarginsWeighted?: number[];
+    goalAlignmentsRaw?: number[];
+    goalAlignmentsWeighted?: number[];
+    geometriesRaw?: number[];
+    geometriesWeighted?: number[];
   }
  ): RecommendationAnalytics {
   const typeDist: Record<RecommendationMechanism, number> = {
@@ -281,6 +289,30 @@ export function computeRecommendationAnalytics(
   const occupancyIndices = options?.occupancyIndices || [];
   const averageFrontierOccupancyIndex = occupancyIndices.length > 0 ? Number((occupancyIndices.reduce((a, b) => a + b, 0) / occupancyIndices.length).toFixed(4)) : 0.0;
 
+  const scoreGapsRaw = options?.scoreGapsRaw || [];
+  const averageScoreGapRaw = scoreGapsRaw.length > 0 ? Number((scoreGapsRaw.reduce((a, b) => a + b, 0) / scoreGapsRaw.length).toFixed(4)) : 0.0;
+
+  const scoreGapsWeighted = options?.scoreGapsWeighted || [];
+  const averageScoreGapWeighted = scoreGapsWeighted.length > 0 ? Number((scoreGapsWeighted.reduce((a, b) => a + b, 0) / scoreGapsWeighted.length).toFixed(4)) : 0.0;
+
+  const constraintMarginsRaw = options?.constraintMarginsRaw || [];
+  const averageConstraintMarginRaw = constraintMarginsRaw.length > 0 ? Number((constraintMarginsRaw.reduce((a, b) => a + b, 0) / constraintMarginsRaw.length).toFixed(4)) : 0.0;
+
+  const constraintMarginsWeighted = options?.constraintMarginsWeighted || [];
+  const averageConstraintMarginWeighted = constraintMarginsWeighted.length > 0 ? Number((constraintMarginsWeighted.reduce((a, b) => a + b, 0) / constraintMarginsWeighted.length).toFixed(4)) : 0.0;
+
+  const goalAlignmentsRaw = options?.goalAlignmentsRaw || [];
+  const averageGoalAlignmentRaw = goalAlignmentsRaw.length > 0 ? Number((goalAlignmentsRaw.reduce((a, b) => a + b, 0) / goalAlignmentsRaw.length).toFixed(4)) : 0.0;
+
+  const goalAlignmentsWeighted = options?.goalAlignmentsWeighted || [];
+  const averageGoalAlignmentWeighted = goalAlignmentsWeighted.length > 0 ? Number((goalAlignmentsWeighted.reduce((a, b) => a + b, 0) / goalAlignmentsWeighted.length).toFixed(4)) : 0.0;
+
+  const geometriesRaw = options?.geometriesRaw || [];
+  const averageGeometryRaw = geometriesRaw.length > 0 ? Number((geometriesRaw.reduce((a, b) => a + b, 0) / geometriesRaw.length).toFixed(4)) : 0.0;
+
+  const geometriesWeighted = options?.geometriesWeighted || [];
+  const averageGeometryWeighted = geometriesWeighted.length > 0 ? Number((geometriesWeighted.reduce((a, b) => a + b, 0) / geometriesWeighted.length).toFixed(4)) : 0.0;
+
   return {
     recommendationTypeDistribution: typeDist,
     dominantFactorDistribution: factorDist,
@@ -311,7 +343,15 @@ export function computeRecommendationAnalytics(
     averageSpacing,
     spacingStdDev,
     averageFrontierCompressionRatio,
-    averageFrontierOccupancyIndex
+    averageFrontierOccupancyIndex,
+    averageScoreGapRaw,
+    averageScoreGapWeighted,
+    averageConstraintMarginRaw,
+    averageConstraintMarginWeighted,
+    averageGoalAlignmentRaw,
+    averageGoalAlignmentWeighted,
+    averageGeometryRaw,
+    averageGeometryWeighted
   };
 }
 
@@ -329,6 +369,15 @@ export function computeDiscoveryAnalytics(
   const spacings: number[] = [];
   const compressionRatios: number[] = [];
   const occupancyIndices: number[] = [];
+
+  const scoreGapsRaw: number[] = [];
+  const scoreGapsWeighted: number[] = [];
+  const constraintMarginsRaw: number[] = [];
+  const constraintMarginsWeighted: number[] = [];
+  const goalAlignmentsRaw: number[] = [];
+  const goalAlignmentsWeighted: number[] = [];
+  const geometriesRaw: number[] = [];
+  const geometriesWeighted: number[] = [];
 
   for (const match of matches) {
     if (match.recommendedPaths && match.recommendedPaths.length > 0) {
@@ -355,6 +404,18 @@ export function computeDiscoveryAnalytics(
     if (match.recommendationDecision) {
       dominantFactors.push(normalizeDominantFactor(match.recommendationDecision.dominantFactor));
       decisionConfidences.push(match.recommendationDecision.confidence);
+      
+      const cb = match.recommendationDecision.confidenceBreakdown;
+      if (cb) {
+        scoreGapsRaw.push(cb.scoreGapRaw);
+        scoreGapsWeighted.push(cb.scoreGapWeighted);
+        constraintMarginsRaw.push(cb.constraintMarginRaw);
+        constraintMarginsWeighted.push(cb.constraintMarginWeighted);
+        goalAlignmentsRaw.push(cb.goalAlignmentRaw);
+        goalAlignmentsWeighted.push(cb.goalAlignmentWeighted);
+        geometriesRaw.push(cb.geometryRaw);
+        geometriesWeighted.push(cb.geometryWeighted);
+      }
     }
   }
 
@@ -368,6 +429,14 @@ export function computeDiscoveryAnalytics(
     spreads,
     spacings,
     compressionRatios,
-    occupancyIndices
+    occupancyIndices,
+    scoreGapsRaw,
+    scoreGapsWeighted,
+    constraintMarginsRaw,
+    constraintMarginsWeighted,
+    goalAlignmentsRaw,
+    goalAlignmentsWeighted,
+    geometriesRaw,
+    geometriesWeighted
   });
 }

@@ -61,7 +61,7 @@ graph TD
         F10 --> F10C1 --> F10C2 --> F10C3 --> F10C4
     end
 
-    subgraph "PHASE 3 — Recommendation Engine (🔄 Em andamento)"
+    subgraph "PHASE 3 — Recommendation Engine (✅ Concluída)"
         F10C5["F10-C.5: Transformation Dependency Graph"]
         C31["C3.1: Transformation Execution Engine"]
         C32A["C3.2-A: Goal-Oriented Recommendation Engine"]
@@ -71,22 +71,32 @@ graph TD
         C34["C3.4: Multi-Objective Optimization"]
         C34A["C3.4-A: Real Scenario Benchmark"]
         C34B["C3.4-B: Recommendation Analytics"]
-        F12_1["F12.1: Resolution Confidence Calibration"]
+        F12_1B["F12.1-B: Percentile Normalization Layer"]
+        F12_3["F12.3: Dynamic Pareto Diagnostics"]
+        F12_4["F12.4: Empirical Confidence Recalibration"]
+        F12_5["F12.5: Confidence Decomposition Analytics"]
       
-        F10C4 --> F10C5 --> C31 --> C32A --> C32B --> C32C --> C33 --> C34 --> C34A --> C34B --> F12_1
+        F10C4 --> F10C5 --> C31 --> C32A --> C32B --> C32C --> C33 --> C34 --> C34A --> C34B --> F12_1B --> F12_3 --> F12_4 --> F12_5
     end
 
-    subgraph "PHASE 4 — Corpus & Benchmark"
+    subgraph "PHASE 4 — Confidence Weight Learning (✅ Concluída)"
+        F12_6["F12.6: Learned Confidence Weight Optimization"]
+        F12_5 --> F12_6
+    end
+
+    subgraph "PHASE 5 — Context-Aware Optimization (🔄 Em andamento)"
+        F12_7["F12.7: Context-Aware Confidence Weights"]
+        F12_6 --> F12_7
         F10E["F10-E: Corpus Expansion & Benchmark Suite"]
-        F12_1 --> F10E
+        F12_7 --> F10E
     end
 
-    subgraph "PHASE 5 — Extended Harmony"
+    subgraph "PHASE 6 — Extended Harmony"
         F14["F14: Blues & Extended Tonality Engine"]
         F10E --> F14
     end
 
-    subgraph "PHASE 6 — Integrations (MuseScore & Audio)"
+    subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
         IM0["Infra-M0: Harmony Engine Adapter"]
         IMX["Infra-MX: Canonical Score Format"]
         IMY["Infra-MY: Canonical Harmonic Event Model"]
@@ -165,10 +175,52 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
-### Sprint F12.1: Resolution Confidence Calibration
+### Sprint F12.1-B: Percentile Normalization Layer
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Corrigir assimetrias de escala nos objetivos de Pareto que distorciam a tomada de decisão.
+*   **Conceito**: Normalização baseada em percentis reais obtidos via simulação de quotas com 500 progressões únicas e 3.672 caminhos válidos.
+
+---
+
+### Sprint F12.3: Dynamic Pareto Diagnostics
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Implementar instrumentação geométrica na fronteira de Pareto.
+*   **Conceito**: Métricas contínuas de Hypervolume (Monte Carlo), Spread, Spacing (L2) e FCR (compactação) para diagnosticar a estrutura de soluções não-dominadas.
+
+---
+
+### Sprint F12.4: Empirical Confidence Recalibration
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Mapear a incerteza espacial da fronteira na certeza do recomendador.
+*   **Conceito**: Inclusão de `geometryFactor` e `paretoAmbiguity` na confiança bruta, seguido de recalibração logística de Platt ($A = 19.60, B = -10.15$) otimizada sob restrições de discriminação.
+
+---
+
+### Sprint F12.5: Confidence Decomposition Analytics
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Analisar detalhadamente as contribuições individuais e a força preditiva de cada fator de confiança.
+*   **Conceito**: Telemetria para registrar a contribuição bruta, ponderada e *Relative Contribution Share* de cada fator. Cálculo de correlações de Pearson com a confiança e com o sucesso real de benchmark qualitativo, além de gravação histórica local de drift.
+
+---
+
+### Sprint F12.6: Learned Confidence Weight Optimization
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Otimizar empiricamente os pesos de confiança e simplificar a formulação de elegibilidade.
+*   **Conceito**:
+    *   **F12.6-A (Filtro Rígido de Restrições)**: Remover `Constraint Margin` como componente ponderado da confiança (visto que atua puramente como gate binário de elegibilidade com variância zero) e mantê-lo estritamente como *Hard Eligibility Gate*.
+    *   **Etapa 1 (Grid Search Grosso + Fino)**: Aprender pesos ótimos $w_{\text{scoreGap}}$, $w_{\text{goalAlignment}}$, $w_{\text{geometry}}$ usando busca de grade em duas etapas (0.05 coarse e 0.01 fine local) para maximizar o score híbrido ($0.7 \cdot \text{Pearson} + 0.3 \cdot \text{Spearman}$ com tratamento de empates) sobre os cenários qualitativos de sucesso do benchmark.
+    *   **Etapa 2 (Recalibração Platt)**: Executar Platt Scaling sobre a nova confiança de pesos empíricos ($w = [0.68, 0.12, 0.20]$), atingindo $A = 24.20, B = -4.70$ com ECE de $11.97\%$ e MCE de $17.68\%$.
+    *   **Barreira de Regressão**: Proteção de escrita em `confidence_weight_model.json` para atualizações regressivas inferiores a $\epsilon = 0.005$.
+
+---
+
+### Sprint F12.7: Context-Aware Confidence Weights
 **Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
-*   **Objetivo**: Refinar os modelos de probabilidade contínua para calibrar e computar a confiança da resolução de dominantes e desvios tonais.
-*   **Conceito**: Consolidar a `ResolutionAnalysis` usando múltiplos fatores: resolução física de voice-leading (Layer 6), força funcional de atração, densidade harmônica dos acordes e estabilidade regional circundante.
+*   **Objetivo**: Aprender e aplicar vetores de pesos de confiança condicionados ao contexto harmônico, incorporando o Brier Score como métrica de validação probabilística integral.
+*   **Conceito**:
+    *   **Brier Score**: Codificar e rastrear o **Brier Score** ($BS = \frac{1}{N} \sum_{i=1}^N (p_i - o_i)^2$) como métrica unificada de calibração, discriminação e refinamento contínuo da incerteza.
+    *   **Regionalização de Pesos**: Segmentar os cenários de benchmark em clusters ou contextos harmônicos (ex: por Perfil Estético de otimização, complexidade da fronteira de Pareto ou modulações de longa distância) e rodar o otimizador híbrido para obter vetores de pesos de confiança contextualizados ($w_{\text{context}}$).
+    *   **Inferência Contextual**: Adaptar o motor de explicabilidade para detectar em tempo de execução o contexto ativo e carregar o respectivo vetor de pesos correspondente para calcular a confiança final.
 
 ---
 

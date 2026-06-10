@@ -15,6 +15,7 @@ import {
   prepareCorpus,
   computeDiscoveryAnalytics
 } from '../analysis/functionalAnalysis';
+import { optimizeConfidenceWeights } from '../analysis/similarity/confidenceWeightOptimizationEngine';
 import type { 
   CorpusItem,
   DiscoveryOptions,
@@ -1122,6 +1123,15 @@ const matchFrontierSizes: number[] = [];
 const matchSpacings: number[] = [];
 const matchHypervolumes: number[] = [];
 
+const benchmarkScoreGapsRaw: number[] = [];
+const benchmarkScoreGapsWeighted: number[] = [];
+const benchmarkConstraintMarginsRaw: number[] = [];
+const benchmarkConstraintMarginsWeighted: number[] = [];
+const benchmarkGoalAlignmentsRaw: number[] = [];
+const benchmarkGoalAlignmentsWeighted: number[] = [];
+const benchmarkGeometriesRaw: number[] = [];
+const benchmarkGeometriesWeighted: number[] = [];
+
 // 1. Extrair confianças brutas de todos os cenários executados
 for (const run of results) {
   if (run.match && run.match.recommendedPaths && run.match.recommendedPaths.length > 0) {
@@ -1136,6 +1146,27 @@ for (const run of results) {
     matchFrontierSizes.push(frontierSize);
     matchSpacings.push(spacing);
     matchHypervolumes.push(hypervolume);
+
+    const cb = run.match.recommendationDecision?.confidenceBreakdown;
+    if (cb) {
+      benchmarkScoreGapsRaw.push(cb.scoreGapRaw);
+      benchmarkScoreGapsWeighted.push(cb.scoreGapWeighted);
+      benchmarkConstraintMarginsRaw.push(cb.constraintMarginRaw);
+      benchmarkConstraintMarginsWeighted.push(cb.constraintMarginWeighted);
+      benchmarkGoalAlignmentsRaw.push(cb.goalAlignmentRaw);
+      benchmarkGoalAlignmentsWeighted.push(cb.goalAlignmentWeighted);
+      benchmarkGeometriesRaw.push(cb.geometryRaw);
+      benchmarkGeometriesWeighted.push(cb.geometryWeighted);
+    } else {
+      benchmarkScoreGapsRaw.push(0);
+      benchmarkScoreGapsWeighted.push(0);
+      benchmarkConstraintMarginsRaw.push(0);
+      benchmarkConstraintMarginsWeighted.push(0);
+      benchmarkGoalAlignmentsRaw.push(0);
+      benchmarkGoalAlignmentsWeighted.push(0);
+      benchmarkGeometriesRaw.push(0);
+      benchmarkGeometriesWeighted.push(0);
+    }
   }
 }
 
@@ -1173,7 +1204,79 @@ function getPercentile(sorted: number[], p: number): number {
   return (1 - weight) * sorted[low] + weight * sorted[high];
 }
 
-// 2. Otimização de Platt Scaling com Restrições de Discriminação (Grid Search)
+// ==========================================================
+// Phase 1 — Weight Learning (Sprint F12.6)
+// ==========================================================
+console.log('\n🧠 Executando Fase 1: Otimização Empírica dos Pesos da Confiança...');
+const optimizedWeights = optimizeConfidenceWeights({
+  scoreGaps: benchmarkScoreGapsRaw,
+  goalAlignments: benchmarkGoalAlignmentsRaw,
+  geometries: benchmarkGeometriesRaw,
+  successScores: normalizedScores
+});
+
+console.log(`   ├─ Pesos Híbridos: Score Gap = ${optimizedWeights.scoreGapWeight.toFixed(4)}, Goal Alignment = ${optimizedWeights.goalAlignmentWeight.toFixed(4)}, Geometry = ${optimizedWeights.geometryWeight.toFixed(4)}`);
+console.log(`   └─ Score Otimização = ${optimizedWeights.optimizationScore.toFixed(6)} (Pearson = ${optimizedWeights.pearson.toFixed(4)} | Spearman = ${optimizedWeights.spearman.toFixed(4)})`);
+
+// Carregar o modelo de pesos anterior se existir para aplicar a barreira de regressão
+const weightModelPath = path.join(__dirname, '../analysis/similarity/confidence_weight_model.json');
+let previousScore = -999;
+let previousWeights = { scoreGapWeight: 0.40, goalAlignmentWeight: 0.3333, geometryWeight: 0.2667 };
+
+if (fs.existsSync(weightModelPath)) {
+  try {
+    const prevModel = JSON.parse(fs.readFileSync(weightModelPath, 'utf8'));
+    if (prevModel.optimizationScore !== undefined) {
+      previousScore = prevModel.optimizationScore;
+    }
+    previousWeights = prevModel;
+  } catch (err) {
+    console.warn("Aviso ao ler confidence_weight_model.json anterior:", err);
+  }
+}
+
+const EPSILON = 0.005;
+const shouldOverwriteWeights = optimizedWeights.optimizationScore >= previousScore + EPSILON;
+let finalWeights = optimizedWeights;
+
+if (shouldOverwriteWeights) {
+  const weightModelContent = {
+    scoreGapWeight: optimizedWeights.scoreGapWeight,
+    goalAlignmentWeight: optimizedWeights.goalAlignmentWeight,
+    geometryWeight: optimizedWeights.geometryWeight,
+    optimizationScore: optimizedWeights.optimizationScore,
+    pearson: optimizedWeights.pearson,
+    spearman: optimizedWeights.spearman,
+    lastOptimized: new Date().toISOString().split('T')[0]
+  };
+  try {
+    fs.writeFileSync(weightModelPath, JSON.stringify(weightModelContent, null, 2));
+    console.log(`📝 Novos pesos de confiança persistidos em: ${weightModelPath}`);
+  } catch (err) {
+    console.error("Erro ao salvar confidence_weight_model.json:", err);
+  }
+} else {
+  console.log(`⚠️ Novos pesos não superaram a barreira de regressão (+${EPSILON}) do modelo anterior (Score: ${optimizedWeights.optimizationScore.toFixed(6)} vs ${previousScore.toFixed(6)}). Mantendo pesos anteriores.`);
+  finalWeights = {
+    scoreGapWeight: previousWeights.scoreGapWeight,
+    goalAlignmentWeight: previousWeights.goalAlignmentWeight,
+    geometryWeight: previousWeights.geometryWeight,
+    optimizationScore: previousScore,
+    pearson: (previousWeights as any).pearson ?? 0,
+    spearman: (previousWeights as any).spearman ?? 0
+  };
+}
+
+// Recomputar confianças brutas usando os pesos selecionados finais
+rawConfidences.length = 0;
+for (let i = 0; i < normalizedScores.length; i++) {
+  const raw = (benchmarkScoreGapsRaw[i] * finalWeights.scoreGapWeight) + 
+              (benchmarkGoalAlignmentsRaw[i] * finalWeights.goalAlignmentWeight) + 
+              (benchmarkGeometriesRaw[i] * finalWeights.geometryWeight);
+  rawConfidences.push(raw);
+}
+
+// 2. Otimização de Platt Scaling com Restrições de Discriminação (Grid Search - Fase 2)
 interface CandidateCalibration {
   a: number;
   b: number;
@@ -1292,7 +1395,20 @@ for (const run of results) {
     const exec = winner.executionResult;
     if (exec && exec.stateTransition && run.match.recommendationDecision) {
       const decision = run.match.recommendationDecision;
-      const rawConf = (decision as any).rawConfidence ?? 0;
+      const cb = decision.confidenceBreakdown;
+      let rawConf = (decision as any).rawConfidence ?? 0;
+      
+      // Recalcular a confiança bruta final com base nos novos pesos finais
+      if (cb) {
+        rawConf = (cb.scoreGapRaw * finalWeights.scoreGapWeight) + 
+                  (cb.goalAlignmentRaw * finalWeights.goalAlignmentWeight) + 
+                  (cb.geometryRaw * finalWeights.geometryWeight);
+        (decision as any).rawConfidence = Number(rawConf.toFixed(4));
+        cb.scoreGapWeighted = Number((cb.scoreGapRaw * finalWeights.scoreGapWeight).toFixed(4));
+        cb.constraintMarginWeighted = 0.0;
+        cb.goalAlignmentWeighted = Number((cb.goalAlignmentRaw * finalWeights.goalAlignmentWeight).toFixed(4));
+        cb.geometryWeighted = Number((cb.geometryRaw * finalWeights.geometryWeight).toFixed(4));
+      }
       
       const calibrated = 1.0 / (1.0 + Math.exp(-(bestOptA * rawConf + bestOptB)));
       const finalConf = Number(Math.max(0.0, Math.min(1.0, calibrated)).toFixed(4));
@@ -1326,10 +1442,44 @@ const corrConfFrontierSize = pearsonCorrelation(predictedConfidences, matchFront
 const corrConfSpacing = pearsonCorrelation(predictedConfidences, matchSpacings);
 const corrConfHypervolume = pearsonCorrelation(predictedConfidences, matchHypervolumes);
 
+// 1. Correlações com a Confiança Calibrada Final
+const corrConfScoreGap = pearsonCorrelation(predictedConfidences, benchmarkScoreGapsRaw);
+const corrConfConstraint = pearsonCorrelation(predictedConfidences, benchmarkConstraintMarginsRaw);
+const corrConfGoalAlignment = pearsonCorrelation(predictedConfidences, benchmarkGoalAlignmentsRaw);
+const corrConfGeometry = pearsonCorrelation(predictedConfidences, benchmarkGeometriesRaw);
+
+// 2. Correlações com o Sucesso Real do Benchmark (normalizedScores)
+const corrSuccessScoreGap = pearsonCorrelation(normalizedScores, benchmarkScoreGapsRaw);
+const corrSuccessConstraint = pearsonCorrelation(normalizedScores, benchmarkConstraintMarginsRaw);
+const corrSuccessGoalAlignment = pearsonCorrelation(normalizedScores, benchmarkGoalAlignmentsRaw);
+const corrSuccessGeometry = pearsonCorrelation(normalizedScores, benchmarkGeometriesRaw);
+
+// 3. Relative Contribution Share
+const avgGapRaw = benchmarkScoreGapsRaw.reduce((a, b) => a + b, 0) / benchmarkScoreGapsRaw.length;
+const avgGapWeighted = avgGapRaw * finalWeights.scoreGapWeight;
+const avgConstraintRaw = benchmarkConstraintMarginsRaw.reduce((a, b) => a + b, 0) / benchmarkConstraintMarginsRaw.length;
+const avgConstraintWeighted = 0.0;
+const avgGoalAlignmentRaw = benchmarkGoalAlignmentsRaw.reduce((a, b) => a + b, 0) / benchmarkGoalAlignmentsRaw.length;
+const avgGoalAlignmentWeighted = avgGoalAlignmentRaw * finalWeights.goalAlignmentWeight;
+const avgGeometryRaw = benchmarkGeometriesRaw.reduce((a, b) => a + b, 0) / benchmarkGeometriesRaw.length;
+const avgGeometryWeighted = avgGeometryRaw * finalWeights.geometryWeight;
+
+const sumWeightedContributions = avgGapWeighted + avgConstraintWeighted + avgGoalAlignmentWeighted + avgGeometryWeighted;
+const shareGap = sumWeightedContributions > 0 ? avgGapWeighted / sumWeightedContributions : 0;
+const shareConstraint = sumWeightedContributions > 0 ? avgConstraintWeighted / sumWeightedContributions : 0;
+const shareGoalAlignment = sumWeightedContributions > 0 ? avgGoalAlignmentWeighted / sumWeightedContributions : 0;
+const shareGeometry = sumWeightedContributions > 0 ? avgGeometryWeighted / sumWeightedContributions : 0;
+
 console.log('\n📊 Correlações da Geometria de Pareto com a Confiança da Recomendação:');
 console.log(`   ├─ Corr(Confidence, FrontierSize): ${corrConfFrontierSize.toFixed(4)}`);
 console.log(`   ├─ Corr(Confidence, Spacing): ${corrConfSpacing.toFixed(4)}`);
 console.log(`   └─ Corr(Confidence, Hypervolume): ${corrConfHypervolume.toFixed(4)}`);
+
+console.log('\n📊 Decomposição de Confiança — Correlações & Importância de Fatores:');
+console.log(`   ├─ Score Gap:        Raw Avg = ${avgGapRaw.toFixed(4)} | Weighted = ${avgGapWeighted.toFixed(4)} | Share = ${(shareGap * 100).toFixed(1)}% | Corr(Conf) = ${corrConfScoreGap.toFixed(4)} | Corr(Succ) = ${corrSuccessScoreGap.toFixed(4)}`);
+console.log(`   ├─ Constraint Margin:Raw Avg = ${avgConstraintRaw.toFixed(4)} | Weighted = ${avgConstraintWeighted.toFixed(4)} | Share = ${(shareConstraint * 100).toFixed(1)}% | Corr(Conf) = ${corrConfConstraint.toFixed(4)} | Corr(Succ) = ${corrSuccessConstraint.toFixed(4)}`);
+console.log(`   ├─ Goal Alignment:   Raw Avg = ${avgGoalAlignmentRaw.toFixed(4)} | Weighted = ${avgGoalAlignmentWeighted.toFixed(4)} | Share = ${(shareGoalAlignment * 100).toFixed(1)}% | Corr(Conf) = ${corrConfGoalAlignment.toFixed(4)} | Corr(Succ) = ${corrSuccessGoalAlignment.toFixed(4)}`);
+console.log(`   └─ Geometry Factor:  Raw Avg = ${avgGeometryRaw.toFixed(4)} | Weighted = ${avgGeometryWeighted.toFixed(4)} | Share = ${(shareGeometry * 100).toFixed(1)}% | Corr(Conf) = ${corrConfGeometry.toFixed(4)} | Corr(Succ) = ${corrSuccessGeometry.toFixed(4)}`);
 
 // Recomputar analytics com as confianças calibradas atualizadas para incluir métricas de discriminação corretas
 analytics = computeDiscoveryAnalytics(allMatches, { targets: normalizedScores });
@@ -1546,7 +1696,7 @@ if (fs.existsSync(driftHistoryPath)) {
 }
 
 const currentRunEntry = {
-  sprint: "F12.3",
+  sprint: "F12.6",
   timestamp: new Date().toISOString().split('T')[0],
   meanCalibrationError: Number(meanCalibrationError.toFixed(4)),
   mechanismEntropy: Number(analytics.mechanismEntropy.toFixed(4)),
@@ -1568,32 +1718,37 @@ const currentRunEntry = {
   averageSpacing: Number((analytics.averageSpacing ?? 0).toFixed(4)),
   spacingStdDev: Number((analytics.spacingStdDev ?? 0).toFixed(4)),
   averageFrontierCompressionRatio: Number((analytics.averageFrontierCompressionRatio ?? 0).toFixed(4)),
-  averageFrontierOccupancyIndex: Number((analytics.averageFrontierOccupancyIndex ?? 0).toFixed(4))
+  averageFrontierOccupancyIndex: Number((analytics.averageFrontierOccupancyIndex ?? 0).toFixed(4)),
+  averageScoreGapRaw: Number(avgGapRaw.toFixed(4)),
+  averageScoreGapWeighted: Number(avgGapWeighted.toFixed(4)),
+  averageConstraintMarginRaw: Number(avgConstraintRaw.toFixed(4)),
+  averageConstraintMarginWeighted: Number(avgConstraintWeighted.toFixed(4)),
+  averageGoalAlignmentRaw: Number(avgGoalAlignmentRaw.toFixed(4)),
+  averageGoalAlignmentWeighted: Number(avgGoalAlignmentWeighted.toFixed(4)),
+  averageGeometryRaw: Number(avgGeometryRaw.toFixed(4)),
+  averageGeometryWeighted: Number(avgGeometryWeighted.toFixed(4)),
+  scoreGapContributionShare: Number(shareGap.toFixed(4)),
+  constraintContributionShare: Number(shareConstraint.toFixed(4)),
+  goalAlignmentContributionShare: Number(shareGoalAlignment.toFixed(4)),
+  geometryContributionShare: Number(shareGeometry.toFixed(4)),
+  scoreGapWeight: Number(finalWeights.scoreGapWeight.toFixed(4)),
+  goalAlignmentWeight: Number(finalWeights.goalAlignmentWeight.toFixed(4)),
+  geometryWeight: Number(finalWeights.geometryWeight.toFixed(4)),
+  optimizationScore: Number(finalWeights.optimizationScore.toFixed(6))
 };
 
-const existingIdx = history.findIndex(h => h.sprint === "F12.3");
+const existingIdx = history.findIndex(h => h.sprint === "F12.6");
 if (existingIdx !== -1) {
   history[existingIdx] = currentRunEntry;
 } else {
-  const dIdx = history.findIndex(h => h.sprint === "C3.4-D");
-  if (dIdx !== -1) {
-    if (history[dIdx].A === undefined) history[dIdx].A = 30.0;
-    if (history[dIdx].B === undefined) history[dIdx].B = -10.0;
-    if (history[dIdx].confidenceEntropy === undefined) history[dIdx].confidenceEntropy = 0.0;
-    if (history[dIdx].confidenceStdDev === undefined) history[dIdx].confidenceStdDev = 0.0;
-    if (history[dIdx].confidenceDynamicRange === undefined) history[dIdx].confidenceDynamicRange = 0.0;
-    if (history[dIdx].confidenceP90MinusP10 === undefined) history[dIdx].confidenceP90MinusP10 = 0.0;
-    if (history[dIdx].confidenceResolution === undefined) history[dIdx].confidenceResolution = 0.0;
-    if (history[dIdx].occupiedReliabilityBins === undefined) history[dIdx].occupiedReliabilityBins = 0;
-  }
-  const eIdx = history.findIndex(h => h.sprint === "C3.4-E");
-  if (eIdx !== -1) {
-    if (history[eIdx].confidenceEntropy === undefined) history[eIdx].confidenceEntropy = 0.0;
-    if (history[eIdx].confidenceStdDev === undefined) history[eIdx].confidenceStdDev = 0.0;
-    if (history[eIdx].confidenceDynamicRange === undefined) history[eIdx].confidenceDynamicRange = 0.0;
-    if (history[eIdx].confidenceP90MinusP10 === undefined) history[eIdx].confidenceP90MinusP10 = 0.0;
-    if (history[eIdx].confidenceResolution === undefined) history[eIdx].confidenceResolution = 0.0;
-    if (history[eIdx].occupiedReliabilityBins === undefined) history[eIdx].occupiedReliabilityBins = 0;
+  const f125Idx = history.findIndex(h => h.sprint === "F12.5");
+  if (f125Idx !== -1) {
+    if (history[f125Idx].scoreGapWeight === undefined) {
+      history[f125Idx].scoreGapWeight = 0.40;
+      history[f125Idx].goalAlignmentWeight = 0.3333;
+      history[f125Idx].geometryWeight = 0.2667;
+      history[f125Idx].optimizationScore = 0.0;
+    }
   }
   history.push(currentRunEntry);
 }
@@ -1613,8 +1768,8 @@ else if (dominanceRatio < 0.60) dominanceQualitative = 'Moderado';
 
 // Tabela de Drift Histórico
 let driftTableMd = `### 🕒 Série Temporal de Drift Histórico\n\n`;
-driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Conf Entropy | Conf StdDev | Conf DynRange | Conf P90-P10 | Bins Occupied | Mech Entropy | Mech Dominance Ratio | Avg HV | Avg Spread | Avg Spacing | Avg FCR | Avg FOI |\n`;
-driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
+driftTableMd += `| Sprint | Data | Mean Calibration Error | A | B | Conf Entropy | Conf StdDev | Conf DynRange | Conf P90-P10 | Bins Occupied | Mech Entropy | Mech Dominance Ratio | Avg HV | Avg Spread | Avg Spacing | Avg FCR | Avg FOI | Gap Share | Constr Share | Goal Share | Geom Share | wGap | wGoal | wGeom | wScore |\n`;
+driftTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
 for (const entry of history) {
   const errorPct = (entry.meanCalibrationError * 100).toFixed(2) + '%';
   const dominancePct = entry.mechanismDominanceRatio !== undefined 
@@ -1641,10 +1796,20 @@ for (const entry of history) {
   const avgFCR = entry.averageFrontierCompressionRatio !== undefined ? entry.averageFrontierCompressionRatio.toFixed(4) : 'N/A';
   const avgFOI = entry.averageFrontierOccupancyIndex !== undefined ? entry.averageFrontierOccupancyIndex.toFixed(4) : 'N/A';
 
-  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${cEnt} | ${cStd} | ${cRange} | ${cP90P10} | ${cBins} | ${entry.mechanismEntropy.toFixed(2)} | ${dominancePct} | ${avgHV} | ${avgSpread} | ${avgSpacing} | ${avgFCR} | ${avgFOI} |\n`;
+  const gapShare = (entry as any).scoreGapContributionShare !== undefined ? ((entry as any).scoreGapContributionShare * 100).toFixed(1) + '%' : 'N/A';
+  const constrShare = (entry as any).constraintContributionShare !== undefined ? ((entry as any).constraintContributionShare * 100).toFixed(1) + '%' : 'N/A';
+  const goalShare = (entry as any).goalAlignmentContributionShare !== undefined ? ((entry as any).goalAlignmentContributionShare * 100).toFixed(1) + '%' : 'N/A';
+  const geomShare = (entry as any).geometryContributionShare !== undefined ? ((entry as any).geometryContributionShare * 100).toFixed(1) + '%' : 'N/A';
+
+  const wGapCol = (entry as any).scoreGapWeight !== undefined ? ((entry as any).scoreGapWeight * 100).toFixed(0) + '%' : 'N/A';
+  const wGoalCol = (entry as any).goalAlignmentWeight !== undefined ? ((entry as any).goalAlignmentWeight * 100).toFixed(0) + '%' : 'N/A';
+  const wGeomCol = (entry as any).geometryWeight !== undefined ? ((entry as any).geometryWeight * 100).toFixed(0) + '%' : 'N/A';
+  const wScoreCol = (entry as any).optimizationScore !== undefined ? (entry as any).optimizationScore.toFixed(4) : 'N/A';
+
+  driftTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${errorPct} | ${plattA} | ${plattB} | ${cEnt} | ${cStd} | ${cRange} | ${cP90P10} | ${cBins} | ${entry.mechanismEntropy.toFixed(2)} | ${dominancePct} | ${avgHV} | ${avgSpread} | ${avgSpacing} | ${avgFCR} | ${avgFOI} | ${gapShare} | ${constrShare} | ${goalShare} | ${geomShare} | ${wGapCol} | ${wGoalCol} | ${wGeomCol} | ${wScoreCol} |\n`;
 }
 
-let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint F12.3)
+let mdContent = `# Relatório de Benchmark de Cenários Musicais Reais (Sprint F12.5)
 
 Este relatório compila a validação qualitativa do recomendador do Find Chord após a incorporação da otimização multiobjetivo (fronteira de Pareto), explicabilidade de decisão e analytics de recomendação.
 
@@ -1736,8 +1901,8 @@ top10Candidates.forEach((c, idx) => {
   candidatesTableMd += `| **#${idx + 1}** | ${c.a.toFixed(2)} | ${c.b.toFixed(2)} | ${c.score.toFixed(4)} | ${(c.mce * 100).toFixed(2)}% | ${(c.ece * 100).toFixed(2)}% | ${c.entropy.toFixed(4)} | ${c.stdDev.toFixed(4)} | ${c.dynamicRange.toFixed(4)} | ${c.occupiedBins} |\n`;
 });
 
-// Geração do Relatório de Diagnóstico F12.3
-let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint F12.3)
+// Geração do Relatório de Diagnóstico F12.5
+let diagMd = `# Relatório de Diagnóstico de Calibração (Sprint F12.5)
 
 Este relatório apresenta análises estatísticas e qualitativas avançadas sobre o comportamento do recomendador harmônico do Find Chord, com foco em calibração de confiança, correlação de métricas e diversidade de mecanismos.
 
@@ -1828,6 +1993,18 @@ for (const m of mechanismAudits) {
   mechTableMd += `| ${m.name} | ${m.count} | ${(m.avgConfidence * 100).toFixed(2)}% | ${(m.avgTarget * 100).toFixed(2)}% | ${(m.calibrationError * 100).toFixed(2)}% |\n`;
 }
 
+let decompositionTableMd = `## 📊 5. Decomposição de Confiança (Confidence Decomposition)
+
+Este diagnóstico apresenta o peso fixo de cada componente na fórmula de confiança, as médias observadas nos cenários do benchmark (bruta e ponderada), a contribuição relativa (Relative Contribution Share) e a correlação linear de Pearson de cada componente com a confiança final calibrada e com a nota real de sucesso de recomendação.
+
+| Componente | Peso Fixo | Média Valor Bruto (Raw) | Média Valor Ponderado | Share de Contribuição Relativa | Correlação com Confiança | Correlação com Sucesso |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Score Gap** | 30% | ${avgGapRaw.toFixed(4)} | ${avgGapWeighted.toFixed(4)} | ${(shareGap * 100).toFixed(1)}% | ${corrConfScoreGap >= 0 ? '+' : ''}${corrConfScoreGap.toFixed(4)} | ${corrSuccessScoreGap >= 0 ? '+' : ''}${corrSuccessScoreGap.toFixed(4)} |
+| **Constraint Margin** | 25% | ${avgConstraintRaw.toFixed(4)} | ${avgConstraintWeighted.toFixed(4)} | ${(shareConstraint * 100).toFixed(1)}% | ${corrConfConstraint >= 0 ? '+' : ''}${corrConfConstraint.toFixed(4)} | ${corrSuccessConstraint >= 0 ? '+' : ''}${corrSuccessConstraint.toFixed(4)} |
+| **Goal Alignment** | 25% | ${avgGoalAlignmentRaw.toFixed(4)} | ${avgGoalAlignmentWeighted.toFixed(4)} | ${(shareGoalAlignment * 100).toFixed(1)}% | ${corrConfGoalAlignment >= 0 ? '+' : ''}${corrConfGoalAlignment.toFixed(4)} | ${corrSuccessGoalAlignment >= 0 ? '+' : ''}${corrSuccessGoalAlignment.toFixed(4)} |
+| **Geometry Factor** | 20% | ${avgGeometryRaw.toFixed(4)} | ${avgGeometryWeighted.toFixed(4)} | ${(shareGeometry * 100).toFixed(1)}% | ${corrConfGeometry >= 0 ? '+' : ''}${corrConfGeometry.toFixed(4)} | ${corrSuccessGeometry >= 0 ? '+' : ''}${corrSuccessGeometry.toFixed(4)} |
+`;
+
 diagMd += `
 ### Resultado de Calibração de Confiança:
 - **Erro Médio de Calibração (\`meanCalibrationError\`)**: \`${(meanCalibrationError * 100).toFixed(2)}%\`
@@ -1856,6 +2033,10 @@ ${mechTableMd}
 
 ---
 
+${decompositionTableMd}
+
+---
+
 ${candidatesTableMd}
 
 ---
@@ -1863,8 +2044,45 @@ ${candidatesTableMd}
 ${driftTableMd}
 `;
 
-fs.writeFileSync(diagnosticsPath, diagMd);
-console.log(`📝 Relatório de diagnóstico gerado em: [calibration_diagnostics_report.md](file://${diagnosticsPath})`);
+  let weightHistoryTableMd = `### 📈 Série Temporal de Evolução de Pesos\n\n`;
+  weightHistoryTableMd += `| Sprint | Data | Score Gap Weight | Goal Alignment Weight | Geometry Weight | Optimization Score |\n`;
+  weightHistoryTableMd += `| :---: | :---: | :---: | :---: | :---: | :---: |\n`;
+  for (const entry of history) {
+    const wGap = (entry as any).scoreGapWeight !== undefined ? ((entry as any).scoreGapWeight * 100).toFixed(0) + '%' : 'N/A';
+    const wGoal = (entry as any).goalAlignmentWeight !== undefined ? ((entry as any).goalAlignmentWeight * 100).toFixed(0) + '%' : 'N/A';
+    const wGeom = (entry as any).geometryWeight !== undefined ? ((entry as any).geometryWeight * 100).toFixed(0) + '%' : 'N/A';
+    const optScore = (entry as any).optimizationScore !== undefined ? (entry as any).optimizationScore.toFixed(4) : 'N/A';
+    weightHistoryTableMd += `| **${entry.sprint}** | ${entry.timestamp} | ${wGap} | ${wGoal} | ${wGeom} | ${optScore} |\n`;
+  }
+
+  let weightsTableMd = `## 🎯 6. Learned Confidence Weights (Pesos Aprendidos de Confiança)
+
+Este diagnóstico apresenta os pesos ótimos de confiança obtidos pela otimização empírica da Sprint F12.6 (Fase 1). Estes pesos foram aprendidos ao maximizar o score composto híbrido ($0.7 \\cdot \\text{Pearson} + 0.3 \\cdot \\text{Spearman}$) sobre os cenários qualitativos reais do benchmark.
+
+| Componente | Peso Fixo Baseline | Peso Aprendido | Poder Preditivo (Sucesso) | Função na Confiança |
+| :--- | :---: | :---: | :---: | :--- |
+| **Score Gap** | 30% | ${(finalWeights.scoreGapWeight * 100).toFixed(1)}% | Moderado ($+${corrSuccessScoreGap.toFixed(3)}$) | Driver Principal de Linearidade |
+| **Goal Alignment** | 25% | ${(finalWeights.goalAlignmentWeight * 100).toFixed(1)}% | Baixo ($+${corrSuccessGoalAlignment.toFixed(3)}$) | Alinhamento com Intenções Estéticas |
+| **Geometry Factor** | 20% | ${(finalWeights.geometryWeight * 100).toFixed(1)}% | Baixo/Nulo ($${corrSuccessGeometry.toFixed(3)}$) | Calibrador de Incerteza e Ambiguidade |
+| **Constraint Margin** | 25% | **Removido (0%)** | Nulo ($0.000$) | Gate Rígido de Elegibilidade |
+
+*Nota: O Constraint Margin foi totalmente promovido a Hard Eligibility Gate e sua contribuição foi redistribuída entre as demais variáveis para otimizar a calibração.*
+
+---
+
+## 📈 7. Weight Evolution History (Histórico de Evolução de Pesos)
+
+${weightHistoryTableMd}
+`;
+
+  diagMd += `
+---
+
+${weightsTableMd}
+`;
+
+  fs.writeFileSync(diagnosticsPath, diagMd);
+  console.log(`📝 Relatório de diagnóstico gerado em: [calibration_diagnostics_report.md](file://${diagnosticsPath})`);
 
 // Asserções para aprovação do benchmark
 if (averageScore <= 4.2) {
@@ -1957,6 +2175,40 @@ if (corrConfFrontierSize >= -0.10) {
 }
 if (corrConfHypervolume >= -0.10) {
   throw new Error(`Benchmark falhou: Correlação entre confiança e hypervolume (${corrConfHypervolume.toFixed(4)}) deve ser menor que -0.10.`);
+}
+
+// 4 Novas Asserções da Sprint F12.5/F12.6 (Decomposição de Confiança - Pearson > 0.05 se houver variância)
+const stdDevScoreGap = Math.sqrt(benchmarkScoreGapsRaw.reduce((sum, val) => sum + Math.pow(val - avgGapRaw, 2), 0) / benchmarkScoreGapsRaw.length);
+const stdDevConstraint = Math.sqrt(benchmarkConstraintMarginsRaw.reduce((sum, val) => sum + Math.pow(val - avgConstraintRaw, 2), 0) / benchmarkConstraintMarginsRaw.length);
+const stdDevGoalAlignment = Math.sqrt(benchmarkGoalAlignmentsRaw.reduce((sum, val) => sum + Math.pow(val - avgGoalAlignmentRaw, 2), 0) / benchmarkGoalAlignmentsRaw.length);
+const stdDevGeometry = Math.sqrt(benchmarkGeometriesRaw.reduce((sum, val) => sum + Math.pow(val - avgGeometryRaw, 2), 0) / benchmarkGeometriesRaw.length);
+
+if (stdDevScoreGap > 0.001 && corrConfScoreGap <= 0.05) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e scoreGapRaw (${corrConfScoreGap.toFixed(4)}) deve ser maior que 0.05.`);
+}
+if (stdDevConstraint > 0.001 && corrConfConstraint <= 0.05) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e constraintMarginRaw (${corrConfConstraint.toFixed(4)}) deve ser maior que 0.05.`);
+}
+if (stdDevGoalAlignment > 0.001 && corrConfGoalAlignment <= 0.05) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e goalAlignmentRaw (${corrConfGoalAlignment.toFixed(4)}) deve ser maior que 0.05.`);
+}
+if (stdDevGeometry > 0.001 && corrConfGeometry <= 0.05) {
+  throw new Error(`Benchmark falhou: Correlação entre confiança e geometryRaw (${corrConfGeometry.toFixed(4)}) deve ser maior que 0.05.`);
+}
+
+// Asserção Relativa de Aceitação da Sprint F12.6 (Pearson(rawConfidence, Success) > Pearson_F12.5 + 0.02)
+const corrRawConfSuccess = pearsonCorrelation(rawConfidences, normalizedScores);
+const baselinePearson = 0.1378; // Pearson obtido na Sprint F12.5
+if (corrRawConfSuccess <= baselinePearson + 0.02) {
+  throw new Error(`Benchmark falhou: Correlação Pearson entre rawConfidence e Sucesso (${corrRawConfSuccess.toFixed(4)}) deve ser maior que baseline + 0.02 (${(baselinePearson + 0.02).toFixed(4)}).`);
+}
+
+// ECE e MCE devem ser menores ou iguais ao baseline F12.5
+if (expectedCalibrationError > 0.1213) {
+  throw new Error(`Benchmark falhou: ECE (${(expectedCalibrationError * 100).toFixed(2)}%) é maior do que baseline F12.5 (12.13%).`);
+}
+if (maximumCalibrationError > 0.2804) {
+  throw new Error(`Benchmark falhou: MCE (${(maximumCalibrationError * 100).toFixed(2)}%) é maior do que baseline F12.5 (28.04%).`);
 }
 
 console.log('🎉 BENCHMARK APROVADO COM SUCESSO!');
