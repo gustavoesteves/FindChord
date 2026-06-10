@@ -1357,6 +1357,9 @@ for (const bin of bins) {
   totalSamples += bin.samples.length;
 }
 
+const stableMCEThreshold = 3;
+const hasStableBin = bins.some(b => b.samples.length >= stableMCEThreshold);
+
 for (const bin of bins) {
   const count = bin.samples.length;
   if (count > 0) {
@@ -1365,7 +1368,8 @@ for (const bin of bins) {
     const calibrationError = Math.abs(avgConfidence - avgTarget);
     
     eceSum += (count / totalSamples) * calibrationError;
-    if (calibrationError > maximumCalibrationError) {
+    const isConsideredForMCE = hasStableBin ? (count >= stableMCEThreshold) : true;
+    if (isConsideredForMCE && calibrationError > maximumCalibrationError) {
       maximumCalibrationError = calibrationError;
     }
     
@@ -1785,7 +1789,7 @@ diagMd += `
 ### Resultado de Calibração de Confiança:
 - **Erro Médio de Calibração (\`meanCalibrationError\`)**: \`${(meanCalibrationError * 100).toFixed(2)}%\`
 - **Expected Calibration Error (\`ECE\`)**: \`${(expectedCalibrationError * 100).toFixed(2)}%\`
-- **Maximum Calibration Error (\`MCE\`)**: \`${(maximumCalibrationError * 100).toFixed(2)}%\`
+- **Maximum Calibration Error (\`MCE\`)**: \`${(maximumCalibrationError * 100).toFixed(2)}%\` (bins com $\ge 3$ amostras)
 - **Entropia de Confiança (\`confidenceEntropy\`)**: \`${analytics.confidenceEntropy.toFixed(4)}\` (Métrica: \`> 1.0\`)
 - **Desvio Padrão de Confiança (\`confidenceStdDev\`)**: \`${analytics.confidenceStdDev.toFixed(4)}\` (Métrica: \`> 0.10\`)
 - **Intervalo Dinâmico de Confiança (\`confidenceDynamicRange\`)**: \`${analytics.confidenceDynamicRange.toFixed(4)}\` (Métrica: \`> 0.30\`)
