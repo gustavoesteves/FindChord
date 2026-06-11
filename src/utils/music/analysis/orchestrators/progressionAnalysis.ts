@@ -29,6 +29,8 @@ import { buildHarmonicKnowledgeGraph } from '../narrative/knowledgeGraphBuilder'
 import { extractNarrativeFacts } from '../narrative/narrativeFactEngine';
 import { compileNarrativeExplanation } from '../narrative/harmonicNarrativeCompiler';
 import { generateFingerprint } from '../narrative/narrativeFingerprint';
+import { computeStabilityAndCausality } from '../calibration/InterpretiveStabilityEngine';
+import { computeTheoryAdequacyAndFrontier } from '../calibration/TheoryFrontierDetector';
 
 
 
@@ -43,7 +45,8 @@ import { generateFingerprint } from '../narrative/narrativeFingerprint';
  */
 export function analyzeProgression(
   progression: string[],
-  profile: HarmonicGrammarProfile = 'GENERAL'
+  profile: HarmonicGrammarProfile = 'GENERAL',
+  isPerturbation = false
 ): FunctionalAnalysis {
   if (progression.length === 0) {
     return {
@@ -313,6 +316,11 @@ export function analyzeProgression(
     narrative: narrative || undefined,
     knowledgeGraph
   };
+
+  if (!isPerturbation) {
+    computeStabilityAndCausality(fullAnalysisDTO, (prog) => analyzeProgression(prog, profile, true));
+    computeTheoryAdequacyAndFrontier(fullAnalysisDTO);
+  }
 
   const narrativeFacts = extractNarrativeFacts(fullAnalysisDTO);
   const narrativeExplanation = compileNarrativeExplanation(narrativeFacts, chords);

@@ -12,6 +12,9 @@ import type {
 } from '../models/FunctionalAnalysis';
 import type { AdaptiveTonalState } from '../models/AdaptiveTonalState';
 import { parseChord } from '../../theory/chordParser';
+import { calibrateHypotheses } from '../calibration/BayesianCalibrationEngine';
+import { applyMusicologicalPriors } from '../calibration/MusicologicalPriorEngine';
+import { computeConsensus } from '../calibration/ConsensusModelingEngine';
 import { isMinorType } from '../helpers/qualityHelpers';
 import { ALL_24_KEYS, getChroma } from '../../theory/pitchClass';
 import { getScaleDegreeOffset } from '../../theory/scaleDegree';
@@ -111,6 +114,7 @@ export function resolveGlobalPath(
     };
   }
   const N = cache[keysInCache[0]].length;
+  const progression = cache[keysInCache[0]].map(c => c.chordSymbol);
 
   // 1. Generate active candidate list (24 tonal keys + top-N modal candidates)
   let activeCandidates = candidates;
@@ -540,8 +544,8 @@ export function resolveGlobalPath(
     const hypothesesList = Object.values(keyMap)
       .map(item => ({
         root: item.tonal.root,
-        mode: item.tonal.mode,
-        probability: Number(item.prob.toFixed(4)),
+        mode: item.tonal.mode === 'MINOR' ? 'MINOR' : 'MAJOR' as 'MAJOR' | 'MINOR',
+        probability: item.prob,
         harmonicFunction: item.harmonicFunction,
         contextualFunction: item.contextualFunction,
         isPersistent: item.isPersistent
@@ -551,49 +555,84 @@ export function resolveGlobalPath(
     const primary = hypothesesList[0];
     const alternatives = hypothesesList.slice(1).filter(h => h.isPersistent);
 
-    // Normalize probabilities of the kept (persistent) hypotheses to sum to 1.0
-    const kept = [primary, ...alternatives];
+    const kept = [primary, ...alternatives].map(h => ({
+      root: h.root,
+      mode: h.mode,
+      probability: h.probability,
+      harmonicFunction: h.harmonicFunction,
+      contextualFunction: h.contextualFunction
+    }));
+
+    // Re-normalize raw probabilities of the kept hypotheses
     const sumKeptProbs = kept.reduce((sum, h) => sum + h.probability, 0);
     if (sumKeptProbs > 0) {
       kept.forEach(h => {
-        h.probability = Number((h.probability / sumKeptProbs).toFixed(4));
+        h.probability = h.probability / sumKeptProbs;
       });
     }
 
-    // D. Determine certaintyLevel using HDR (Hypothesis Dominance Ratio)
-    const p1 = primary.probability;
-    const p2 = alternatives[0]?.probability || 0;
-    const hdr = p2 > 0 ? p1 / p2 : Infinity;
+    const rawHypothesesCopy = kept.map(h => ({
+      root: h.root,
+      mode: h.mode as 'MAJOR' | 'MINOR',
+      probability: h.probability,
+      harmonicFunction: h.harmonicFunction as HarmonicFunction,
+      contextualFunction: h.contextualFunction
+    }));
+
+    // Apply Bayesian calibration step
+    const calibrationRes = calibrateHypotheses(kept, progression[i]);
+    
+    // Apply Musicological priors
+    const finalHyps = applyMusicologicalPriors(calibrationRes.hypotheses, progression, i);
+
+    // Compute final PCS and certaintyLevel based on finalHyps
+    const finalProbs = finalHyps.map(h => h.probability);
+    const finalEntropy = -finalProbs.reduce((sum, p) => p > 0 ? sum + p * Math.log(p) : sum, 0);
+    const K = finalProbs.length;
+    const hMax = K > 1 ? Math.log(K) : 1.0;
+    const pTop = finalProbs[0] ?? 0;
+    
+    let pcsVal = Number((pTop * (1.0 - (hMax > 0 ? finalEntropy / hMax : 0.0))).toFixed(4));
+    if ((finalHyps as any).matchedTemplate) {
+      pcsVal = 0.98; // high confidence when we match an exact musicological consensus
+    }
 
     let certaintyLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
-    if (hdr > 4.0) {
+    if (pcsVal > 0.80) {
       certaintyLevel = 'HIGH';
-    } else if (hdr >= 1.5) {
+    } else if (pcsVal >= 0.50) {
       certaintyLevel = 'MEDIUM';
     } else {
       certaintyLevel = 'LOW';
     }
 
-    // Remove temporary isPersistent field before pushing to DTO
     const cleanedPrimary = {
-      root: primary.root,
-      mode: primary.mode,
-      probability: primary.probability,
-      harmonicFunction: primary.harmonicFunction,
-      contextualFunction: primary.contextualFunction
+      root: finalHyps[0].root,
+      mode: finalHyps[0].mode,
+      probability: finalHyps[0].probability,
+      harmonicFunction: finalHyps[0].harmonicFunction as HarmonicFunction,
+      contextualFunction: finalHyps[0].contextualFunction
     };
-    const cleanedAlternatives = alternatives.map(alt => ({
+    const cleanedAlternatives = finalHyps.slice(1).map(alt => ({
       root: alt.root,
       mode: alt.mode,
       probability: alt.probability,
-      harmonicFunction: alt.harmonicFunction,
+      harmonicFunction: alt.harmonicFunction as HarmonicFunction,
       contextualFunction: alt.contextualFunction
     }));
+
+    const consensusRes = computeConsensus(finalHyps as any, progression[i], progression, i);
 
     adaptiveTonalStates.push({
       primary: cleanedPrimary,
       alternatives: cleanedAlternatives,
-      certaintyLevel
+      certaintyLevel,
+      pcs: pcsVal,
+      pcsBeforePrior: calibrationRes.pcs,
+      rawHypotheses: rawHypothesesCopy,
+      mig: consensusRes.mig,
+      adi: consensusRes.adi,
+      cfs: consensusRes.cfs
     });
   }
 

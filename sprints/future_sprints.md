@@ -108,10 +108,15 @@ graph TD
         F11C["F11-C: Adversarial Harmonies & Outlier Stress Test"]
         F11D["F11-D: Adaptive Harmonic Reasoning"]
         F11E["F11-E: Convergence Bias & Polytonal Inference Audit"]
-        F11F["F11-F: Dynamic Polytonal Reasoning"]
+        F11F["F11-F: Bayesian Polytonal Calibration"]
+        F11G["F11-G: Musicological Consensus & Disagreement"]
+        F11H["F11-H: Interpretive Stability Engine"]
+        F11I["F11-I: Theory Discovery"]
+        F11J["F11-J: Theory Formation"]
+        F11K["F11-K: Theory Selection"]
         F14["F14: Blues & Extended Tonality Engine"]
         F12_8 --> F10E
-        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F11C --> F11D --> F11E --> F11F --> F14
+        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F11C --> F11D --> F11E --> F11F --> F11G --> F11H --> F11I --> F11J --> F11K --> F14
     end
 
     subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
@@ -402,7 +407,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F11-E: Convergence Bias & Polytonal Inference Audit
-**Status: 📅 PROGRAMADA (P&D / Auditoria de Convergência e Politonalidade)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Investigar se as probabilidades das hipóteses concorrentes refletem a realidade musical ou se existe um viés estrutural no algoritmo (Beam Search/Viterbi) favorecendo a convergência precoce e o colapso probabilístico em torno de uma hipótese dominante.
 *   **Conceito & Auditorias**:
     *   **Auditoria de Convergência**: Determinar se o Beam Search favorece excessivamente hipóteses tonais diatônicas dominantes em detrimento de alternativas legítimas.
@@ -466,7 +471,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F11-F: Bayesian Polytonal Calibration
-**Status: 📅 PROGRAMADA (Pesquisa / Calibração de Hipóteses Politonais)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Corrigir as distorções probabilísticas identificadas na F11-E (especialmente no Grupo D), implementando calibração contínua e desacoplada sobre as hipóteses alternativas e eixos politonais concorrentes.
 *   **Conceito & Calibração**:
     *   **Decoupled Architecture**: Processamento sequencial desacoplado para calibração estatística e prioris literárias:
@@ -482,6 +487,71 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **OCS (Overconfidence Score)**: $|OCS| = |\text{Accuracy} - \text{Confidence}| < 5.00\%$
     *   **HDRR (HDR Retention)**: $HDRR = HDR_{\text{after}} / HDR_{\text{before}} > 0.70$
     *   **LAS (Literary Agreement Score)**: $> 80.00\%$
+
+---
+
+### Sprint F11-G: Musicological Consensus & Analyst Disagreement Modeling
+**Status: 📅 PROGRAMADA (Pesquisa / Modelagem de Consenso Musicológico)**
+*   **Objetivo**: Representar formalmente múltiplas interpretações estruturais corretas quando a própria literatura especializada e os analistas humanos divergem sobre a taxonomia (ex: acordes como o Tristan Chord sendo explicados concorrentemente por escolas Funcionais, Simétricas ou Neo-Riemannianas), refinando a unidade de análise de hipótese tonal individual para escolas de pensamento analítico.
+*   **Conceito & Modelagem**:
+    *   **Consenso Multi-Perspectiva**: Substituir a representação de "erro/incerteza do resolvedor" por uma modelagem explícita de "divergência teórica válida" (Analyst Disagreement Index).
+    *   **Mapeamento de Escolas de Análise**: Associar vetores de probabilidade a diferentes correntes analíticas (ex: Análise Funcional Tradicional, Teoria dos Eixos de Bartók, Teoria de Conjuntos / Pós-Tonal, e Relações Neo-Riemannianas).
+    *   **Consistência Explicativa Plural**: Expandir o motor de narrativas comparativas para justificar as alternativas sob a terminologia teórica específica de cada escola analítica mapeada.
+*   **Métricas Propostas**:
+    *   **ADI (Analyst Disagreement Index)**: Proporção de massa probabilística alinhada com as escolas analíticas descritas pela literatura ($ADI \ge 80.00\%$).
+    *   **TECS (Theoretical Explanation Consistency Score)**: Consistência gramatical e terminológica textual gerada para cada escola analítica ($TECS \ge 90.00\%$).
+
+---
+
+### Sprint F11-H: Historical Harmonic Interpretation Dynamics
+**Status: 📅 PROGRAMADA (Pesquisa / Dinâmica Histórica das Interpretações)**
+*   **Objetivo**: Introduzir uma camada temporal e historiográfica ao Find Chord, permitindo que interpretações harmônicas sejam contextualizadas e explicadas de acordo com a evolução histórica das teorias e escolas analíticas.
+*   **Conceito & Dinâmica Histórica**:
+    *   **Base Historiográfica**: Mapear as principais escolas teóricas e autores representativos da história da música (Funcionalismo Clássico, Schenkerianismo, Pós-Tonal, Neo-Riemanniano, Simetria e Jazz Contemporâneo).
+    *   **Historical Interpretation Engine**: Relacionar as hipóteses analíticas geradas com períodos históricos teóricos específicos e construir linhas do tempo interpretativas que mostram a evolução das leituras possíveis.
+    *   **Explicabilidade Historiográfica**: Produzir relatórios e narrativas detalhadas explicando a evolução das leituras e por que diferentes escolas e teóricos de épocas distintas divergiram na análise da obra.
+*   **Métricas Propostas**:
+    *   **HAI (Historical Agreement Index)**: Concordância com a literatura analítica histórica registrada ($HAI \ge 85.00\%$).
+    *   **SDR (School Differentiation Rate)**: Capacidade de discriminar corretamente entre escolas teóricas concorrentes ($SDR \ge 80.00\%$).
+    *   **HCS (Historical Consistency Score)**: Coerência interna longitudinal do mapeamento historiográfico ($HCS \ge 90.00\%$).
+    *   **TIM (Temporal Interpretation Mapping)**: Acurácia no posicionamento temporal e referencial da análise ($TIM \ge 85.00\%$).
+---
+
+### Sprint F11-I: Musicological Theory Discovery & Emergent Analytical Pattern Mining
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Identificar regiões do espaço harmônico onde as taxonomias teóricas clássicas apresentam limitações explicativas e descobrir padrões estruturados de desacordo escolar.
+*   **Conceito & Métodos**:
+    *   **Epistemic Embedding ($E$)**: Vetor epistemológico de 7 dimensões normalizado de dinâmica analítica.
+    *   **Theory Adequacy Score (TAS)**: Grau de cobertura e suficiência teórica das escolas existentes.
+    *   **Theory Frontier Index (TFI)**: Mapeamento de anomalias/fronteiras explicativas.
+    *   **Clustering Epistêmico**: Segmentação por K-Means no espaço $E$ para detecção de comunidades coerentes ($ECI > 0.75$, $ETS > 0.80$).
+
+---
+
+### Sprint F11-J: Autonomous Theory Formation
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Propor formalmente novos candidatos a teorias analíticas baseados nas fronteiras detectadas na F11-I, qualificando sua coesão, novidade e generalização.
+*   **Conceito & Métodos**:
+    *   **Teoria Evolutiva de Abstrações**: Mapeamento do ciclo de estágios (`Cluster` → `Pattern Candidate` → `Theory Candidate` → `Validated Theory Candidate`).
+    *   **Theory Maturity Score (TMS)**: Métrica ponderada de maturidade agregada ($TMS > 0.80$) incorporando Generalization Score ($GS$), Novelty Score ($NS$), Coesão ($TCS$), Reprodutibilidade ($TRI$) e Explanatory Gain ponderado ($EGS_w$ com holdout).
+    *   **Theory Knowledge Graph**: Grafo dinâmico ligando novas teorias validadas às escolas tradicionais por arestas tipadas (`DERIVES_FROM`, `COMPLEMENTS`, `CONFLICTS_WITH`).
+
+---
+
+### Sprint F11-K: Theory Selection & Evolutionary Validation
+**Status: 📅 PROGRAMADA (Pesquisa / Falsificação e Seleção de Teorias)**
+*   **Objetivo**: Introduzir seleção evolutiva de teorias candidatas sob expansão de corpus e perturbações, avaliando sua sobrevivência e comparando-as com escolas clássicas (falsificação teórica).
+*   **Conceito & Métodos**:
+    *   **Longitudinal Survival Score (LSS)**: Proporção de ciclos de avaliação em que o candidato de teoria sobrevive:
+        $$LSS = \frac{N_{\text{survived}}}{N_{\text{evaluation\_cycles}}}$$
+    *   **Theory Compression Gain (TCG)**: Mede o ganho de compressão explicativa contra a complexidade de regras introduzidas:
+        $$TCG = \frac{\text{Complexity}}{\text{Coverage}}$$
+    *   **Theory Replacement Index ($TRI_2$)**: Ganho de adequação explicativa em relação à melhor escola clássica tradicional:
+        $$TRI_2 = TAS_{\text{candidate}} - TAS_{\text{best\_classical}}$$
+    *   **Hipóteses Científicas**:
+        - **H13 — Theory Survival Hypothesis**: Teorias com $TMS$, $GS$ e $NS$ altos apresentam maior estabilidade longitudinal.
+        - **H14 — Theory Compression Hypothesis**: Teorias de alta parcimônia ($TCG$ ótimo) apresentam maior taxa de sobrevivência longitudinal ($LSS$).
+        - **H15 — Competitive Explanatory Hypothesis**: Em regiões de fronteira teórica, a modelagem evolutiva gera ao menos um candidato capaz de superar a melhor escola clássica ($TRI_2 > 0$).
 
 ---
 

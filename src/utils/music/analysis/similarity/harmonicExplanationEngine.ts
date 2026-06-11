@@ -266,8 +266,93 @@ export function generateExplanation(
   
   const confidenceSentence = `${f1} alto é o principal responsável pela confiança. Ranking: ${f1} > ${f2} > ${f3} > ${f4}.`;
   
-  const narrative = `${certaintySentence} ${baseNarrative} ${confidenceSentence}`;
+  let narrative = `${certaintySentence} ${baseNarrative} ${confidenceSentence}`;
   
+  if (adaptiveState && adaptiveState.mig) {
+    const mig = adaptiveState.mig;
+    const adi = adaptiveState.adi ?? 0;
+    const cfs = adaptiveState.cfs ?? 0;
+
+    if (adi >= 0.15) {
+      let consensusText = `\n[Desacordo Musicológico] Há divergência teórica ativa sobre este acorde (ADI: ${adi.toFixed(2)}).`;
+      
+      const conflicts = mig.nodes.filter(n => n.type === 'conflict');
+      if (conflicts.length > 0) {
+        consensusText += ' Conflitos detectados: ' + conflicts.map((c: any) => c.description).join(' ');
+      }
+
+      const SCHOOLS_LOCAL = [
+        { name: 'functionalism', author: 'Riemann' },
+        { name: 'schenkerian', author: 'Schenker' },
+        { name: 'neo-riemannian', author: 'Cohn' },
+        { name: 'set-theory', author: 'Forte' },
+        { name: 'axis-theory', author: 'Lendvai' },
+        { name: 'jazz-cst', author: 'Berklee' }
+      ];
+
+      const schoolEdges = mig.edges.filter(e => e.type === 'supports');
+      const schoolSupports: Record<string, string[]> = {};
+      schoolEdges.forEach(e => {
+        const schoolName = e.from.replace('school_', '');
+        const interpNode = mig.nodes.find(n => n.id === e.to);
+        if (interpNode) {
+          const label = (interpNode as any).label || (interpNode as any).nonDiatonicRepresentation || (interpNode as any).tonalCenter;
+          if (!schoolSupports[schoolName]) schoolSupports[schoolName] = [];
+          schoolSupports[schoolName].push(`${label} (P: ${e.weight})`);
+        }
+      });
+
+      const schoolSentences = Object.entries(schoolSupports).map(([school, targets]) => {
+        const schoolRef = SCHOOLS_LOCAL.find(s => s.name === school);
+        const authorStr = schoolRef ? ` (${schoolRef.author})` : '';
+        return `${school.toUpperCase()}${authorStr} apoia: ${targets.join(', ')}`;
+      });
+      if (schoolSentences.length > 0) {
+        consensusText += ` Perspectivas teóricas: ${schoolSentences.join('; ')}.`;
+      }
+
+      if (cfs >= 0.4) {
+        consensusText += ` O consenso local é frágil (CFS: ${cfs.toFixed(2)}), com alta dependência de eixos específicos.`;
+      } else {
+        consensusText += ` O consenso local é robusto (CFS: ${cfs.toFixed(2)}).`;
+      }
+      
+      narrative += consensusText;
+    }
+  }
+
+  if (adaptiveState && (adaptiveState.iss !== undefined || adaptiveState.icr !== undefined)) {
+    const iss = adaptiveState.iss ?? 1.0;
+    const icr = adaptiveState.icr ?? 1.0;
+    const sis = adaptiveState.sis ?? 1.0;
+    let causalText = `\n[Análise Causal] A interpretação dominante possui estabilidade global ISS de ${iss.toFixed(2)}, estabilidade semântica SIS de ${sis.toFixed(2)} e robustez causal ICR de ${icr.toFixed(2)}.`;
+    
+    if (adaptiveState.causalityGraph && adaptiveState.causalityGraph.nodes.length > 0) {
+      const causeNodes = adaptiveState.causalityGraph.nodes.filter(n => n.type === 'cause');
+      if (causeNodes.length > 0) {
+        let bestCause = causeNodes[0];
+        let maxWeight = 0;
+        causeNodes.forEach(node => {
+          const edge = adaptiveState.causalityGraph!.edges.find(e => e.from === node.id);
+          if (edge && (edge.weight ?? 0) > maxWeight) {
+            maxWeight = edge.weight ?? 0;
+            bestCause = node;
+          }
+        });
+        
+        const chordName = bestCause.label.replace('Acorde Causal: ', '');
+        causalText += ` A interpretação dominante depende principalmente da presença do acorde ${chordName}. Sua remoção reduz a probabilidade da leitura tonal em ${(maxWeight * 100).toFixed(0)}%.`;
+        
+        if (chordName.includes('7')) {
+          causalText += ` Se o acorde ${chordName} fosse substituído por seu substituto de trítono, a análise migraria para uma interpretação com centro tonal alternativo.`;
+        } else {
+          causalText += ` Se o acorde ${chordName} sofresse intercâmbio modal ou fosse removido, o equilíbrio de forças entre as escolas analíticas mudaria.`;
+        }
+      }
+    }
+    narrative += causalText;
+  }
+
   return {
     tonalCenter,
     harmonicFunction,
