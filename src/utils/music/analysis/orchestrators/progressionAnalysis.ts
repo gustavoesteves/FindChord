@@ -108,6 +108,7 @@ export function analyzeProgression(
     const chordUnderKey = cache[stateStr][idx];
     const chosenHypIndex = globalPath.hypothesisIndexes[idx];
     const winner = chordUnderKey.debug?.functionalHypotheses?.[chosenHypIndex];
+    const adaptiveTonalState = globalPath.adaptiveTonalStates?.[idx];
 
     if (winner) {
       const analysisTags = [...chordUnderKey.analysisTags];
@@ -205,7 +206,8 @@ export function analyzeProgression(
         modal: modalContext,
         debug: {
           ...chordUnderKey.debug,
-          explanation: winner.explanation
+          explanation: winner.explanation,
+          adaptiveTonalState
         },
         analysisTags
       });
@@ -215,7 +217,11 @@ export function analyzeProgression(
         state,
         contextualFunction: 'PRIMARY',
         explanation: ['Diatonic chord in this key center'],
-        tonal: { tonalCenter: keyCenter }
+        tonal: { tonalCenter: keyCenter },
+        debug: {
+          ...chordUnderKey.debug,
+          adaptiveTonalState
+        }
       });
     }
   }

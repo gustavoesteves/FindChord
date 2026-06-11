@@ -26,6 +26,7 @@ export interface HarmonicExplanation {
   };
   attribution: FeatureAttribution;
   narrative: string;
+  certaintyLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export function generateExplanation(
@@ -180,7 +181,36 @@ export function generateExplanation(
   if (harmonicFunction === 'SUBDOMINANT') functionNamePt = 'Subdominante';
   if (harmonicFunction === 'DOMINANT') functionNamePt = 'Dominante';
   
-  let narrative = '';
+  // A. Determinar nível de certeza e sentença correspondente
+  let certaintyLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
+  let certaintySentence = '';
+  const adaptiveState = targetChord.debug?.adaptiveTonalState;
+  
+  if (adaptiveState) {
+    certaintyLevel = adaptiveState.certaintyLevel;
+    const prim = adaptiveState.primary;
+    const primModePt = prim.mode === 'MINOR' ? 'menor' : 'maior';
+    
+    if (certaintyLevel === 'HIGH') {
+      certaintySentence = `O contexto favorece claramente ${prim.root} ${primModePt}.`;
+    } else if (certaintyLevel === 'MEDIUM') {
+      const alt = adaptiveState.alternatives[0];
+      if (alt) {
+        const altModePt = alt.mode === 'MINOR' ? 'menor' : 'maior';
+        const primFuncPt = prim.harmonicFunction === 'TONIC' ? 'tônica' : prim.harmonicFunction === 'SUBDOMINANT' ? 'subdominante' : 'dominante';
+        const altFuncPt = alt.harmonicFunction === 'TONIC' ? 'tônica' : alt.harmonicFunction === 'SUBDOMINANT' ? 'subdominante' : 'dominante';
+        certaintySentence = `Existem duas interpretações competitivas: o acorde pode atuar como ${primFuncPt} em ${prim.root} ${primModePt} ou como ${altFuncPt} em ${alt.root} ${altModePt}.`;
+      } else {
+        certaintySentence = `Existem interpretações competitivas no contexto local.`;
+      }
+    } else {
+      certaintySentence = `Não há evidência suficiente para privilegiar um único centro tonal.`;
+    }
+  } else {
+    certaintySentence = `O contexto favorece claramente ${root} ${mode === 'MINOR' ? 'menor' : 'maior'}.`;
+  }
+
+  let baseNarrative = '';
   
   if (contextualFunction === 'SECONDARY_DOMINANT') {
     // Dominante Secundária
@@ -191,23 +221,23 @@ export function generateExplanation(
     else if (secondaryTarget === 'vi') resolutionChord = progression[targetIndex + 1] || 'Am';
     else resolutionChord = progression[targetIndex + 1] || secondaryTarget;
     
-    narrative = `${chordName} funciona como dominante secundária (${romanNumeral}) em ${keyNamePt}. Resolução esperada em ${resolutionChord}.`;
+    baseNarrative = `${chordName} funciona como dominante secundária (${romanNumeral}) em ${keyNamePt}. Resolução esperada em ${resolutionChord}.`;
   } else if (targetIndex > 0 && analysis.chords[targetIndex - 1]?.contextualFunction === 'SECONDARY_DOMINANT') {
     // Resolução de Dominante Secundária
     const prevChord = analysis.chords[targetIndex - 1];
     const prevChordName = prevChord.chordSymbol;
     const prevRoman = prevChord.romanNumeral || 'V7/ii';
-    narrative = `${prevChordName} funciona como dominante secundária (${prevRoman}) em ${keyNamePt}. Resolução esperada em ${chordName}.`;
+    baseNarrative = `${prevChordName} funciona como dominante secundária (${prevRoman}) em ${keyNamePt}. Resolução esperada em ${chordName}.`;
   } else if (contextualFunction === 'MODAL_BORROWING') {
     // Empréstimo Modal
     if (romanNumeral === 'iv') {
-      narrative = `${functionNamePt} iv menor emprestada do modo paralelo em ${keyNamePt}.`;
+      baseNarrative = `${functionNamePt} iv menor emprestada do modo paralelo em ${keyNamePt}.`;
     } else {
-      narrative = `${functionNamePt} ${romanNumeral} emprestado do modo paralelo em ${keyNamePt}.`;
+      baseNarrative = `${functionNamePt} ${romanNumeral} emprestado do modo paralelo em ${keyNamePt}.`;
     }
   } else if (contextualFunction === 'CHROMATIC_APPROACH') {
     // Neapolitan ou bII
-    narrative = `${functionNamePt} ${romanNumeral} atuando como acorde napolitano ou aproximação cromática em ${keyNamePt}.`;
+    baseNarrative = `${functionNamePt} ${romanNumeral} atuando como acorde napolitano ou aproximação cromática em ${keyNamePt}.`;
   } else {
     // Diatônico simples ou modulação
     const firstKey = analysis.chords[0]?.tonal?.tonalCenter;
@@ -215,10 +245,10 @@ export function generateExplanation(
     const isModulated = firstKey && currentKey && (firstKey.root !== currentKey.root || firstKey.mode !== currentKey.mode);
     
     if (isModulated) {
-      narrative = `Mudança gradual do centro tonal para ${currentKey.root} ${currentKey.mode === 'MINOR' ? 'menor' : 'maior'}.`;
+      baseNarrative = `Mudança gradual do centro tonal para ${currentKey.root} ${currentKey.mode === 'MINOR' ? 'menor' : 'maior'}.`;
     } else {
       const romanProgression = analysis.chords.map(c => c.romanNumeral).join('–');
-      narrative = `${functionNamePt} diatônica em ${keyNamePt}. Completa a progressão ${romanProgression}.`;
+      baseNarrative = `${functionNamePt} diatônica em ${keyNamePt}. Completa a progressão ${romanProgression}.`;
     }
   }
   
@@ -235,7 +265,8 @@ export function generateExplanation(
   const f4 = translatedNames[contributionRanking[3]];
   
   const confidenceSentence = `${f1} alto é o principal responsável pela confiança. Ranking: ${f1} > ${f2} > ${f3} > ${f4}.`;
-  narrative += ` ${confidenceSentence}`;
+  
+  const narrative = `${certaintySentence} ${baseNarrative} ${confidenceSentence}`;
   
   return {
     tonalCenter,
@@ -248,6 +279,7 @@ export function generateExplanation(
       informationGain
     },
     attribution,
-    narrative
+    narrative,
+    certaintyLevel
   };
 }

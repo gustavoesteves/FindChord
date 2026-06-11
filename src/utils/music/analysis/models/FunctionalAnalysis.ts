@@ -4,6 +4,7 @@
 import type { HarmonicKnowledgeGraph } from './HarmonicGraph';
 import type { HarmonicNarrativeFacts, HarmonicNarrativeExplanation } from './HarmonicNarrative';
 import type { HarmonicFingerprint } from './HarmonicFingerprint';
+import type { AdaptiveTonalState } from './AdaptiveTonalState';
 
 
 /**
@@ -152,6 +153,7 @@ export interface SemanticContext {
 export interface DebugContext {
   functionalHypotheses?: FunctionalHypothesis[];
   explanation?: string[];
+  adaptiveTonalState?: AdaptiveTonalState;
 }
 
 export interface FunctionalChord {
@@ -363,6 +365,7 @@ export interface GlobalAnalysisPath {
   modulations?: ModulationEvent[];
   explanations: string[];
   states?: HarmonicState[];
+  adaptiveTonalStates?: AdaptiveTonalState[];
 }
 
 export type HarmonicRegionType = 

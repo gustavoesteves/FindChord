@@ -7,8 +7,10 @@ import type {
   CadenceInfo,
   HarmonicGrammarProfile,
   HarmonicState,
-  ModalMode
+  ModalMode,
+  HarmonicFunction
 } from '../models/FunctionalAnalysis';
+import type { AdaptiveTonalState } from '../models/AdaptiveTonalState';
 import { parseChord } from '../../theory/chordParser';
 import { isMinorType } from '../helpers/qualityHelpers';
 import { ALL_24_KEYS, getChroma } from '../../theory/pitchClass';
@@ -51,6 +53,40 @@ export function getParentMajorChroma(state: HarmonicState): number {
     case 'LOCRIAN': offset = 1; break; // -11 = +1
   }
   return (rootChroma + offset) % 12;
+}
+
+export interface BeamPath {
+  score: number;
+  localScore: number;
+  transitionScore: number;
+  states: HarmonicState[];
+  hypotheses: FunctionalHypothesis[];
+  hypothesisIndexes: number[];
+  consecutiveCount: number;
+  explanations: string[];
+}
+
+export function getRunLength(states: HarmonicState[], index: number): number {
+  const target = states[index];
+  if (!target) return 0;
+  let len = 1;
+  // Go backwards
+  for (let idx = index - 1; idx >= 0; idx--) {
+    if (states[idx].root === target.root && states[idx].mode === target.mode) {
+      len++;
+    } else {
+      break;
+    }
+  }
+  // Go forwards
+  for (let idx = index + 1; idx < states.length; idx++) {
+    if (states[idx].root === target.root && states[idx].mode === target.mode) {
+      len++;
+    } else {
+      break;
+    }
+  }
+  return len;
 }
 
 export function resolveGlobalPath(
@@ -156,11 +192,11 @@ export function resolveGlobalPath(
     columns.push(columnStates);
   }
 
-  // 3. Initialize Viterbi structures
-  const dp: number[][] = columns.map(col => col.map(() => -Infinity));
-  const parent: number[][] = columns.map(col => col.map(() => -1));
-  const consecutiveCount: number[][] = columns.map(col => col.map(() => 1));
+  // 3. Initialize Beam Search parameters
+  const BEAM_WIDTH = 10;
 
+
+  // Initial chord 0 first chord heuristics
   const firstChordSymbol = cache[getStateString(activeCandidates[0])][0]?.chordSymbol;
   const firstParsed = firstChordSymbol ? parseChord(firstChordSymbol) : null;
   const firstChordRoot = firstParsed && !firstParsed.empty ? firstParsed.root : null;
@@ -168,7 +204,9 @@ export function resolveGlobalPath(
     ? (isMinorType(firstParsed.quality) ? 'AEOLIAN' : 'IONIAN')
     : null;
 
-  // Initialize chord 0
+  // Initialize Beam paths
+  let currentBeam: BeamPath[] = [];
+
   for (let j = 0; j < columns[0].length; j++) {
     const st = columns[0][j];
     let startMultiplier = 1.0;
@@ -188,58 +226,78 @@ export function resolveGlobalPath(
       const isInitialKey = initialTonal.root === initialTonalCenter.root && initialTonal.mode === initialTonalCenter.mode;
 
       if (isInitialKey || isFirstChordKey) {
-        startMultiplier = isModal ? 0.20 : 1.0; // Prefer tonal keys over modal keys at path start in standard profiles
+        startMultiplier = isModal ? 0.20 : 1.0; // Prefer tonal keys over modal keys at path start
       } else if (isCloselyRelated(initialTonal, initialTonalCenter)) {
         startMultiplier = 0.15;
       } else {
         startMultiplier = 0.02;
       }
     }
-    dp[0][j] = Math.log(Math.max(0.01, st.hypothesis.confidence)) + Math.log(startMultiplier);
-    consecutiveCount[0][j] = 1;
+
+    const localLog = Math.log(Math.max(0.01, st.hypothesis.confidence));
+    const score = localLog + Math.log(startMultiplier);
+    
+    currentBeam.push({
+      score,
+      localScore: localLog,
+      transitionScore: 0,
+      states: [st.state],
+      hypotheses: [st.hypothesis],
+      hypothesisIndexes: [st.hypIndex],
+      consecutiveCount: 1,
+      explanations: [
+        `Chord 0 (${st.originalChord.chordSymbol}): State: ${getStateString(st.state)}, ` +
+        `Chosen ${st.hypothesis.contextualFunction} (${st.hypothesis.romanNumeral}) with local confidence ${st.hypothesis.confidence.toFixed(2)}`
+      ]
+    });
   }
 
-  // 4. Run Viterbi Dynamic Programming
+  // Sort and keep top BEAM_WIDTH paths
+  currentBeam.sort((a, b) => b.score - a.score);
+  if (currentBeam.length > 0) {
+    currentBeam = currentBeam.slice(0, BEAM_WIDTH);
+  }
+
+  // Track beam history at each step i for multi-hypothesis analysis
+  const beamHistory: BeamPath[][] = [currentBeam];
+
+  // 4. Run Beam Search for i = 1 to N-1
   for (let i = 1; i < N; i++) {
-    const prevCol = columns[i - 1];
     const curCol = columns[i];
+    const nextBeamCandidates: BeamPath[] = [];
 
-    for (let j = 0; j < curCol.length; j++) {
-      const curState = curCol[j];
-      let maxScore = -Infinity;
-      let bestParentIdx = -1;
-      let bestConsecutiveCount = 1;
+    for (let k = 0; k < currentBeam.length; k++) {
+      const path = currentBeam[k];
+      const prevState = path.states[path.states.length - 1];
+      const prevHyp = path.hypotheses[path.hypotheses.length - 1];
 
-      for (let k = 0; k < prevCol.length; k++) {
-        const prevState = prevCol[k];
+      for (let j = 0; j < curCol.length; j++) {
+        const curState = curCol[j];
 
-        // A. Contextual transition probability from style model
+        // A. Contextual transition probability
         const baseProb = model.getProbability(
-          prevState.hypothesis.contextualFunction,
+          prevHyp.contextualFunction,
           curState.hypothesis.contextualFunction
         );
 
-        // B. Key signature transition multiplier (Modulation)
-        const isSameState = prevState.state.root === curState.state.root && prevState.state.mode === curState.state.mode;
-        const prevTonal = mapStateToTonalCenter(prevState.state);
+        // B. Key signature transition multiplier
+        const isSameState = prevState.root === curState.state.root && prevState.mode === curState.state.mode;
+        const prevTonal = mapStateToTonalCenter(prevState);
         const curTonal = mapStateToTonalCenter(curState.state);
         let keyMultiplier = getKeyTransitionMultiplier(prevTonal, curTonal, profile);
 
-        // Relative mode optimization: if they share the exact same diatonic pitch collection (relative modes),
-        // they share the same key signature, so do not penalize the transition. Only under modal profile.
-        if (profile === 'MODAL_FUNCTIONAL' && !isSameState && getParentMajorChroma(prevState.state) === getParentMajorChroma(curState.state)) {
+        if (profile === 'MODAL_FUNCTIONAL' && !isSameState && getParentMajorChroma(prevState) === getParentMajorChroma(curState.state)) {
           keyMultiplier = 1.0;
         }
 
-        // Under standard tonal profiles, penalize transitioning into a modal state
         if (profile !== 'MODAL_FUNCTIONAL' && !isSameState && curState.state.mode !== 'IONIAN' && curState.state.mode !== 'AEOLIAN') {
           keyMultiplier *= 0.50;
         }
 
-        // C. Tonal Persistence rule: penalize rapid key signature hopping
+        // C. Tonal Persistence rule
         let persistenceMultiplier = 1.0;
         if (!isSameState) {
-          const prevKeyDuration = consecutiveCount[i - 1][k];
+          const prevKeyDuration = path.consecutiveCount;
           if (prevKeyDuration === 1) {
             persistenceMultiplier = 0.15;
           } else if (prevKeyDuration === 2) {
@@ -248,7 +306,6 @@ export function resolveGlobalPath(
           if (i >= N - 2) {
             persistenceMultiplier *= 0.15;
           }
-          // Ease penalty if transitioning to a modal state confirmed by a cadence
           const curIsModal = curState.state.mode !== 'IONIAN' && curState.state.mode !== 'AEOLIAN';
           const curStateStr = getStateString(curState.state);
           const curKeyCadences = cadencesByKey[curStateStr] || [];
@@ -271,14 +328,15 @@ export function resolveGlobalPath(
 
         // E. Resolution target matching
         let targetMultiplier = 1.0;
-        const targetDegree = prevState.hypothesis.secondaryTarget || prevState.hypothesis.chromaticAnalysis?.targetDegree;
+        let resolutionExpl = 'no target';
+        const targetDegree = prevHyp.secondaryTarget || prevHyp.chromaticAnalysis?.targetDegree;
         
         if (targetDegree) {
           const targetOffset = getScaleDegreeOffset(targetDegree);
-          const prevKeyChroma = getChroma(prevState.state.root);
+          const prevKeyChroma = getChroma(prevState.root);
           const absoluteTargetChroma = (prevKeyChroma + targetOffset) % 12;
 
-          const dist = prevState.hypothesis.contextualAnalysis?.resolutionDistance || prevState.hypothesis.chromaticAnalysis?.resolutionDistance || 1;
+          const dist = prevHyp.contextualAnalysis?.resolutionDistance || prevHyp.chromaticAnalysis?.resolutionDistance || 1;
           const targetIdx = (i - 1 + dist) % N;
           const targetChordSymbol = cache[getStateString(activeCandidates[0])][targetIdx].chordSymbol;
           const targetParsed = parseChord(targetChordSymbol);
@@ -286,14 +344,16 @@ export function resolveGlobalPath(
 
           if (targetRootChroma === absoluteTargetChroma) {
             targetMultiplier = 1.15;
+            resolutionExpl = `matched target PC (${targetParsed.root})`;
           } else {
             targetMultiplier = 0.15;
+            resolutionExpl = `mismatched target PC (expected chroma ${absoluteTargetChroma}, got ${targetRootChroma})`;
           }
         }
 
         // F. Functional syntax matching
         let functionalMult = getFunctionalMultiplier(
-          prevState.hypothesis.harmonicFunction,
+          prevHyp.harmonicFunction,
           curState.hypothesis.harmonicFunction,
           profile
         );
@@ -301,88 +361,109 @@ export function resolveGlobalPath(
           functionalMult = 1.30;
         }
 
-        // Total transition probability
         const transProbability = baseProb * keyMultiplier * persistenceMultiplier * cadenceBonus * targetMultiplier * functionalMult;
         const transitionLog = Math.log(Math.max(1e-10, transProbability));
         const localLog = Math.log(Math.max(0.01, curState.hypothesis.confidence));
 
-        const score = dp[i - 1][k] + transitionLog + localLog;
+        const score = path.score + transitionLog + localLog;
 
-        if (score > maxScore) {
-          maxScore = score;
-          bestParentIdx = k;
-          bestConsecutiveCount = isSameState ? (consecutiveCount[i - 1][k] + 1) : 1;
+        let baseProbExplanation = `[Base: ${baseProb.toFixed(2)}]`;
+        if (model instanceof HybridTransitionModel) {
+          const details = model.getExplanations(prevHyp.contextualFunction, curState.hypothesis.contextualFunction);
+          baseProbExplanation = `[Base: ${details.baseProb.toFixed(2)} (α: ${details.alpha.toFixed(2)}), Corpus: ${details.corpusProb.toFixed(2)} (β: ${details.beta.toFixed(2)}), Final Base: ${details.finalProb.toFixed(2)}]`;
         }
+
+        const keyExpl = isSameState ? 'same state' : `state modulation to ${getStateString(curState.state)} (mult: ${keyMultiplier.toFixed(2)})`;
+        const cadenceExpl = matchingCadence ? `cadence: ${matchingCadence.name}` : 'no cadence';
+
+        nextBeamCandidates.push({
+          score,
+          localScore: path.localScore + localLog,
+          transitionScore: path.transitionScore + transitionLog,
+          states: [...path.states, curState.state],
+          hypotheses: [...path.hypotheses, curState.hypothesis],
+          hypothesisIndexes: [...path.hypothesisIndexes, curState.hypIndex],
+          consecutiveCount: isSameState ? (path.consecutiveCount + 1) : 1,
+          explanations: [
+            ...path.explanations,
+            `Transition ${i - 1} -> ${i} (${prevState.root} ${prevState.mode} -> ${curState.state.root} ${curState.state.mode}): ` +
+            `State ${getStateString(prevState)} -> ${getStateString(curState.state)} [${keyExpl}] ` +
+            `${prevHyp.contextualFunction} (${prevHyp.romanNumeral}) -> ${curState.hypothesis.contextualFunction} (${curState.hypothesis.romanNumeral}) ` +
+            `${baseProbExplanation} ` +
+            `[Multiplier Target: ${targetMultiplier.toFixed(2)} (${resolutionExpl}), Functional: ${functionalMult.toFixed(2)}, Cadence: ${cadenceExpl}, Persistence: ${persistenceMultiplier.toFixed(2)}]`
+          ]
+        });
       }
+    }
 
-      dp[i][j] = maxScore;
-      parent[i][j] = bestParentIdx;
-      consecutiveCount[i][j] = bestConsecutiveCount;
+    // Sort and keep top BEAM_WIDTH paths
+    nextBeamCandidates.sort((a, b) => b.score - a.score);
+    if (nextBeamCandidates.length > 0) {
+      currentBeam = nextBeamCandidates.slice(0, BEAM_WIDTH);
+    } else {
+      currentBeam = [];
+    }
+
+    beamHistory.push(currentBeam);
+  }
+
+  // 5. Select overall optimal path
+  const bestPath = currentBeam[0];
+  if (!bestPath) {
+    throw new Error('Viterbi Beam Search collapsed to 0 paths.');
+  }
+
+  // Calculate adaptive persistence threshold based on the optimal path's key persistence
+  let persistenceThreshold = 3;
+  if (N > 2) {
+    const keyRuns: number[] = [];
+    let currentRun = 1;
+    for (let k = 1; k < N; k++) {
+      if (bestPath.states[k].root === bestPath.states[k - 1].root && bestPath.states[k].mode === bestPath.states[k - 1].mode) {
+        currentRun++;
+      } else {
+        keyRuns.push(currentRun);
+        currentRun = 1;
+      }
+    }
+    keyRuns.push(currentRun);
+    const avgPrimaryRun = keyRuns.reduce((a, b) => a + b, 0) / keyRuns.length;
+    if (avgPrimaryRun < 2.2) {
+      persistenceThreshold = 1; // highly alternating (e.g. Scriabin loop, politonality)
+    } else if (avgPrimaryRun < 3.2) {
+      persistenceThreshold = 2; // moderately modulating (e.g. Coltrane changes)
     }
   }
 
-  // 5. Find optimal path end index
-  let maxPathScore = -Infinity;
-  let bestEndIdx = -1;
-  const lastCol = columns[N - 1];
-
-  for (let j = 0; j < lastCol.length; j++) {
-    if (dp[N - 1][j] > maxPathScore) {
-      maxPathScore = dp[N - 1][j];
-      bestEndIdx = j;
-    }
-  }
-
-  if (bestEndIdx === -1) {
-    bestEndIdx = 0;
-  }
-
-  // 6. Backtrack to reconstruct path
+  // 6. Build keys and modulations for compatibility
   const keys: TonalCenter[] = [];
-  const hypothesisIndexes: number[] = new Array(N);
-  const chordIndexes = Array.from({ length: N }, (_, idx) => idx);
-
-  let curIdx = bestEndIdx;
-  const optimalStates: ViterbiState[] = [];
-
-  for (let i = N - 1; i >= 0; i--) {
-    const col = columns[i];
-    const chosenState = col[curIdx] || col[0];
-    optimalStates.unshift(chosenState);
-    hypothesisIndexes[i] = chosenState.hypIndex;
-    curIdx = parent[i][curIdx];
-  }
-
-  // Fill in keys for compatibility
   for (let i = 0; i < N; i++) {
-    const tonal = mapStateToTonalCenter(optimalStates[i].state);
+    const tonal = mapStateToTonalCenter(bestPath.states[i]);
     keys.push({
       root: tonal.root,
       mode: tonal.mode,
-      confidence: optimalStates[i].originalChord.confidence
+      confidence: bestPath.hypotheses[i].confidence
     });
   }
 
-  // 7. Track modulation events
   const modulations: ModulationEvent[] = [];
   for (let i = 1; i < N; i++) {
     const prevTonal = keys[i - 1];
     const curTonal = keys[i];
-    const prevState = optimalStates[i - 1];
-    const curState = optimalStates[i];
-
-    const isSameState = prevState.state.root === curState.state.root && prevState.state.mode === curState.state.mode;
+    const prevState = bestPath.states[i - 1];
+    const curState = bestPath.states[i];
+    const isSameState = prevState.root === curState.root && prevState.mode === curState.mode;
 
     if (!isSameState) {
-      const curStateStr = getStateString(curState.state);
+      const curStateStr = getStateString(curState);
       const curKeyCadences = cadencesByKey[curStateStr] || [];
       const cadence = curKeyCadences.find(cad => i >= cad.startIndex && i <= cad.endIndex && !cad.suppressed && cad.resolution?.status !== 'INTERRUPTED' && cad.resolution?.status !== 'EVADED');
       
       const isClose = isCloselyRelated(prevTonal, curTonal);
       let confidence = isClose ? 0.70 : 0.50;
       let reason = isClose 
-        ? `Regional state transition (${getStateString(prevState.state)} -> ${getStateString(curState.state)})`
-        : `Distant state transition (${getStateString(prevState.state)} -> ${getStateString(curState.state)})`;
+        ? `Regional state transition (${getStateString(prevState)} -> ${getStateString(curState)})`
+        : `Distant state transition (${getStateString(prevState)} -> ${getStateString(curState)})`;
 
       if (cadence) {
         confidence = Math.min(0.99, confidence + cadence.confidence * 0.25);
@@ -399,139 +480,134 @@ export function resolveGlobalPath(
     }
   }
 
-  // 8. Calculate separate scores and descriptions for the DTO
-  let localScore = 0;
-  let transitionScore = 0;
-  const explanations: string[] = [];
+  // 7. Post-process final beam paths to construct AdaptiveTonalState[]
+  const adaptiveTonalStates: AdaptiveTonalState[] = [];
+  for (let i = 0; i < N; i++) {
+    const activePaths = beamHistory[i];
+    if (activePaths.length === 0) {
+      adaptiveTonalStates.push({
+        primary: {
+          root: keys[i].root,
+          mode: keys[i].mode,
+          probability: 1.0,
+          harmonicFunction: bestPath.hypotheses[i].harmonicFunction,
+          contextualFunction: bestPath.hypotheses[i].contextualFunction
+        },
+        alternatives: [],
+        certaintyLevel: 'HIGH'
+      });
+      continue;
+    }
 
-  // Chord 0 explanation
-  const firstState = optimalStates[0];
-  const firstHyp = firstState.hypothesis;
-  localScore += Math.log(Math.max(0.01, firstHyp.confidence));
-  explanations.push(
-    `Chord 0 (${firstState.originalChord.chordSymbol}): State: ${getStateString(firstState.state)}, ` +
-    `Chosen ${firstHyp.contextualFunction} (${firstHyp.romanNumeral}) with local confidence ${firstHyp.confidence.toFixed(2)}`
-  );
+    // A. Compute normalized probabilities of paths in the final beam
+    const scores = activePaths.map(p => p.score);
+    const maxS = Math.max(...scores);
+    const exps = scores.map(s => Math.exp(s - maxS));
+    const sumExps = exps.reduce((a, b) => a + b, 0);
+    const probs = exps.map(e => e / (sumExps || 1));
 
-  for (let i = 1; i < N; i++) {
-    const prevState = optimalStates[i - 1];
-    const curState = optimalStates[i];
-    const prevHyp = prevState.hypothesis;
-    const curHyp = curState.hypothesis;
+    // B. Group path probabilities by unique TonalCenter at index i
+    const keyMap: Record<string, { tonal: TonalCenter; prob: number; harmonicFunction: HarmonicFunction; contextualFunction?: string; isPersistent: boolean }> = {};
 
-    localScore += Math.log(Math.max(0.01, curHyp.confidence));
+    for (let k = 0; k < activePaths.length; k++) {
+      const path = activePaths[k];
+      const state = path.states[i];
+      const tonal = mapStateToTonalCenter(state);
+      const keyStr = `${tonal.root}_${tonal.mode}`;
+      const hyp = path.hypotheses[i];
+      const pathProb = probs[k];
 
-    let baseProb: number;
-    let transitionDetailStr: string;
+      const runLen = getRunLength(path.states, i);
+      const isPersistent = runLen >= Math.min(persistenceThreshold, N);
 
-    if (model instanceof HybridTransitionModel) {
-      const details = model.getExplanations(prevHyp.contextualFunction, curHyp.contextualFunction);
-      baseProb = details.finalProb;
-      transitionDetailStr = `[Base: ${details.baseProb.toFixed(2)} (α: ${details.alpha.toFixed(2)}), Corpus: ${details.corpusProb.toFixed(2)} (β: ${details.beta.toFixed(2)}), Final Base: ${details.finalProb.toFixed(2)}]`;
+      if (!keyMap[keyStr]) {
+        keyMap[keyStr] = {
+          tonal,
+          prob: pathProb,
+          harmonicFunction: hyp.harmonicFunction,
+          contextualFunction: hyp.contextualFunction,
+          isPersistent
+        };
+      } else {
+        keyMap[keyStr].prob += pathProb;
+        if (isPersistent) {
+          keyMap[keyStr].isPersistent = true;
+        }
+      }
+    }
+
+    // C. Convert map to sorted array of hypotheses
+    const hypothesesList = Object.values(keyMap)
+      .map(item => ({
+        root: item.tonal.root,
+        mode: item.tonal.mode,
+        probability: Number(item.prob.toFixed(4)),
+        harmonicFunction: item.harmonicFunction,
+        contextualFunction: item.contextualFunction,
+        isPersistent: item.isPersistent
+      }))
+      .sort((a, b) => b.probability - a.probability);
+
+    const primary = hypothesesList[0];
+    const alternatives = hypothesesList.slice(1).filter(h => h.isPersistent);
+
+    // Normalize probabilities of the kept (persistent) hypotheses to sum to 1.0
+    const kept = [primary, ...alternatives];
+    const sumKeptProbs = kept.reduce((sum, h) => sum + h.probability, 0);
+    if (sumKeptProbs > 0) {
+      kept.forEach(h => {
+        h.probability = Number((h.probability / sumKeptProbs).toFixed(4));
+      });
+    }
+
+    // D. Determine certaintyLevel using HDR (Hypothesis Dominance Ratio)
+    const p1 = primary.probability;
+    const p2 = alternatives[0]?.probability || 0;
+    const hdr = p2 > 0 ? p1 / p2 : Infinity;
+
+    let certaintyLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
+    if (hdr > 4.0) {
+      certaintyLevel = 'HIGH';
+    } else if (hdr >= 1.5) {
+      certaintyLevel = 'MEDIUM';
     } else {
-      baseProb = model.getProbability(prevHyp.contextualFunction, curHyp.contextualFunction);
-      transitionDetailStr = `[Base: ${baseProb.toFixed(2)}]`;
+      certaintyLevel = 'LOW';
     }
 
-    const isSameState = prevState.state.root === curState.state.root && prevState.state.mode === curState.state.mode;
-    const prevTonal = mapStateToTonalCenter(prevState.state);
-    const curTonal = mapStateToTonalCenter(curState.state);
-    let keyMult = getKeyTransitionMultiplier(prevTonal, curTonal, profile);
-    if (profile === 'MODAL_FUNCTIONAL' && !isSameState && getParentMajorChroma(prevState.state) === getParentMajorChroma(curState.state)) {
-      keyMult = 1.0;
-    }
-    if (profile !== 'MODAL_FUNCTIONAL' && !isSameState && curState.state.mode !== 'IONIAN' && curState.state.mode !== 'AEOLIAN') {
-      keyMult *= 0.50;
-    }
-    const keyExpl = isSameState ? 'same state' : `state modulation to ${getStateString(curState.state)} (mult: ${keyMult.toFixed(2)})`;
+    // Remove temporary isPersistent field before pushing to DTO
+    const cleanedPrimary = {
+      root: primary.root,
+      mode: primary.mode,
+      probability: primary.probability,
+      harmonicFunction: primary.harmonicFunction,
+      contextualFunction: primary.contextualFunction
+    };
+    const cleanedAlternatives = alternatives.map(alt => ({
+      root: alt.root,
+      mode: alt.mode,
+      probability: alt.probability,
+      harmonicFunction: alt.harmonicFunction,
+      contextualFunction: alt.contextualFunction
+    }));
 
-    // Calculate exact consecutive duration for explanation
-    const prevSt = optimalStates[i - 1].state;
-    let duration = 0;
-    for (let idx = i - 1; idx >= 0; idx--) {
-      if (optimalStates[idx].state.root === prevSt.root && optimalStates[idx].state.mode === prevSt.mode) {
-        duration++;
-      } else {
-        break;
-      }
-    }
-    
-    const curStateStr = getStateString(curState.state);
-    const curKeyCadences = cadencesByKey[curStateStr] || [];
-    const cadence = curKeyCadences.find(cad => cad.endIndex === i && !cad.suppressed);
-    const cadenceExpl = cadence ? `cadence: ${cadence.name}` : 'no cadence';
-
-    let durationLogFactor = 1.0;
-    if (!isSameState) {
-      if (duration === 1) durationLogFactor = 0.15;
-      else if (duration === 2) durationLogFactor = 0.50;
-      
-      if (i >= N - 2) {
-        durationLogFactor *= 0.15;
-      }
-      
-      const curIsModal = curState.state.mode !== 'IONIAN' && curState.state.mode !== 'AEOLIAN';
-      if (curIsModal && cadence) {
-        durationLogFactor = Math.min(1.0, durationLogFactor * 1.5);
-      }
-    }
-
-    let cadenceBonus = 1.0;
-    if (cadence && cadence.resolution?.status !== 'INTERRUPTED' && cadence.resolution?.status !== 'EVADED') {
-      const isModalCadence = cadence.name.startsWith('Aproximação');
-      const mult = isModalCadence ? 0.80 : 0.40;
-      cadenceBonus = 1.0 + cadence.confidence * mult;
-    }
-
-    let targetMultiplier = 1.0;
-    let resolutionExpl = 'no target';
-    const targetDegree = prevHyp.secondaryTarget || prevHyp.chromaticAnalysis?.targetDegree;
-    if (targetDegree) {
-      const targetOffset = getScaleDegreeOffset(targetDegree);
-      const prevKeyChroma = getChroma(prevState.state.root);
-      const absoluteTargetChroma = (prevKeyChroma + targetOffset) % 12;
-
-      const curParsed = parseChord(curState.originalChord.chordSymbol);
-      const curRootChroma = getChroma(curParsed.root);
-
-      if (curRootChroma === absoluteTargetChroma) {
-        targetMultiplier = 1.15;
-        resolutionExpl = `matched target PC (${curParsed.root})`;
-      } else {
-        targetMultiplier = 0.15;
-        resolutionExpl = `mismatched target PC (expected chroma ${absoluteTargetChroma}, got ${curRootChroma})`;
-      }
-    }
-
-    let functionalMult = getFunctionalMultiplier(prevHyp.harmonicFunction, curHyp.harmonicFunction, profile);
-    if (targetMultiplier > 1.0) {
-      functionalMult = 1.30;
-    }
-    const transProbability = baseProb * keyMult * durationLogFactor * cadenceBonus * targetMultiplier * functionalMult;
-    transitionScore += Math.log(Math.max(1e-10, transProbability));
-
-    explanations.push(
-      `Transition ${i - 1} -> ${i} (${prevState.originalChord.chordSymbol} -> ${curState.originalChord.chordSymbol}): ` +
-      `State ${getStateString(prevState.state)} -> ${getStateString(curState.state)} [${keyExpl}] ` +
-      `${prevHyp.contextualFunction} (${prevHyp.romanNumeral}) -> ${curHyp.contextualFunction} (${curHyp.romanNumeral}) ` +
-      `${transitionDetailStr} ` +
-      `[Multiplier Target: ${targetMultiplier.toFixed(2)} (${resolutionExpl}), Functional: ${functionalMult.toFixed(2)}, Cadence: ${cadenceExpl}, Persistence: ${durationLogFactor.toFixed(2)}]`
-    );
+    adaptiveTonalStates.push({
+      primary: cleanedPrimary,
+      alternatives: cleanedAlternatives,
+      certaintyLevel
+    });
   }
 
-  const totalScore = localScore + transitionScore;
-
-  // 9. Attach the chosen active states list to the returned path for final mapping
+  // 8. Return final analysis DTO
   return {
-    chordIndexes,
-    hypothesisIndexes,
-    totalScore,
-    localScore,
-    transitionScore,
+    chordIndexes: bestPath.hypothesisIndexes.map((_, idx) => idx),
+    hypothesisIndexes: bestPath.hypothesisIndexes,
+    totalScore: bestPath.score,
+    localScore: bestPath.localScore,
+    transitionScore: bestPath.transitionScore,
     keys,
     modulations,
-    explanations,
-    // Add internal states backtracked
-    states: optimalStates.map(st => st.state)
+    explanations: bestPath.explanations,
+    states: bestPath.states,
+    adaptiveTonalStates
   };
 }

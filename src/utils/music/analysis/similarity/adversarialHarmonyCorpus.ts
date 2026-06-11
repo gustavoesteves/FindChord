@@ -11,7 +11,40 @@ export interface AdversarialScenario {
   perturbedProgressions: { progression: string[]; targetChordIndex: number }[];
 }
 
-export const ADVERSARIAL_HARMONY_CORPUS: AdversarialScenario[] = [
+const PITCH_TO_SEMITONE: Record<string, number> = {
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+  'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9,
+  'A#': 10, 'Bb': 10, 'B': 11
+};
+
+const SEMITONE_TO_PITCH_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SEMITONE_TO_PITCH_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+function transposePitch(pitch: string, semitones: number, preferFlat: boolean): string {
+  const current = PITCH_TO_SEMITONE[pitch];
+  if (current === undefined) return pitch;
+  const target = (current + semitones + 12) % 12;
+  return preferFlat ? SEMITONE_TO_PITCH_FLAT[target] : SEMITONE_TO_PITCH_SHARP[target];
+}
+
+function transposeChordSymbol(symbol: string, semitones: number, preferFlat: boolean): string {
+  const match = symbol.match(/^([A-G][#b]|[A-G])/);
+  if (!match) return symbol;
+  const root = match[1];
+  const rest = symbol.slice(root.length);
+  const transposedRoot = transposePitch(root, semitones, preferFlat);
+  return transposedRoot + rest;
+}
+
+function transposeKeyword(keyword: string, semitones: number, preferFlat: boolean): string {
+  const upper = keyword.toUpperCase();
+  if (PITCH_TO_SEMITONE[upper] !== undefined) {
+    return transposePitch(upper, semitones, preferFlat).toLowerCase();
+  }
+  return keyword;
+}
+
+const BASE_CORPUS: AdversarialScenario[] = [
   // ─── LEVEL 1: TONALIDADE EXTREMA (BACH / MODULAÇÕES ENCADEADAS) ───
   {
     id: 'l1-bach-circle',
@@ -25,7 +58,7 @@ export const ADVERSARIAL_HARMONY_CORPUS: AdversarialScenario[] = [
     ],
     expectedHarmonicFunctions: ['TONIC', 'SUBDOMINANT'],
     expectedContextualFunctions: ['PRIMARY', 'SECONDARY_DOMINANT'],
-    expectedNarrativeKeywords: ['tônica', 'diatônica', 'c'],
+    expectedNarrativeKeywords: ['tônica', 'diatônica', 'c', 'dominante', 'secundária'],
     perturbedProgressions: [
       { progression: ['Cmaj7', 'Fmaj7', 'Bdim', 'E7', 'Am', 'D7', 'G', 'C7', 'F'], targetChordIndex: 4 }
     ]
@@ -235,3 +268,51 @@ export const ADVERSARIAL_HARMONY_CORPUS: AdversarialScenario[] = [
     ]
   }
 ];
+
+function generateExpandedCorpus(): AdversarialScenario[] {
+  const expanded: AdversarialScenario[] = [];
+  const transpositions = [0, 2, 5, 7, 10]; // Transpose to 5 keys to get exactly 60 scenarios (12 * 5)
+
+  for (const scenario of BASE_CORPUS) {
+    for (const offset of transpositions) {
+      if (offset === 0) {
+        expanded.push(scenario);
+        continue;
+      }
+
+      // Check if original root of first expected center is flat to decide enhancer
+      const originalRoot = scenario.expectedTonalCenters[0]?.root || 'C';
+      const preferFlat = originalRoot.endsWith('b') || ['F', 'Bb', 'Eb', 'Ab'].includes(originalRoot);
+
+      const transposedProgression = scenario.progression.map(ch => transposeChordSymbol(ch, offset, preferFlat));
+      const transposedTonalCenters = scenario.expectedTonalCenters.map(tc => ({
+        root: transposePitch(tc.root, offset, preferFlat),
+        mode: tc.mode
+      }));
+
+      const transposedPerturbed = scenario.perturbedProgressions.map(p => ({
+        progression: p.progression.map(ch => transposeChordSymbol(ch, offset, preferFlat)),
+        targetChordIndex: p.targetChordIndex
+      }));
+
+      const transposedKeywords = scenario.expectedNarrativeKeywords?.map(kw => transposeKeyword(kw, offset, preferFlat));
+
+      expanded.push({
+        id: `${scenario.id}-t${offset}`,
+        name: `${scenario.name} (transposed +${offset})`,
+        level: scenario.level,
+        progression: transposedProgression,
+        targetChordIndex: scenario.targetChordIndex,
+        expectedTonalCenters: transposedTonalCenters,
+        expectedHarmonicFunctions: scenario.expectedHarmonicFunctions,
+        expectedContextualFunctions: scenario.expectedContextualFunctions,
+        expectedNarrativeKeywords: transposedKeywords,
+        perturbedProgressions: transposedPerturbed
+      });
+    }
+  }
+
+  return expanded;
+}
+
+export const ADVERSARIAL_HARMONY_CORPUS = generateExpandedCorpus();
