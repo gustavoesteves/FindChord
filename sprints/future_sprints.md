@@ -436,9 +436,10 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **MDE (Modal Diversity Entropy)**: Entropia dos modos no feixe ($MDE = H(\text{modes})$) medindo a diversidade de tipos modais ativos (maior, menor, octatônico, tons inteiros, místico, politonal).
     *   **PCS (Premature Collapse Score)**: Razão temporal de colapso do feixe ($PCS = t_{\text{collapse}} / t_{\text{total}}$), onde $t_{\text{collapse}}$ é a etapa a partir da qual $HDR > 10.0$ de forma contínua.
 *   **Hipóteses Científicas**:
-    *   **H0 (Viés Algorítmico Estrutural)**: O feixe colapsa prematuramente devido ao resolvedor (CBI alto, ASP baixo, PRS baixo).
-    *   **H1 (Convergência Musical Legítima)**: O feixe permanece aberto para competição justa (PRS alto, BDP alto, ASP alto).
-    *   **H2 (Convergência Dependente de Contexto)**: O sistema converge legitimamente em domínios tonais/modais estruturados (como Bach e Coltrane), mas apresenta convergência artificial e precoce sob politonalidade ou pós-tonalidade.
+    *   **H0 (Viés Algorítmico Estrutural)**: O feixe colapsa prematuramente devido ao resolvedor (CBI alto, ASP baixo, PRS baixo). *(Falsificada na auditoria F11-E)*
+    *   **H1 (Convergência Musical Legítima)**: O feixe permanece aberto para competição justa (PRS alto, BDP alto, ASP alto). *(Parcialmente suportada)*
+    *   **H2 (Convergência Dependente de Contexto)**: O sistema converge legitimamente em domínios diatônicos e modulações estruturadas, mas preserva a ambiguidade em contextos complexos. *(Suportada na auditoria F11-E)*
+    *   **H3 (Incerteza na Calibração sob Controvérsia Musicológica)**: A estrutura cognitiva de múltiplas hipóteses está correta (PRS e LTPS adequados), mas as probabilidades atribuídas perdem calibração em contextos musicológicos complexos ou de literatura controversa (ex: Grupo D com HCE de $18.21\%$). *(Fortemente suportada na auditoria F11-E)*
 *   **Critérios de Aceitação**:
     | Métrica | Meta |
     |---|---|
@@ -464,9 +465,15 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
-### Sprint F11-F: Dynamic Polytonal Reasoning
-**Status: 📅 PROGRAMADA (Pesquisa / Raciocínio Politonal)**
-*   **Objetivo**: Implementar um resolvedor capaz de manter de forma ativa e explícita representações de politonalidade dinâmica em tempo de execução, ajustando transições e pesos com base nas conclusões da auditoria de viés da F11-E.
+### Sprint F11-F: Bayesian Polytonal Calibration
+**Status: 📅 PROGRAMADA (Pesquisa / Calibração de Hipóteses Politonais)**
+*   **Objetivo**: Corrigir as distorções probabilísticas identificadas na F11-E (especialmente no Grupo D), implementando calibração contínua sobre as hipóteses alternativas e eixos politonais concorrentes.
+*   **Conceito & Calibração**:
+    *   **Probability Recalibration Layer**: Camada de calibração dinâmica que ajusta as probabilidades de transição do feixe baseado em estimativas regionais de ambiguidade (MAP/Platt modificado para múltiplas classes).
+    *   **Context-Aware Confidence Scaling**: Escalonamento dinâmico baseado no teor cromático e simétrico do acorde atual para evitar dominância espúria de chaves diatônicas.
+    *   **Consenso Literário Harmônico (Consensus Matching)**: Injeção de prioris de corpus musicológicos clássicos para ponderar leituras controversas (ex: Tristan Chord, Acorde Prometeico).
+    *   **Bayesian Hypothesis Calibration**: Inferência de transição que pondera as probabilidades observadas com base no tempo de vida e consistência de caminhos anteriores.
+*   **Métricas Centrais**: Redução do HCE no Grupo D para $< 10\%$, estabilização do HDR e preservação de PRS e ICUA.
 
 ---
 
