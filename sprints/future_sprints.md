@@ -105,9 +105,10 @@ graph TD
         F10G["F10-G: Real Repertoire Validation Benchmark"]
         F11A["F11-A: Harmonic Function Intelligence Layer"]
         F11B["F11-B: Explainable Harmonic Reasoning Audit"]
+        F11C["F11-C: Adversarial Harmonies & Outlier Stress Test"]
         F14["F14: Blues & Extended Tonality Engine"]
         F12_8 --> F10E
-        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F14
+        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F11C --> F14
     end
 
     subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
@@ -355,6 +356,19 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **Métricas e Taxonomia Cognitiva**: Definição e aferição de acurácia de função harmônica, acurácia de contexto especial, acurácia de centro tonal local, acurácia de atribuição de confiança e concordância de ranqueamento (Feature Ranking Agreement), além de checar consistência estrutural e narrativa e catalogar falhas sob taxonomia expandida (incluindo falhas do Tipo H — explicação musical correta mas atribuição causal incorreta).
 *   **Resultados da Auditoria**:
     A suíte de testes [explainabilityBenchmark.test.ts](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/tests/explainabilityBenchmark.test.ts) atingiu **100.00% de sucesso** em todas as métricas de exatidão harmônica e consistência narrativa. A auditoria de ablação em [featureAttributionAudit.test.ts](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/tests/featureAttributionAudit.test.ts) corroborou quantitativamente a hipótese de estabilização paramétrica da confiança, onde o **Score Gap** figura como a feature causal dominante absoluta (Δ Confiança médio de 0.9919), e a ordem completa das contribuições preserva a ordenação `Score Gap > Goal Alignment > Geometry > Information Gain`. O relatório final foi persistido em [explainability_audit_report.md](file:///Users/gustavoesteves/.gemini/antigravity-ide/brain/177b17d2-71af-4648-a0b6-2e77cf48a251/explainability_audit_report.md).
+
+---
+
+### Sprint F11-C: Adversarial Harmonies & Outlier Stress Test
+**Status: 📅 PROGRAMADA (P&D / Robustez Limite)**
+*   **Objetivo**: Encontrar os pontos de quebra (break points) e limites cognitivos do motor de recomendação e explicação do Find Chord através de um corpus de testes altamente adverso (outliers estatísticos, harmonia pós-tonal, cromatismo extremo e modulações não-funcionais).
+*   **Conceito**:
+    *   **Corpus de Stress Adversário**: Criação de um banco de dados de teste contendo progressões harmônicas complexas:
+        *   *Coltrane Changes* e modulações por terças maiores simétricas.
+        *   Harmonia pós-bop e acordes híbridos (*slash chords* sem relação tonal direta).
+        *   Tonalidade expandida impressionista (Debussy, escalas de tons inteiros) e pós-tonalismo precoce (Scriabin, acorde místico).
+        *   Politonalidade e modulações abruptas OOD (sem pivô comum).
+    *   **Métricas de Degradação Extrema**: Aferição da capacidade do resolvedor de Viterbi de manter a integridade sob alta entropia e avaliação dos novos limites e taxas de quebra de explicabilidade (atribuição de confiança sob ruído).
 
 ---
 
