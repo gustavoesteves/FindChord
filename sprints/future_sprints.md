@@ -295,6 +295,16 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     | **Goal Alignment** | Sinal Semântico Independente | Direcionamento de intenção do usuário |
     | **Score Gap** | Estabilizador Paramétrico | Regularização estrutural e robustez estatística |
 
+---
+
+### Sprint F10-F.7: Regularização Explícita vs. Estabilização Empírica
+**Status: 📅 PLANEJADA**
+*   **Objetivo**: Investigar se o fator `Score Gap` pode ser substituído por um mecanismo de regularização explícito (como penalização L2/Ridge ou priors bayesianos) no otimizador do calibrador de confiança, simplificando o modelo para 3 features de sinal sem perder a estabilidade dos parâmetros.
+*   **Conceito**:
+    *   **Formulação de Regularizadores**: Incorporar penalização Ridge (L2) sobre os pesos de otimização da calibração ($w_{\text{geo}}, w_{\text{info}}, w_{\text{goal}}$).
+    *   **Análise Comparativa de Estabilidade**: Medir a dispersão (Coefficient of Variation) dos coeficientes via Bootstrap (100+ iterações) comparando o modelo de 3 pilares regularizado com o baseline de 4 pilares.
+    *   **Desempenho Preditivo**: Assegurar que métricas de discriminação e calibração (Brier Score, ECE, Spearman) permaneçam dentro das tolerâncias de ablação ($\Delta BS < 0.002, \Delta Spearman < 0.03$).
+    *   **Decisão de Simplificação**: Caso um regularizador explícito ofereça a mesma estabilidade paramétrica e capacidade preditiva, remover permanentemente a feature redundante `Score Gap`.
 
 ---
 
