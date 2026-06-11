@@ -385,7 +385,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 **Status: 📅 PROGRAMADA (P&D / Raciocínio Multi-Hipótese)**
 *   **Objetivo**: Substituir o modelo de "uma tonalidade ativa por acorde" por um mecanismo de múltiplas hipóteses tonais ponderadas, capaz de representar ambiguidade funcional, politonalidade parcial e transições rápidas sem colapso interpretativo.
 *   **Conceito & Raciocínio Multi-Hipótese**:
-    *   **Multi-Hypothesis Tonal State**: Estado tonal concorrente com soma de probabilidades de hipóteses igual a 1.0.
+    *   **Estruturas AdaptiveTonalState e TonalHypothesis**: Representação de dados de entrada/saída contendo hipótese primária e concorrentes com probabilidades calibradas.
     *   **Adaptive Viterbi Resolver**: Resolvedor que mantém os top-K caminhos tonais (K=3, Beam Width = 10, Pruning = 1%).
     *   **Harmonic Ambiguity Layer**: Reconhecimento explícito de simetrias (diminutos, aumentados, coleções octatônicas, tons inteiros, policordes) para preservar múltiplas interpretações.
 *   **Novas Métricas**:
@@ -393,6 +393,9 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **Adaptive Transition Stability (ATS)**: Estabilidade das probabilidades de transição local.
     *   **Collapse Resistance Score (CRS)**: Redução do Tonal Collapse Index (TCI) sob estresse.
     *   **Interpretive Consistency Under Ambiguity (ICUA)**: Consistência explicativa sob múltiplas análises válidas.
+    *   **Hypothesis Calibration Error (HCE)**: Erro de calibração absoluto das hipóteses concorrentes (análogo ao ECE, meta $< 10\%$).
+    *   **Hypothesis Survival Length (HSL)**: Média de acordes em que uma hipótese alternativa sobrevive no feixe antes de ser podada.
+    *   **Ambiguity Resolution Delay (ARD)**: Latência média em acordes para abandonar caminhos e hipóteses expirados.
 *   **Corpus de Teste**: Expansão do `adversarialHarmonyCorpus.ts` para 50-80 progressões adversárias com cobertura estendida de Scriabin, Debussy, Coltrane e politonalidade.
 *   **Verificação & Benchmark**: Criação de `adaptiveReasoningBenchmark.test.ts` e relatório `adaptive_reasoning_report.md` comparando o Baseline Viterbi (1 hipótese) com o Adaptive Viterbi (K hipóteses), visando redução de >= 30% no TCI dos Níveis 4-6 sem regressões no repertório tonal padrão.
 *   **Critérios de Aceitação**:
@@ -400,6 +403,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   HAR $\ge$ baseline
     *   ESS $\ge$ baseline
     *   ICUA $\ge 90\%$
+    *   HCE $< 10\%$
     *   Sem regressão em F10-G (Top-3 Accuracy): $\le 1\%$ de queda
     *   Sem regressão em F11-A (Function Accuracy): $\le 1\%$ de queda
 
