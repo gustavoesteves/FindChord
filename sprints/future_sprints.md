@@ -282,6 +282,19 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **Ablação Completa**: Treinar pesos e Platt scaling calibrados com $w_{\text{gap}} = 0$.
     *   **Análise de Desempenho**: Comparar Brier Score, ECE, MCE e Spearman combinados nas partições de validação e estresse contra o modelo completo.
     *   **Critérios de Simplificação**: Definir limites para redundância (Brier Delta e Spearman Delta) e analisar a viabilidade de simplificação do modelo para os 3 pilares principais (`Geometry` + `Information Gain` + `Goal Alignment`).
+*   **Aprendizado & Conclusão**:
+    A auditoria demonstrou que o `Score Gap` não contribui materialmente para a capacidade preditiva do modelo calibrado (SHAP = 1.12%, $\Delta BS \approx 0$, $\Delta Spearman \approx 0.02$), porém atua como um mecanismo crucial de estabilização dos parâmetros durante a otimização. Sua remoção preserva o desempenho observável, mas aumenta significativamente a variabilidade dos pesos aprendidos (CV médio sobe de 0.1993 para 0.3263), especialmente em `Goal Alignment` (CV sobe de 0.2814 para 0.5650). Portanto, sua retenção é justificada por razões de robustez estatística e regularização estrutural, e não por ganho direto de discriminação ou calibração.
+*   **Estrutura Hierárquica da Confiança**:
+    O motor analítico opera sob a seguinte divisão:
+    $$\text{Confidence} = \underbrace{\text{Geometry} + \text{InformationGain} + \text{GoalAlignment}}_{\text{sinal}} + \underbrace{\text{ScoreGap}}_{\text{estabilização}}$$
+
+    | Feature | Papel Dominante | Justificativa de Retenção |
+    | :--- | :--- | :--- |
+    | **Geometry** | Sinal Principal (Incerteza Espacial) | Fonte primária de sinal estrutural (NSGA-II) |
+    | **Information Gain** | Sinal Principal (Ganho de Informação) | Fonte primária de sinal informacional |
+    | **Goal Alignment** | Sinal Semântico Independente | Direcionamento de intenção do usuário |
+    | **Score Gap** | Estabilizador Paramétrico | Regularização estrutural e robustez estatística |
+
 
 ---
 
