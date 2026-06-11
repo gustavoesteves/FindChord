@@ -5,11 +5,11 @@
   "global": {
     "scoreGapWeight": 0.15,
     "goalAlignmentWeight": 0.1,
-    "geometryWeight": 0.46,
-    "ambiguityWeight": 0.29,
-    "optimizationScore": 0.343618,
+    "geometryWeight": 0.44,
+    "ambiguityWeight": 0.31,
+    "optimizationScore": 0.354194,
     "population": 25,
-    "lastOptimized": "2026-06-10",
-    "brierScore": 0.031853
+    "lastOptimized": "2026-06-11",
+    "brierScore": 0.027142
   }
 }

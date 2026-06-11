@@ -16,6 +16,9 @@ import {
   computeDiscoveryAnalytics
 } from '../analysis/functionalAnalysis';
 import { optimizeConfidenceWeights } from '../analysis/similarity/confidenceWeightOptimizationEngine';
+import { computeCombinedCoverage } from '../analysis/similarity/coverageAnalyticsEngine';
+import { computeParetoCoverageMap } from '../analysis/similarity/paretoCoverageMap';
+import { calculateDistributionStats, generateCoverageReportMd } from '../analysis/similarity/benchmarkCoverageReport';
 import type { 
   CorpusItem,
   DiscoveryOptions,
@@ -1820,6 +1823,34 @@ const appDataDir = '/Users/gustavoesteves/.gemini/antigravity-ide';
 const artifactPath = path.join(appDataDir, 'brain/f6477136-2b69-47c8-8b1f-1aa05a2947ab/musical_benchmark_report.md');
 const diagnosticsPath = path.join(appDataDir, 'brain/f6477136-2b69-47c8-8b1f-1aa05a2947ab/calibration_diagnostics_report.md');
 const driftHistoryPath = path.join(appDataDir, 'brain/f6477136-2b69-47c8-8b1f-1aa05a2947ab/calibration_drift_history.json');
+const coverageReportPath = path.join(appDataDir, 'brain/f6477136-2b69-47c8-8b1f-1aa05a2947ab/benchmark_coverage_report.md');
+
+// ----------------------------------------------------
+// SPRINT F10-E: Corpus Coverage & Representativeness
+// ----------------------------------------------------
+const coverageData = {
+  goalAlignment: benchmarkGoalAlignmentsRaw,
+  scoreGap: benchmarkScoreGapsRaw,
+  geometry: benchmarkGeometriesRaw,
+  hypervolume: matchHypervolumes,
+  frontierSize: matchFrontierSizes,
+  informationGain: benchmarkInformationGainsRaw
+};
+const coverageResult = computeCombinedCoverage(coverageData);
+const paretoGridResult = computeParetoCoverageMap(matchHypervolumes, benchmarkInformationGainsRaw);
+
+const distributions = {
+  goalAlignment: calculateDistributionStats(benchmarkGoalAlignmentsRaw),
+  hypervolume: calculateDistributionStats(matchHypervolumes),
+  frontierSize: calculateDistributionStats(matchFrontierSizes),
+  informationGain: calculateDistributionStats(benchmarkInformationGainsRaw),
+  effectiveFrontierSize: calculateDistributionStats(benchmarkEffectiveFrontierSizes),
+  confidence: calculateDistributionStats(predictedConfidences)
+};
+
+const coverageReportMd = generateCoverageReportMd(coverageResult, paretoGridResult, distributions);
+fs.writeFileSync(coverageReportPath, coverageReportMd);
+console.log(`📝 Relatório de cobertura gerado em: [benchmark_coverage_report.md](file://${coverageReportPath})`);
 
 // 1. Ler e atualizar histórico de drift
 let history: any[] = [];
@@ -1832,7 +1863,7 @@ if (fs.existsSync(driftHistoryPath)) {
 }
 
 const currentRunEntry = {
-  sprint: "F12.8",
+  sprint: "F10-E",
   timestamp: new Date().toISOString().split('T')[0],
   meanCalibrationError: Number(meanCalibrationError.toFixed(4)),
   mechanismEntropy: Number(analytics.mechanismEntropy.toFixed(4)),
@@ -1874,19 +1905,17 @@ const currentRunEntry = {
   optimizationScore: Number(finalWeights.optimizationScore.toFixed(6)),
   brierScore: Number(candidateBrierScore.toFixed(6)),
   averageFrontierEntropy: Number((analytics.averageFrontierEntropy ?? 0).toFixed(4)),
-  averageEffectiveFrontierSize: Number((analytics.averageEffectiveFrontierSize ?? 1.0).toFixed(4))
+  averageEffectiveFrontierSize: Number((analytics.averageEffectiveFrontierSize ?? 1.0).toFixed(4)),
+  combinedCoverageScore: Number(coverageResult.combinedCoverageScore.toFixed(4)),
+  benchmarkQualityScore: Number(coverageResult.benchmarkQualityScore.toFixed(4)),
+  paretoSpaceCoverage: Number(paretoGridResult.coverage.toFixed(4)),
+  averageDiversity: Number(coverageResult.averageDiversity.toFixed(4))
 };
 
-const existingIdx = history.findIndex(h => h.sprint === "F12.8");
+const existingIdx = history.findIndex(h => h.sprint === "F10-E");
 if (existingIdx !== -1) {
   history[existingIdx] = currentRunEntry;
 } else {
-  const f127Idx = history.findIndex(h => h.sprint === "F12.7");
-  if (f127Idx !== -1) {
-    if (history[f127Idx].brierScore === undefined) {
-      history[f127Idx].brierScore = 0.0338;
-    }
-  }
   history.push(currentRunEntry);
 }
 
@@ -2240,6 +2269,46 @@ ${contextAnalysisTableMd}
 ${weightsTableMd}
 `;
 
+  let coverageSectionMd = `\n## 📊 9. Corpus Coverage Analysis (Sprint F10-E)\n\n`;
+  coverageSectionMd += `Este diagnóstico apresenta os resultados de representatividade do benchmark da Sprint F10-E.\n\n`;
+  coverageSectionMd += `- **Combined Coverage Score**: \`${(coverageResult.combinedCoverageScore * 100).toFixed(2)}%\` (Meta: \`> 70.0%\`)\n`;
+  coverageSectionMd += `- **Coverage Gap**: \`${(coverageResult.coverageGap * 100).toFixed(2)}%\`\n`;
+  coverageSectionMd += `- **Benchmark Quality Score**: \`${coverageResult.benchmarkQualityScore.toFixed(4)}\` (Meta: \`> 0.75\`)\n`;
+  coverageSectionMd += `- **Pareto Space Coverage**: \`${(paretoGridResult.coverage * 100).toFixed(2)}%\` (Meta: \`> 70.0%\`)\n`;
+  coverageSectionMd += `- **Average Diversity (Shannon)**: \`${coverageResult.averageDiversity.toFixed(4)}\` (Meta: \`> 0.60\`)\n`;
+  coverageSectionMd += `- **Average Balance (Uniformity)**: \`${coverageResult.averageBalance.toFixed(4)}\`\n\n`;
+  
+  coverageSectionMd += `### Pareto Coverage Map (Grid 3x3):\n`;
+  coverageSectionMd += `| Hypervolume \\ Information Gain | ${paretoGridResult.colLabels[0]} | ${paretoGridResult.colLabels[1]} | ${paretoGridResult.colLabels[2]} |\n`;
+  coverageSectionMd += `| :--- | :---: | :---: | :---: |\n`;
+  coverageSectionMd += `| **${paretoGridResult.rowLabels[0]}** | ${paretoGridResult.grid[0][0]} | ${paretoGridResult.grid[0][1]} | ${paretoGridResult.grid[0][2]} |\n`;
+  coverageSectionMd += `| **${paretoGridResult.rowLabels[1]}** | ${paretoGridResult.grid[1][0]} | ${paretoGridResult.grid[1][1]} | ${paretoGridResult.grid[1][2]} |\n`;
+  coverageSectionMd += `| **${paretoGridResult.rowLabels[2]}** | ${paretoGridResult.grid[2][0]} | ${paretoGridResult.grid[2][1]} | ${paretoGridResult.grid[2][2]} |\n\n`;
+  
+  coverageSectionMd += `### Alertas de Outliers e Regiões Sub-amostradas:\n`;
+  if (coverageResult.allWarnings.length === 0) {
+    coverageSectionMd += `🟢 Nenhuma anomalia de cobertura detectada.\n`;
+  } else {
+    coverageResult.allWarnings.forEach(warn => {
+      coverageSectionMd += `*   ${warn}\n`;
+    });
+  }
+  
+  coverageSectionMd += `\n### Top Missing Regions (Vácuos Amostrais) & Recomendações:\n`;
+  if (coverageResult.topMissingRegions.length === 0) {
+    coverageSectionMd += `🟢 Nenhuma região prioritária identificada.\n`;
+  } else {
+    coverageResult.topMissingRegions.forEach(region => {
+      coverageSectionMd += `-   ➕ **Região Faltante**: \`${region}\`\n`;
+    });
+  }
+
+  diagMd += `
+---
+
+${coverageSectionMd}
+`;
+
   fs.writeFileSync(diagnosticsPath, diagMd);
   console.log(`📝 Relatório de diagnóstico gerado em: [calibration_diagnostics_report.md](file://${diagnosticsPath})`);
 
@@ -2372,6 +2441,20 @@ if (corrSuccessEffectiveFrontierSize >= 0.0) {
 }
 if (corrSuccessInformationGain <= 0.0) {
   throw new Error(`Benchmark falhou: Correlação entre informationGain e Sucesso (${corrSuccessInformationGain.toFixed(4)}) deve ser positiva (> 0.0).`);
+}
+
+// Asserções de Cobertura e Representatividade de Corpus (Sprint F10-E)
+if (coverageResult.combinedCoverageScore <= 0.70) {
+  throw new Error(`Benchmark falhou: Combined Coverage Score (${coverageResult.combinedCoverageScore.toFixed(4)}) é inferior ou igual a 0.70.`);
+}
+if (coverageResult.benchmarkQualityScore <= 0.70) {
+  throw new Error(`Benchmark falhou: Benchmark Quality Score (${coverageResult.benchmarkQualityScore.toFixed(4)}) é inferior ou igual a 0.70.`);
+}
+if (paretoGridResult.coverage <= 0.70) {
+  throw new Error(`Benchmark falhou: Coverage_ParetoSpace (${paretoGridResult.coverage.toFixed(4)}) é inferior ou igual a 0.70.`);
+}
+if (coverageResult.averageDiversity <= 0.60) {
+  throw new Error(`Benchmark falhou: Diversity (${coverageResult.averageDiversity.toFixed(4)}) é inferior ou igual a 0.60.`);
 }
 
 console.log('🎉 BENCHMARK APROVADO COM SUCESSO!');
