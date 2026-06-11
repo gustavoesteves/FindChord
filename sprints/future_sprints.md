@@ -388,21 +388,29 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **Estruturas AdaptiveTonalState e TonalHypothesis**: Representação de dados de entrada/saída contendo hipótese primária e concorrentes com probabilidades calibradas.
     *   **Adaptive Viterbi Resolver**: Resolvedor que mantém os top-K caminhos tonais (K=3, Beam Width = 10, Pruning = 1%).
     *   **Harmonic Ambiguity Layer**: Reconhecimento explícito de simetrias (diminutos, aumentados, coleções octatônicas, tons inteiros, policordes) para preservar múltiplas interpretações.
+    *   **Hierarquia Narrativa (Níveis de Certeza)**: Mapear HDS e o **HDR (Hypothesis Dominance Ratio)** para determinar e retornar um nível de certeza do DTO (`certaintyLevel: 'HIGH' | 'MEDIUM' | 'LOW'`). O HDR ($HDR = \frac{P_1}{P_2}$) ajuda a separar as decisões de certeza: HIGH ($HDR > 4.0$, favorece claramente), MEDIUM ($HDR \in [1.5, 4.0]$, interpretações competitivas) e LOW ($HDR < 1.5$, sem evidência suficiente).
 *   **Novas Métricas**:
     *   **Hypothesis Diversity Score (HDS)**: Diversidade efetiva de hipóteses tonais ($HDS = e^{H(p)}$).
+    *   **Hypothesis Diversity Collapse (HDC)**: Distância funcional entre as hipóteses para evitar multiplicidade redundante/inútil no feixe. Meta: $HDC > 0.60$ nos níveis 4–6.
+    *   **Hypothesis Switching Entropy (HSE)**: Frequência de chaveamento do caminho tonal primário ao longo do tempo (evitando oscilações/nervosismo interpretativo). Meta: Baixa em Bach, Moderada em Coltrane, Alta em Politonalidade.
+    *   **Hypothesis Dominance Ratio (HDR)**: Razão entre as probabilidades do primeiro e do segundo caminhos tonais para calibração dos limiares de certeza.
+    *   **Persistent Alternative Hypothesis Rate (PAHR)**: Taxa de persistência temporal no feixe. Uma hipótese só é considerada cognitivamente válida se sobreviver no feixe por $N \ge 3$ acordes consecutivos, servindo como filtro contra ruído cromático local.
     *   **Adaptive Transition Stability (ATS)**: Estabilidade das probabilidades de transição local.
     *   **Collapse Resistance Score (CRS)**: Redução do Tonal Collapse Index (TCI) sob estresse.
-    *   **Interpretive Consistency Under Ambiguity (ICUA)**: Consistência explicativa sob múltiplas análises válidas.
+    *   **Interpretive Consistency Under Ambiguity (ICUA)**: Consistência explicativa sob múltiplas análises válidas (meta $> 95\%$).
     *   **Hypothesis Calibration Error (HCE)**: Erro de calibração absoluto das hipóteses concorrentes (análogo ao ECE, meta $< 10\%$).
     *   **Hypothesis Survival Length (HSL)**: Média de acordes em que uma hipótese alternativa sobrevive no feixe antes de ser podada.
     *   **Ambiguity Resolution Delay (ARD)**: Latência média em acordes para abandonar caminhos e hipóteses expirados.
 *   **Corpus de Teste**: Expansão do `adversarialHarmonyCorpus.ts` para 50-80 progressões adversárias com cobertura estendida de Scriabin, Debussy, Coltrane e politonalidade.
 *   **Verificação & Benchmark**: Criação de `adaptiveReasoningBenchmark.test.ts` e relatório `adaptive_reasoning_report.md` comparando o Baseline Viterbi (1 hipótese) com o Adaptive Viterbi (K hipóteses), visando redução de >= 30% no TCI dos Níveis 4-6 sem regressões no repertório tonal padrão.
 *   **Critérios de Aceitação**:
-    *   Redução do TCI em Níveis 4-6: $\ge 30\%$
+    *   Redução do TCI em Níveis 4-6: $\ge 30\%$ (ex: Nível 4 $TCI \le 0.70$, Nível 5 $TCI \le 0.35$, Nível 6 $TCI \le 0.45$)
+    *   HDC em Níveis 4-6: $> 0.60$
+    *   HSE: Estabilidade condizente com o estilo (baixo acoplamento/oscilação em Bach, alta apenas em politonalidade real)
+    *   PAHR (Persistência): Filtro temporal de ruídos fixado em $N \ge 3$ acordes.
     *   HAR $\ge$ baseline
     *   ESS $\ge$ baseline
-    *   ICUA $\ge 90\%$
+    *   ICUA $\ge 95\%$
     *   HCE $< 10\%$
     *   Sem regressão em F10-G (Top-3 Accuracy): $\le 1\%$ de queda
     *   Sem regressão em F11-A (Function Accuracy): $\le 1\%$ de queda
