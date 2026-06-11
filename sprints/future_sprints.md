@@ -467,13 +467,21 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ### Sprint F11-F: Bayesian Polytonal Calibration
 **Status: 📅 PROGRAMADA (Pesquisa / Calibração de Hipóteses Politonais)**
-*   **Objetivo**: Corrigir as distorções probabilísticas identificadas na F11-E (especialmente no Grupo D), implementando calibração contínua sobre as hipóteses alternativas e eixos politonais concorrentes.
+*   **Objetivo**: Corrigir as distorções probabilísticas identificadas na F11-E (especialmente no Grupo D), implementando calibração contínua e desacoplada sobre as hipóteses alternativas e eixos politonais concorrentes.
 *   **Conceito & Calibração**:
-    *   **Probability Recalibration Layer**: Camada de calibração dinâmica que ajusta as probabilidades de transição do feixe baseado em estimativas regionais de ambiguidade (MAP/Platt modificado para múltiplas classes).
-    *   **Context-Aware Confidence Scaling**: Escalonamento dinâmico baseado no teor cromático e simétrico do acorde atual para evitar dominância espúria de chaves diatônicas.
-    *   **Consenso Literário Harmônico (Consensus Matching)**: Injeção de prioris de corpus musicológicos clássicos para ponderar leituras controversas (ex: Tristan Chord, Acorde Prometeico).
-    *   **Bayesian Hypothesis Calibration**: Inferência de transição que pondera as probabilidades observadas com base no tempo de vida e consistência de caminhos anteriores.
-*   **Métricas Centrais**: Redução do HCE no Grupo D para $< 10\%$, estabilização do HDR e preservação de PRS e ICUA.
+    *   **Decoupled Architecture**: Processamento sequencial desacoplado para calibração estatística e prioris literárias:
+        $$\text{Raw Beam Output} \longrightarrow \text{BayesianCalibrationEngine} \longrightarrow \text{Calibrated Hypotheses} \longrightarrow \text{MusicologicalPriorEngine} \longrightarrow \text{Posterior Hypotheses}$$
+    *   **Bayesian Calibration Engine**: Temperature scaling e cálculo do **PCS (Posterior Confidence Score)**:
+        $$PCS = P_{\text{top}} \times \left(1 - \frac{H}{H_{\text{max}}}\right)$$
+    *   **Contextual Confidence Model**: Escalonamento dinâmico baseado na complexidade harmônica ($\text{ComplexityScore} \in [0, 1]$):
+        $$P_{\text{max}} = 0.95 - 0.20 \times \text{ComplexityScore}$$
+    *   **Musicological Prior Engine**: Injeção de prioris da literatura para alinhar o resolvedor com análises consensuais consagradas (Tristan Chord, Scriabin, Voiles, etc.).
+*   **Métricas Centrais**:
+    *   **HCE** no Grupo D: $< 5.00\%$
+    *   **ECE** (Expected Calibration Error): $< 4.00\%$
+    *   **OCS (Overconfidence Score)**: $|OCS| = |\text{Accuracy} - \text{Confidence}| < 5.00\%$
+    *   **HDRR (HDR Retention)**: $HDRR = HDR_{\text{after}} / HDR_{\text{before}} > 0.70$
+    *   **LAS (Literary Agreement Score)**: $> 80.00\%$
 
 ---
 
