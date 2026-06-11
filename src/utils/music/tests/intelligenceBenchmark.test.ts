@@ -2,18 +2,13 @@
 // Run with: npx tsx src/utils/music/tests/intelligenceBenchmark.test.ts
 
 import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 import { analyzeProgression } from '../analysis/functionalAnalysis';
-import { classifyChordFunction } from '../analysis/functionalClassifier';
 import { getPitchClass } from '../core/pitch';
 import { parseChord } from '../theory/chordParser';
 import { isMinorType } from '../analysis/helpers/qualityHelpers';
-import { INTELLIGENCE_CORPUS, IntelligenceSong } from '../analysis/similarity/intelligenceCorpus';
+import { INTELLIGENCE_CORPUS } from '../analysis/similarity/intelligenceCorpus';
 
 // ==========================================================
 // HELPERS
@@ -326,7 +321,6 @@ async function main() {
   const cGen = generalResults.contextualMetrics;
   const bGen = generalResults.borrowedBreakdown;
 
-  const mExt = extendedResults.confusionMatrix.matrix;
   const cExt = extendedResults.contextualMetrics;
   const bExt = extendedResults.borrowedBreakdown;
 

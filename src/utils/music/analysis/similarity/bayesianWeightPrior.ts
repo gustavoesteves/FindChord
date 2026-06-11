@@ -2,7 +2,7 @@
  * Bayesian Weight Prior and MAP Optimization (Sprint F10-F.7)
  */
 
-import { OptimizationInputs, OptimizedWeights } from './regularizedConfidenceOptimizer';
+import type { OptimizationInputs, OptimizedWeights } from './regularizedConfidenceOptimizer';
 
 function pearsonCorrelation(x: number[], y: number[]): number {
   const len = x.length;

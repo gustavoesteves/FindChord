@@ -260,7 +260,7 @@ modulationBases.forEach((mod, idx) => {
     expectedTonalCenter: { root: mod.targetRoot, mode: mod.targetMode },
     expectedHarmonicFunction: mod.func,
     expectedContextualFunction: mod.ctx,
-    expectedNarrativeKeywords: ['centro tonal' || 'modulação', mod.targetRoot],
+    expectedNarrativeKeywords: ['centro tonal', 'modulação', mod.targetRoot],
     expectedDominantFeature: 'scoreGap',
     expectedRanking: ['scoreGap', 'goalAlignment', 'geometry', 'informationGain']
   });

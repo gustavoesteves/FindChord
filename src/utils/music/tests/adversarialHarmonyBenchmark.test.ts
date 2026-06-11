@@ -1,7 +1,6 @@
 import { ADVERSARIAL_HARMONY_CORPUS } from '../analysis/similarity/adversarialHarmonyCorpus';
 import { generateExplanation, analyzeProgression } from '../analysis/functionalAnalysis';
 import * as fs from 'fs';
-import * as path from 'path';
 
 let passedTests = 0;
 let failedTests = 0;

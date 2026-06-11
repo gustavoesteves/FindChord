@@ -352,11 +352,11 @@ function spearmanCorrelation(x: number[], y: number[]): number {
 function optimizeAblatedPlattScaling(
   rawConfidences: number[],
   normalizedScores: number[],
-  frontierSizes: number[],
-  hypervolumes: number[],
-  goalAlignments: number[],
-  geometries: number[],
-  informationGains: number[]
+  _frontierSizes: number[],
+  _hypervolumes: number[],
+  _goalAlignments: number[],
+  _geometries: number[],
+  _informationGains: number[]
 ) {
   const n = rawConfidences.length;
   let bestOptA = 18.0;
@@ -710,8 +710,6 @@ async function main() {
     hypervolumes: trainRuns.map(r => r.hypervolume)
   };
 
-  // 2. Correlações e VIF da Baseline
-  const featureNames = ['Score Gap', 'Goal Align', 'Geometry', 'Info Gain'];
   const R: number[][] = Array.from({ length: 4 }, () => new Array(4).fill(0));
   const feats = [scoreGaps, goalAlignments, geometries, informationGains];
 
@@ -742,7 +740,6 @@ async function main() {
   const bayesianW = optimizeWeightsBayesian(trainInputs, true, 0.5);
 
   // Otimizar Platt Scaling e Avaliar cada modelo
-  const plattAblBaseline = { a: 19.00, b: -10.00 }; // Platt scaling da baseline unreg
   
   function getPlattAndEval(weights: any, is3: boolean) {
     const rawConfTrain = trainRuns.map(r => 

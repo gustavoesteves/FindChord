@@ -1,9 +1,6 @@
 import { EXPLAINABILITY_CORPUS } from '../analysis/similarity/explainabilityCorpus';
 import { generateExplanation } from '../analysis/functionalAnalysis';
-import { selectConfidenceWeights, inferConfidenceContext } from '../analysis/similarity/contextAwareConfidenceEngine';
-import calibrationModel from '../analysis/similarity/calibration_model.json' with { type: 'json' };
 import * as fs from 'fs';
-import * as path from 'path';
 
 let passedTests = 0;
 let failedTests = 0;

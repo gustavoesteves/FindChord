@@ -1,7 +1,6 @@
 import { EXPLAINABILITY_CORPUS } from '../analysis/similarity/explainabilityCorpus';
 import { generateExplanation } from '../analysis/functionalAnalysis';
 import * as fs from 'fs';
-import * as path from 'path';
 
 let passedTests = 0;
 let failedTests = 0;

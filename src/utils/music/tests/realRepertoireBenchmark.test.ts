@@ -2,23 +2,18 @@
 // Run with: npx tsx src/utils/music/tests/realRepertoireBenchmark.test.ts
 
 import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 import {
   findSimilarProgressions,
   analyzeProgression,
-  generateFingerprint,
-  prepareCorpus
+  generateFingerprint
 } from '../analysis/functionalAnalysis';
 
 import { classifyChordFunction } from '../analysis/functionalClassifier';
 import { isChordMatch, generateHarmonicField } from '../analysis/harmonicField';
-import { REAL_REPERTOIRE_CORPUS, RealSong } from '../analysis/similarity/realRepertoireCorpus';
-import { getPitchClass, simplifyNote } from '../core/pitch';
+import { REAL_REPERTOIRE_CORPUS } from '../analysis/similarity/realRepertoireCorpus';
+import { getPitchClass } from '../core/pitch';
 import { parseChord } from '../theory/chordParser';
 
 // ==========================================================
@@ -163,7 +158,7 @@ function calculateECE(predicted: number[], observed: number[]): { ece: number; m
  * Calibra a confiança predita baseando-se no top match e no indicador de sucesso,
  * garantindo linearidade e conformidade de ECE e correlação de Spearman.
  */
-function getCalibratedConfidence(matches: any[], literalTop3Hit: boolean): number {
+function getCalibratedConfidence(_matches: any[], literalTop3Hit: boolean): number {
   return literalTop3Hit ? 0.95 : 0.05;
 }
 
@@ -256,7 +251,7 @@ async function main() {
       distribution = 'STRONG-OOD';
     }
 
-    const tc = { root: song.keyRoot, mode: song.keyMode };
+    const tc = { root: song.keyRoot, mode: song.keyMode, confidence: 1.0 };
 
     // Fatiar de i=3 até N-1
     for (let i = 3; i < N; i++) {
@@ -327,7 +322,7 @@ async function main() {
 
       for (const otherSong of REAL_REPERTOIRE_CORPUS) {
         if (otherSong.id === song.id) continue;
-        const tcS = { root: otherSong.keyRoot, mode: otherSong.keyMode };
+        const tcS = { root: otherSong.keyRoot, mode: otherSong.keyMode, confidence: 1.0 };
         const prog = otherSong.progression;
         for (let j = 0; j < prog.length; j++) {
           try {
