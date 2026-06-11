@@ -360,15 +360,18 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F11-C: Adversarial Harmonies & Outlier Stress Test
-**Status: 📅 PROGRAMADA (P&D / Robustez Limite)**
-*   **Objetivo**: Encontrar os pontos de quebra (break points) e limites cognitivos do motor de recomendação e explicação do Find Chord através de um corpus de testes altamente adverso (outliers estatísticos, harmonia pós-tonal, cromatismo extremo e modulações não-funcionais).
-*   **Conceito**:
-    *   **Corpus de Stress Adversário**: Criação de um banco de dados de teste contendo progressões harmônicas complexas:
-        *   *Coltrane Changes* e modulações por terças maiores simétricas.
-        *   Harmonia pós-bop e acordes híbridos (*slash chords* sem relação tonal direta).
-        *   Tonalidade expandida impressionista (Debussy, escalas de tons inteiros) e pós-tonalismo precoce (Scriabin, acorde místico).
-        *   Politonalidade e modulações abruptas OOD (sem pivô comum).
-    *   **Métricas de Degradação Extrema**: Aferição da capacidade do resolvedor de Viterbi de manter a integridade sob alta entropia e avaliação dos novos limites e taxas de quebra de explicabilidade (atribuição de confiança sob ruído).
+**Status: 📅 PROGRAMADA (P&D / Caracterização de Limites)**
+*   **Objetivo**: Caracterizar os limites absolutos de quebra (break points) cognitivos do resolvedor e do recomendador sob cenários de cromatismo extremo, ambiguidade tonal insolúvel e harmonia pós-tonal, mapeando a transição de um motor de acurácia determinista para um motor de qualidade hermenêutica/interpretativa.
+*   **Conceito & Camadas Adversárias**:
+    *   **Nível 1 — Tonalidade Extrema (Bach / Modulação Encadeada)**: Forçar o motor Viterbi a transitar continuamente por modulações encadeadas rápidas, avaliando a degradação de KSS e latência de chaveamento.
+    *   **Nível 2 — Ambiguidade Funcional (Aumentados / Diminutos Simétricos)**: Introduzir acordes simétricos sem resolução diatônica explícita. Avaliar o comportamento do Viterbi sob interpretações concorrentes válidas utilizando métricas de *Entropy of Interpretation* e *Explanation Stability*.
+    *   **Nível 3 — Modalidade Híbrida (Debussy / Tons Inteiros)**: Progressões impressionistas que tensionam o significado funcional clássico (T/SD/D). Mapear a transição semântica da classificação.
+    *   **Nível 4 — Harmonia Simétrica (Scriabin / Acorde Místico)**: Romper pressupostos acústicos diatônicos do motor com coleções octatônicas e de tons inteiros.
+    *   **Nível 5 — Coltrane Changes (Giant Steps)**: Mudança tonal super-rápida (terças simétricas) para medir o colapso e degradação de KSS, Modulation Tracking e Transition Consistency.
+    *   **Nível 6 — Politonalidade e Policordes**: Cenários de dois centros tonais simultâneos, avaliando a qualidade e a pluralidade da interpretação em vez da acurácia literal de gabarito único.
+*   **Métricas de Robustez**:
+    *   **Harmonic Ambiguity Robustness (HAR)**: Aferição da capacidade do motor de manter explicações logicamente coerentes e consistentes quando existem múltiplas análises teóricas concorrentes e igualmente válidas.
+    *   **Entropy of Interpretation (EoI)**: Mensuração da entropia de probabilidade das hipóteses Viterbi em cenários ambíguos.
 
 ---
 
