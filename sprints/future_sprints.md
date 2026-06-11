@@ -412,10 +412,12 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 *   **Componentes**:
     *   **[NEW] [polytonalInferenceCorpus.ts](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/analysis/similarity/polytonalInferenceCorpus.ts)**: Corpus especializado contendo:
         *   *Grupo A — Politonalidade Controlada*: Exemplos de Stravinsky, Milhaud e Bartók contendo centros tonais concorrentes formalmente anotados.
-        *   *Grupo B — Ambiguidade Simétrica*: Casos reais com acordes diminutos, aumentados e octatônicos onde múltiplas interpretações possuem suporte equivalente.
+        *   *Grupo B — Embiguidade Simétrica*: Casos reais com acordes diminutos, aumentados e octatônicos onde múltiplas interpretações possuem suporte equivalente.
         *   *Grupo C — Ambiguidade Artificial*: Progressões sintéticas calibradas para manter $P(H_1) \approx P(H_2)$ durante longos trechos harmônicos.
+        *   *Grupo D — Casos Musicológicos Controversos*: Peças literárias complexas (Tristan Chord, Scriabin Op. 74, trechos de Giant Steps, Debussy Voiles, Petrushka) com múltiplas análises teóricas aceitas na literatura.
     *   **[NEW] [convergenceBiasBenchmark.test.ts](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/tests/convergenceBiasBenchmark.test.ts)**: Runner dedicado à auditoria.
-    *   **[NEW] [convergence_bias_report.md](file:///Users/gustavoesteves/.gemini/antigravity-ide/brain/177b17d2-71af-4648-a0b6-2e77cf48a251/convergence_bias_report.md)**: Relatório de auditoria contendo distribuição de HDR, curvas de sobrevivência, evolução temporal de entropia e evidências pró-H0/H1.
+    *   **[NEW] [convergence_bias_report.md](file:///Users/gustavoesteves/.gemini/antigravity-ide/brain/177b17d2-71af-4648-a0b6-2e77cf48a251/convergence_bias_report.md)**: Relatório de auditoria focado em responder se existe viés.
+    *   **[NEW] [beam_dynamics_report.md](file:///Users/gustavoesteves/.gemini/antigravity-ide/brain/177b17d2-71af-4648-a0b6-2e77cf48a251/beam_dynamics_report.md)**: Relatório detalhado focado em analisar a dinâmica temporal do feixe de busca e como o viés emerge.
 *   **Novas Métricas**:
     *   **Convergence Bias Index (CBI)**: Mede a taxa de concentração probabilística ao longo do tempo:
         $$CBI = \frac{P_{\text{top}}(t_n) - P_{\text{top}}(t_0)}{n}$$
@@ -428,9 +430,13 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
         Meta: $ASP > 0.30$.
     *   **Hypothesis Dominance Velocity (HDV)**: Velocidade de crescimento do Hypothesis Dominance Ratio (HDR) para rastrear convergência prematura.
     *   **Polytonal Representation Score (PRS)**: Mede se múltiplos centros tonais concorrentes são realmente representados no feixe. Meta: $PRS > 0.75$.
+    *   **SCI (Structural Convergence Index)**: Razão entre CBI e PRS ($SCI = CBI / PRS$) para verificar se a convergência rápida é legítima ou induzida.
+    *   **EBC (Effective Beam Competition)**: Proporção de estados sob competição real ($EBC = \#(HDR < 2.0) / N$).
+    *   **LTPS (Long-Term Persistence Score)**: Medida de estabilidade de sobrevivência longitudinal de hipóteses ($LTPS = \sum \text{survivalLength}_i / N$).
 *   **Hipóteses Científicas**:
     *   **H0**: Existe viés de convergência estrutural. O feixe colapsa prematuramente devido ao design do resolvedor.
     *   **H1**: A convergência observada é consequência legítima da informação musical. O feixe permanece livre para competição justa.
+    *   **H2 (Convergência Dependente de Contexto)**: O sistema converge legitimamente em tonalidades funcionais e modulações estruturadas, mas apresenta convergência artificial e precoce em harmonia politonal e pós-tonal.
 *   **Critérios de Aceitação**:
     | Métrica | Meta |
     |---|---|
@@ -438,6 +444,9 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     | BDP | > 0.50 |
     | ASP | > 0.30 |
     | PRS | > 0.75 |
+    | SCI | Caracterizado |
+    | EBC | Caracterizado |
+    | LTPS | Caracterizado |
     | HCE | < 10% |
     | ICUA | > 95% |
 
