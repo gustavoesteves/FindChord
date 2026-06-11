@@ -89,19 +89,23 @@ graph TD
         F12_6 --> F12_7
     end
 
-    subgraph "PHASE 5.5 — Probabilistic Modeling (🔄 Em andamento)"
+    subgraph "PHASE 5.5 — Probabilistic Modeling (✅ Concluída)"
         F12_8["F12.8: Probabilistic Confidence Modeling"]
         F12_7 --> F12_8
     end
 
-    subgraph "PHASE 6 — Extended Harmony & Corpus"
+    subgraph "PHASE 6 — Extended Harmony, Validation & Audit (🔄 Em andamento)"
         F10E["F10-E: Corpus Expansion & Benchmark Suite"]
         F10F["F10-F: Corpus Expansion & Generalization Stress Testing"]
         F10F5["F10-F.5: Parameter Identifiability & Redundancy Audit"]
         F10F6["F10-F.6: Confidence Feature Simplification Audit"]
+        F10F7["F10-F.7: Regularization vs Stabilization Audit"]
+        F10G["F10-G: Real Repertoire Validation Benchmark"]
+        F11A["F11-A: Harmonic Function Intelligence Layer"]
+        F11B["F11-B: Explainable Harmonic Reasoning Audit"]
         F14["F14: Blues & Extended Tonality Engine"]
         F12_8 --> F10E
-        F10E --> F10F --> F10F5 --> F10F6 --> F14
+        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F14
     end
 
     subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
