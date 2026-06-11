@@ -96,9 +96,12 @@ graph TD
 
     subgraph "PHASE 6 — Extended Harmony & Corpus"
         F10E["F10-E: Corpus Expansion & Benchmark Suite"]
+        F10F["F10-F: Corpus Expansion & Generalization Stress Testing"]
+        F10F5["F10-F.5: Parameter Identifiability & Redundancy Audit"]
+        F10F6["F10-F.6: Confidence Feature Simplification Audit"]
         F14["F14: Blues & Extended Tonality Engine"]
         F12_8 --> F10E
-        F10E --> F14
+        F10E --> F10F --> F10F5 --> F10F6 --> F14
     end
 
     subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
@@ -230,7 +233,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F12.8: Probabilistic Confidence Modeling
-**Status: 🔄 PRÓXIMO PASSO (Prioridade 1)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Modelar continuamente a confiança a partir de um estimador de probabilidade contínua baseado nas características geométricas da fronteira.
 *   **Conceito**:
     *   **Entropia de Pareto**: Integrar a métrica de **Entropia da Fronteira** ($H = -\sum p_i \log p_i$, onde $p_i$ é a relevância relative ou crowding distance de cada solução ótima) para diferenciar entre fronteiras com soluções redundantes (baixa entropia) e soluções altamente diversas/competitivas (alta entropia).
@@ -239,7 +242,7 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F10-E: Corpus Expansion & Benchmark Suite
-**Status: 🔄 PLANEJADA (Pós-F12.8)**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Expandir o corpus com mais de 100 progressões clássicas, de jazz e populares e validar a cobertura de contextos.
 *   **Conceito**:
     *   **Indexação e Densidade**: Indexar fingerprints de alta densidade no banco estático para validação em larga escala.
@@ -249,6 +252,36 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
         *   `frontierSizeDistribution`: histograma de tamanhos de fronteiras obtidos.
         *   `hypervolumeDistribution`: distribuição de volume coberto por Pareto.
         *   `contextCoverageScore`: score sintético indicando a proporção de contextos cobertos com significância estatística ($N \ge 10$).
+
+---
+
+### Sprint F10-F: Corpus Expansion & Generalization Stress Testing
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Verificar se o modelo de calibração e confiança generaliza de forma robusta e calibrada sobre partições Holdout, Validação e Estresse.
+*   **Conceito**:
+    *   **Harness de Generalização**: Segmentar cenários em Treino, Holdout (estabilidade intra-distribuição), Validação (150 cenários sintéticos complexos) e Estresse (12 cenários de modulações extremas).
+    *   **Métricas de Drift e Estabilidade**: Aferição de desvios populacionais usando Population Stability Index (PSI), Double Bootstrap para avaliar o Coeficiente de Variação (CV) dos pesos e parâmetros de Platt, e teste de consistência monotônica da entropia contínua da fronteira.
+
+---
+
+### Sprint F10-F.5: Parameter Identifiability & Redundancy Audit
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Realizar auditoria científica detalhada para analisar redundância entre `Goal Alignment`, `Geometry` e `Information Gain` na formulação da confiança.
+*   **Conceito**:
+    *   **Matriz de Correlação e VIF**: Computar multicolinearidade direta via diagonal da matriz inversa.
+    *   **Correlação Parcial**: Estimar associação linear residual direta de `Goal Alignment` com o sucesso real de benchmark, removendo o efeito compartilhado de outras variáveis.
+    *   **Estudo de Ablação**: Otimizar pesos e Platt scaling fixando $w_{\text{goal}} = 0$ e comparar o Brier Score e Spearman nas partições de validação e estresse.
+    *   **Análise SHAP e Importance Ranking**: Decomposição de contribuição marginal média das features na confiança calibrada.
+
+---
+
+### Sprint F10-F.6: Confidence Feature Simplification Audit
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Realizar auditoria científica detalhada especificamente no fator `Score Gap` para verificar a possibilidade de simplificar o modelo removendo-o.
+*   **Conceito**:
+    *   **Ablação Completa**: Treinar pesos e Platt scaling calibrados com $w_{\text{gap}} = 0$.
+    *   **Análise de Desempenho**: Comparar Brier Score, ECE, MCE e Spearman combinados nas partições de validação e estresse contra o modelo completo.
+    *   **Critérios de Simplificação**: Definir limites para redundância (Brier Delta e Spearman Delta) e analisar a viabilidade de simplificação do modelo para os 3 pilares principais (`Geometry` + `Information Gain` + `Goal Alignment`).
 
 ---
 
