@@ -106,9 +106,10 @@ graph TD
         F11A["F11-A: Harmonic Function Intelligence Layer"]
         F11B["F11-B: Explainable Harmonic Reasoning Audit"]
         F11C["F11-C: Adversarial Harmonies & Outlier Stress Test"]
+        F11D["F11-D: Adaptive Harmonic Reasoning"]
         F14["F14: Blues & Extended Tonality Engine"]
         F12_8 --> F10E
-        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F11C --> F14
+        F10E --> F10F --> F10F5 --> F10F6 --> F10F7 --> F10G --> F11A --> F11B --> F11C --> F11D --> F14
     end
 
     subgraph "PHASE 7 — Integrations (MuseScore & Audio)"
@@ -377,6 +378,30 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     *   **Tonal Collapse Index (TCI)**: Ponto de quebra observacional onde a suposição de centro tonal único colapsa.
 *   **Resultados do Estresse Adversário**:
     A suíte de estresse adversário [adversarialHarmonyBenchmark.test.ts](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/tests/adversarialHarmonyBenchmark.test.ts) caracterizou os limites cognitivos da arquitetura atual, obtendo **100.00% de sucesso** em HAR, **96.36%** em ESS, **100.00%** em Explanation Consistency e **100.00%** em Narrative Consistency. Os resultados empiricamente comprovam a ocorrência de **excesso de confiança estrutural** nas transições rápidas (Níveis 3, 4, 5, onde a entropia EoI é zero e IDS = 1.00), e picos de incerteza harmônica controlada em regiões de ambiguidade e politonalidade (Nível 2 e Nível 6, com EoI ~0.50 e IDS ~1.50). O colapso do centro tonal (TCI) atinge seu ápice a partir do Nível 4, estabelecendo a fronteira operacional das suposições de Viterbi tonal. O relatório completo de caracterização científica está salvo em [adversarial_harmony_report.md](file:///Users/gustavoesteves/.gemini/antigravity-ide/brain/177b17d2-71af-4648-a0b6-2e77cf48a251/adversarial_harmony_report.md).
+
+---
+
+### Sprint F11-D: Adaptive Harmonic Reasoning
+**Status: 📅 PROGRAMADA (P&D / Raciocínio Multi-Hipótese)**
+*   **Objetivo**: Substituir o modelo de "uma tonalidade ativa por acorde" por um mecanismo de múltiplas hipóteses tonais ponderadas, capaz de representar ambiguidade funcional, politonalidade parcial e transições rápidas sem colapso interpretativo.
+*   **Conceito & Raciocínio Multi-Hipótese**:
+    *   **Multi-Hypothesis Tonal State**: Estado tonal concorrente com soma de probabilidades de hipóteses igual a 1.0.
+    *   **Adaptive Viterbi Resolver**: Resolvedor que mantém os top-K caminhos tonais (K=3, Beam Width = 10, Pruning = 1%).
+    *   **Harmonic Ambiguity Layer**: Reconhecimento explícito de simetrias (diminutos, aumentados, coleções octatônicas, tons inteiros, policordes) para preservar múltiplas interpretações.
+*   **Novas Métricas**:
+    *   **Hypothesis Diversity Score (HDS)**: Diversidade efetiva de hipóteses tonais ($HDS = e^{H(p)}$).
+    *   **Adaptive Transition Stability (ATS)**: Estabilidade das probabilidades de transição local.
+    *   **Collapse Resistance Score (CRS)**: Redução do Tonal Collapse Index (TCI) sob estresse.
+    *   **Interpretive Consistency Under Ambiguity (ICUA)**: Consistência explicativa sob múltiplas análises válidas.
+*   **Corpus de Teste**: Expansão do `adversarialHarmonyCorpus.ts` para 50-80 progressões adversárias com cobertura estendida de Scriabin, Debussy, Coltrane e politonalidade.
+*   **Verificação & Benchmark**: Criação de `adaptiveReasoningBenchmark.test.ts` e relatório `adaptive_reasoning_report.md` comparando o Baseline Viterbi (1 hipótese) com o Adaptive Viterbi (K hipóteses), visando redução de >= 30% no TCI dos Níveis 4-6 sem regressões no repertório tonal padrão.
+*   **Critérios de Aceitação**:
+    *   Redução do TCI em Níveis 4-6: $\ge 30\%$
+    *   HAR $\ge$ baseline
+    *   ESS $\ge$ baseline
+    *   ICUA $\ge 90\%$
+    *   Sem regressão em F10-G (Top-3 Accuracy): $\le 1\%$ de queda
+    *   Sem regressão em F11-A (Function Accuracy): $\le 1\%$ de queda
 
 ---
 
