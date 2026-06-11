@@ -430,13 +430,15 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
         Meta: $ASP > 0.30$.
     *   **Hypothesis Dominance Velocity (HDV)**: Velocidade de crescimento do Hypothesis Dominance Ratio (HDR) para rastrear convergência prematura.
     *   **Polytonal Representation Score (PRS)**: Mede se múltiplos centros tonais concorrentes são realmente representados no feixe. Meta: $PRS > 0.75$.
-    *   **SCI (Structural Convergence Index)**: Razão entre CBI e PRS ($SCI = CBI / PRS$) para verificar se a convergência rápida é legítima ou induzida.
-    *   **EBC (Effective Beam Competition)**: Proporção de estados sob competição real ($EBC = \#(HDR < 2.0) / N$).
+    *   **SCI (Structural Convergence Index)**: Razão entre CBI e PRS ($SCI = CBI / PRS$) para verificar se a convergência rápida é legítima ou induzida algoritmicamente.
+    *   **EBC (Effective Beam Competition)**: Proporção de estados sob competição real no feixe ($EBC = \#(HDR < 2.0) / N$, onde $N$ é o número de acordes).
     *   **LTPS (Long-Term Persistence Score)**: Medida de estabilidade de sobrevivência longitudinal de hipóteses ($LTPS = \sum \text{survivalLength}_i / N$).
+    *   **MDE (Modal Diversity Entropy)**: Entropia dos modos no feixe ($MDE = H(\text{modes})$) medindo a diversidade de tipos modais ativos (maior, menor, octatônico, tons inteiros, místico, politonal).
+    *   **PCS (Premature Collapse Score)**: Razão temporal de colapso do feixe ($PCS = t_{\text{collapse}} / t_{\text{total}}$), onde $t_{\text{collapse}}$ é a etapa a partir da qual $HDR > 10.0$ de forma contínua.
 *   **Hipóteses Científicas**:
-    *   **H0**: Existe viés de convergência estrutural. O feixe colapsa prematuramente devido ao design do resolvedor.
-    *   **H1**: A convergência observada é consequência legítima da informação musical. O feixe permanece livre para competição justa.
-    *   **H2 (Convergência Dependente de Contexto)**: O sistema converge legitimamente em tonalidades funcionais e modulações estruturadas, mas apresenta convergência artificial e precoce em harmonia politonal e pós-tonal.
+    *   **H0 (Viés Algorítmico Estrutural)**: O feixe colapsa prematuramente devido ao resolvedor (CBI alto, ASP baixo, PRS baixo).
+    *   **H1 (Convergência Musical Legítima)**: O feixe permanece aberto para competição justa (PRS alto, BDP alto, ASP alto).
+    *   **H2 (Convergência Dependente de Contexto)**: O sistema converge legitimamente em domínios tonais/modais estruturados (como Bach e Coltrane), mas apresenta convergência artificial e precoce sob politonalidade ou pós-tonalidade.
 *   **Critérios de Aceitação**:
     | Métrica | Meta |
     |---|---|
@@ -447,8 +449,18 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
     | SCI | Caracterizado |
     | EBC | Caracterizado |
     | LTPS | Caracterizado |
+    | MDE | Caracterizado |
+    | PCS | Caracterizado |
     | HCE | < 10% |
     | ICUA | > 95% |
+*   **Contraste Metodológico (F11-D Baseline vs F11-E Auditoria)**:
+    | Métrica | F11-D (Baseline) | F11-E (Auditoria) |
+    |---|:---:|:---:|
+    | **HDC** | $0.63$ (Nível 4-6) | Caracterizado (Todos os Grupos) |
+    | **HCE** | $6.49\%$ | $< 10.00\%$ |
+    | **HDR** | $100.0$ (Nível 6) | Caracterizado e Mapeado |
+    | **ASP** | — | $> 0.30$ |
+    | **BDP** | — | $> 0.50$ |
 
 ---
 
