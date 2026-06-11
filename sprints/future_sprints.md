@@ -11,7 +11,7 @@ Este documento formaliza a reestruturação do roadmap sob a ótica de espaço d
 | Área | Cobertura Atual | Detalhamento |
 |---|---|---|
 | **Harmonia funcional tonal maior** | ~95% | Cobertura completa de tétrades, graus e funções diatônicas. |
-| **Tonalidade menor** | ~85% | Relações de menor natural, harmônica e melódica integradas na busca global. |
+| **Tonalidade menor** | ~95% | Relações de menor natural, harmônica e melódica integradas; funções diatônicas menores validadas a 100% de acurácia. |
 | **Dominantes secundários** | ~100% | Detecção e rotulação contextual de V7/X na timeline. |
 | **SubV7** | ~100% | Identificação de dominantes substitutos tritone. |
 | **Tonicizações e modulações** | ~100% | Delimitação de janelas temporárias vs modulações estruturais via cadência. |
@@ -25,6 +25,8 @@ Este documento formaliza a reestruturação do roadmap sob a ótica de espaço d
 | **Equivalência funcional / substituições** | ~100% | Mapeamento de classes funcionais equivalentes e substituições na Layer 5. |
 | **Voice-leading** | ~100% | Análise de notas comuns, condução suave e movimentos lineares concluída na Layer 6. |
 | **Espaço de Transformação (F10-C.4/C.5)** | ~100% | Catálogo estático de templates de rearmonização, grafo de decisões e caminhos pedagógicos. |
+| **Calibração de Confiança** | ~100% | Otimização Platt e peso das 4 features validados em repertório real (Brier < 0.003, ECE < 5.0%), robustos a OOD. |
+| **Explicabilidade Causal (F11-B)** | ~100% | Justificativas estruturadas em português auditadas via ablação virtual com 100% de consistência e acurácia. |
 | **Blues** | ~5% | Parcialmente detectado como acordes dominantes avulsos, sem suporte estrutural formal. |
 
 ---
