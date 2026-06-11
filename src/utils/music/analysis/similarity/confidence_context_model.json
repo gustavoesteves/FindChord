@@ -4,12 +4,12 @@
   },
   "global": {
     "scoreGapWeight": 0.15,
-    "goalAlignmentWeight": 0.1,
-    "geometryWeight": 0.44,
-    "ambiguityWeight": 0.31,
-    "optimizationScore": 0.354194,
+    "goalAlignmentWeight": 0.13,
+    "geometryWeight": 0.4,
+    "ambiguityWeight": 0.32,
+    "optimizationScore": 0.335701,
     "population": 25,
     "lastOptimized": "2026-06-11",
-    "brierScore": 0.027142
+    "brierScore": 0.02759
   }
 }

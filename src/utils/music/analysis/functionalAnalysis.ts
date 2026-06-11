@@ -52,6 +52,8 @@ export {
   computeRecommendationAnalytics,
   computeDiscoveryAnalytics
 } from './similarity/recommendationAnalyticsEngine';
+export { generateExplanation } from './similarity/harmonicExplanationEngine';
+export type { HarmonicExplanation, FeatureAttribution } from './similarity/harmonicExplanationEngine';
 // ──────────────────────────────────────────────────────────────
 
 
