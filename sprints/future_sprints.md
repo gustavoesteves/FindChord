@@ -684,6 +684,38 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-T: Counterfactual Universe Simulation Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Desenvolver um motor de simulação contrafactual para testar teorias e leis analíticas fora das condições históricas observadas. O motor gera 5 universos sintéticos em duas camadas (macro/micro) e mensura o suporte, a dominância trans-universal e a invariância ontológica das leis.
+*   **Conceito & Métodos**:
+    *   **Counterfactual Robustness Score ($CRS_p$)**: Proporção de universos sintéticos que suportam o programa ($PVI \ge 0.65$):
+        $$CRS_p = \frac{N_{\text{universes\_supported}}}{N_{\text{universes\_tested}}}$$
+    *   **Law Stability Index ($LSI_p$)**: Estabilidade dos scores do paradigma no ecossistema trans-universal:
+        $$LSI_p = 1.0 - \sigma(OFS_{\text{universes}})$$
+    *   **Counterfactual Generalization Score ($CGS_p$)**: Índice final de generalização contrafactual:
+        $$CGS_p = CRS_p \cdot LSI_p \cdot SRS_p$$
+    *   **Ontological Invariance Score ($OIS_l$)**: Grau de universalidade de cada lei explicativa harmônica:
+        $$OIS_l = \frac{N_{\text{universes\_where\_law\_remains\_predictive}}}{N_{\text{universes}}}$$
+
+### Sprint F11-U: Universal Law Extraction Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Analisar os resultados combinados de descoberta, replicação, competição lakatosiana e invariância contrafactual para extrair os princípios de harmonia verdadeiramente universais.
+*   **Conceito & Métodos**:
+    *   **Law Robustness Score ($LRS_l$)**: Score integrado de robustez de uma lei:
+        $$LRS_l = FI_l \cdot RepS_{w, l} \cdot OIS_l \cdot \sqrt{EAW_{\text{combined}, l}}$$
+    *   **Paradigm Consensus Score ($PCS_l$)**: Nível de concordância de paradigmas sobre a lei:
+        $$PCS_l = \frac{|P_l|}{|P_{\text{total}}|}$$
+    *   **Universality Class**:
+        *   `UNIVERSAL`: $OIS \ge 0.80$, $PCS \ge 0.66$ e $LRS \ge 0.40$
+        *   `QUASI_UNIVERSAL`: $OIS \ge 0.60$ e $LRS \ge 0.20$
+        *   `LOCAL`: Restante
+
+### Sprint F11-V: Universal Law Compression Engine
+**Status: 📅 PLANEJADA**
+*   **Objetivo**: Construir o grafo de dependência causal entre as leis universais extraídas para identificar relações de derivação, redundância e dependências estruturais entre princípios explicativos.
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)

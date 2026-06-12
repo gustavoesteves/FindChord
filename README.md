@@ -66,6 +66,8 @@ graph TD
     Mensura a confiabilidade e replicabilidade das hipóteses geradas através de score de replicação ponderado ($RepS_w$), yield de impacto ($DY^*$), taxa móvel de falsas descobertas ($FDR_{\text{rolling}}$) e estabilidade epistêmica ($ESS$). Regula e recalibra de forma popperiana o motor de pesquisa sob crises epistemológicas.
 15. **Coexistência Multiparadigmática (Sprint F11-S)**:
     Habilita a coexistência em paralelo de múltiplos paradigmas com Núcleo Firme axiológico e Cinturão Protetor adaptativo, regulando orçamentos de busca via Softmax EAW composto e predições por consenso ponderado MPC.
+16. **Simulação de Universos Contrafactuais (Sprint F11-T)**:
+    Habilita a geração e teste de ontologias em mundos harmônicos sintéticos probabilísticos (macro/micro), calculando robustez de programa ($CRS$), estabilidade ($LSI$), generalização contrafactual ($CGS$) e invariância de leis ($OIS$).
 
 ---
 
@@ -209,6 +211,16 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Multi-Paradigm Predictive Consensus ($MPC$)**: Fusão de probabilidades com base no peso epistêmico, acurácia e replicação do paradigma:
     $$MPC(claim) = \sum_{p} EAW_p \cdot PVI_p \cdot RepS_{w, p} \cdot Confidence_p(claim)$$
 
+### 15. Simulação de Universos Contrafactuais (Sprint F11-T)
+*   **Counterfactual Robustness Score ($CRS_p$)**: Razão de universos contrafactuais alternativos em que o programa se mantém suportado ($PVI \ge 0.65$):
+    $$CRS_p = \frac{N_{\text{universes\_supported}}}{N_{\text{universes\_tested}}}$$
+*   **Law Stability Index ($LSI_p$)**: Estabilidade longitudinal e contextual do score de adequação do paradigma ($OFS$):
+    $$LSI_p = 1.0 - \sigma(OFS_{\text{universes}})$$
+*   **Counterfactual Generalization Score ($CGS_p$)**: Score de generalização final agregando robustez, estabilidade e confiabilidade:
+    $$CGS_p = CRS_p \cdot LSI_p \cdot SRS_p$$
+*   **Ontological Invariance Score ($OIS_l$)**: Índice de invariância universal de leis harmônicas:
+    $$OIS_l = \frac{N_{\text{universes\_where\_law\_remains\_predictive}}}{N_{\text{universes}}}$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -251,6 +263,14 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Extração de Leis Universais (F11-U)**:
+    ```bash
+    npx tsx src/utils/music/tests/universalLawExtractionBenchmark.test.ts
+    ```
+*   **Simulação de Universos Contrafactuais (F11-T)**:
+    ```bash
+    npx tsx src/utils/music/tests/counterfactualUniverseBenchmark.test.ts
+    ```
 *   **Coexistência Multiparadigmática (F11-S)**:
     ```bash
     npx tsx src/utils/music/tests/lakatosResearchProgramBenchmark.test.ts
