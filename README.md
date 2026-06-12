@@ -60,6 +60,8 @@ graph TD
    Habilita o motor a fundir categorias redundantes e podar nós obsoletos de forma totalmente autônoma. Aplica restrições de segurança para garantir que a compressão física não deteriore a acurácia preditiva ($PVI$) nem a cobertura cruzada.
 12. **Detecção de Drift e Substituição de Paradigmas (Sprint F11-P)**:
    Monitora a deriva de saúde da ontologia ($ODI_2$) e a pressão externa ($PPS$). Se uma crise de obsolescência persistir, substitui o paradigma conceitual ativo por uma alternativa de melhor desempenho ($OFS$) e assimilação de novidades ($NAR$).
+13. **Descoberta Científica Autônoma (Sprint F11-Q)**:
+   Habilita o motor a identificar lacunas explicativas na taxonomia e formular hipóteses inéditas e empiricamente refutáveis (Popper/Lakatos), medindo seu ineditismo ($HNS$), falseabilidade ($FI$), impacto ($DIS$) e severidade de teste ($STS$) contra previsões estruturais de mecanismos harmônicos.
 
 ---
 
@@ -171,6 +173,16 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Condição de Substituição**: Substituição acionada quando em crise de 3 gerações, se:
     $$OFS_{\text{new}} > OFS_{\text{old}} + 0.05$$
 
+### 12. Descoberta Científica Autônoma (Sprint F11-Q)
+*   **Hypothesis Novelty Score ($HNS$)**: Distância da hipótese bridges de novos conceitos em relação à taxonomia ativa:
+    $$HNS = 1.0 - \frac{|\text{Hypothesis.concepts} \cap \text{ExistingKnowledge.concepts}|}{|\text{Hypothesis.concepts}|}$$
+*   **Falsifiability Index ($FI$)**: Razão de asserções que podem ser falseadas nos experimentos empíricos:
+    $$FI = \frac{N_{\text{testable}}}{N_{\text{claims}}}$$
+*   **Discovery Impact Score ($DIS$)**: Ponderação do ineditismo, testabilidade e poder explicativo consolidado:
+    $$DIS = HNS \cdot FI \cdot PVI \cdot TCI$$
+*   **Scientific Test Severity ($STS$)**: Grau de rigor do cenário experimental baseado em anomalias de predição sob o baseline:
+    $$STS = \frac{ObservedAnomalies}{ExpectedAnomalies}$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -213,6 +225,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Descoberta Científica Autônoma (F11-Q)**:
+    ```bash
+    npx tsx src/utils/music/tests/scientificDiscoveryBenchmark.test.ts
+    ```
 *   **Detecção de Drift e Mudança de Paradigma (F11-P)**:
     ```bash
     npx tsx src/utils/music/tests/paradigmShiftBenchmark.test.ts

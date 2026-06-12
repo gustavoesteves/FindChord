@@ -38,4 +38,11 @@ export interface TheoryPrediction {
     isExotic: boolean;
     isEnigmatic: boolean;
   };
+  predictionMechanism?:
+    | 'FUNCTIONAL'
+    | 'MODAL'
+    | 'SYMMETRIC'
+    | 'TRANSFORMATIONAL'
+    | 'VOICE_LEADING'
+    | 'HYBRID';
 }

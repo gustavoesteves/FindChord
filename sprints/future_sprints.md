@@ -637,6 +637,22 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-Q: Autonomous Scientific Discovery Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Habilitar o sistema a atuar como um agente científico ativo, detectando lacunas conceituais e formulando hipóteses inéditas e testáveis, quantificando sua refutabilidade (critério de Popper) e testando-as empiricamente sob testes severos.
+*   **Conceito & Métodos**:
+    *   **Hypothesis Novelty Score ($HNS$)**: Mede o ineditismo da hipótese em termos de pontes conceituais:
+        $$HNS = 1.0 - \frac{|\text{Hypothesis.concepts} \cap \text{ExistingKnowledge.concepts}|}{|\text{Hypothesis.concepts}|}$$
+    *   **Falsifiability Index ($FI$)**: Razão de asserções que podem ser falseadas nos experimentos empíricos:
+        $$FI = \frac{N_{\text{testable}}}{N_{\text{claims}}}$$
+    *   **Discovery Impact Score ($DIS$)**: Impacto científico ajustado pelo rigor de Popper e Lakatos:
+        $$DIS = HNS \cdot FI \cdot PVI \cdot TCI$$
+    *   **Scientific Test Severity ($STS$)**: Rigor e severidade empírica do teste sobre anomalias reais observadas contra o baseline:
+        $$STS = \frac{ObservedAnomalies}{ExpectedAnomalies}$$
+    *   **Prediction Mechanisms**: Foco da validação preditiva em mecanismos harmônicos estruturais em `TheoryPrediction` (`FUNCTIONAL` | `MODAL` | `SYMMETRIC` | `TRANSFORMATIONAL` | `VOICE_LEADING` | `HYBRID`) em vez de categorias estilísticas ou geográficas históricas.
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)
