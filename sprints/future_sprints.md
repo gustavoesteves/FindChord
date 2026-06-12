@@ -561,13 +561,14 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F11-L: Automated Theory Revision & Synthesis
-**Status: 📅 PROGRAMADA (Revisão e Síntese de Teorias)**
-*   **Objetivo**: Permitir que o ecossistema evolutivo fundir teorias sobreviventes, revise suas regras estruturais e crie abstrações híbridas dinamicamente a partir de interações.
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Permitir que o ecossistema evolutivo fundisse teorias sobreviventes, revisasse suas regras estruturais (mutações) e criasse abstrações híbridas dinamicamente a partir de complementaridades.
 *   **Conceito & Métodos**:
-    *   **Evolutionary Diversity Index (EDI)**: Evitar convergência prematura medindo a proporção de famílias teóricas distintas entre as sobreviventes:
-        $$EDI = \frac{N_{families}}{N_{survivors}}$$
-    *   **Theory Merge Engine**: Algoritmo para hibridização e união de regras e protótipos de teorias complementares de alta sinergia.
-    *   **Automated Rule Revision**: Algoritmo de busca estocástica para alterar pesos ou remover propriedades causais fracas de teorias sobreviventes.
+    *   **Evolutionary Diversity Index (EDI)**: Mede a proporção de famílias teóricas distintas entre as sobreviventes para evitar convergência precoce ($EDI \ge 0.50$):
+        $$EDI = \frac{N_{\text{distinct\_families}}}{N_{\text{survivors}}}$$
+    *   **Função de Fitness Multiobjetivo**: Seleciona variantes locais de mutações estruturais (regras/protótipos) equilibrando generalização e parcimônia:
+        $$\text{Fitness} = 0.50 \cdot TMS + 0.30 \cdot GS + 0.20 \cdot TCG$$
+    *   **Operador de Síntese (Merge)**: Combina teorias complementares ($Complementarity > 0.60$ e $Similarity < 0.80$) sob limiar de complexidade controlada ($TCG_{\text{merged}} \ge 0.90 \cdot \max(TCG_A, TCG_B)$), gerando arestas genealógicas `DERIVES_FROM` e rotulagem `family: "HYBRID"`.
 
 ---
 

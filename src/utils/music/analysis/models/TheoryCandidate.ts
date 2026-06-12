@@ -19,4 +19,6 @@ export interface TheoryCandidate {
     ns: number;   // Novelty Score (> 0.40)
     tms: number;  // Theory Maturity Score (> 0.80)
   };
+  parents?: string[];
+  family?: string;
 }

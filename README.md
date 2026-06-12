@@ -21,7 +21,8 @@ graph TD
     G --> H[Emergent Theory Generator: Teoria de Estágios]
     H --> I[Theory Evolution Engine: Validação holdout GS / NS / EGS_w]
     I --> J[Theory Selection & Competition: LSS / TCG / TRI2 / EPS / ESR]
-    J --> K[Theory Knowledge Graph / TheoryFitnessGraph: Grafo Evolutivo Tipado]
+    J --> K[Theory Revision & Synthesis: Mutação / Hibridização / EDI / Multiobjective Fitness]
+    K --> L[Theory Knowledge Graph / TheoryFitnessGraph: Linhagem Genealógica e Árvore Evolutiva]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -40,11 +41,13 @@ graph TD
 4. **Análise de Estabilidade e Causalidade Contrafactual (Sprint F11-H)**:
    Mede a robustez de uma análise simulando perturbações locais (remoção de acorde, substituição funcional, empréstimo modal e trítono) para avaliar a resposta causal do sistema.
 5. **Descoberta Metateórica e Epistemic Embeddings (Sprint F11-I)**:
-   Transiciona o sistema para o domínio da metateoria. Mapeia cada ponto de análise em um vetor de *Epistemic Embedding* ($E$) de 7 dimensões, detectando áreas onde as teorias estabelecidas sofrem de inadequação estrutural.
+   Transiciona o sistema para o domínio da metateoria. Mapeia cada ponto de análise in um vetor de *Epistemic Embedding* ($E$) de 7 dimensões, detectando áreas onde as teorias estabelecidas sofrem de inadequação estrutural.
 6. **Formação Autônoma de Teorias (Sprint F11-J)**:
    Gera e evolui novos candidatos de conceitos teóricos (`TheoryCandidate`) para formalizar e preencher lacunas do espaço de conhecimento, integrando novos nós em um grafo dinâmico de conhecimento musicológico.
 7. **Seleção e Validação Evolucionária de Teorias (Sprint F11-K)**:
    Introduz um ecossistema seletivo e torneios de competição direta com as escolas clássicas tradicionais sob ciclos multigeracionais, aplicando critérios rígidos de falsificação e extinção de teorias redundantes ou instáveis.
+8. **Revisão e Síntese de Teorias (Sprint F11-L)**:
+   Habilita o refinamento autônomo de regras por mutações locais (Revision) guiadas por uma função de fitness multiobjetivo, e a recombinação de teorias sobreviventes complementares (Synthesis) em híbridos de alta parcimônia, controlando a diversidade do ecossistema ($EDI$).
 
 ---
 
@@ -102,6 +105,14 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Evolutionary Stability Ratio ($ESR$)**: Razão de pressão seletiva do ecossistema de teorias ($0.20 \le ESR \le 0.70$):
     $$ESR = \frac{N_{\text{survivors}}}{N_{\text{generated}}}$$
 
+### 7. Revisão e Síntese Evolutiva (Sprint F11-L)
+*   **Evolutionary Diversity Index ($EDI$)**: Índice de diversidade de famílias de teorias ativas para prevenir convergência prematura:
+    $$EDI = \frac{N_{\text{distinct\_families}}}{N_{\text{survivors}}}$$
+*   **Função de Fitness Multiobjetivo (Revision)**: Critério para seleção de variantes mutadas locais:
+    $$\text{Fitness}_{\text{variant}} = 0.50 \cdot TMS + 0.30 \cdot GS + 0.20 \cdot TCG$$
+*   **Síntese de Teorias (Merge)**: Fusão de teorias complementares com controle de monstros teóricos via:
+    $$TCG_{\text{merged}} \ge 0.90 \cdot \max(TCG_A, TCG_B)$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -144,6 +155,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Revisão e Síntese de Teorias (F11-L)**:
+    ```bash
+    npx tsx src/utils/music/tests/autonomousTheoryRevisionBenchmark.test.ts
+    ```
 *   **Seleção Evolutiva e Competição de Teorias (F11-K)**:
     ```bash
     npx tsx src/utils/music/tests/autonomousTheoryEvolutionBenchmark.test.ts
@@ -177,4 +192,4 @@ A integridade metodológica e a não-regressão do sistema são verificadas por 
 
 ## 📚 Roadmap de Evolução Científica
 
-O planejamento de novos módulos e trilhas científicas está detalhado no repositório em [future_sprints.md](file:///Volumes/Documents/Development/Find%20Chord/sprints/future_sprints.md). A próxima fronteira de desenvolvimento é a **Sprint F11-L: Automated Theory Revision & Synthesis**, focada na hibridização, fusão de teorias complementares sobreviventes e refinação automatizada de regras estruturais.
+O planejamento de novos módulos e trilhas científicas está detalhado no repositório em [future_sprints.md](file:///Volumes/Documents/Development/Find%20Chord/sprints/future_sprints.md). A próxima fronteira de desenvolvimento é a **Trilha de Integração (MuseScore Integration Track)**, focada no desenvolvimento do SDK/API `Infra-M0` e o formato de partitura canônica para exportar a inteligência evolucionária a clientes externos.
