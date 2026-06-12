@@ -587,6 +587,25 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-N: Comparative Ontological Selection & Meta-Theory Tournament
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Introduzir competição direta entre ontologias conceituais completas, avaliando seu poder explicativo cruzado entre múltiplos corpora, eficiência epistemológica, estabilidade de convergência e parcimônia estrutural.
+*   **Conceito & Métodos**:
+    *   **Epistemic Efficiency ($EE$)**: Razão entre o retorno explicativo/preditivo e o custo de complexidade estrutural da ontologia:
+        $$EE = \frac{TCI \cdot PVI \cdot Coverage_{cross}}{\ln(1.0 + \text{Complexity})}$$
+    *   **Robustness Score ($RS$)**: Mede a estabilidade de cobertura entre múltiplos corpora de estilos, penalizando especializações de nicho:
+        $$RS = 1.0 - \sigma(Coverage_i)$$
+    *   **Taxonomic Convergence Ratio ($TCR$)**: Mede a estabilização da árvore comparando mutações estruturais (nós e arestas adicionados/removidos/movidos) entre gerações sucessivas:
+        $$TCR = 1.0 - \frac{\text{TaxonomicChanges}}{\text{TotalNodes}}$$
+    *   **Ontological Fitness Score ($OFS$)**: Score agregador para determinação de dominância conceitual:
+        $$OFS = 0.35 \cdot EE + 0.25 \cdot TCI + 0.20 \cdot PVI + 0.20 \cdot TCR$$
+    *   **Ontological Dominance Index ($ODI^*$)**: Mede a dominância líquida ponderada pela margem de vitória de fitness:
+        $$ODI^* = \frac{\sum (OFS_{\text{winner}} - OFS_{\text{loser}})}{Matches}$$
+    *   **Structural Parsimony Score ($SPS$)**: Mede a parcimônia estrutural da árvore em relação à cobertura média dos estilos:
+        $$SPS = \frac{Coverage_{cross}}{\text{Nodes} + \text{Edges}}$$
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)

@@ -24,6 +24,7 @@ graph TD
     J --> K[Theory Revision & Synthesis: Mutação / Hibridização / EDI / Multiobjective Fitness]
     K --> L[Theory Knowledge Graph / TheoryFitnessGraph: Linhagem Genealógica e Árvore Evolutiva]
     L --> M[Meta-Evolution & Ontological Reorganization: TCI / PVI / OCS / PVI*]
+    M --> N[Ontological Tournaments & Comparative Selection: EE / RS / TCR / OFS / ODI* / SPS]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -51,6 +52,8 @@ graph TD
     Habilita o refinamento autônomo de regras por mutações locais (Revision) guiadas por uma função de fitness multiobjetivo, e a recombinação de teorias sobreviventes complementares (Synthesis) em híbridos de alta parcimônia, controlando a diversidade do ecossistema ($EDI$).
 9. **Meta-Evolução e Reorganização Ontológica (Sprint F11-M)**:
    Mapeia as teorias sobreviventes sob uma taxonomia superior reorganizada baseada em coesão ontológica ($OCS$), avaliando a consiliência epistemológica das teorias ($TCI$) e validando suas previsões de resolução harmônica contra holdouts exóticos ($PVI$, $PVI^*$).
+10. **Torneio de Ontologias e Seleção de Paradigmas (Sprint F11-N)**:
+   Realiza competições diretas entre taxonomias completas sobre múltiplos sub-corpora de estilos harmônicos. Avalia o poder de dominância líquida ($ODI^*$) e a eficiência ($EE$) de cada paradigma completo, promovendo a estrutura ontológica ótima.
 
 ---
 
@@ -126,6 +129,21 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **PVI* (PVI Estabilizado)**: Incorpora a consistência temporal explicativa ($EPS$) na validação preditiva:
     $$PVI^* = PVI \cdot EPS$$
 
+### 9. Torneio de Ontologias e Seleção de Paradigmas (Sprint F11-N)
+*   **Epistemic Efficiency ($EE$)**: Relação de adequabilidade explicativa/preditiva normalizada pelo custo de complexidade estrutural e cobertura média cruzada:
+    $$EE = \frac{TCI \cdot PVI \cdot Coverage_{cross}}{\ln(1.0 + \text{Complexity})}$$
+    *(Onde $\text{Complexity} = N_{\text{nodes}} + 0.5 \cdot N_{\text{edges}} + \text{Depth}$ e $Coverage_{cross}$ é a média das coberturas dos 5 corpora de estilos).*
+*   **Robustness Score ($RS$)**: Estabilidade das coberturas por estilo (penalizando especializações locais):
+    $$RS = 1.0 - \sigma(Coverage_i)$$
+*   **Taxonomic Convergence Ratio ($TCR$)**: Mede a taxa de conservação topológica entre ontologias de gerações sucessivas:
+    $$TCR = 1.0 - \frac{\text{TaxonomicChanges}}{\text{TotalNodes}}$$
+*   **Ontological Fitness Score ($OFS$)**: Score sintético para determinação de dominância:
+    $$OFS = 0.35 \cdot EE + 0.25 \cdot TCI + 0.20 \cdot PVI + 0.20 \cdot TCR$$
+*   **Ontological Dominance Index ($ODI^*$)**: Margem média líquida de dominância contra os competidores diretos:
+    $$ODI^* = \frac{\sum (OFS_{\text{winner}} - OFS_{\text{loser}})}{Matches}$$
+*   **Structural Parsimony Score ($SPS$)**: Parcimônia estrutural ponderada pela cobertura cruzada:
+    $$SPS = \frac{Coverage_{cross}}{\text{Nodes} + \text{Edges}}$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -168,6 +186,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Torneio e Seleção de Ontologias (F11-N)**:
+    ```bash
+    npx tsx src/utils/music/tests/ontologyTournamentBenchmark.test.ts
+    ```
 *   **Meta-Evolução e Reorganização Ontológica (F11-M)**:
     ```bash
     npx tsx src/utils/music/tests/metaEvolutionBenchmark.test.ts
