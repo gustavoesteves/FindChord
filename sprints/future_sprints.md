@@ -669,6 +669,21 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-S: Lakatos Research Program Engine (Multi-Paradigm Coexistence)
+**Status: 🔄 PLANEJADA (Próxima Sprint)**
+*   **Objetivo**: Habilitar a coexistência e a competição de múltiplos programas de pesquisa (paradigmas) ativos em paralelo (Ex: Funcional Tonal, Simétrico de Eixos, Neo-Riemanniano), avaliando seu progresso teórico e empírico, alocando orçamentos de descoberta dinamicamente e realizando predições baseadas em consenso multiparadigmático.
+*   **Conceito & Métodos**:
+    *   **Núcleo Firme (Hard Core) Axiológico**: Mapeia princípios fundamentais e axiomas imutáveis do paradigma que são imunes a podas ou otimizações.
+    *   **Cinturão Protetor (Protective Belt)**: Conjunto de hipóteses auxiliares e nós secundários que absorvem anomalias sob pressão empírica.
+    *   **Lakatos Progressiveness Index ($LPI_t$)**: Classifica se o programa é progressivo ou degenerante com base em novas previsões vs complexidade:
+        $$LPI_t = (Coverage_t - Coverage_{t-1}) \cdot PVI_t - \beta \cdot (Complexity_{belt, t} - Complexity_{belt, t-1})$$
+    *   **Epistemic Allocation Weight ($EAW_p$)**: Peso de alocação de recursos via Softmax sobre um score composto de progressividade, abrangência e replicabilidade:
+        $$EAW_p = \text{Softmax}(0.5 \cdot LPI_p + 0.3 \cdot Coverage_p + 0.2 \cdot RepS_{w, p})$$
+    *   **Multi-Paradigm Predictive Consensus ($MPC$)**: Predição consensual ponderada pelo peso epistêmico de cada paradigma, sua acurácia preditiva ($PVI$) e replicabilidade ($RepS_w$):
+        $$MPC(claim) = \sum_{p} EAW_p \cdot PVI_p \cdot RepS_{w, p} \cdot Confidence_p(claim)$$
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)
