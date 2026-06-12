@@ -572,6 +572,21 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-M: Meta-Evolution & Ontological Theory Reorganization
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Mapear as teorias sobreviventes de F11-L sob uma taxonomia reorganizada de nível semântico superior, gerando previsões harmônicas falsificáveis sobre um holdout estrito de validação e avaliando a consiliência epistemológica das teorias.
+*   **Conceito & Métodos**:
+    *   **Theory Consilience Index ($TCI$)**: Mede a abrangência não-redundante e capacidade de generalização de unificar escolas clássicas tradicionais sob uma representação conceitual comum:
+        $$TCI = \frac{N_{\text{unified}}}{N_{\text{total}}} \cdot \left(1.0 - \text{Overlap}(Ontology)\right) \cdot GS$$
+    *   **Predictive Validity Index ($PVI$)**: Mede a acurácia de predições harmônicas sob perturbações contrafactuais não-vistas em partições holdout estritas (como a Escala Enigmática de Verdi ou progressões de jazz modificadas) para mitigar riscos de sobreajuste:
+        $$PVI = \frac{\sum \mathbb{I}\left(\text{Prediction}_{\text{meta}} == \text{Resolution}_{\text{actual}}\right)}{N_{\text{predictions}}}$$
+    *   **Ontological Cohesion Score ($OCS$)**: Mede a estabilidade da árvore taxonômica gerada pela reorganização de categorias sob o princípio de inércia ontológica:
+        $$OCS = 1.0 - \frac{\text{TaxonomicDistance}(\text{NewOntology}, \text{TraditionalOntology})}{\text{GenerationsCount}}$$
+    *   **PVI* (PVI Estabilizado)**: Incorpora a consistência temporal explicativa ($EPS$) como regularizador multiplicativo de validação preditiva:
+        $$PVI^* = PVI \cdot EPS$$
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)

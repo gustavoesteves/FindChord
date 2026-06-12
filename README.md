@@ -23,6 +23,7 @@ graph TD
     I --> J[Theory Selection & Competition: LSS / TCG / TRI2 / EPS / ESR]
     J --> K[Theory Revision & Synthesis: Mutação / Hibridização / EDI / Multiobjective Fitness]
     K --> L[Theory Knowledge Graph / TheoryFitnessGraph: Linhagem Genealógica e Árvore Evolutiva]
+    L --> M[Meta-Evolution & Ontological Reorganization: TCI / PVI / OCS / PVI*]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -47,7 +48,9 @@ graph TD
 7. **Seleção e Validação Evolucionária de Teorias (Sprint F11-K)**:
    Introduz um ecossistema seletivo e torneios de competição direta com as escolas clássicas tradicionais sob ciclos multigeracionais, aplicando critérios rígidos de falsificação e extinção de teorias redundantes ou instáveis.
 8. **Revisão e Síntese de Teorias (Sprint F11-L)**:
-   Habilita o refinamento autônomo de regras por mutações locais (Revision) guiadas por uma função de fitness multiobjetivo, e a recombinação de teorias sobreviventes complementares (Synthesis) em híbridos de alta parcimônia, controlando a diversidade do ecossistema ($EDI$).
+    Habilita o refinamento autônomo de regras por mutações locais (Revision) guiadas por uma função de fitness multiobjetivo, e a recombinação de teorias sobreviventes complementares (Synthesis) em híbridos de alta parcimônia, controlando a diversidade do ecossistema ($EDI$).
+9. **Meta-Evolução e Reorganização Ontológica (Sprint F11-M)**:
+   Mapeia as teorias sobreviventes sob uma taxonomia superior reorganizada baseada em coesão ontológica ($OCS$), avaliando a consiliência epistemológica das teorias ($TCI$) e validando suas previsões de resolução harmônica contra holdouts exóticos ($PVI$, $PVI^*$).
 
 ---
 
@@ -113,6 +116,16 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Síntese de Teorias (Merge)**: Fusão de teorias complementares com controle de monstros teóricos via:
     $$TCG_{\text{merged}} \ge 0.90 \cdot \max(TCG_A, TCG_B)$$
 
+### 8. Meta-Evolução e Reorganização Ontológica (Sprint F11-M)
+*   **Theory Consilience Index ($TCI$)**: Mede a unificação não-redundante de escolas clássicas sob um meta-framework que generaliza ($GS$):
+    $$TCI = \frac{N_{\text{unified}}}{N_{\text{total}}} \cdot \left(1.0 - \text{Overlap}(Ontology)\right) \cdot GS$$
+*   **Predictive Validity Index ($PVI$)**: Acurácia de predições harmônicas sobre partições holdout estritas contendo progressões exóticas (ex: Escala Enigmática de Verdi) para mitigar sobreajuste:
+    $$PVI = \frac{\sum \mathbb{I}\left(\text{Prediction}_{\text{meta}} == \text{Resolution}_{\text{actual}}\right)}{N_{\text{predictions}}}$$
+*   **Ontological Cohesion Score ($OCS$)**: Estabilidade estrutural da taxonomia sob a inércia ontológica:
+    $$OCS = 1.0 - \frac{\text{TaxonomicDistance}(\text{NewOntology}, \text{TraditionalOntology})}{\text{GenerationsCount}}$$
+*   **PVI* (PVI Estabilizado)**: Incorpora a consistência temporal explicativa ($EPS$) na validação preditiva:
+    $$PVI^* = PVI \cdot EPS$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -155,6 +168,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Meta-Evolução e Reorganização Ontológica (F11-M)**:
+    ```bash
+    npx tsx src/utils/music/tests/metaEvolutionBenchmark.test.ts
+    ```
 *   **Revisão e Síntese de Teorias (F11-L)**:
     ```bash
     npx tsx src/utils/music/tests/autonomousTheoryRevisionBenchmark.test.ts

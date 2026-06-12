@@ -28,8 +28,8 @@ export function mutateTheoryCandidate(
     description: `${cand.description} (Propriedades expandidas para maior novidade teórica).`
   });
 
-  // Variant 3: Simplify properties (remove the last property if length > 1)
-  if (cand.properties.length > 1) {
+  // Variant 3: Simplify properties (remove the last property if length > 3)
+  if (cand.properties.length > 3 && cand.family !== 'HYBRID') {
     variants.push({
       ...cand,
       id: `${cand.id}_mut3`,
