@@ -1,76 +1,160 @@
-# React + TypeScript + Vite
+# Find Chord — Plataforma de Cognição, Descoberta e Formação Autônoma de Teorias Harmônicas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **De um resolvedor de acordes e construtor de voicings interativo a um laboratório de metateoria e modelagem epistemológica musical.**
 
-Currently, two official plugins are available:
+Find Chord é uma plataforma web premium, reativa e cientificamente rigorosa para análise harmônica funcional, otimização de condução de vozes (*voice leading*), explicabilidade causal contrafactual e descoberta autônoma de novas teorias musicológicas auxiliada por IA.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🗺️ Arquitetura Cognitiva e Epistemológica
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+O motor analítico do Find Chord não se limita a rotular acordes de forma estática. Ele opera como um pipeline cognitivo multicamadas que processa as posições físicas do instrumento ou cadeias de acordes em níveis crescentes de abstração conceitual, consenso acadêmico, causalidade e indução de teorias:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+graph TD
+    A[Inputs: Fretboard / Cifra / Sequenciador MIDI] --> B[Viterbi Beam Search: Multi-Hipótese K=3]
+    B --> C[Calibração Bayesiana: Platt Scaling + Priori Histórica]
+    C --> D[Musicological Interpretation Graph: MIG - 6 Escolas Clássicas]
+    D --> E[Estabilidade Causal Contrafactual: Perturbações Locais]
+    E --> F[Epistemic Embeddings & Zonas de Fronteira: TFI / TAS]
+    F --> G[Clustering Epistêmico & Mineração: K-Means Dinâmico]
+    G --> H[Emergent Theory Generator: Teoria de Estágios]
+    H --> I[Theory Evolution Engine: Validação holdout GS / NS / EGS_w]
+    I --> J[Theory Knowledge Graph: Grafo Evolutivo Tipado]
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Detalhamento das Camadas do Motor:
+1. **Inferência Adaptativa de Múltiplas Hipóteses (Sprint F11-D)**:
+   Substitui abordagens rígidas de centro tonal por um algoritmo de *Beam Search* (K=3, largura de feixe = 10) baseado em dinâmica de Viterbi, permitindo a coexistência de hipóteses tonais concorrentes e modelando politonalidade sem colapso de incerteza.
+2. **Calibração Bayesiana de Incerteza (Sprint F11-F)**:
+   Aplica uma camada de calibração por regressão logística contínua (*Platt Scaling*) associada a prioris históricas extraídas do comportamento estatístico de cadências na literatura clássica. Alinha as probabilidades brutas com a realidade musicológica empírica.
+3. **Musicological Interpretation Graph (MIG) (Sprint F11-G)**:
+   Representa o pluralismo epistemológico sob divergência acadêmica. O grafo MIG consolida votos de 6 escolas teóricas clássicas que avaliam cada transição:
+   *   **Funcionalismo Tradicional (Riemann)**: Relações de tônica, subdominante e dominante.
+   *   **Análise Schenkeriana**: Linhas de condução linear e reduções estruturais.
+   *   **Teoria Neo-Riemanniana (PLR)**: Relações geométricas simétricas entre tríades.
+   *   **Set Theory (Forte)**: Classes de conjuntos de notas para harmonia pós-tonal.
+   *   **Teoria dos Eixos (Lendvai)**: Relações de eixos tonais e substituições simétricas.
+   *   **Jazz-CST (Chord-Scale Theory)**: Correspondência de cifragem moderna e modos escalares.
+4. **Análise de Estabilidade e Causalidade Contrafactual (Sprint F11-H)**:
+   Mede a robustez de uma análise simulando perturbações locais (remoção de acorde, substituição funcional, empréstimo modal e trítono) para avaliar a resposta causal do sistema.
+5. **Descoberta Metateórica e Epistemic Embeddings (Sprint F11-I)**:
+   Transiciona o sistema para o domínio da metateoria. Mapeia cada ponto de análise em um vetor de *Epistemic Embedding* ($E$) de 7 dimensões, detectando áreas onde as teorias estabelecidas sofrem de inadequação estrutural.
+6. **Formação Autônoma de Teorias (Sprint F11-J)**:
+   Gera e evolui novos candidatos de conceitos teóricos (`TheoryCandidate`) para formalizar e preencher lacunas do espaço de conhecimento, integrando novos nós em um grafo dinâmico de conhecimento musicológico.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🔬 Formulação Matemática e Métricas Científicas
 
-## MusicXML Export
-This application includes a MusicXML 4.0 export feature for guitar chord timelines, allowing seamless integration with MuseScore and other notation software.
+A robustez intelectual da plataforma é auditada por métricas quantitativas precisas, formuladas para evitar circularidade e sobreajuste (*overfitting*):
 
+### 1. Dinâmica de Consenso e Disacordo
+*   **Analyst Disagreement Index ($ADI$)**: A entropia de Shannon sobre o vetor de suporte probabilístico de interpretação entre as escolas analíticas:
+    $$ADI = -\sum_{i=1}^{M} P(I_i) \log_2 P(I_i)$$
+*   **Consensus Fragility Score ($CFS$)**: Mede a sensibilidade do consenso dominante frente à exclusão de uma das escolas teóricas clássicas:
+    $$CFS = 1.0 - \min_{s} \text{ConsensusAgreement}(S \setminus \{s\})$$
+
+### 2. Estabilidade e Causalidade
+*   **Interpretive Stability Score ($ISS$)**: Balanço entre a estabilidade das probabilidades de inferência ($PIS$) e a estabilidade semântico-estrutural da leitura dominante ($SIS$):
+    $$ISS = 0.5 \cdot PIS + 0.5 \cdot SIS$$
+*   **Interpretive Causal Robustness ($ICR$)**: Estabilidade média da leitura dominante ao longo de todo o contexto musical:
+    $$ICR = 1.0 - \frac{1}{N} \sum_{i=1}^{N} \text{CIS}_{\text{total}}(\text{chord}_i)$$
+
+### 3. Zonas de Fronteira e Adequabilidade
+*   **Theory Adequacy Score ($TAS$)**: Suficiência explicativa das escolas clássicas existentes:
+    $$TAS = 1.0 - (0.4 \cdot ADI + 0.3 \cdot CFS + 0.3 \cdot (1.0 - ISS))$$
+*   **Theory Frontier Index ($TFI$)**: Localiza anomalias e zonas de fronteira teórica onde a divergência é alta e a estabilidade é baixa:
+    $$TFI = (1.0 - TAS) \cdot (1.0 - ISS) \cdot (1.0 + \text{Mean}(SDS))$$
+
+### 4. Clusterização e Descoberta
+*   **Epistemic Embedding ($E$)**: O vetor epistemológico projetado por acorde:
+    $$E = [ADI, CFS, 1.0-ISS, \text{Mean}(SDS), 1.0-ICR, \text{Ratio}_{\text{n-diat}}, \text{Severity}_{\text{conf}}]$$
+*   **Epistemic Community Index ($ECI$)**: Mede a separabilidade e coesão das fronteiras descobertas:
+    $$ECI = \frac{\bar{d}_{\text{between}}}{\bar{d}_{\text{between}} + 0.55 \cdot \bar{d}_{\text{within}}}$$
+*   **Emergent Theory Score ($ETS$)**: Métrica global de consistência estrutural das anomalias mineradas:
+    $$ETS = \text{Silhouette}(E) \cdot (1.0 - \text{Overlap}(Clusters))$$
+
+### 5. Formação de Teoria e Generalização
+*   **Weighted Explanatory Gain Score ($EGS_w$)**: Ganho na adequabilidade teórica ($TAS$) ponderado pela cobertura do cluster no corpus com validação holdout:
+    $$EGS_w = (TAS_{\text{com candidato}} - TAS_{\text{sem candidato}}) \cdot \frac{N_{\text{cluster}}}{N_{\text{corpus}}}$$
+*   **Generalization Score ($GS$)**: Razão de adequabilidade explicativa entre a partição holdout (não-vista) e de treino (vista), validando contra sobreajuste:
+    $$GS = \frac{TAS_{\text{holdout}}}{TAS_{\text{training}}}$$
+*   **Novelty Score ($NS$)**: Nível de inovação topológica da teoria candidata em relação às escolas clássicas existentes no grafo de conhecimento:
+    $$NS = 1.0 - \operatorname{Similarity}(TheoreticalGraph, ClassicalSchools)$$
+*   **Theory Maturity Score ($TMS$)**: A métrica agregadora de validação final para promoção à teoria validada:
+    $$TMS = 0.25 \cdot TCS + 0.25 \cdot TRI + 0.20 \cdot GS + 0.15 \cdot EGS_w + 0.15 \cdot NS$$
+    *(Onde $TCS$ é o Cohesion Score do cluster e $TRI$ é o Reproducibility Index).*
+
+---
+
+## 💻 Recursos da Interface Científica
+
+O painel visual do Find Chord foi projetado sob os mais modernos conceitos de UX e design system fluido (vidro, sombras neon, micro-animações interativas):
+
+*   **Fretboard Interativo**: Braço de guitarra altamente responsivo, suportando afinações customizadas, arpejos realistas e sintetizador sintetizado dinâmico em Web Audio API.
+*   **Sequenciador de Cadências e Voice Leading**: Permite a entrada de cadeias de acordes e calcula os caminhos físicos mais curtos e ergonômicos no braço do instrumento.
+*   **Painel de Narrativa Harmônica**: Apresenta a "Análise do Professor", mapeia a evolução da tensão regional, destaca os dispositivos de cor (empréstimos modais, dominantes secundárias) e exibe os pontos de cadência formalizados.
+*   **Auditoria de Estabilidade e Consensus**: Visualização gráfica das divergências de interpretação entre as escolas no MIG e do impacto de testes contrafactuais na leitura harmônica.
+
+---
+
+## 🛠️ Execução e Desenvolvimento Local
+
+### 1. Requisitos
+*   Node.js (versão 20 ou superior)
+*   NPM
+
+### 2. Instalação e Execução
+Instale as dependências locais:
+```bash
+npm install
+```
+
+Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
+O laboratório estará acessível em: `http://localhost:5173/FindChord/`
+
+Gere o build otimizado para produção:
+```bash
+npm run build
+```
+
+---
+
+## 🧪 Suíte de Validação e Benchmarks Científicos
+
+A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
+
+*   **Formação de Teoria Autônoma (F11-J)**:
+    ```bash
+    npx tsx src/utils/music/tests/autonomousTheoryBenchmark.test.ts
+    ```
+*   **Descoberta Teórica e Mineração Epistêmica (F11-I)**:
+    ```bash
+    npx tsx src/utils/music/tests/emergentTheoryBenchmark.test.ts
+    ```
+*   **Estabilidade e Causalidade Contrafactual (F11-H)**:
+    ```bash
+    npx tsx src/utils/music/tests/interpretiveStabilityBenchmark.test.ts
+    ```
+*   **Consenso e Divergência Escolar (F11-G)**:
+    ```bash
+    npx tsx src/utils/music/tests/consensusConsensusBenchmark.test.ts
+    ```
+*   **Calibração Bayesiana de Incerteza (F11-F)**:
+    ```bash
+    npx tsx src/utils/music/tests/bayesianCalibrationBenchmark.test.ts
+    ```
+*   **Inferência Adaptativa e Beam Search (F11-D)**:
+    ```bash
+    npx tsx src/utils/music/tests/adaptiveReasoningBenchmark.test.ts
+    ```
+
+---
+
+## 📚 Roadmap de Evolução Científica
+
+O planejamento de novos módulos e trilhas científicas está detalhado no repositório em [future_sprints.md](file:///Volumes/Documents/Development/Find%20Chord/sprints/future_sprints.md). A próxima fronteira de desenvolvimento é a **Sprint F11-K: Theory Selection & Evolutionary Validation**, com foco na introdução de dinâmicas de competição e falsificação evolutiva sob perturbações e crescimento contínuo de corpus.
