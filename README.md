@@ -62,6 +62,8 @@ graph TD
    Monitora a deriva de saúde da ontologia ($ODI_2$) e a pressão externa ($PPS$). Se uma crise de obsolescência persistir, substitui o paradigma conceitual ativo por uma alternativa de melhor desempenho ($OFS$) e assimilação de novidades ($NAR$).
 13. **Descoberta Científica Autônoma (Sprint F11-Q)**:
    Habilita o motor a identificar lacunas explicativas na taxonomia e formular hipóteses inéditas e empiricamente refutáveis (Popper/Lakatos), medindo seu ineditismo ($HNS$), falseabilidade ($FI$), impacto ($DIS$) e severidade de teste ($STS$) contra previsões estruturais de mecanismos harmônicos.
+14. **Validação Metacientífica e Replicação (Sprint F11-R)**:
+   Mensura a confiabilidade e replicabilidade das hipóteses geradas através de score de replicação ponderado ($RepS_w$), yield de impacto ($DY^*$), taxa móvel de falsas descobertas ($FDR_{\text{rolling}}$) e estabilidade epistêmica ($ESS$). Regula e recalibra de forma popperiana o motor de pesquisa sob crises epistemológicas.
 
 ---
 
@@ -183,6 +185,18 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Scientific Test Severity ($STS$)**: Grau de rigor do cenário experimental baseado em anomalias de predição sob o baseline:
     $$STS = \frac{ObservedAnomalies}{ExpectedAnomalies}$$
 
+### 13. Validação Metacientífica e Replicação (Sprint F11-R)
+*   **Weighted Replication Score ($RepS_w$)**: Replicabilidade da hipótese ponderada pela severidade dos 5 corpora (pesos 1 a 5):
+    $$RepS_w = \frac{\sum_{i=1}^{5} \text{Replication}_i \cdot \text{Severity}_i}{\sum_{i=1}^{5} \text{Severity}_i}$$
+*   **Discovery Yield de Impacto ($DY^*$)**: Rendimento do motor de descoberta ponderado pela relevância ($DIS$):
+    $$DY^* = \frac{\sum_{i \in \text{supported}} DIS_i}{N_{\text{generated}}}$$
+*   **Rolling False Discovery Rate ($FDR_{\text{rolling}}$)**: Proporção acumulada de falsas descobertas em janela de 5 gerações:
+    $$FDR_{\text{rolling}} = \frac{\sum_{g=t-5}^{t} \text{Spurious}_g}{\sum_{g=t-5}^{t} \text{Supported}_g}$$
+*   **Epistemic Stability Score ($ESS$)**: Estabilidade de confiabilidade em janela de 3 gerações:
+    $$ESS = 1.0 - \sigma(SRS_{\text{window}})$$
+*   **Scientific Reliability Score ($SRS$)**: Confiabilidade global agregada e renormalizada:
+    $$SRS = 0.25 \cdot RepS_w + 0.20 \cdot DY^* + 0.20 \cdot ESS + 0.20 \cdot (1.0 - FDR_{\text{rolling}}) + 0.15 \cdot \text{Mean}(FI)$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -225,6 +239,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Validação Meta-Científica (F11-R)**:
+    ```bash
+    npx tsx src/utils/music/tests/metaScientificValidationBenchmark.test.ts
+    ```
 *   **Descoberta Científica Autônoma (F11-Q)**:
     ```bash
     npx tsx src/utils/music/tests/scientificDiscoveryBenchmark.test.ts

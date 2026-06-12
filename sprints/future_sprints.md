@@ -651,6 +651,22 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
         $$STS = \frac{ObservedAnomalies}{ExpectedAnomalies}$$
     *   **Prediction Mechanisms**: Foco da validação preditiva em mecanismos harmônicos estruturais em `TheoryPrediction` (`FUNCTIONAL` | `MODAL` | `SYMMETRIC` | `TRANSFORMATIONAL` | `VOICE_LEADING` | `HYBRID`) em vez de categorias estilísticas ou geográficas históricas.
 
+### Sprint F11-R: Meta-Scientific Validation Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Implementar um validador metacientífico de integridade da pesquisa, medindo a qualidade e replicabilidade das hipóteses geradas, defendendo o ecossistema contra a crise de replicação através de alarmes de falsas descobertas móveis ($FDR_{\text{rolling}}$) e recalibração popperiana autônoma.
+*   **Conceito & Métodos**:
+    *   **Weighted Replication Score ($RepS_w$)**: Taxa de replicação ponderada pelas severidades relativas de 5 sub-corpora de teste (de 1 a 5):
+        $$RepS_w = \frac{\sum_{i=1}^{5} \text{Replication}_i \cdot \text{Severity}_i}{\sum_{i=1}^{5} \text{Severity}_i}$$
+    *   **Discovery Yield de Impacto ($DY^*$)**: Aproveitamento de descobertas ponderado pela relevância epistemológica ($DIS$):
+        $$DY^* = \frac{\sum_{i \in \text{supported}} DIS_i}{N_{\text{generated}}}$$
+    *   **Rolling False Discovery Rate ($FDR_{\text{rolling}}$)**: Taxa de falsas descobertas em janela móvel de 5 gerações:
+        $$FDR_{\text{rolling}} = \frac{\sum_{g=t-5}^{t} \text{Spurious}_g}{\sum_{g=t-5}^{t} \text{Supported}_g}$$
+    *   **Epistemic Stability Score ($ESS$)**: Estabilidade longitudinal da acurácia e replicação na janela móvel de 3 gerações:
+        $$ESS = 1.0 - \sigma(SRS_{\text{window}})$$
+    *   **Scientific Reliability Score ($SRS$)**: Score global ponderado de confiabilidade da pesquisa:
+        $$SRS = 0.25 \cdot RepS_w + 0.20 \cdot DY^* + 0.20 \cdot ESS + 0.20 \cdot (1.0 - FDR_{\text{rolling}}) + 0.15 \cdot \text{Mean}(FI)$$
+    *   **Recalibração Metacientífica Autônoma**: Ativada se $FDR_{\text{rolling}} > 0.30$ por 3 gerações consecutivas, aumentando o rigor mínimo de falseabilidade ($FI$), severidade de testes ($STS$) e penalizações de complexidade para frear especulações ruidosas.
+
 ---
 
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
