@@ -5,7 +5,6 @@ import { OntologyFitnessEngine } from './OntologyFitnessEngine';
 import { OntologyConvergenceEngine } from './OntologyConvergenceEngine';
 import { CrossCorpusValidationEngine } from './CrossCorpusValidationEngine';
 import { TheoryConsilienceEngine } from './TheoryConsilienceEngine';
-import { selectBestVariant } from './TheoryRevisionEngine';
 import type { TheoryCandidate } from '../models/TheoryCandidate';
 
 export class OntologyTournamentEngine {

@@ -26,6 +26,7 @@ graph TD
     L --> M[Meta-Evolution & Ontological Reorganization: TCI / PVI / OCS / PVI*]
     M --> N[Ontological Tournaments & Comparative Selection: EE / RS / TCR / OFS / ODI* / SPS]
     N --> O[Ontological Self-Optimization & Pruning: OAI / SCR / OPS / Compression Safety]
+    O --> P[Ontological Drift Detection & Paradigm Shift: ODI2 / PPS / NAR / Paradigm Replacement]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -57,6 +58,8 @@ graph TD
    Realiza competições diretas entre taxonomias completas sobre múltiplos sub-corpora de estilos harmônicos. Avalia o poder de dominância líquida ($ODI^*$) e a eficiência ($EE$) de cada paradigma completo, promovendo a estrutura ontológica ótima.
 11. **Auto-Otimização e Simplificação Ontológica (Sprint F11-O)**:
    Habilita o motor a fundir categorias redundantes e podar nós obsoletos de forma totalmente autônoma. Aplica restrições de segurança para garantir que a compressão física não deteriore a acurácia preditiva ($PVI$) nem a cobertura cruzada.
+12. **Detecção de Drift e Substituição de Paradigmas (Sprint F11-P)**:
+   Monitora a deriva de saúde da ontologia ($ODI_2$) e a pressão externa ($PPS$). Se uma crise de obsolescência persistir, substitui o paradigma conceitual ativo por uma alternativa de melhor desempenho ($OFS$) e assimilação de novidades ($NAR$).
 
 ---
 
@@ -158,6 +161,16 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
     - $Coverage_{\text{optimized}} \ge 0.95 \cdot Coverage_{\text{baseline}}$
     - $PVI_{\text{optimized}} \ge 0.95 \cdot PVI_{\text{baseline}}$
 
+### 11. Detecção de Drift e Substituição de Paradigmas (Sprint F11-P)
+*   **Ontological Drift Index ($ODI_2$)**: Degradação explicativa líquida em relação ao pico histórico:
+    $$ODI_2 = 1.0 - \frac{Coverage_{current} \cdot PVI_{current}}{Coverage_{peak} \cdot PVI_{peak}}$$
+*   **Paradigm Pressure Score ($PPS$)**: Pressão estrutural sob instabilidade de taxonomia ($TCR$) e perda de robustez ($RS$):
+    $$PPS = ODI_2 \cdot (1.0 - TCR) \cdot (1.0 - RS)$$
+*   **Novelty Assimilation Ratio ($NAR$)**: Taxa de conceitos inéditos explicados pelo novo paradigma proposto:
+    $$NAR = \frac{NewConceptsExplained}{NewConceptsObserved}$$
+*   **Condição de Substituição**: Substituição acionada quando em crise de 3 gerações, se:
+    $$OFS_{\text{new}} > OFS_{\text{old}} + 0.05$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -200,6 +213,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Detecção de Drift e Mudança de Paradigma (F11-P)**:
+    ```bash
+    npx tsx src/utils/music/tests/paradigmShiftBenchmark.test.ts
+    ```
 *   **Auto-Otimização e Poda Ontológica (F11-O)**:
     ```bash
     npx tsx src/utils/music/tests/ontologySelfOptimizationBenchmark.test.ts

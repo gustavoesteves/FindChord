@@ -123,8 +123,6 @@ export class OntologySelfOptimizationEngine {
     const ops = initialCount > 0 ? itemsRemoved / initialCount : 0.0;
     
     // SCR = (CoverageCross * N_concepts) / Complexity
-    const uniqueConcepts = new Set(finalTaxonomy.nodes.flatMap(n => n.concepts));
-    const complexity = OntologyFitnessEngine.calculateComplexity(finalTaxonomy);
     const scr = this.calculateSCR(finalTaxonomy, optimizedEval.coverageCross);
 
     // OAI = DeltaCoverage / (1.0 + DeltaComplexity)

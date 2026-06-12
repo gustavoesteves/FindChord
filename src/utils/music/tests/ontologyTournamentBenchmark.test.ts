@@ -1,7 +1,6 @@
 import type { OntologicalTaxonomy, OntologicalNode } from '../analysis/models/TheoryOntology';
-import { OntologyReorganizationEngine, TRADITIONAL_NODES } from '../analysis/calibration/OntologyReorganizationEngine';
+import { TRADITIONAL_NODES } from '../analysis/calibration/OntologyReorganizationEngine';
 import { OntologyTournamentEngine } from '../analysis/calibration/OntologyTournamentEngine';
-import { CLASSICAL_SCHOOLS } from '../analysis/calibration/TheoryCompetitionEngine';
 
 let passedTests = 0;
 let failedTests = 0;
@@ -89,7 +88,7 @@ const nodesC: OntologicalNode[] = [
     ]
   }
 ];
-const edgesC = nodesC.filter(n => n.parentId).map(n => ({
+const edgesC: { source: string; target: string; type: 'SUB_CLASS_OF' | 'UNIFIES' | 'INSTANCE_OF' }[] = nodesC.filter(n => n.parentId).map(n => ({
   source: n.id,
   target: n.parentId!,
   type: 'SUB_CLASS_OF' as const

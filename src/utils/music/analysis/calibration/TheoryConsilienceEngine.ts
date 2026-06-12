@@ -1,5 +1,4 @@
 import type { TheoryCandidate } from '../models/TheoryCandidate';
-import type { ClassicalSchool } from './TheoryCompetitionEngine';
 import { CLASSICAL_SCHOOLS } from './TheoryCompetitionEngine';
 
 export const SCHOOL_CONCEPTS: Record<string, string[]> = {

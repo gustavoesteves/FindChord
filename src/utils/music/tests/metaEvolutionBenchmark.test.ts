@@ -4,8 +4,6 @@ import { discoverAnalyticalPatterns } from '../analysis/calibration/TheoryDiscov
 import { generateTheoryCandidates } from '../analysis/calibration/EmergentTheoryGenerator';
 import { EvolutionHistoryStore } from '../analysis/calibration/EvolutionHistoryStore';
 import { selectSurvivors, evaluateTheoryFitness } from '../analysis/calibration/TheorySelectionEngine';
-import { runCompetition, buildFitnessGraph } from '../analysis/calibration/TheoryCompetitionEngine';
-import { calculateEDI } from '../analysis/calibration/TheoryDiversityDetector';
 import { mutateTheoryCandidate, selectBestVariant } from '../analysis/calibration/TheoryRevisionEngine';
 import { canMerge, mergeTheories } from '../analysis/calibration/TheorySynthesisEngine';
 import type { TheoryCandidate } from '../analysis/models/TheoryCandidate';
@@ -66,8 +64,6 @@ let initialTMS: Record<string, number> = {};
 
 let parentA: TheoryCandidate | null = null;
 let parentB: TheoryCandidate | null = null;
-let parentAtcg = 0;
-let parentBtcg = 0;
 
 for (let gen = 1; gen <= nGenerations; gen++) {
   // A. Evaluate and update base candidate metrics
@@ -116,9 +112,6 @@ for (let gen = 1; gen <= nGenerations; gen++) {
       const infoB = clusterInfoMap[parentB.id] || { avgTAS: 0.30, size: 25 };
       const fitA = evaluateTheoryFitness(parentA, analyses, historyStore, infoA.avgTAS, infoA.size);
       const fitB = evaluateTheoryFitness(parentB, analyses, historyStore, infoB.avgTAS, infoB.size);
-
-      parentAtcg = fitA.tcg;
-      parentBtcg = fitB.tcg;
 
       const merged = mergeTheories(
         parentA,

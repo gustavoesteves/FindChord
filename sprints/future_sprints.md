@@ -622,6 +622,21 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-P: Ontological Drift Detection & Paradigm Shift Engine
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Habilitar a detecção automatizada de crises e substituições paradigmáticas na árvore conceitual de harmonia quando novos repertórios obsoletam a ontologia dominante ativa.
+*   **Conceito & Métodos**:
+    *   **Ontological Drift Index ($ODI_2$)**: Mede a deterioração explicativa e de acurácia em relação ao seu pico histórico de estabilidade:
+        $$ODI_2 = 1.0 - \frac{Coverage_{current} \cdot PVI_{current}}{Coverage_{peak} \cdot PVI_{peak}}$$
+    *   **Paradigm Pressure Score ($PPS$)**: Pressão quantitativa de contorno para substituição estrutural da árvore:
+        $$PPS = ODI_2 \cdot (1.0 - TCR) \cdot (1.0 - RS)$$
+    *   **Novelty Assimilation Ratio ($NAR$)**: Percentual de novos conceitos assimilados e explicados pela ontologia substituta:
+        $$NAR = \frac{NewConceptsExplained}{NewConceptsObserved}$$
+    *   **Transição para CRISIS**: Disparado se $ODI_2 > 0.40$ e $PPS > 0.30$ por 3 gerações consecutivas.
+    *   **Substituição de Paradigma**: Substitui a ontologia ativa pela candidata se $OFS_{new} > OFS_{old} + 0.05$.
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)

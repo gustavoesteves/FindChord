@@ -1,8 +1,6 @@
-import type { OntologicalTaxonomy, OntologicalNode } from '../analysis/models/TheoryOntology';
-import { OntologyReorganizationEngine, TRADITIONAL_NODES } from '../analysis/calibration/OntologyReorganizationEngine';
+import type { OntologicalTaxonomy } from '../analysis/models/TheoryOntology';
+import { TRADITIONAL_NODES } from '../analysis/calibration/OntologyReorganizationEngine';
 import { OntologySelfOptimizationEngine } from '../analysis/calibration/OntologySelfOptimizationEngine';
-import { OntologyFitnessEngine } from '../analysis/calibration/OntologyFitnessEngine';
-import { CrossCorpusValidationEngine } from '../analysis/calibration/CrossCorpusValidationEngine';
 
 let passedTests = 0;
 let failedTests = 0;
