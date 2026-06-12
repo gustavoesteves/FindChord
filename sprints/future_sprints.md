@@ -711,8 +711,20 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
         *   `LOCAL`: Restante
 
 ### Sprint F11-V: Universal Law Compression Engine
-**Status: 📅 PLANEJADA**
+**Status: ✅ CONCLUÍDA**
 *   **Objetivo**: Construir o grafo de dependência causal entre as leis universais extraídas para identificar relações de derivação, redundância e dependências estruturais entre princípios explicativos.
+*   **Conceito & Métodos**:
+    *   **Directed Implication Score ($DIS_{A \to B}$)**: Probabilidade de a Lei B ser preditiva dado que a Lei A é preditiva:
+        $$DIS_{A \to B} = P(\text{predictive}_B | \text{predictive}_A)$$
+    *   **Law Compression Ratio ($LCR$)**: Ganho de simplicidade da teoria:
+        $$LCR = 1.0 - \frac{|L_{\text{fundamental}}|}{|L|}$$
+    *   **Hierarchy Index ($HI$)**: Nível de estruturação hierárquica livre de ciclos:
+        $$HI = 1.0 - \frac{\text{Cycles}}{\text{Edges}}$$
+    *   **Explanatory Ablation Test**: Perda de cobertura explicativa de um universo após remover a lei selecionada.
+
+### Sprint F11-W: Autonomous Scientific Literature Integration Engine
+**Status: 📅 PLANEJADA**
+*   **Objetivo**: Integrar teorias e citação acadêmica em formato JSON para enriquecer o protective belt de paradigmas com conhecimento científico consolidado e literatura real de teóricos históricos.
 
 ---
 

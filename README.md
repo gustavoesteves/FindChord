@@ -263,6 +263,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Compressão de Leis Universais (F11-V)**:
+    ```bash
+    npx tsx src/utils/music/tests/universalLawCompressionBenchmark.test.ts
+    ```
 *   **Extração de Leis Universais (F11-U)**:
     ```bash
     npx tsx src/utils/music/tests/universalLawExtractionBenchmark.test.ts
