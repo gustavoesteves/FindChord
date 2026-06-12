@@ -20,7 +20,8 @@ graph TD
     F --> G[Clustering Epistêmico & Mineração: K-Means Dinâmico]
     G --> H[Emergent Theory Generator: Teoria de Estágios]
     H --> I[Theory Evolution Engine: Validação holdout GS / NS / EGS_w]
-    I --> J[Theory Knowledge Graph: Grafo Evolutivo Tipado]
+    I --> J[Theory Selection & Competition: LSS / TCG / TRI2 / EPS / ESR]
+    J --> K[Theory Knowledge Graph / TheoryFitnessGraph: Grafo Evolutivo Tipado]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -42,6 +43,8 @@ graph TD
    Transiciona o sistema para o domínio da metateoria. Mapeia cada ponto de análise em um vetor de *Epistemic Embedding* ($E$) de 7 dimensões, detectando áreas onde as teorias estabelecidas sofrem de inadequação estrutural.
 6. **Formação Autônoma de Teorias (Sprint F11-J)**:
    Gera e evolui novos candidatos de conceitos teóricos (`TheoryCandidate`) para formalizar e preencher lacunas do espaço de conhecimento, integrando novos nós em um grafo dinâmico de conhecimento musicológico.
+7. **Seleção e Validação Evolucionária de Teorias (Sprint F11-K)**:
+   Introduz um ecossistema seletivo e torneios de competição direta com as escolas clássicas tradicionais sob ciclos multigeracionais, aplicando critérios rígidos de falsificação e extinção de teorias redundantes ou instáveis.
 
 ---
 
@@ -86,6 +89,19 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
     $$TMS = 0.25 \cdot TCS + 0.25 \cdot TRI + 0.20 \cdot GS + 0.15 \cdot EGS_w + 0.15 \cdot NS$$
     *(Onde $TCS$ é o Cohesion Score do cluster e $TRI$ é o Reproducibility Index).*
 
+### 6. Seleção Evolutiva e Competição (Sprint F11-K)
+*   **Longitudinal Survival Score ($LSS$)**: Proporção de gerações onde a teoria candidata permaneceu ativa, ponderada pelo seu amadurecimento de maturidade explicativa ($TMS$):
+    $$LSS = \frac{\text{GenerationsAlive}}{\text{TotalGenerations}} \cdot \frac{TMS_{\text{final}}}{\max(0.01, TMS_{\text{initial}})}$$
+*   **Theory Compression Gain ($TCG$)**: Mede o equilíbrio entre parcimônia (complexidade estrutural de regras) e poder explicativo:
+    $$TCG = \frac{\text{Coverage}}{\ln(1.0 + \text{Complexity})}$$
+    *(Onde $\text{Complexity} = 0.1 + 0.03 \cdot P + 0.07 \cdot C$, sendo $P$ a contagem de protótipos e $C$ a contagem de propriedades).*
+*   **Theory Replacement Index ($TRI_2$)**: Ganho competitivo explicativo líquido em relação à melhor escola clássica tradicional:
+    $$TRI_2 = TAS_{\text{candidate}} - \max(TAS_{\text{classical}})$$
+*   **Explanatory Persistence Score ($EPS$)**: Mede a estabilidade temporal do ganho explicativo através do desvio padrão $\sigma$ de $EGS_w$ ao longo dos ciclos vivos:
+    $$EPS = 1.0 - \sigma(EGS_w)$$
+*   **Evolutionary Stability Ratio ($ESR$)**: Razão de pressão seletiva do ecossistema de teorias ($0.20 \le ESR \le 0.70$):
+    $$ESR = \frac{N_{\text{survivors}}}{N_{\text{generated}}}$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -128,6 +144,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Seleção Evolutiva e Competição de Teorias (F11-K)**:
+    ```bash
+    npx tsx src/utils/music/tests/autonomousTheoryEvolutionBenchmark.test.ts
+    ```
 *   **Formação de Teoria Autônoma (F11-J)**:
     ```bash
     npx tsx src/utils/music/tests/autonomousTheoryBenchmark.test.ts
@@ -157,4 +177,4 @@ A integridade metodológica e a não-regressão do sistema são verificadas por 
 
 ## 📚 Roadmap de Evolução Científica
 
-O planejamento de novos módulos e trilhas científicas está detalhado no repositório em [future_sprints.md](file:///Volumes/Documents/Development/Find%20Chord/sprints/future_sprints.md). A próxima fronteira de desenvolvimento é a **Sprint F11-K: Theory Selection & Evolutionary Validation**, com foco na introdução de dinâmicas de competição e falsificação evolutiva sob perturbações e crescimento contínuo de corpus.
+O planejamento de novos módulos e trilhas científicas está detalhado no repositório em [future_sprints.md](file:///Volumes/Documents/Development/Find%20Chord/sprints/future_sprints.md). A próxima fronteira de desenvolvimento é a **Sprint F11-L: Automated Theory Revision & Synthesis**, focada na hibridização, fusão de teorias complementares sobreviventes e refinação automatizada de regras estruturais.

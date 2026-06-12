@@ -539,19 +539,35 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 ---
 
 ### Sprint F11-K: Theory Selection & Evolutionary Validation
-**Status: 📅 PROGRAMADA (Pesquisa / Falsificação e Seleção de Teorias)**
-*   **Objetivo**: Introduzir seleção evolutiva de teorias candidatas sob expansão de corpus e perturbações, avaliando sua sobrevivência e comparando-as com escolas clássicas (falsificação teórica).
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Introduzir seleção evolutiva de teorias candidatas sob ciclos multigeracionais, avaliando sua sobrevivência e comparando-as com escolas clássicas (falsificação teórica).
 *   **Conceito & Métodos**:
-    *   **Longitudinal Survival Score (LSS)**: Proporção de ciclos de avaliação em que o candidato de teoria sobrevive:
-        $$LSS = \frac{N_{\text{survived}}}{N_{\text{evaluation\_cycles}}}$$
-    *   **Theory Compression Gain (TCG)**: Mede o ganho de compressão explicativa contra a complexidade de regras introduzidas:
-        $$TCG = \frac{\text{Complexity}}{\text{Coverage}}$$
-    *   **Theory Replacement Index ($TRI_2$)**: Ganho de adequação explicativa em relação à melhor escola clássica tradicional:
-        $$TRI_2 = TAS_{\text{candidate}} - TAS_{\text{best\_classical}}$$
+    *   **Longitudinal Survival Score (LSS)**: Proporção de ciclos de avaliação em que o candidato de teoria sobrevive, ajustado pelo amadurecimento do seu TMS:
+        $$LSS = \frac{GenerationsAlive}{TotalGenerations} \cdot \frac{TMS_{final}}{\max(0.01, TMS_{initial})}$$
+    *   **Theory Compression Gain (TCG)**: Balanço entre a cobertura e a complexidade de regras da teoria:
+        $$TCG = \frac{Coverage}{\ln(1.0 + Complexity)}$$
+    *   **Theory Replacement Index ($TRI_2$)**: Ganho explicativo da teoria em relação à melhor escola clássica tradicional:
+        $$TRI_2 = TAS_{candidate} - \max(TAS_{classical})$$
+    *   **Explanatory Persistence Score (EPS)**: Consistência do ganho explicativo temporal através do desvio padrão de $EGS_w$:
+        $$EPS = 1.0 - \sigma(EGS_w)$$
+    *   **Evolutionary Stability Ratio (ESR)**: Taxa de sobrevivência no ecossistema seletivo ($0.20 \le ESR \le 0.70$):
+        $$ESR = \frac{N_{survivors}}{N_{generated}}$$
+    *   **Regras de Extinção**: Regras de eliminação estrita para candidatos fracos ($TMS < 0.60$ por 3 gerações, $TRI_2 < -0.05$ por 5 gerações, ou $LSS < 0.50$ após 3 gerações).
     *   **Hipóteses Científicas**:
-        - **H13 — Theory Survival Hypothesis**: Teorias com $TMS$, $GS$ e $NS$ altos apresentam maior estabilidade longitudinal.
-        - **H14 — Theory Compression Hypothesis**: Teorias de alta parcimônia ($TCG$ ótimo) apresentam maior taxa de sobrevivência longitudinal ($LSS$).
-        - **H15 — Competitive Explanatory Hypothesis**: Em regiões de fronteira teórica, a modelagem evolutiva gera ao menos um candidato capaz de superar a melhor escola clássica ($TRI_2 > 0$).
+        - **H13 — Theory Survival Hypothesis**: Teorias com $TMS$, $GS$ e $NS$ altos apresentam maior estabilidade longitudinal ($LSS > 0.80$).
+        - **H14 — Theory Compression Hypothesis**: Teorias de alta parcimônia ($TCG > 1.20$) apresentam maior taxa de sobrevivência longitudinal ($LSS$).
+        - **H15 — Competitive Explanatory Hypothesis**: Em regiões de fronteira teórica, a modelagem evolutiva gera ao menos um candidato capaz de superar a melhor escola clássica ($TRI_2 > 0.05$).
+
+---
+
+### Sprint F11-L: Automated Theory Revision & Synthesis
+**Status: 📅 PROGRAMADA (Revisão e Síntese de Teorias)**
+*   **Objetivo**: Permitir que o ecossistema evolutivo fundir teorias sobreviventes, revise suas regras estruturais e crie abstrações híbridas dinamicamente a partir de interações.
+*   **Conceito & Métodos**:
+    *   **Evolutionary Diversity Index (EDI)**: Evitar convergência prematura medindo a proporção de famílias teóricas distintas entre as sobreviventes:
+        $$EDI = \frac{N_{families}}{N_{survivors}}$$
+    *   **Theory Merge Engine**: Algoritmo para hibridização e união de regras e protótipos de teorias complementares de alta sinergia.
+    *   **Automated Rule Revision**: Algoritmo de busca estocástica para alterar pesos ou remover propriedades causais fracas de teorias sobreviventes.
 
 ---
 
