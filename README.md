@@ -61,9 +61,11 @@ graph TD
 12. **Detecção de Drift e Substituição de Paradigmas (Sprint F11-P)**:
    Monitora a deriva de saúde da ontologia ($ODI_2$) e a pressão externa ($PPS$). Se uma crise de obsolescência persistir, substitui o paradigma conceitual ativo por uma alternativa de melhor desempenho ($OFS$) e assimilação de novidades ($NAR$).
 13. **Descoberta Científica Autônoma (Sprint F11-Q)**:
-   Habilita o motor a identificar lacunas explicativas na taxonomia e formular hipóteses inéditas e empiricamente refutáveis (Popper/Lakatos), medindo seu ineditismo ($HNS$), falseabilidade ($FI$), impacto ($DIS$) e severidade de teste ($STS$) contra previsões estruturais de mecanismos harmônicos.
+    Habilita o motor a identificar lacunas explicativas na taxonomia e formular hipóteses inéditas e empiricamente refutáveis (Popper/Lakatos), medindo seu ineditismo ($HNS$), falseabilidade ($FI$), impacto ($DIS$) e severidade de teste ($STS$) contra previsões estruturais de mecanismos harmônicos.
 14. **Validação Metacientífica e Replicação (Sprint F11-R)**:
-   Mensura a confiabilidade e replicabilidade das hipóteses geradas através de score de replicação ponderado ($RepS_w$), yield de impacto ($DY^*$), taxa móvel de falsas descobertas ($FDR_{\text{rolling}}$) e estabilidade epistêmica ($ESS$). Regula e recalibra de forma popperiana o motor de pesquisa sob crises epistemológicas.
+    Mensura a confiabilidade e replicabilidade das hipóteses geradas através de score de replicação ponderado ($RepS_w$), yield de impacto ($DY^*$), taxa móvel de falsas descobertas ($FDR_{\text{rolling}}$) e estabilidade epistêmica ($ESS$). Regula e recalibra de forma popperiana o motor de pesquisa sob crises epistemológicas.
+15. **Coexistência Multiparadigmática (Sprint F11-S)**:
+    Habilita a coexistência em paralelo de múltiplos paradigmas com Núcleo Firme axiológico e Cinturão Protetor adaptativo, regulando orçamentos de busca via Softmax EAW composto e predições por consenso ponderado MPC.
 
 ---
 
@@ -197,6 +199,16 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Scientific Reliability Score ($SRS$)**: Confiabilidade global agregada e renormalizada:
     $$SRS = 0.25 \cdot RepS_w + 0.20 \cdot DY^* + 0.20 \cdot ESS + 0.20 \cdot (1.0 - FDR_{\text{rolling}}) + 0.15 \cdot \text{Mean}(FI)$$
 
+### 14. Coexistência Multiparadigmática (Sprint F11-S)
+*   **Lakatos Progressiveness Index ($LPI_t$)**: Progressividade do programa de pesquisa confrontando avanço empírico vs crescimento de complexidade:
+    $$LPI_t = (Coverage_t - Coverage_{t-1}) \cdot PVI_t - \beta \cdot (Complexity_{belt, t} - Complexity_{belt, t-1})$$
+*   **Epistemic Allocation Weight ($EAW_p$)**: Probabilidade de alocação de buscas por Softmax sobre um score composto de LPI, abrangência e replicação:
+    $$EAW_p = \text{Softmax}(0.5 \cdot LPI_p + 0.3 \cdot Coverage_p + 0.2 \cdot RepS_{w, p})$$
+*   **Anomaly Absorption Rate ($AAR_p$)**: Razão de anomalias solucionadas por acréscimo de complexidade no cinturão:
+    $$AAR_p = \frac{\Delta AnomaliesExplained}{\max(1, \Delta Complexity_{belt})}$$
+*   **Multi-Paradigm Predictive Consensus ($MPC$)**: Fusão de probabilidades com base no peso epistêmico, acurácia e replicação do paradigma:
+    $$MPC(claim) = \sum_{p} EAW_p \cdot PVI_p \cdot RepS_{w, p} \cdot Confidence_p(claim)$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -239,6 +251,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Coexistência Multiparadigmática (F11-S)**:
+    ```bash
+    npx tsx src/utils/music/tests/lakatosResearchProgramBenchmark.test.ts
+    ```
 *   **Validação Meta-Científica (F11-R)**:
     ```bash
     npx tsx src/utils/music/tests/metaScientificValidationBenchmark.test.ts
