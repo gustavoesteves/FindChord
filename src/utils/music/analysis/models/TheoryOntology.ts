@@ -16,6 +16,12 @@ export interface OntologicalTaxonomy {
     generationsCount: number;
     taxonomicDistance: number;
     ocs: number;
+    // F11-O metrics
+    oai?: number;
+    scr?: number;
+    ops?: number;
+    coverageLoss?: number;
+    pviLoss?: number;
   };
 }
 

@@ -606,6 +606,22 @@ As sprints concluídas compõem o motor fundamental de análise, a plataforma de
 
 ---
 
+### Sprint F11-O: Ontological Self-Optimization
+**Status: ✅ CONCLUÍDA**
+*   **Objetivo**: Habilitar a auto-otimização dinâmica e bidirecional da árvore de conceitos harmônicos, permitindo que o sistema fundisse nós redundantes, podasse categorias obsoletas e evitasse sobrecompressão por restrições de segurança.
+*   **Conceito & Métodos**:
+    *   **Ontological Adaptation Index ($OAI$)**: Eficiência de integração de novas hipóteses na ontologia sem explosão de complexidade:
+        $$OAI = \frac{\Delta Coverage_{cross}}{1.0 + \Delta \text{Complexity}}$$
+    *   **Semantic Compression Ratio ($SCR$)**: Mede a densidade conceitual em relação à complexidade física da árvore:
+        $$SCR = \frac{Coverage_{cross} \cdot N_{\text{concepts\_explained}}}{\text{Complexity}}$$
+    *   **Ontological Pruning Score ($OPS$)**: Razão de descarte e limpeza estrutural de elementos inúteis ($0.05 \le OPS \le 0.40$):
+        $$OPS = \frac{\text{Nodes}_{\text{removed}} + \text{Edges}_{\text{removed}}}{\text{Nodes}_{\text{initial}} + \text{Edges}_{\text{initial}}}$$
+    *   **Compression Safety Constraint**: Garante integridade explicativa restringindo perdas de cobertura e previsões:
+        - $Coverage_{\text{optimized}} \ge 0.95 \cdot Coverage_{\text{baseline}}$
+        - $PVI_{\text{optimized}} \ge 0.95 \cdot PVI_{\text{baseline}}$
+
+---
+
 ## 🔌 Trilha de Integração (MuseScore Integration Track)
 
 ### Sprint Infra-M0: Harmony Engine Adapter (API/SDK)

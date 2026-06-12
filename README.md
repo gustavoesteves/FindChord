@@ -25,6 +25,7 @@ graph TD
     K --> L[Theory Knowledge Graph / TheoryFitnessGraph: Linhagem Genealógica e Árvore Evolutiva]
     L --> M[Meta-Evolution & Ontological Reorganization: TCI / PVI / OCS / PVI*]
     M --> N[Ontological Tournaments & Comparative Selection: EE / RS / TCR / OFS / ODI* / SPS]
+    N --> O[Ontological Self-Optimization & Pruning: OAI / SCR / OPS / Compression Safety]
 ```
 
 ### Detalhamento das Camadas do Motor:
@@ -54,6 +55,8 @@ graph TD
    Mapeia as teorias sobreviventes sob uma taxonomia superior reorganizada baseada em coesão ontológica ($OCS$), avaliando a consiliência epistemológica das teorias ($TCI$) e validando suas previsões de resolução harmônica contra holdouts exóticos ($PVI$, $PVI^*$).
 10. **Torneio de Ontologias e Seleção de Paradigmas (Sprint F11-N)**:
    Realiza competições diretas entre taxonomias completas sobre múltiplos sub-corpora de estilos harmônicos. Avalia o poder de dominância líquida ($ODI^*$) e a eficiência ($EE$) de cada paradigma completo, promovendo a estrutura ontológica ótima.
+11. **Auto-Otimização e Simplificação Ontológica (Sprint F11-O)**:
+   Habilita o motor a fundir categorias redundantes e podar nós obsoletos de forma totalmente autônoma. Aplica restrições de segurança para garantir que a compressão física não deteriore a acurácia preditiva ($PVI$) nem a cobertura cruzada.
 
 ---
 
@@ -144,6 +147,17 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Structural Parsimony Score ($SPS$)**: Parcimônia estrutural ponderada pela cobertura cruzada:
     $$SPS = \frac{Coverage_{cross}}{\text{Nodes} + \text{Edges}}$$
 
+### 10. Auto-Otimização e Simplificação Ontológica (Sprint F11-O)
+*   **Ontological Adaptation Index ($OAI$)**: Eficiência de adaptação ao integrar novas teorias sem explosão de complexidade:
+    $$OAI = \frac{\Delta Coverage_{cross}}{1.0 + \Delta \text{Complexity}}$$
+*   **Semantic Compression Ratio ($SCR$)**: Densidade explicativa real ponderada por cobertura cruzada:
+    $$SCR = \frac{Coverage_{cross} \cdot N_{\text{concepts\_explained}}}{\text{Complexity}}$$
+*   **Ontological Pruning Score ($OPS$)**: Ratio de descarte e limpeza estrutural de elementos inúteis ($0.05 \le OPS \le 0.40$):
+    $$OPS = \frac{\text{Nodes}_{\text{removed}} + \text{Edges}_{\text{removed}}}{\text{Nodes}_{\text{initial}} + \text{Edges}_{\text{initial}}}$$
+*   **Compression Safety Constraint**:
+    - $Coverage_{\text{optimized}} \ge 0.95 \cdot Coverage_{\text{baseline}}$
+    - $PVI_{\text{optimized}} \ge 0.95 \cdot PVI_{\text{baseline}}$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -186,6 +200,10 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Auto-Otimização e Poda Ontológica (F11-O)**:
+    ```bash
+    npx tsx src/utils/music/tests/ontologySelfOptimizationBenchmark.test.ts
+    ```
 *   **Torneio e Seleção de Ontologias (F11-N)**:
     ```bash
     npx tsx src/utils/music/tests/ontologyTournamentBenchmark.test.ts
