@@ -9,5 +9,13 @@ export default defineConfig({
     tailwindcss(),
   ],
   base: '/FindChord/',
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+        suite: './suite.html',
+      }
+    }
+  }
 })
 

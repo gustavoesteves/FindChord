@@ -221,6 +221,40 @@ A robustez intelectual da plataforma é auditada por métricas quantitativas pre
 *   **Ontological Invariance Score ($OIS_l$)**: Índice de invariância universal de leis harmônicas:
     $$OIS_l = \frac{N_{\text{universes\_where\_law\_remains\_predictive}}}{N_{\text{universes}}}$$
 
+### 16. Extração de Leis Universais (Sprint F11-U)
+*   **Law Robustness Score ($LRS$)**: Confiabilidade geral e robustez de uma lei extraída combinando falseabilidade ($FI$), replicação ($RepS$), invariância contrafactual ($OIS$) e peso epistêmico acumulado ($EAW_{\text{combined}}$):
+    $$LRS = FI \cdot RepS \cdot OIS \cdot \sqrt{EAW_{\text{combined}}}$$
+*   **Paradigm Consensus Score ($PCS$)**: Proporção de programas de pesquisa concorrentes que suportam a validade da lei:
+    $$PCS = \frac{N_{\text{supported\_programs}}}{N_{\text{total\_programs}}}$$
+
+### 17. Compressão de Leis Universais (Sprint F11-V)
+*   **Directed Implication Score ($DIS_{A \to B}$)**: Probabilidade de a Lei B ser preditiva em um determinado contexto dado que a Lei A também é preditiva (implicação lógica causal):
+    $$DIS_{A \to B} = P(\text{predictive}_B | \text{predictive}_A) = \frac{N(\text{predictive}_A \cap \text{predictive}_B)}{N(\text{predictive}_A)}$$
+*   **Law Compression Ratio ($LCR$)**: Ganho na parcimônia teórica pela redução de leis redundantes ou derivadas:
+    $$LCR = 1.0 - \frac{|L_{\text{fundamental}}|}{|L|}$$
+*   **Hierarchy Index ($HI$)**: Índice de estruturação livre de loops causais no grafo de leis:
+    $$HI = 1.0 - \frac{\text{Cycles}_{\text{detected}}}{\max(1, \text{Edges}_{\text{total}})}$$
+
+### 18. Integração de Literatura & Redescoberta Independente (Sprint F11-W)
+*   **Historical Convergence Score ($HCS_l$)**: Grau de redescoberta de uma lei harmônica $l$ por múltiplos teóricos históricos independentes:
+    $$HCS_l = \frac{N_{\text{authors}}(l)}{N_{\text{authors,max}}}$$
+*   **Conceptual Convergence Score ($CCS_l$)**: Diversidade conceitual indicando quantas terminologias harmônicas humanas distintas convergem na formulação de uma mesma lei $l$:
+    $$CCS_l = \frac{N_{\text{concepts}}(l)}{N_{\text{concepts,max}}}$$
+*   **Historical Independent Rediscovery Index ($HIRI_l$)**: Força de redescoberta agregando classe de universalidade, confiança das evidências e a força do suporte (Direct/Indirect):
+    $$HIRI_l = \text{Weight}_{\text{class}}(l) \cdot HCS_l \cdot \text{MeanConfidence}(l) \cdot \text{Weight}_{\text{support}}(l)$$
+*   **Global Epistemic Convergence Index ($GECI$)**: Razão de leis de generalização ampla (`UNIVERSAL` e `QUASI_UNIVERSAL`) que são referenciadas e corroboradas na literatura histórica humana:
+    $$GECI = \frac{|\{l \in L_{\text{universal}} \cup L_{\text{quasi\_universal}} \mid N_{\text{authors}}(l) \ge 1\}|}{|L_{\text{universal}} \cup L_{\text{quasi\_universal}}|}$$
+*   **Literature Coverage of Fundamental Laws ($LCFL$)**: Nível de suporte histórico da literatura sobre o conjunto axiológico de leis fundamentais do motor:
+    $$LCFL = \frac{|\{l \in L_{\text{fundamental}} \mid N_{\text{authors}}(l) \ge 1\}|}{|L_{\text{fundamental}}|}$$
+
+### 19. Síntese Metateórica (Sprint F11-X)
+*   **Theoretical Unification Score ($TUS$)**: Proporção do conjunto total de leis analisadas que é explicada e unificada a partir dos axiomas fundamentais (nós raiz):
+    $$TUS = \frac{|L_{\text{explained}}|}{|L_{\text{total}}|}$$
+*   **Explanatory Depth ($ED$)**: Média da profundidade (comprimento do caminho máximo de derivação causal) a partir dos axiomas fundamentais até suas folhas:
+    $$ED = \frac{\sum_{p \in P} \text{MaxDerivationPathLength}(p)}{|P|}$$
+*   **Historical Support Score ($HSS$)**: Média do respaldo histórico ($HIRI$) das leis que servem como axiomas para a metateoria sintetizada:
+    $$HSS = \frac{\sum_{p \in P} HIRI_p}{|P|}$$
+
 ---
 
 ## 💻 Recursos da Interface Científica
@@ -263,6 +297,14 @@ npm run build
 
 A integridade metodológica e a não-regressão do sistema são verificadas por benchmarks modulares executáveis diretamente via linha de comando:
 
+*   **Síntese Metateórica (F11-X)**:
+    ```bash
+    npx tsx src/utils/music/tests/metaTheorySynthesisBenchmark.test.ts
+    ```
+*   **Integração de Literatura e Redescoberta (F11-W)**:
+    ```bash
+    npx tsx src/utils/music/tests/scientificLiteratureIntegrationBenchmark.test.ts
+    ```
 *   **Compressão de Leis Universais (F11-V)**:
     ```bash
     npx tsx src/utils/music/tests/universalLawCompressionBenchmark.test.ts

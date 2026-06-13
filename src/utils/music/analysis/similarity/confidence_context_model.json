@@ -3,13 +3,13 @@
     "softmaxTemperature": 25
   },
   "global": {
-    "scoreGapWeight": 0.18,
-    "goalAlignmentWeight": 0.11,
-    "geometryWeight": 0.44,
+    "scoreGapWeight": 0.16,
+    "goalAlignmentWeight": 0.1,
+    "geometryWeight": 0.47,
     "ambiguityWeight": 0.27,
-    "optimizationScore": 0.264049,
+    "optimizationScore": 0.265873,
     "population": 25,
     "lastOptimized": "2026-06-12",
-    "brierScore": 0.029661
+    "brierScore": 0.029691
   }
 }
