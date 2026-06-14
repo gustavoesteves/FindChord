@@ -1,0 +1,47 @@
+{
+  "contracts": {
+    "Chord": {
+      "totalFields": 24,
+      "consumedFields": 24,
+      "orphanedFields": 0,
+      "fields": {
+        "active": [
+          "id", "symbol", "voicing", "voicing.notes", "voicing.frets",
+          "tuning", "tuning.instrument", "tuning.strings", "inversion",
+          "voicingType", "tensionLevel", "voiceLeadingScore"
+        ],
+        "deprecated": []
+      }
+    },
+    "Progression": {
+      "totalFields": 31,
+      "consumedFields": 30,
+      "orphanedFields": 1,
+      "fields": {
+        "active": [
+          "id", "chordEvents", "tonalCenters", "globalTensionCurve"
+        ],
+        "deprecated": [
+          "narrativeSegments", "activeParadigms", "metaTheoryId"
+        ]
+      }
+    },
+    "Score": {
+      "totalFields": 40,
+      "consumedFields": 18,
+      "orphanedFields": 22,
+      "fields": {
+        "active": [
+          "id", "title", "progressionEvents"
+        ],
+        "deprecated": [
+          "globalNarrative", "sections", "metaTheory", "metaTheory.id",
+          "metaTheory.name", "metaTheory.axioms", "metaTheory.theoreticalUnificationScore",
+          "metaTheory.explanatoryDepth", "metaTheory.historicalSupportScore",
+          "metaTheory.metaNarrative", "metaTheory.dominantDomains",
+          "dominantResearchPrograms", "universalLawsActivated"
+        ]
+      }
+    }
+  }
+}

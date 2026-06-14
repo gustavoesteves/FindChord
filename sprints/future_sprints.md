@@ -13,6 +13,7 @@ Este documento centraliza a visibilidade do desenvolvimento do ecossistema Find 
 | **Fase 3** | Mecanismos Cognitivos F11 | **🟢 CONCLUÍDA** | Lakatos, Universos Contrafactuais, Leis (F11-Q a F11-X) |
 | **Fase F12-0**| Congelamento da Core API v1 | **🟢 CONCLUÍDA** | Modelos imutáveis (`Chord`, `Progression`, `Score`) |
 | **Fase F11-AUD-REM**| Remediação de Código Pós-Auditoria | **🟢 CONCLUÍDA** | Resolução de telemetria morta (ADI/CFS), limpeza de campos órfãos, tipagem de romanNumeral/matchedTemplate e congelamento definitivo da v1 |
+| **Fase F12-A0**| Contract Metadata Generation | **🟢 CONCLUÍDA** | Geração e mapeamento dinâmico de metadados de contratos, telemetria e rotas da API |
 | **Fase F12** | Camada de Produto & Plugins MuseScore | **📅 PLANEJADA** | Integração dos plugins Builder, Inspector, Reharmonizer, Narrative e Hardening |
 
 ---
@@ -96,6 +97,16 @@ Aqui estão consolidadas as sprints finalizadas que fundamentam o motor analíti
     2.  **Limpeza de Campos Órfãos da API**: Inspecionar os contratos e expurgar ou ativar de fato os campos declarados que hoje não possuem consumo no front ou serialização.
     3.  **Congelamento Definitivo da API v1**: Estabelecer que `CanonicalChordEvent`, `CanonicalProgressionEvent` e `CanonicalScoreEvent` estão sob governança estritamente `FROZEN` na pasta `/api/v1/contracts`. Qualquer nova modificação estrutural exigirá uma `API v2`.
     4.  **Consolidação Filosófica do Builder**: Registrar documentalmente o Builder puramente como um "Transcritor de Voicings" (fretboard capture e identificação mecânica de dedilhado) sem acoplamento de motores de sugestões ou IA.
+
+---
+
+### ⚙️ 1.6. Sprint F12-A0 (Contract Metadata Generation)
+*   **Status: 🟢 CONCLUÍDA**
+*   **Objetivo**: Gerar o mapeamento formal de metadados e rotas da API v1 para alimentar os dashboards e inspetores dinâmicos do ecossistema.
+*   **Entregáveis**:
+    1.  **Mapeamento de Contratos**: [contract-consumption-map.json](file:///Volumes/Documents/Development/Find%20Chord/docs/audit/contract-consumption-map.json) mapeando campos ativos/depreciados.
+    2.  **Mapeamento de Telemetria**: [telemetry-consumption-map.json](file:///Volumes/Documents/Development/Find%20Chord/docs/audit/telemetry-consumption-map.json) catalogando produtores e leitores de scores científicos.
+    3.  **Registro de Rotas**: [api-registry.json](file:///Volumes/Documents/Development/Find%20Chord/docs/audit/api-registry.json) consolidando as rotas `/api/v1` locais.
 
 ---
 

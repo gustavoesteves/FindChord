@@ -1,0 +1,66 @@
+{
+  "telemetry": {
+    "adi": {
+      "name": "Academic Disaccord",
+      "producer": "ConsensusModelingEngine.ts",
+      "consumers": [
+        "TheoryFrontierDetector.ts",
+        "TheoryDiscoveryEngine.ts"
+      ],
+      "description": "Mede o grau de divergência interpretativa entre as escolas de harmonia."
+    },
+    "cfs": {
+      "name": "Consensus Fragility Score",
+      "producer": "ConsensusModelingEngine.ts",
+      "consumers": [
+        "TheoryFrontierDetector.ts",
+        "EpistemicEmbeddingEngine.ts",
+        "harmonicExplanationEngine.ts"
+      ],
+      "description": "Mede a instabilidade do consenso sob perturbações contrafactuais de entrada."
+    },
+    "iss": {
+      "name": "Interpretive Stability Score",
+      "producer": "InterpretiveStabilityEngine.ts",
+      "consumers": [
+        "TheoryFrontierDetector.ts",
+        "TheoryDiscoveryEngine.ts"
+      ],
+      "description": "Mapeia a resiliência interpretativa do acorde ao longo do tempo de execução."
+    },
+    "sis": {
+      "name": "Structural Influence Score",
+      "producer": "InterpretiveStabilityEngine.ts",
+      "consumers": [],
+      "description": "Mede a influência estrutural de modificações locais na progressão."
+    },
+    "pis": {
+      "name": "Paradigm Influence Score",
+      "producer": "InterpretiveStabilityEngine.ts",
+      "consumers": [],
+      "description": "Inércia paradigmática local."
+    },
+    "icr": {
+      "name": "Interpretive Convergence Ratio",
+      "producer": "InterpretiveStabilityEngine.ts",
+      "consumers": [],
+      "description": "Taxa de convergência da interpretação harmônica."
+    },
+    "tas": {
+      "name": "Theory Adequacy Score",
+      "producer": "TheoryFrontierDetector.ts",
+      "consumers": [
+        "TheoryDiscoveryEngine.ts"
+      ],
+      "description": "Score de adequação teórica regional pós-consenso."
+    },
+    "tfi": {
+      "name": "Theory Frontier Index",
+      "producer": "TheoryFrontierDetector.ts",
+      "consumers": [
+        "TheoryDiscoveryEngine.ts"
+      ],
+      "description": "Índice de proximidade de fronteira teórica ou anomalia."
+    }
+  }
+}
