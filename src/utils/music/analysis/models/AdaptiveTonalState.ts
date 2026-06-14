@@ -8,6 +8,7 @@ export interface TonalHypothesis {
   probability: number;
   harmonicFunction: HarmonicFunction;
   contextualFunction?: string;
+  romanNumeral?: string;
 }
 
 export interface AdaptiveTonalState {

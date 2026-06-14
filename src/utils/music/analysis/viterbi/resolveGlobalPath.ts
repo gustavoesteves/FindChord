@@ -489,16 +489,24 @@ export function resolveGlobalPath(
   for (let i = 0; i < N; i++) {
     const activePaths = beamHistory[i];
     if (activePaths.length === 0) {
+      const fallbackHyp = {
+        root: keys[i].root,
+        mode: keys[i].mode,
+        probability: 1.0,
+        harmonicFunction: bestPath.hypotheses[i].harmonicFunction,
+        contextualFunction: bestPath.hypotheses[i].contextualFunction
+      };
+      const consensusRes = computeConsensus([fallbackHyp], progression[i] || 'C', progression, i);
       adaptiveTonalStates.push({
-        primary: {
-          root: keys[i].root,
-          mode: keys[i].mode,
-          probability: 1.0,
-          harmonicFunction: bestPath.hypotheses[i].harmonicFunction,
-          contextualFunction: bestPath.hypotheses[i].contextualFunction
-        },
+        primary: fallbackHyp,
         alternatives: [],
-        certaintyLevel: 'HIGH'
+        certaintyLevel: 'HIGH',
+        pcs: 1.0,
+        pcsBeforePrior: 1.0,
+        rawHypotheses: [fallbackHyp],
+        mig: consensusRes.mig,
+        adi: consensusRes.adi,
+        cfs: consensusRes.cfs
       });
       continue;
     }
@@ -583,7 +591,8 @@ export function resolveGlobalPath(
     const calibrationRes = calibrateHypotheses(kept, progression[i]);
     
     // Apply Musicological priors
-    const finalHyps = applyMusicologicalPriors(calibrationRes.hypotheses, progression, i);
+    const priorResult = applyMusicologicalPriors(calibrationRes.hypotheses, progression, i);
+    const finalHyps = priorResult.hypotheses;
 
     // Compute final PCS and certaintyLevel based on finalHyps
     const finalProbs = finalHyps.map(h => h.probability);
@@ -593,7 +602,7 @@ export function resolveGlobalPath(
     const pTop = finalProbs[0] ?? 0;
     
     let pcsVal = Number((pTop * (1.0 - (hMax > 0 ? finalEntropy / hMax : 0.0))).toFixed(4));
-    if ((finalHyps as any).matchedTemplate) {
+    if (priorResult.matchedTemplate) {
       pcsVal = 0.98; // high confidence when we match an exact musicological consensus
     }
 

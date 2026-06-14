@@ -12,7 +12,7 @@ Este documento centraliza a visibilidade do desenvolvimento do ecossistema Find 
 | **Fase 2** | Calibração & Robustez Causal | **🟢 CONCLUÍDA** | Platt Scaling, ablação contrafactual, regularização |
 | **Fase 3** | Mecanismos Cognitivos F11 | **🟢 CONCLUÍDA** | Lakatos, Universos Contrafactuais, Leis (F11-Q a F11-X) |
 | **Fase F12-0**| Congelamento da Core API v1 | **🟢 CONCLUÍDA** | Modelos imutáveis (`Chord`, `Progression`, `Score`) |
-| **Fase F11-AUD-REM**| Remediação de Código Pós-Auditoria | **📅 PLANEJADA** | Resolução de telemetria morta (ADI/CFS), limpeza de campos órfãos e congelamento definitivo da v1 |
+| **Fase F11-AUD-REM**| Remediação de Código Pós-Auditoria | **🟢 CONCLUÍDA** | Resolução de telemetria morta (ADI/CFS), limpeza de campos órfãos, tipagem de romanNumeral/matchedTemplate e congelamento definitivo da v1 |
 | **Fase F12** | Camada de Produto & Plugins MuseScore | **📅 PLANEJADA** | Integração dos plugins Builder, Inspector, Reharmonizer, Narrative e Hardening |
 
 ---
@@ -89,7 +89,7 @@ Aqui estão consolidadas as sprints finalizadas que fundamentam o motor analíti
 ---
 
 ### 🛠️ 1.5. Sprint Intermediária F11-AUD-REM (Audit Remediation)
-*   **Status: 📅 PLANEJADA**
+*   **Status: 🟢 CONCLUÍDA**
 *   **Objetivo**: Resolver as fragilidades apontadas pela auditoria executiva de código e garantir a estabilização e governança da base antes de iniciar as interfaces de produto da F12.
 *   **Entregáveis**:
     1.  **Saneamento de Telemetria Morta**: Configurar as métricas `adi` (Academic Disaccord) e `cfs` (Consensus Fragility Score) para que participem do fluxo operacional regular e cálculo de consenso, removendo fallbacks silenciosos ou campos nulos.

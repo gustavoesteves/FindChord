@@ -1,3 +1,6 @@
+/**
+ * CanonicalChordEvent - FROZEN v1
+ */
 export interface CanonicalChordEvent {
   id: string;
   symbol: string;                        // Harmonic chord symbol (e.g. "Cm11", "Gmaj7/B")
@@ -13,6 +16,8 @@ export interface CanonicalChordEvent {
   voicingType?: string;                 // Voicing structure classification (e.g. "Drop-2", "Drop-3", "Closed", "Quartal")
   tensionLevel?: number;                // Tension score computed by the engine
   voiceLeadingScore?: number;           // Voice leading transition quality score [0.0, 1.0]
+  /** @deprecated Orphan field in v1. Preserved for future narrative plugin compatibility. */
   universalLaws?: string[];             // IDs of active universal/fundamental laws verified for this event
+  /** @deprecated Orphan field in v1. Preserved for future narrative plugin compatibility. */
   predictionMechanisms?: string[];      // Active prediction schools/mechanisms from the MIG
 }

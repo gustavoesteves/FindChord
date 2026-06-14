@@ -66,9 +66,9 @@ export function computeConsensus(
       id: `interp_tonal_${idx}`,
       tonalCenter: h.root,
       mode: h.mode,
-      romanNumeral: (h as any).romanNumeral || 'I',
+      romanNumeral: h.romanNumeral || 'I',
       harmonicFunction: h.harmonicFunction,
-      label: `${h.root} ${h.mode === 'MINOR' ? 'Menor' : 'Maior'}: ${(h as any).romanNumeral || h.harmonicFunction}`,
+      label: `${h.root} ${h.mode === 'MINOR' ? 'Menor' : 'Maior'}: ${h.romanNumeral || h.harmonicFunction}`,
       probability: h.probability,
       isDiatonic: true
     });

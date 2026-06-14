@@ -209,12 +209,19 @@ function normalizeRoot(r: string): string {
   return map[r] || r;
 }
 
+export interface HypothesisGenerationResult {
+  hypotheses: CalibratedHypothesis[];
+  matchedTemplate: boolean;
+}
+
 export function applyMusicologicalPriors(
   hypotheses: CalibratedHypothesis[],
   progression: string[],
   targetChordIndex: number
-): CalibratedHypothesis[] {
-  if (hypotheses.length === 0) return hypotheses;
+): HypothesisGenerationResult {
+  if (hypotheses.length === 0) {
+    return { hypotheses: [], matchedTemplate: false };
+  }
 
   // 1. Identify if a subsegment of the progression matches any prior template
   let activeTemplate: PriorTemplate | null = null;
@@ -248,7 +255,9 @@ export function applyMusicologicalPriors(
   }
 
   // If no template matches, return calibrated hypotheses unchanged
-  if (!activeTemplate) return hypotheses;
+  if (!activeTemplate) {
+    return { hypotheses, matchedTemplate: false };
+  }
 
   // 2. Map the relative keys of the template priors to absolute keys
   const absolutePriors = activeTemplate.priors.map(p => {
@@ -275,6 +284,8 @@ export function applyMusicologicalPriors(
 
   // Re-sort hypotheses based on posterior probabilities
   const result = posteriorHyps.sort((a, b) => b.probability - a.probability);
-  (result as any).matchedTemplate = true;
-  return result;
+  return {
+    hypotheses: result,
+    matchedTemplate: true
+  };
 }
