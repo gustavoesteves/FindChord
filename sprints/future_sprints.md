@@ -125,7 +125,7 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
 | **F12-0** | Core API Stabilization | **🟢 CONCLUÍDA** | Especificação em [core-api-v1.md](file:///Volumes/Documents/Development/Find%20Chord/docs/core-api-v1.md) e [plugin-interaction-contract-v1.md](file:///Volumes/Documents/Development/Find%20Chord/docs/plugin-interaction-contract-v1.md). |
-| **F12-A** | Core API Playground | **📅 PLANEJADA** | Painel interativo isolado para entrada e renderização de JSON da API v1. |
+| **F12-A** | Core API Playground | **🟢 CONCLUÍDA** | Painel interativo isolado para entrada e renderização de JSON da API v1. |
 | **F12-B** | Builder MVP | **📅 PLANEJADA** | Transcritor de voicings sem IA. Captura a digitação física do braço de guitarra virtual e identifica as notas, cifras, inversões e voicings (Drop 2, Close, Open, Quartal, etc.) inserindo-os diretamente na partitura como acordes, cifras e grids. |
 | **F12-C** | Inspector MVP | **📅 PLANEJADA** | Linter harmônico visual (Diagnóstico - Nível 1): exibe e alerta sobre paralelismos proibidos (oitavas/quintas seguidas), saltos melódicos excessivos, problemas graves de condução física de vozes (Voice Leading) e acúmulo de tensão. |
 | **F12-D** | Reharmonizer MVP | **📅 PLANEJADA** | Assistente Criativo (Sugestões - Nível 2 & Rearmonização - Nível 3): propõe voicings alternativos, inversões suaves e rearmonizações completas ou parciais guiadas por paradigmas teóricos (**Funcional** como ii-V-I/subV, **Transformacional** como Neo-Riemanniano LPR, **Simétrica** como Lendvai/Eixos, **Modal** como empréstimos, e **Linear** como aproximações cromáticas). |
