@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useBuilder } from "./context/BuilderContext";
 import { getNoteAt } from "../../utils/music/core/notes";
 import { playGuitarNote } from "../../utils/audioSynth";
-import { Volume2, RotateCcw } from "lucide-react";
+import { noteToMidi } from "../../utils/music/core/midi";
+import { musescoreAdapter } from "../../utils/musescoreAdapter";
+import type { CanonicalChordEvent } from "../../utils/music/analysis/models/CanonicalChordEvent";
+import { Volume2, RotateCcw, Send } from "lucide-react";
 
 export const VirtualFretboard: React.FC = () => {
   const { state, actions } = useBuilder();
@@ -25,6 +28,49 @@ export const VirtualFretboard: React.FC = () => {
         return next;
       });
     }, 600);
+  };
+
+  const buildChordEventPayload = (): CanonicalChordEvent | null => {
+    if (!state.activeChord) return null;
+
+    const midiNotes = state.selectedFrets
+      .map((f, idx) => (f !== null ? noteToMidi(getNoteAt(state.tuning[idx], f)) : null))
+      .filter((n): n is number => n !== null)
+      .sort((a, b) => a - b);
+
+    return {
+      id: `ch_${state.activeChord.root}${state.activeChord.quality}_${Date.now()}`,
+      symbol: state.activeChord.symbol,
+      voicing: {
+        notes: midiNotes,
+        frets: [...state.selectedFrets]
+      },
+      tuning: {
+        instrument: state.activeInstrument,
+        strings: [...state.tuning]
+      },
+      inversion: state.activeChord.inversion,
+      voicingType: state.activeChord.voicingType,
+      tensionLevel: state.activeChord.tensionLevel,
+      voiceLeadingScore: 1.0,
+      universalLaws: [],
+      predictionMechanisms: ["rp_functional"]
+    };
+  };
+
+  const handleSendToMuseScore = async () => {
+    const payload = buildChordEventPayload();
+    if (!payload) return;
+
+    const formattedLog = `[BRIDGE SEND] -> event: "insertChord" | timestamp: ${Math.floor(Date.now() / 1000)} | payload: ${JSON.stringify(payload)}`;
+    actions.addBridgeLog(formattedLog);
+
+    const success = await musescoreAdapter.sendChord(payload);
+    if (success) {
+      actions.addBridgeLog(`[BRIDGE OK] -> Acorde "${payload.symbol}" inserido com sucesso no MuseScore.`);
+    } else {
+      actions.addBridgeLog(`[BRIDGE ERROR] -> Falha ao enviar para o MuseScore local. Verifique se o servidor de ponte (port: 9000) está ativo.`);
+    }
   };
 
   const playCurrentFretboard = () => {
@@ -55,7 +101,7 @@ export const VirtualFretboard: React.FC = () => {
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div className="flex flex-col">
           <h2 className="text-sm font-extrabold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-            Braço Virtual (15 Trastes)
+            {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço Virtual (15 Trastes)"}
           </h2>
           <p className="text-[10px] text-zinc-400 leading-normal mt-0.5">
             Clique nas casas para pressionar notas. Clique nos botões "×" à esquerda do braço para abafar as cordas.
@@ -63,6 +109,17 @@ export const VirtualFretboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {state.activeChord && (
+            <button
+              onClick={handleSendToMuseScore}
+              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-650 hover:brightness-110 text-white font-extrabold text-xs rounded-lg flex items-center gap-1.5 shadow-md hover:shadow-purple-950/25 active:scale-[0.98] transition cursor-pointer animate-scale-up"
+              title="Enviar acorde atual ao MuseScore"
+            >
+              <Send className="h-3.5 w-3.5" />
+              Inserir no MuseScore
+            </button>
+          )}
+
           <button
             onClick={playCurrentFretboard}
             disabled={state.selectedFrets.every(f => f === null)}
