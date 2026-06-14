@@ -58,7 +58,7 @@ export const VirtualFretboard: React.FC = () => {
             Braço Virtual (15 Trastes)
           </h2>
           <p className="text-[10px] text-zinc-400 leading-normal mt-0.5">
-            Clique nas casas para pressionar notas. Clique em MUTE no StringSelector ou no nut esquerdo para abafar.
+            Clique nas casas para pressionar notas. Clique nos botões "×" à esquerda do braço para abafar as cordas.
           </p>
         </div>
 
