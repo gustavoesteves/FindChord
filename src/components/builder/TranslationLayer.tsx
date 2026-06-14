@@ -15,7 +15,6 @@ import {
   Trash2, 
   History, 
   BookOpen, 
-  Info,
   Eye,
   EyeOff
 } from "lucide-react";

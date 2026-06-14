@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from "
 import { useChordStore } from "../../../store/useChordStore";
 import type { ChordCandidate } from "../../../store/useChordStore";
 import { getPitchClass } from "../../../utils/music/core/pitch";
-import { getNoteAt } from "../../../utils/music/core/notes";
 import { CHORD_REGISTRY } from "../../../utils/music/constants/chordRegistry";
+import type { ChordQuality } from "../../../utils/music/constants/chordRegistry";
 import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
 
@@ -124,9 +124,11 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const chordRoot = activeChord.root;
       const rootPC = getPitchClass(chordRoot);
-      const def = CHORD_REGISTRY[activeChord.quality as any];
+      const def = activeChord.quality in CHORD_REGISTRY
+        ? CHORD_REGISTRY[activeChord.quality as ChordQuality]
+        : undefined;
       const targetPitchClasses = def
-        ? def.semitones.map(s => (rootPC + s) % 12)
+        ? def.semitones.map((s: number) => (rootPC + s) % 12)
         : [rootPC];
 
       const results = generateVoicings(

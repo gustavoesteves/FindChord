@@ -1,6 +1,6 @@
 import React from "react";
 import { useBuilder } from "./context/BuilderContext";
-import { INSTRUMENTS } from "../../store/useChordStore";
+import { INSTRUMENTS, useChordStore } from "../../store/useChordStore";
 import { Sparkles } from "lucide-react";
 
 const NOTE_CLASSES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];

@@ -1,7 +1,7 @@
 import type { CanonicalProgressionEvent } from "../../models/CanonicalProgressionEvent";
 import type { CanonicalChordEvent } from "../../models/CanonicalChordEvent";
 import type { InspectorDiagnostic } from "../../models/InspectorDiagnostic";
-import type { VoicingShape } from "../../models/VoicingShape";
+import type { VoicingShape } from "../../../models/VoicingShape";
 import { buildAnalyzedVoicing } from "../../voicingAnalyzer";
 import { ParallelFifthsRule } from "../../../voiceLeading/rules/ParallelFifthsRule";
 import { ParallelOctavesRule } from "../../../voiceLeading/rules/ParallelOctavesRule";
@@ -92,7 +92,7 @@ export function runVoiceLeadingDiagnostics(
       const pitchA = getAbsolutePitch(fretA, baseNote);
       const pitchB = getAbsolutePitch(fretB, baseNote);
 
-      if (pitchA !== null && pitchB !== null) {
+      if (fretA !== null && fretB !== null && pitchA !== null && pitchB !== null) {
         const diff = Math.abs(pitchB - pitchA);
         const isBass = stringIdx === 0 || (stringIdx === 1 && fretsA[0] === null);
         if (diff > 8 && !isBass) {

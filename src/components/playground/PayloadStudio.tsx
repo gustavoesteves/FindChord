@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { usePlayground } from "./context/PlaygroundContext";
 import type { ContractType } from "./context/PlaygroundContext";
-import { FileJson, RefreshCw, FileText } from "lucide-react";
+import { FileJson, RefreshCw } from "lucide-react";
 import type { CanonicalChordEvent } from "../../utils/music/analysis/models/CanonicalChordEvent";
 import type { CanonicalProgressionEvent } from "../../utils/music/analysis/models/CanonicalProgressionEvent";
 import type { CanonicalScoreEvent } from "../../utils/music/analysis/models/CanonicalScoreEvent";
@@ -263,10 +263,11 @@ const SCORE_TEMPLATE: CanonicalScoreEvent = {
   metaTheory: {
     id: "mt_traditional_functional_harmony",
     name: "Teoria Funcional Tradicional",
-    axioms: ["law_parsimonious_voice_leading", "law_chromatic_attraction"],
+    fundamentalPrinciples: ["law_parsimonious_voice_leading", "law_chromatic_attraction"],
+    explainedLawIds: ["law_parsimonious_voice_leading", "law_chromatic_attraction"],
     theoreticalUnificationScore: 1.0,
     explanatoryDepth: 1.5,
-    historicalSupportScore: 0.91,
+    historicalSupport: 0.91,
     metaNarrative: "Harmonia explicada por cadências funcionais e voice leading parsimonioso.",
     dominantDomains: ["FUNCTIONAL", "VOICE_LEADING"]
   },

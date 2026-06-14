@@ -1,4 +1,4 @@
-import type { InspectorDiagnostic } from "../../models/InspectorDiagnostic";
+import type { InspectorDiagnostic } from "../models/InspectorDiagnostic";
 
 export class DiagnosticAggregator {
   /**

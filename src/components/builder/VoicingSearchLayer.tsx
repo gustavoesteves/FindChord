@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useBuilder } from "./context/BuilderContext";
 import type { VoicingShape } from "../../utils/music/models/VoicingShape";
-import { Sparkles, Layers, Award, ArrowDownUp } from "lucide-react";
-import { playGuitarChord } from "../../utils/audioSynth";
+import { Layers } from "lucide-react";
 
 type FilterTab = "todos" | "drops" | "abertos" | "fechados" | "ergonomicos" | "distancia";
 

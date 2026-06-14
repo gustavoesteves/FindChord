@@ -75,13 +75,13 @@ const BuilderContent: React.FC = () => {
       
       {/* Abas de Navegação Premium */}
       <div className="flex border-b border-zinc-800 pb-0.5 overflow-x-auto gap-2">
-        {([
-          { id: "input", label: "Captura & Afinador", icon: Sliders },
-          { id: "translation", label: "Teoria & Biblioteca", icon: BookOpen },
-          { id: "voicings", label: "Shapes Alternativos", icon: Search },
-          { id: "inspector", label: "Linter Inspector", icon: ShieldAlert, alertCount: diagnostics.length },
-          { id: "export", label: "Ponte MuseScore", icon: Send }
-        ] as const).map(tab => {
+        {[
+          { id: "input" as BuilderTab, label: "Captura & Afinador", icon: Sliders, alertCount: undefined as number | undefined },
+          { id: "translation" as BuilderTab, label: "Teoria & Biblioteca", icon: BookOpen, alertCount: undefined as number | undefined },
+          { id: "voicings" as BuilderTab, label: "Shapes Alternativos", icon: Search, alertCount: undefined as number | undefined },
+          { id: "inspector" as BuilderTab, label: "Linter Inspector", icon: ShieldAlert, alertCount: diagnostics.length as number | undefined },
+          { id: "export" as BuilderTab, label: "Ponte MuseScore", icon: Send, alertCount: undefined as number | undefined }
+        ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (

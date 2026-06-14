@@ -1,4 +1,3 @@
-import React from "react";
 import { PlaygroundProvider } from "./playground/context/PlaygroundContext";
 import { PayloadStudio } from "./playground/PayloadStudio";
 import { ContractValidator } from "./playground/ContractValidator";
