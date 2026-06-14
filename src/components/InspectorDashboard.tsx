@@ -20,6 +20,11 @@ export const InspectorDashboard: React.FC<InspectorDashboardProps> = ({
   totalMeasures = 0 
 }) => {
   const [selectedMeasure, setSelectedMeasure] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // 1. Calcular contadores gerais
   const stats = useMemo(() => {
@@ -242,12 +247,14 @@ export const InspectorDashboard: React.FC<InspectorDashboardProps> = ({
                 badgeColor = "text-amber-400 bg-amber-950/60 border-amber-900";
               }
 
+              const isExpanded = !!expandedIds[diag.id];
+
               return (
                 <div 
                   key={diag.id} 
                   className={`p-4 rounded-xl border flex flex-col gap-3 hover:brightness-105 transition duration-150 shadow-md ${borderClass}`}
                 >
-                  {/* Alert Header */}
+                  {/* Alert Header - Camada Musical */}
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -266,69 +273,99 @@ export const InspectorDashboard: React.FC<InspectorDashboardProps> = ({
                       <span className={`px-2 py-0.5 rounded border ${badgeColor}`}>
                         {diag.severity.toUpperCase()}
                       </span>
-                      <span className="px-2 py-0.5 rounded border border-zinc-800 bg-zinc-950 text-zinc-400">
-                        {diag.source}
-                      </span>
-                      {diag.confidence !== undefined && (
-                        <span className="px-2 py-0.5 rounded border border-zinc-800 bg-zinc-950 text-purple-400">
-                          conf: {(diag.confidence * 100).toFixed(0)}%
-                        </span>
-                      )}
                     </div>
                   </div>
 
-                  {/* Alert Description */}
+                  {/* Alert Description - Camada Musical */}
                   <p className="text-xs text-zinc-350 leading-relaxed">{diag.description}</p>
 
-                  {/* Evidence list */}
-                  {diag.evidence && diag.evidence.length > 0 && (
-                    <div className="flex flex-col gap-1 pl-2.5 border-l border-zinc-800">
-                      {diag.evidence.map((ev, evIdx) => (
-                        <span key={evIdx} className="text-[10px] text-zinc-400 font-mono">
-                          • {ev}
-                        </span>
-                      ))}
+                  {/* Trigger to toggle Camada Técnica */}
+                  <button
+                    onClick={() => toggleExpand(diag.id)}
+                    className="w-fit text-[9px] text-zinc-500 hover:text-purple-400 font-black uppercase tracking-widest flex items-center gap-1.5 cursor-pointer transition-colors mt-0.5 select-none animate-pulse"
+                  >
+                    <Activity className={`h-3 w-3 ${isExpanded ? "text-purple-400" : ""}`} />
+                    {isExpanded ? "Ocultar Telemetria Técnica" : "Mostrar Telemetria Técnica"}
+                  </button>
+
+                  {/* Camada Técnica - Colapsável */}
+                  {isExpanded && (
+                    <div className="flex flex-col gap-3 p-3.5 mt-1 rounded-xl bg-zinc-950/60 border border-zinc-900/60 animate-scale-up">
+                      {/* Source & Confidence row */}
+                      <div className="flex items-center gap-4 text-[9px] font-bold font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-zinc-500 uppercase font-black">Fonte do Linter:</span>
+                          <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-zinc-400">
+                            {diag.source}
+                          </span>
+                        </div>
+                        {diag.confidence !== undefined && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-zinc-500 uppercase font-black">Confiança:</span>
+                            <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-purple-400">
+                              {(diag.confidence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Evidence List */}
+                      {diag.evidence && diag.evidence.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-widest">Evidências Científicas:</span>
+                          <div className="flex flex-col gap-1 pl-2 border-l border-zinc-850">
+                            {diag.evidence.map((ev, evIdx) => (
+                              <span key={evIdx} className="text-[10px] text-zinc-400 font-mono">
+                                • {ev}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Telemetry Coefficients Grid */}
+                      {diag.telemetry && (
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-widest">Coeficientes Ativos:</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                            {diag.telemetry.cfs !== undefined && (
+                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
+                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">CFS (Fragility)</span>
+                                <span className="text-pink-400 font-extrabold mt-0.5">{diag.telemetry.cfs.toFixed(4)}</span>
+                              </div>
+                            )}
+                            {diag.telemetry.adi !== undefined && (
+                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
+                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">ADI (Disaccord)</span>
+                                <span className="text-purple-400 font-extrabold mt-0.5">{diag.telemetry.adi.toFixed(4)}</span>
+                              </div>
+                            )}
+                            {diag.telemetry.iss !== undefined && (
+                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
+                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">ISS (Stability)</span>
+                                <span className="text-emerald-400 font-extrabold mt-0.5">{diag.telemetry.iss.toFixed(4)}</span>
+                              </div>
+                            )}
+                            {diag.telemetry.tas !== undefined && (
+                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
+                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">TAS (Adequacy)</span>
+                                <span className="text-blue-400 font-extrabold mt-0.5">{diag.telemetry.tas.toFixed(4)}</span>
+                              </div>
+                            )}
+                            {diag.telemetry.tfi !== undefined && (
+                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
+                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">TFI (Frontier)</span>
+                                <span className="text-amber-500 font-extrabold mt-0.5">{diag.telemetry.tfi.toFixed(4)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* Metric Telemetry Fact Card */}
-                  {diag.telemetry && (
-                    <div className="mt-1 pt-2 border-t border-zinc-900/60 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                      {diag.telemetry.cfs !== undefined && (
-                        <div className="bg-zinc-950/40 p-1.5 rounded border border-zinc-900/60 flex flex-col font-mono text-[9.5px]">
-                          <span className="text-zinc-500 uppercase font-black tracking-widest text-[8px]">CFS Fragility</span>
-                          <span className="text-pink-400 font-extrabold mt-0.5">{diag.telemetry.cfs.toFixed(4)}</span>
-                        </div>
-                      )}
-                      {diag.telemetry.adi !== undefined && (
-                        <div className="bg-zinc-950/40 p-1.5 rounded border border-zinc-900/60 flex flex-col font-mono text-[9.5px]">
-                          <span className="text-zinc-500 uppercase font-black tracking-widest text-[8px]">ADI Disaccord</span>
-                          <span className="text-purple-400 font-extrabold mt-0.5">{diag.telemetry.adi.toFixed(4)}</span>
-                        </div>
-                      )}
-                      {diag.telemetry.iss !== undefined && (
-                        <div className="bg-zinc-950/40 p-1.5 rounded border border-zinc-900/60 flex flex-col font-mono text-[9.5px]">
-                          <span className="text-zinc-500 uppercase font-black tracking-widest text-[8px]">ISS Stability</span>
-                          <span className="text-emerald-400 font-extrabold mt-0.5">{diag.telemetry.iss.toFixed(4)}</span>
-                        </div>
-                      )}
-                      {diag.telemetry.tas !== undefined && (
-                        <div className="bg-zinc-950/40 p-1.5 rounded border border-zinc-900/60 flex flex-col font-mono text-[9.5px]">
-                          <span className="text-zinc-500 uppercase font-black tracking-widest text-[8px]">TAS Adequacy</span>
-                          <span className="text-blue-400 font-extrabold mt-0.5">{diag.telemetry.tas.toFixed(4)}</span>
-                        </div>
-                      )}
-                      {diag.telemetry.tfi !== undefined && (
-                        <div className="bg-zinc-950/40 p-1.5 rounded border border-zinc-900/60 flex flex-col font-mono text-[9.5px]">
-                          <span className="text-zinc-500 uppercase font-black tracking-widest text-[8px]">TFI Frontier</span>
-                          <span className="text-amber-500 font-extrabold mt-0.5">{diag.telemetry.tfi.toFixed(4)}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Affected measure info */}
-                  <div className="flex items-center justify-between text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-1">
+                  {/* Affected measure info - Camada Musical */}
+                  <div className="flex items-center justify-between text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-1 border-t border-zinc-900/40 pt-2">
                     <span>Compassos afetados: {diag.affectedMeasures.join(", ")}</span>
                     {diag.cadenceType && <span>Cadência: {diag.cadenceType}</span>}
                   </div>
