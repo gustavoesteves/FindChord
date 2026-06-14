@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { usePlayground } from "./context/PlaygroundContext";
 import { analyzeProgression } from "../../utils/music/analysis/orchestrators/progressionAnalysis";
+import { InspectorEngine } from "../../utils/music/analysis/inspector/InspectorEngine";
+import { InspectorDashboard } from "../InspectorDashboard";
+import type { CanonicalChordEvent } from "../../utils/music/analysis/models/CanonicalChordEvent";
+import type { CanonicalScoreEvent } from "../../utils/music/analysis/models/CanonicalScoreEvent";
+import type { CanonicalProgressionEvent } from "../../utils/music/analysis/models/CanonicalProgressionEvent";
 import { 
   Play, 
   Layers, 
-  Terminal, 
-  Settings, 
   ShieldCheck, 
   Activity,
   Cpu
@@ -13,17 +16,32 @@ import {
 
 export const EngineSimulator: React.FC = () => {
   const { state, actions } = usePlayground();
-  const [pipelineTab, setPipelineTab] = useState<"input" | "validation" | "analysis" | "telemetry" | "output" | "bridge">("input");
+  const [pipelineTab, setPipelineTab] = useState<"input" | "validation" | "analysis" | "telemetry" | "inspector" | "output" | "bridge">("input");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Trigger analysis when loadedPayload changes
-  useEffect(() => {
-    if (state.loadedPayload) {
-      handleRunEngine();
-    } else {
-      actions.setAnalysisResult(null);
+  const getProgressionEventForInspector = (): CanonicalProgressionEvent | null => {
+    if (!state.loadedPayload) return null;
+    if (state.activeContractType === "progression") {
+      return state.loadedPayload as CanonicalProgressionEvent;
     }
-  }, [state.loadedPayload, state.activeContractType]);
+    if (state.activeContractType === "chord") {
+      const chordEvent = state.loadedPayload as CanonicalChordEvent;
+      return {
+        id: `pr_mock_${chordEvent.id}`,
+        chordEvents: [chordEvent],
+        tonalCenters: [chordEvent.symbol]
+      };
+    }
+    if (state.activeContractType === "score") {
+      const scoreEvent = state.loadedPayload as CanonicalScoreEvent;
+      return {
+        id: `pr_mock_${scoreEvent.id}`,
+        chordEvents: scoreEvent.progressionEvents.flatMap(p => p.chordEvents),
+        tonalCenters: scoreEvent.progressionEvents.flatMap(p => p.tonalCenters)
+      };
+    }
+    return null;
+  };
 
   const handleRunEngine = () => {
     if (!state.loadedPayload) return;
@@ -32,13 +50,15 @@ export const EngineSimulator: React.FC = () => {
       // Extract progression chord symbols
       let progressionSymbols: string[] = [];
       if (state.activeContractType === "chord") {
-        progressionSymbols = [state.loadedPayload.symbol];
+        const chordEvent = state.loadedPayload as CanonicalChordEvent;
+        progressionSymbols = [chordEvent.symbol];
       } else if (state.activeContractType === "progression") {
-        progressionSymbols = state.loadedPayload.chordEvents.map((c: any) => c.symbol);
+        const progEvent = state.loadedPayload as CanonicalProgressionEvent;
+        progressionSymbols = progEvent.chordEvents.map(c => c.symbol);
       } else if (state.activeContractType === "score") {
-        // Collect from all progression events
-        progressionSymbols = state.loadedPayload.progressionEvents.flatMap((p: any) => 
-          p.chordEvents.map((c: any) => c.symbol)
+        const scoreEvent = state.loadedPayload as CanonicalScoreEvent;
+        progressionSymbols = scoreEvent.progressionEvents.flatMap(p => 
+          p.chordEvents.map(c => c.symbol)
         );
       }
 
@@ -57,11 +77,24 @@ export const EngineSimulator: React.FC = () => {
     if (!state.loadedPayload) return "{}";
     return JSON.stringify({
       event: state.activeContractType === "chord" ? "insertChord" : "insertProgression",
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp: 1718390400, // Fixed constant placeholder for render purity
       version: "1.0",
       payload: state.loadedPayload
     }, null, 2);
   };
+
+  // Trigger analysis when loadedPayload changes
+  useEffect(() => {
+    if (state.loadedPayload) {
+      const timer = setTimeout(() => {
+        handleRunEngine();
+      }, 0);
+      return () => clearTimeout(timer);
+    } else {
+      actions.setAnalysisResult(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.loadedPayload, state.activeContractType]);
 
   if (!state.loadedPayload) {
     return (
@@ -92,7 +125,7 @@ export const EngineSimulator: React.FC = () => {
 
       {/* Simulator Pipeline Tabs */}
       <div className="flex border-b border-zinc-850/60 pb-0.5 overflow-x-auto gap-1">
-        {(["input", "validation", "analysis", "telemetry", "output", "bridge"] as const).map(tab => (
+        {(["input", "validation", "analysis", "telemetry", "inspector", "output", "bridge"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setPipelineTab(tab)}
@@ -183,6 +216,26 @@ export const EngineSimulator: React.FC = () => {
             ) : (
               <span className="text-zinc-600">Nenhum dado analítico disponível. Execute o resolvedor.</span>
             )}
+          </div>
+        )}
+
+        {pipelineTab === "inspector" && (
+          <div>
+            {(() => {
+              const progressionEvent = getProgressionEventForInspector();
+              if (progressionEvent) {
+                const diagnostics = InspectorEngine.inspect(progressionEvent);
+                return (
+                  <div className="font-sans text-xs">
+                    <InspectorDashboard 
+                      diagnostics={diagnostics} 
+                      totalMeasures={progressionEvent.chordEvents.length} 
+                    />
+                  </div>
+                );
+              }
+              return <span className="text-zinc-650 font-sans">Nenhum DTO de progressão carregado.</span>;
+            })()}
           </div>
         )}
 

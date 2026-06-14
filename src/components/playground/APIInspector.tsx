@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Info, HelpCircle, Network, ArrowRight } from "lucide-react";
-import telemetryMap from "../../../../docs/audit/telemetry-consumption-map.json";
-import apiRegistry from "../../../../docs/audit/api-registry.json";
+import telemetryMap from "../../../docs/audit/telemetry-consumption-map.json";
+import apiRegistry from "../../../docs/audit/api-registry.json";
 
 export const APIInspector: React.FC = () => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<"telemetry" | "routes">("telemetry");

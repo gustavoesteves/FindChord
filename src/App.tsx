@@ -7,13 +7,14 @@ import ScaleOverlayPanel from "./components/ScaleOverlayPanel";
 import HarmonicNarrativeOverlayPanel from "./components/HarmonicNarrativeOverlayPanel";
 import VoiceLeadingPanel from "./components/VoiceLeadingPanel";
 import Playground from "./components/Playground";
+import BuilderMVP from "./components/BuilderMVP";
 import { useChordStore } from "./store/useChordStore";
 import { Compass, HelpCircle } from "lucide-react";
 
 export default function App() {
   const { detectedChords, selectedChordIndex } = useChordStore();
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
-  const [activeTab, setActiveTab] = useState<"lab" | "playground">("lab");
+  const [activeTab, setActiveTab] = useState<"lab" | "builder" | "playground">("builder");
 
   return (
     <div className="min-h-screen bg-stage-lights flex flex-col transition-colors duration-300">
@@ -45,6 +46,16 @@ export default function App() {
               🔬 Harmony Lab
             </button>
             <button
+              onClick={() => setActiveTab("builder")}
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === "builder"
+                  ? "bg-purple-600 text-white shadow-md animate-scale-up"
+                  : "text-zinc-500 hover:text-zinc-350"
+              }`}
+            >
+              📥 Builder MVP
+            </button>
+            <button
               onClick={() => setActiveTab("playground")}
               className={`px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "playground"
@@ -57,7 +68,7 @@ export default function App() {
           </div>
         </div>
 
-        {activeTab === "lab" ? (
+        {activeTab === "lab" && (
           /* Harmony Lab Content */
           <div className="flex flex-col gap-6 md:gap-8 animate-scale-up">
             {/* 1. Header (Afinador e Construtor Reverso) */}
@@ -128,7 +139,13 @@ export default function App() {
 
             </div>
           </div>
-        ) : (
+        )}
+
+        {activeTab === "builder" && (
+          <BuilderMVP />
+        )}
+
+        {activeTab === "playground" && (
           <Playground />
         )}
 

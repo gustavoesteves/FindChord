@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { usePlayground, ContractType } from "./context/PlaygroundContext";
+import { usePlayground } from "./context/PlaygroundContext";
+import type { ContractType } from "./context/PlaygroundContext";
 import { FileJson, RefreshCw, FileText } from "lucide-react";
 import type { CanonicalChordEvent } from "../../utils/music/analysis/models/CanonicalChordEvent";
 import type { CanonicalProgressionEvent } from "../../utils/music/analysis/models/CanonicalProgressionEvent";

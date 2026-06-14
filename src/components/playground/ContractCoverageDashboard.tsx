@@ -1,6 +1,6 @@
 import React from "react";
 import { Layers, Bookmark, Trash2 } from "lucide-react";
-import contractMap from "../../../../docs/audit/contract-consumption-map.json";
+import contractMap from "../../../docs/audit/contract-consumption-map.json";
 
 export const ContractCoverageDashboard: React.FC = () => {
   const { contracts } = contractMap;
