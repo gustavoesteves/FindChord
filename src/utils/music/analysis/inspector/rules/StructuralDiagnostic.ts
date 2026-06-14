@@ -110,7 +110,7 @@ export function runStructuralDiagnostics(
       source: "MIG",
       confidence: 0.75,
       title: "Flutuação Tonal Frequente",
-      description: `A progressão apresenta modulações muito frequentes (${keyChangesCount} alterações de tom em ${chords.length} acordes). Embora comum em modulações cromáticas tardias (ex: Coltrane changes), isso reduz a unidade tonal clássica.`,
+      description: `A progressão apresenta modulações muito frequentes (${keyChangesCount} alterações de tom em ${chords.length} acordes). Isso indica uma estrutura harmônica de alta densidade modulante com frequente variação de centro tonal (transformacional/modal) e possível dispersão do consenso de estabilidade interpretativa.`,
       affectedMeasures: Array.from({ length: chords.length }, (_, i) => i + 1),
       evidence: [
         `Total de acordes: ${chords.length}`,

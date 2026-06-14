@@ -24,7 +24,7 @@ export function runCadenceDiagnostics(
         source: "CADENCE",
         confidence: Number(confidence.toFixed(4)),
         title: "Resolução Deceptiva Detectada",
-        description: `A progressão exibe um desvio harmônico clássico (Cadência Deceptiva) entre os compassos ${affectedMeasures.join("–")}: ${cad.name}. A tensão da dominante resolveu no relativo inesperado.`,
+        description: `A progressão exibe um desvio harmônico estrutural (Cadência Deceptiva) entre os compassos ${affectedMeasures.join("–")}: ${cad.name}. A tensão da dominante resolveu no relativo inesperado.`,
         affectedMeasures,
         cadenceType: "DECEPTIVE",
         evidence: cad.resolution.explanation
