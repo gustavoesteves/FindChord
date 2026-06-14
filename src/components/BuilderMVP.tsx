@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { BuilderProvider } from "./builder/context/BuilderContext";
-import { TuningSelector } from "./builder/TuningSelector";
 import { VirtualFretboard } from "./builder/VirtualFretboard";
 import { TranslationLayer } from "./builder/TranslationLayer";
 import { VoicingSearchLayer } from "./builder/VoicingSearchLayer";
@@ -17,11 +16,10 @@ import {
   BookOpen, 
   Search, 
   ShieldAlert, 
-  Send,
-  Settings
+  Send
 } from "lucide-react";
 
-type BuilderTab = "input" | "translation" | "voicings" | "inspector" | "export" | "settings";
+type BuilderTab = "input" | "translation" | "voicings" | "inspector" | "export";
 
 const BuilderContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BuilderTab>("input");
@@ -80,8 +78,7 @@ const BuilderContent: React.FC = () => {
           { id: "translation" as BuilderTab, label: "Teoria & Biblioteca", icon: BookOpen, alertCount: undefined as number | undefined },
           { id: "voicings" as BuilderTab, label: "Shapes Alternativos", icon: Search, alertCount: undefined as number | undefined },
           { id: "inspector" as BuilderTab, label: "Linter Inspector", icon: ShieldAlert, alertCount: diagnostics.length as number | undefined },
-          { id: "export" as BuilderTab, label: "Ponte MuseScore", icon: Send, alertCount: undefined as number | undefined },
-          { id: "settings" as BuilderTab, label: "Configurações", icon: Settings, alertCount: undefined as number | undefined }
+          { id: "export" as BuilderTab, label: "Ponte MuseScore", icon: Send, alertCount: undefined as number | undefined }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -154,23 +151,6 @@ const BuilderContent: React.FC = () => {
         {activeTab === "export" && (
           <div className="animate-scale-up">
             <MuseScoreExportLayer />
-          </div>
-        )}
-
-        {activeTab === "settings" && (
-          <div className="animate-scale-up flex flex-col gap-6">
-            <div className="p-5 rounded-2xl border border-zinc-850 bg-zinc-900/20 backdrop-blur-xl shadow-2xl">
-              <div className="flex flex-col gap-2 border-b border-zinc-850 pb-4 mb-4">
-                <h2 className="text-sm font-extrabold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-purple-400" />
-                  Configurações do Builder
-                </h2>
-                <p className="text-[11px] text-zinc-400">
-                  Ajuste o instrumento de entrada, afinação das cordas e convenções de notação musical.
-                </p>
-              </div>
-              <TuningSelector />
-            </div>
           </div>
         )}
       </div>
