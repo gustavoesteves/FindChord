@@ -18,17 +18,21 @@ Nenhuma sugestão utilizará conceitos culturais como "Jazz", "Rock", "Clássico
 
 ## 3. A Nova Arquitetura de Motores (F13)
 
-### 3.1 Melody Extraction Engine
-Responsável por conectar-se à partitura, extrair a linha principal (lead), identificar notas estruturais vs. notas de passagem, e gerar objetos `MelodicPhrase`.
+### 3.2 Phrase Function Engine
+Antes de sugerir alternativas, o sistema precisa entender a intenção: `Estabelecimento -> Prolongamento -> Dominante`. Isso garante que a rearmonização preserve o papel dramático.
 
-### 3.2 Phrase Function Engine (O elo perdido)
-Antes de sugerir alternativas, o sistema precisa entender: *"O que esta frase está tentando realizar harmonicamente?"*
-Não basta saber que há 3 acordes (`C -> Am -> G7`). É preciso inferir a intenção: `Estabelecimento -> Prolongamento -> Dominante`. Isso garante que a rearmonização preserve o papel dramático, mesmo alterando radicalmente os acordes.
+### 3.3 Harmonic Region Engine (A Unidade de Pensamento)
+O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrupará a frase em blocos funcionais (Regiões).
+- **Região de Estabelecimento** (`C -> Am -> F`)
+- **Região Predominante** (`Dm -> F`)
+- **Região Dominante** (`G7 -> G7sus -> G13`)
+- **Região Cadencial** (`ii -> V -> I`)
+A substituição passará a ocorrer no nível da **Região**, não do acorde.
 
-### 3.3 Harmonic Compatibility Engine
-Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos (ex: b9 contra a melodia) e pontua a tensão/consonância geral.
+### 3.4 Harmonic Compatibility Engine
+Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
 
-### 3.4 Harmonic Possibility Engine
+### 3.5 Harmonic Possibility Engine
 O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original e o contexto tonal para produzir leituras alternativas da mesma frase sob intenções puramente estruturais:
 - **Mais Estável:** Reforça o centro tonal.
 - **Mais Tenso:** Aumenta direcionamento e expectativa cadencial.
@@ -48,17 +52,20 @@ Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda 
 A UI passa a focar no fluxo criativo e empurra ferramentas de "inspeção dura" para segundo plano.
 
 ### Núcleo Principal (Foco Invertido - Ação antes de Explicação)
-1. **Possibilidades Harmônicas:** O coração absoluto da aba. "Mostre-me algo útil antes de me explicar".
+1. **Explorar Alternativas:** O coração absoluto da aba. "Mostre-me algo útil antes de me explicar".
 2. **Narrativa Harmônica:** Curta, direta ("Estabelece o centro tonal"). Serve para justificar a sugestão, não para antecedê-la.
-3. **Curva Dramática:** Secundária. Gráfico simplificado mostrando apenas "Compasso 3: Pico dramático da frase". Continua sendo *observação*, portanto perde o destaque para as *ações*.
+3. **Curva Dramática:** Secundária. Gráfico simplificado. Continua sendo *observação*, perdendo o destaque.
 
 ### Modo Avançado / Acadêmico (Oculto por Padrão)
 1. **Estrutura Formal:** (Ex: "Período Autêntico").
 2. **Auditoria / Linter:** Caça às quintas e oitavas paralelas.
 3. **Métricas Acadêmicas e Epistêmicas.**
 
-## 6. Critérios de Sucesso
+## 6. Critérios de Sucesso e Explicabilidade
 1. **Frase simples:** O sistema produz múltiplas leituras harmônicas (Expansivas, Cromáticas, etc.) perfeitamente compatíveis com a melodia.
-2. **Material repetido:** O sistema propõe de forma orgânica alternativas texturais para reapresentações (A').
-3. **Restrição Física:** Nenhuma sugestão entra em conflito grave com a melodia estrutural analisada.
-4. **Explicabilidade:** Todas as alternativas informam não apenas os novos acordes, mas *o que muda, por que muda, e qual efeito harmônico isso produz*.
+2. **Explicabilidade baseada em Intenção:** Todas as alternativas justificam suas trocas sob o seguinte formato composicional:
+   - *O que foi preservado* (ex: "direção para um ponto de resolução")
+   - *O que foi alterado* (ex: "centro tonal percebido")
+   - *Efeito produzido* (ex: "sensação de deslocamento e expansão")
+3. **Material repetido:** O sistema propõe de forma orgânica alternativas texturais para reapresentações (A').
+4. **Restrição Física:** Nenhuma sugestão entra em conflito com a melodia estrutural analisada.
