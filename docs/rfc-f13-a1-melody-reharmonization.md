@@ -21,10 +21,14 @@ Nenhuma sugestão utilizará conceitos culturais como "Jazz", "Rock", "Clássico
 ### 3.1 Melody Extraction Engine
 Responsável por conectar-se à partitura, extrair a linha principal (lead), identificar notas estruturais vs. notas de passagem, e gerar objetos `MelodicPhrase`.
 
-### 3.2 Harmonic Compatibility Engine
+### 3.2 Phrase Function Engine (O elo perdido)
+Antes de sugerir alternativas, o sistema precisa entender: *"O que esta frase está tentando realizar harmonicamente?"*
+Não basta saber que há 3 acordes (`C -> Am -> G7`). É preciso inferir a intenção: `Estabelecimento -> Prolongamento -> Dominante`. Isso garante que a rearmonização preserve o papel dramático, mesmo alterando radicalmente os acordes.
+
+### 3.3 Harmonic Compatibility Engine
 Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos (ex: b9 contra a melodia) e pontua a tensão/consonância geral.
 
-### 3.3 Harmonic Possibility Engine
+### 3.4 Harmonic Possibility Engine
 O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original e o contexto tonal para produzir leituras alternativas da mesma frase sob intenções puramente estruturais:
 - **Mais Estável:** Reforça o centro tonal.
 - **Mais Tenso:** Aumenta direcionamento e expectativa cadencial.
@@ -33,8 +37,9 @@ O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original e o c
 - **Mais Ambíguo:** Reduz a percepção clara do centro tonal.
 - **Mais Expansivo:** Amplia densidade funcional (tensões/extensões) sem alterar a identidade base.
 - **Mais Econômico:** Simplifica o movimento harmônico (redução).
+- **Reinterpretação Funcional:** *Nova categoria.* Mesma melodia, mas habitando outro universo funcional. Ex: `C → Am → G7` vira `Em → A7 → D`. Transforma radicalmente a percepção sem quebrar a restrição física.
 
-## 4. Exploração Formal (Section Reharmonization)
+## 4. Exploração Formal (F13-A3: Section Reharmonization)
 Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda ocorrência admite interpretação harmônica diferente mantendo a melodia intacta.
 - Exemplo A: `C → Am → G7`
 - Exemplo A': `Cmaj7 → Am9 → G13`
@@ -42,10 +47,10 @@ Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda 
 ## 5. Redesenho da UI (ScoreAnalysisDashboard)
 A UI passa a focar no fluxo criativo e empurra ferramentas de "inspeção dura" para segundo plano.
 
-### Núcleo Principal (Foco)
-1. **Narrativa Harmônica:** Curta, direta ("Estabelece o centro tonal").
-2. **Curva Dramática:** Substitui o antigo mapa de tensão matemático ("Compasso 3: Pico dramático da frase").
-3. **Possibilidades Harmônicas:** O coração da aba, oferecendo as rotas do *Harmonic Possibility Engine*.
+### Núcleo Principal (Foco Invertido - Ação antes de Explicação)
+1. **Possibilidades Harmônicas:** O coração absoluto da aba. "Mostre-me algo útil antes de me explicar".
+2. **Narrativa Harmônica:** Curta, direta ("Estabelece o centro tonal"). Serve para justificar a sugestão, não para antecedê-la.
+3. **Curva Dramática:** Secundária. Gráfico simplificado mostrando apenas "Compasso 3: Pico dramático da frase". Continua sendo *observação*, portanto perde o destaque para as *ações*.
 
 ### Modo Avançado / Acadêmico (Oculto por Padrão)
 1. **Estrutura Formal:** (Ex: "Período Autêntico").
