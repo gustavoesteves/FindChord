@@ -131,11 +131,14 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | **F12-C2** | Analyzer MVP (Section State) | **🟢 CONCLUÍDA** | Tradução de fatos (Facts) em Significado de Seção (HarmonicState) separando micro e meso-narrativa. |
 | **F12-C3** | Analyzer MVP (Global Meaning) | **🟢 CONCLUÍDA** | Tradução de métricas globais em uma camada de Significado Global (Identity, Departure, Return, Tension, Closure). |
 | **F12-C4** | Global Harmonic Arc | **🟢 CONCLUÍDA** | Evolução do *Global Meaning* transitório para uma Trajetória Harmônica Contínua (Arc), modelando a peça como uma linha do tempo de fases (Establishment, Destabilization, Fragmentation, Reconstruction, Resolution) em vez de estados estáticos finais. |
-| **F12-C5** | Emergent Harmonic Behavior | **📅 PLANEJADA** | Camada de emergência acima do Arco: modelagem do "Comportamento" da música através de vetores contínuos (expansão, coesão, volatilidade). Distingue peças com o mesmo *Arc* baseando-se em durações e memórias estruturais. |
-| **F12-C6** | Analyzer MVP (Linter/Mapa) | **📅 PLANEJADA** | Componente visual do Mapa de Tensão e Linter Técnico de quintas/oitavas paralelas. |
+| **F12-C5** | Emergent Harmonic Behavior | **📅 PLANEJADA** | Camada de emergência acima do Arco: modelagem do "Comportamento" da música através de vetores contínuos (expansão, coesão, volatilidade). Distingue peças com o mesmo *Arc* baseando-se em memórias estruturais. |
+| **F12-C6** | Temporal Profile Engine | **📅 PLANEJADA** | Motor focado puramente em métricas cronológicas: duração das fases, velocidade de mudança, frequência de retorno e assimetria temporal. O comportamento nasce tanto da harmonia quanto do tempo. |
+| **F12-C7** | Compositional Identity Engine | **📅 PLANEJADA** | A evolução máxima da interpretação musical. Responde "Quem essa peça é?" (ex: Contemplativa, Errante, Teleológica, Ritualística), somando o Behavior harmônico e o Perfil Temporal. |
+| **F12-C8** | Style Fingerprint Engine | **📅 PLANEJADA** | Motor de aproximação estilística via similaridade vetorial. Conclui que "Essa obra se comporta mais como Ravel do que como Chopin", baseado em como a música se move e gere suas energias. |
+| **F12-C9** | Analyzer MVP (Linter/Mapa) | **📅 PLANEJADA** | Componente visual do Mapa de Tensão e Linter Técnico de quintas/oitavas paralelas. |
 | **F12-D** | Reharmonizer MVP (Explorar) | **📅 PLANEJADA** | Assistente Criativo direcionado por **intenções artísticas**. O compositor escolhe o objetivo desejado (ex: *"Mais tensão"*, *"Mais surpresa"*, *"Mais cromatismo"*, *"Mais movimento modal"*, *"Mais estabilidade"*, *"Mais contraste"*) e o resolvedor calcula as alternativas adequadas. |
 | **F12-E** | MuseScore Hardening | **📅 PLANEJADA** | Tratamento robusto de erros, controle de concorrência e bufferização de mensagens para a ponte do MuseScore. |
-| **F12-F** | Suno Integration (Expandir) | **📅 PLANEJADA** | Exportador que transforma o mapa de tensão, modulações e narrativa do Analyzer em prompts textuais focados em emoções e estrutura formal para envio à API do Suno. |
+| **F12-F** | Suno Integration (Expandir) | **📅 PLANEJADA** | Exportador que transforma a Identidade, o Comportamento e o Mapa de Tensão em prompts textuais imersivos focados em emoções e estrutura formal para envio à API do Suno. |
 
 ---
 
