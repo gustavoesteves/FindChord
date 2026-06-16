@@ -147,7 +147,7 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F13-A1** | Melody-Aware Contextual Reharmonization | **📅 NEXT UP** | Substitui a antiga F12-D. Transforma a análise em uma ferramenta criativa baseada na melodia. Traz os motores `MelodyExtractionEngine`, `MelodicCompatibilityEngine` e `PhraseReharmonizationEngine`. Oculta a auditoria e estrutura formal da Dashboard em favor da Exploração Harmônica. |
+| **F13-A1** | Harmonic Possibility Explorer | **📅 NEXT UP** | Transforma a análise em uma ferramenta exploratória guiada pela melodia ("Quais são as possibilidades escondidas nesta frase?"). O sistema revela leituras latentes (Mais Tenso, Mais Cromático, Mais Modal) sem utilizar rótulos estéticos e sem tentar "corrigir" o compositor. Traz os motores `MelodyExtraction`, `HarmonicCompatibility` e `HarmonicPossibility`. |
 
 ---
 
