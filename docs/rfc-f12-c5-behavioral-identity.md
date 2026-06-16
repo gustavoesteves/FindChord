@@ -18,8 +18,9 @@ A evolução da arquitetura do ecossistema Find Chord está pavimentada da segui
 | **F12-C4** | **Arc** | Em que ordem isso acontece? | *ESTABLISHMENT -> DESTABILIZATION* |
 | **F12-C5** | **Behavior** | Que padrão emerge dessa sequência? | *Perfil Acumulativo (expansão vetorial)* |
 | **F12-C6** | **Temporal Profile**| Qual a dinâmica no tempo? | *Curta duração, mudanças frenéticas* |
-| **F12-C7** | **Identity** | Quem essa música é? | *Heroica, Teleológica, Contemplativa* |
-| **F12-C8** | **Style Fingerprint**| Com quem ela se parece? | *"Aja mais como Ravel do que Chopin"* |
+| **F12-C7** | **Identity Traits** | Como isso se traduz psicologicamente? | *Alta exploração, baixo ritualismo* |
+| **F12-C8** | **Identity** | Quem essa música é? | *Heroica, Teleológica, Contemplativa* |
+| **F12-C9** | **Style Fingerprint**| Com quem ela se parece? | *"Aja mais como Ravel do que Chopin"* |
 
 ## 3. As Sprints de Emergência
 
@@ -33,12 +34,26 @@ Vetores alvo:
 - **Velocidade de mudança (Pace)**
 - **Periodicidade e Assimetria Temporal**
 
-### F12-C7: Compositional Identity Engine
-O clímax da abstração musical. O motor consome a intersecção de `Arc` + `Behavior` + `Temporal Profile` para identificar "A Alma da Obra".
-- **Identidade Teleológica**: Alto direcionamento, baixa volatilidade (ex: Sinfonias Clássicas).
-- **Identidade Contemplativa**: Alta simetria, baixo direcionamento (ex: Ambient, Satie).
+### F12-C7: Identity Traits Engine
+Impede o erro de rotulação precoce ("Essa música é Heróica"). Traduz a combinação de `Behavior` e `Temporal Profile` em uma malha de traços contínuos.
+```typescript
+interface IdentityTraits {
+  persistence: number;
+  exploration: number;
+  certainty: number;
+  ritualism: number;
+  impulsiveness: number;
+  gravity: number;
+}
+```
 
-### F12-C8: Style Fingerprint Engine
+### F12-C8: Compositional Identity Engine
+O clímax da abstração musical. O motor consome os Traços (Traits) para descobrir "A Alma da Obra".
+- **Identidade Teleológica**: Alto direcionamento, persistência e gravidade (ex: Sinfonias Clássicas).
+- **Identidade Contemplativa**: Alto ritualismo, exploração difusa, baixa certeza (ex: Ambient, Satie).
+*Evolução Epistêmica:* Os motores antigos da trilha metateórica (`TheoryDiscoveryEngine`, `OntologyTournamentEngine`) serão redirecionados. Em vez de descobrir teorias harmônicas, eles executarão Machine Learning não-supervisionado para **clusterizar e descobrir novas identidades** (agrupando Mahler, Bruckner e Sibelius em clusters comportamentais autônomos que musicólogos ainda nem nomearam).
+
+### F12-C9: Style Fingerprint Engine
 Com a Identidade parametrizada, o sistema entra na fase comparativa. Ele consegue afirmar: *"Seus acordes e sua métrica são pop, mas a simetria de comportamento e a coesão de memória são estritamente Bachianas."*
 Esta é a ferramenta definitiva para o Compositor/Estudante e o coração absoluto do assistente criativo de `Reharmonization` guiado por Identidade.
 
