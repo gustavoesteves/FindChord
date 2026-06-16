@@ -1,5 +1,6 @@
 import type { CanonicalChordEvent } from "./music/analysis/models/CanonicalChordEvent";
 import type { CanonicalProgressionEvent } from "./music/analysis/models/CanonicalProgressionEvent";
+import { useChordStore } from "../store/useChordStore";
 
 export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
@@ -48,6 +49,17 @@ class MuseScoreAdapter {
       this.socket.onclose = () => {
         this.setStatus("disconnected");
         this.triggerAutoReconnect();
+      };
+
+      this.socket.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === "score_snapshot" && payload.data) {
+            useChordStore.getState().setScoreSnapshot(payload.data);
+          }
+        } catch (e) {
+          console.warn("MuseScore bridge received invalid JSON message:", e);
+        }
       };
 
       this.socket.onerror = () => {
@@ -117,6 +129,31 @@ class MuseScoreAdapter {
           "X-FindChord-Client": "compose-suite"
         },
         body: JSON.stringify({ type: "progression", data: progression }),
+        mode: "cors"
+      });
+      return response.ok;
+    } catch (e) {
+      console.warn("MuseScore bridge offline (HTTP fallback failed):", e);
+      return false;
+    }
+  }
+
+  public async requestScoreSync(): Promise<boolean> {
+    const payload = { type: "request_score", data: {} };
+    if (this.status === "connected" && this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(payload));
+      return true;
+    }
+
+    // Fallback: Tentativa via HTTP POST local
+    try {
+      const response = await fetch("http://localhost:9000/api/v1/send", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "X-FindChord-Client": "compose-suite"
+        },
+        body: JSON.stringify(payload),
         mode: "cors"
       });
       return response.ok;

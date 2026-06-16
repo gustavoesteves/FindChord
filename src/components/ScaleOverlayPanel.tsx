@@ -275,7 +275,7 @@ function classifyScaleNote(
   };
 }
 
-export default function ScaleOverlayPanel() {
+export default function ScaleOverlayPanel({ inline = false }: { inline?: boolean }) {
   const {
     detectedChords,
     selectedChordIndex,
@@ -295,9 +295,9 @@ export default function ScaleOverlayPanel() {
     avoid: true
   });
 
-  // Reseta a escala e os filtros ao fechar o modal
+  // Reseta a escala e os filtros ao fechar o modal (apenas no modo modal)
   useEffect(() => {
-    if (!isScaleSelectorOpen) {
+    if (!inline && !isScaleSelectorOpen) {
       setTimeout(() => {
         setLocalActiveScale(null);
         setVisibleCategories({
@@ -309,7 +309,7 @@ export default function ScaleOverlayPanel() {
         });
       }, 0);
     }
-  }, [isScaleSelectorOpen]);
+  }, [isScaleSelectorOpen, inline]);
 
   const toggleCategoryVisibility = (category: string) => {
     setVisibleCategories(prev => ({
@@ -328,7 +328,22 @@ export default function ScaleOverlayPanel() {
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
 
-  if (!activeChord || !isScaleSelectorOpen) return null;
+  // No modo inline, sempre renderiza se houver acorde (sem depender de isScaleSelectorOpen)
+  if (!inline && (!activeChord || !isScaleSelectorOpen)) return null;
+  if (inline && !activeChord) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-10 rounded-2xl border border-dashed border-zinc-800 text-center">
+        <Sparkles className="h-8 w-8 text-zinc-600" />
+        <div>
+          <p className="text-sm font-bold text-zinc-500">Nenhum acorde detectado</p>
+          <p className="text-xs text-zinc-600 mt-1 max-w-xs">
+            Pressione casas no braço virtual (aba "Captura &amp; Fretboard") para identificar um acorde e ver as escalas compatíveis.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  if (!activeChord) return null;
 
   // Encontra as escalas compatíveis teóricas
   const compatibleScales = getCompatibleScales(activeChord);
@@ -603,216 +618,196 @@ export default function ScaleOverlayPanel() {
     );
   };
 
+  // ── Conteúdo compartilhado ─────────────────────────────────────
+  const sharedContent = (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/40 pb-4 gap-3 select-none">
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="h-5 w-5 text-purple-400" />
+          <div>
+            <h2 className="text-base font-extrabold text-zinc-100 uppercase tracking-wider">Laboratório de Improviso &amp; Escalas Compatíveis</h2>
+            <p className="text-[10px] text-zinc-400 font-medium">
+              Acorde de referência: <span className="text-purple-300 font-bold">{getChordName(activeChord)}</span>
+            </p>
+          </div>
+        </div>
+        {localActiveScale && (
+          <button
+            onClick={() => setLocalActiveScale(null)}
+            className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer transition active:scale-95"
+          >
+            <EyeOff className="h-3 w-3" />
+            Limpar Filtro do Braço
+          </button>
+        )}
+      </div>
+
+      {/* Conteúdo principal */}
+      <div className="flex flex-col gap-4">
+        {compatibleScales.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* Lado Esquerdo: Lista de Escalas */}
+              <div className="lg:col-span-7 flex flex-col gap-2">
+                <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider mb-1 select-none">Opções Compatíveis</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                  {compatibleScales.map(scale => {
+                    const isActive = localActiveScale && localActiveScale.name === scale.name;
+                    return (
+                      <div
+                        key={scale.name}
+                        onClick={() => toggleScaleOverlay(scale)}
+                        className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                          isActive
+                            ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(255,78,140,0.1)] scale-[1.01]"
+                            : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/40 hover:border-zinc-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-zinc-200">{scale.name}</span>
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider transition-colors ${
+                            isActive ? "bg-purple-650 text-white" : "bg-zinc-850 text-zinc-400"
+                          }`}>
+                            {isActive ? "Filtro Ativo" : "Mapear"}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {scale.notes.map((note, idx) => (
+                            <span
+                              key={`${note}-${idx}`}
+                              className={`text-[9px] font-black w-4.5 h-4.5 rounded flex items-center justify-center transition-all ${
+                                idx === 0
+                                  ? "bg-rose-950 border border-rose-800 text-rose-300"
+                                  : "bg-zinc-900 text-zinc-300 border border-zinc-800/40"
+                              }`}
+                            >
+                              {note}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Lado Direito: Guia do Improvisador */}
+              <div className="lg:col-span-5 h-full">
+                {localActiveScale ? (() => {
+                  const scaleType = localActiveScale.type;
+                  let info = SCALE_DESCRIPTIONS[scaleType];
+                  if (!info) {
+                    const matchedKey = Object.keys(SCALE_DESCRIPTIONS).find(k => scaleType.includes(k));
+                    if (matchedKey) info = SCALE_DESCRIPTIONS[matchedKey];
+                  }
+                  if (!info) {
+                    info = {
+                      desc: `Escala de improvisação sintonizada com a tônica e características do acorde.`,
+                      mood: "Combinação harmônica fluida.",
+                      tip: "Explore alternando entre notas estruturais e extensões cromáticas."
+                    };
+                  }
+                  const lick = SUGGESTED_LICKS[scaleType];
+                  return (
+                    <div className="p-4 rounded-xl border border-purple-500/25 bg-purple-950/15 text-zinc-300 shadow-inner flex flex-col gap-3.5 animate-scale-up h-full justify-between select-none">
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <BookOpen className="h-3.5 w-3.5 text-purple-400" />
+                          <span className="text-[9px] font-black uppercase text-purple-400 tracking-wider">Guia do Improvisador</span>
+                        </div>
+                        <p className="text-xs font-extrabold text-zinc-100 leading-snug">{info.desc}</p>
+                        <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-zinc-800/40 text-[10px]">
+                          <div className="leading-tight">
+                            <span className="font-black text-purple-400 uppercase tracking-wider">✨ Mood: </span>
+                            <span className="text-zinc-300 font-semibold">{info.mood}</span>
+                          </div>
+                          <div className="leading-tight mt-1">
+                            <span className="font-black text-purple-400 uppercase tracking-wider">💡 Segredo: </span>
+                            <span className="text-zinc-300 font-semibold">{info.tip}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {lick && (
+                        <div className="flex flex-col gap-2 mt-2.5 pt-2.5 border-t border-purple-500/25 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                              <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider">Lick / Frase de Estudo ({lick.school})</span>
+                            </div>
+                            <button
+                              onClick={() => playLickSequence(lick.intervals)}
+                              className="flex items-center gap-1 text-[8.5px] font-black px-2.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(245,158,11,0.2)] hover:scale-105"
+                            >
+                              ▶ Ouvir
+                            </button>
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] font-black text-zinc-100 leading-tight">{lick.name}</span>
+                            <p className="text-[9.5px] text-zinc-400 leading-relaxed font-semibold">{lick.theoryDesc}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {lick.intervals.map((interval, idx) => {
+                              const noteName = TonalNote.simplify(
+                                TonalNote.transpose(`${activeChord.root}4`, interval)
+                              ).replace(/\d/, "");
+                              return (
+                                <span key={`${interval}-${idx}`} className="text-[8.5px] font-black px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-amber-300">
+                                  {noteName}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })() : (
+                  <div className="h-[220px] rounded-xl border border-dashed border-zinc-850 flex flex-col items-center justify-center p-6 text-center text-zinc-500 text-xs italic gap-1 select-none">
+                    <Sparkles className="h-5 w-5 text-zinc-700 animate-pulse" />
+                    <span>Selecione uma escala ao lado para acender as dicas harmônicas e o braço da guitarra abaixo!</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Fretboard da Escala */}
+            {renderScaleFretboard()}
+          </div>
+        ) : (
+          <div className="text-zinc-500 text-xs py-12 text-center border border-dashed border-zinc-850 rounded-xl select-none">
+            Nenhuma escala compatível óbvia para esta qualidade de acorde.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Modo Inline (aba) ─────────────────────────────────────────
+  if (inline) {
+    return <div className="w-full">{sharedContent}</div>;
+  }
+
+  // ── Modo Modal (comportamento original) ──────────────────────
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in"
       onClick={() => setScaleSelectorOpen(false)}
     >
-      <div 
+      <div
         className="bg-[#121216]/98 border border-zinc-800/85 rounded-2xl p-6 w-full max-w-5xl shadow-2xl flex flex-col max-h-[92vh] glass-panel relative animate-scale-up"
-        onClick={(e) => e.stopPropagation()} // Impede fechamento ao clicar dentro do modal
+        onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Botão Fechar */}
-        <button 
+        <button
           onClick={() => setScaleSelectorOpen(false)}
           className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold bg-zinc-900 hover:bg-zinc-850 w-8 h-8 rounded-full flex items-center justify-center transition border border-zinc-800 cursor-pointer hover:scale-105 active:scale-95"
           title="Fechar"
         >
           ×
         </button>
-
-        {/* Header do Modal */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/40 pb-4 gap-3 pr-8 select-none">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="h-5 w-5 text-purple-400" />
-            <div>
-              <h2 className="text-base font-extrabold text-zinc-100 uppercase tracking-wider">Laboratório de Improviso & Escalas Compatíveis</h2>
-              <p className="text-[10px] text-zinc-400 font-medium">
-                Acorde de referência fretado no braço: <span className="text-purple-300 font-bold">{getChordName(activeChord)}</span>
-              </p>
-            </div>
-          </div>
-          {localActiveScale && (
-            <button
-              onClick={() => setLocalActiveScale(null)}
-              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer transition active:scale-95"
-            >
-              <EyeOff className="h-3 w-3" />
-              Limpar Filtro do Braço
-            </button>
-          )}
+        <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
+          {sharedContent}
         </div>
-
-        {/* Conteúdo Principal com scroll interno */}
-        <div className="flex-1 overflow-y-auto mt-4 pr-1 flex flex-col gap-4 scrollbar-thin">
-          {compatibleScales.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              
-              {/* Parte Superior: Lista e Detalhes Lado a Lado */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                
-                {/* Lado Esquerdo (col-span-7): Lista de Escalas */}
-                <div className="lg:col-span-7 flex flex-col gap-2">
-                  <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider mb-1 select-none">Opções Compatíveis</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
-                    {compatibleScales.map(scale => {
-                      const isActive = localActiveScale && localActiveScale.name === scale.name;
-                      
-                      return (
-                        <div
-                          key={scale.name}
-                          onClick={() => toggleScaleOverlay(scale)}
-                          className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                            isActive 
-                              ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_15px_rgba(255,78,140,0.1)] scale-[1.01]" 
-                              : "bg-zinc-950 border-zinc-850 hover:bg-zinc-900/40 hover:border-zinc-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-zinc-200">{scale.name}</span>
-                            <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider transition-colors ${
-                              isActive 
-                                ? "bg-purple-650 text-white" 
-                                : "bg-zinc-850 text-zinc-400"
-                            }`}>
-                              {isActive ? "Filtro Ativo" : "Mapear"}
-                            </span>
-                          </div>
- 
-                          {/* Notas */}
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {scale.notes.map((note, idx) => (
-                              <span
-                                key={`${note}-${idx}`}
-                                className={`text-[9px] font-black w-4.5 h-4.5 rounded flex items-center justify-center transition-all ${
-                                  idx === 0 
-                                    ? "bg-rose-950 border border-rose-800 text-rose-300" 
-                                    : "bg-zinc-900 text-zinc-300 border border-zinc-800/40"
-                                }`}
-                              >
-                                {note}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
- 
-                {/* Lado Direito (col-span-5): Guia do Improvisador Contextual */}
-                <div className="lg:col-span-5 h-full">
-                  {localActiveScale ? (() => {
-                    const scaleType = localActiveScale.type;
-                    let info = SCALE_DESCRIPTIONS[scaleType];
-                    
-                    if (!info) {
-                      const matchedKey = Object.keys(SCALE_DESCRIPTIONS).find(k => scaleType.includes(k));
-                      if (matchedKey) info = SCALE_DESCRIPTIONS[matchedKey];
-                    }
-
-                    if (!info) {
-                      info = {
-                        desc: `Escala de improvisação perfeitamente sintonizada com a tônica e características do acorde.`,
-                        mood: "Combinação harmônica fluida que expande a paleta de cores musicais.",
-                        tip: "Toque melodias explorando a alternância entre notas estruturais (tônica, terça e quinta) e extensões cromáticas."
-                      };
-                    }
-                    
-                    const lick = SUGGESTED_LICKS[scaleType];
-                    
-                    return (
-                      <div className="p-4 rounded-xl border border-purple-500/25 bg-purple-950/15 text-zinc-300 shadow-inner flex flex-col gap-3.5 animate-scale-up h-full justify-between select-none">
-                        <div className="flex flex-col gap-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <BookOpen className="h-3.5 w-3.5 text-purple-400" />
-                            <span className="text-[9px] font-black uppercase text-purple-400 tracking-wider">
-                              Guia do Improvisador
-                            </span>
-                          </div>
-                          <p className="text-xs font-extrabold text-zinc-100 leading-snug">
-                            {info.desc}
-                          </p>
-                          <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-zinc-800/40 text-[10px]">
-                            <div className="leading-tight">
-                              <span className="font-black text-purple-400 uppercase tracking-wider">✨ Mood: </span>
-                              <span className="text-zinc-300 font-semibold">{info.mood}</span>
-                            </div>
-                            <div className="leading-tight mt-1">
-                              <span className="font-black text-purple-400 uppercase tracking-wider">💡 Segredo: </span>
-                              <span className="text-zinc-300 font-semibold">{info.tip}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Bloco de Lick Sugerido (Conceitual) */}
-                        {lick && (
-                          <div className="flex flex-col gap-2 mt-2.5 pt-2.5 border-t border-purple-500/25 animate-fade-in">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                                <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider">
-                                  Lick / Frase de Estudo ({lick.school})
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => playLickSequence(lick.intervals)}
-                                className="flex items-center gap-1 text-[8.5px] font-black px-2.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(245,158,11,0.2)] hover:scale-105"
-                                title="Ouvir frase arpejada"
-                              >
-                                ▶ Ouvir
-                              </button>
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[10px] font-black text-zinc-100 leading-tight">
-                                {lick.name}
-                              </span>
-                              <p className="text-[9.5px] text-zinc-400 leading-relaxed font-semibold">
-                                {lick.theoryDesc}
-                              </p>
-                            </div>
-                            {/* Notas do Lick Transpostas */}
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {lick.intervals.map((interval, idx) => {
-                                const noteName = TonalNote.simplify(
-                                  TonalNote.transpose(`${activeChord.root}4`, interval)
-                                ).replace(/\d/, "");
-                                return (
-                                  <span
-                                    key={`${interval}-${idx}`}
-                                    className="text-[8.5px] font-black px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-amber-300 shadow-[0_0_2px_rgba(0,0,0,0.5)]"
-                                  >
-                                    {noteName}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })() : (
-                    <div className="h-[220px] rounded-xl border border-dashed border-zinc-850 flex flex-col items-center justify-center p-6 text-center text-zinc-500 text-xs italic gap-1 select-none">
-                      <Sparkles className="h-5 w-5 text-zinc-700 animate-pulse" />
-                      <span>Selecione uma escala ao lado para acender as dicas harmônicas e o braço da guitarra abaixo!</span>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Parte Inferior: O Fretboard da Escala Ativa */}
-              {renderScaleFretboard()}
-
-            </div>
-          ) : (
-            <div className="text-zinc-500 text-xs py-12 text-center border border-dashed border-zinc-850 rounded-xl select-none">
-              Nenhuma escala compatível óbvia para esta qualidade de acorde.
-            </div>
-          )}
-        </div>
-
       </div>
     </div>
   );

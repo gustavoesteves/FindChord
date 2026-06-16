@@ -7,6 +7,7 @@ import type { ChordQuality } from "../utils/music/constants/chordRegistry";
 import type { VoicingShape } from "../utils/music/models/VoicingShape";
 import { clearVoicingCache } from "../utils/music/generation/voicingGenerator";
 import { harmonyEngine } from "../utils/music/harmonyEngine";
+import type { ScoreSnapshot } from "../utils/music/analysis/models/ScoreSnapshot";
 
 export interface FretPosition {
   stringIndex: number; // 0 (1ª corda - E4) a 5 (6ª corda - E2)
@@ -130,6 +131,9 @@ interface ChordStore {
   isPlaying: boolean;
   bpm: number;
   userCustomVoicings: Record<number, VoicingShape>; // Dedilhados customizados salvos pelo usuário
+
+  // --- SCORE SYNC ---
+  scoreSnapshot: ScoreSnapshot | null; // Fonte única de verdade da partitura
   
   // --- AÇÕES ---
   setInstrument: (name: string) => void;
@@ -159,6 +163,8 @@ interface ChordStore {
   setBpm: (bpm: number) => void;
   updateTimelineVoicings: () => void;
   saveCustomVoicingToTimeline: (index: number, voicing: VoicingShape, chordName: string) => void;
+  
+  setScoreSnapshot: (snapshot: ScoreSnapshot | null) => void;
 }
 
 export const useChordStore = create<ChordStore>((set, get) => {
@@ -227,6 +233,9 @@ export const useChordStore = create<ChordStore>((set, get) => {
     isPlaying: false,
     bpm: 120,
     userCustomVoicings: {},
+
+    // --- SCORE SYNC ---
+    scoreSnapshot: null,
 
     // --- AÇÕES ---
     setInstrument: (name) => {
@@ -540,6 +549,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
         progressionChords: currentChords
       });
       get().updateTimelineVoicings();
+    },
+
+    setScoreSnapshot: (snapshot) => {
+      set({ scoreSnapshot: snapshot });
     }
   };
 });

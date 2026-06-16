@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useBuilder } from "./context/BuilderContext";
+import { useChordStore } from "../../store/useChordStore";
+import { CHORD_REGISTRY } from "../../utils/music/constants/chordRegistry";
 import { getNoteAt } from "../../utils/music/core/notes";
 import { playGuitarNote } from "../../utils/audioSynth";
 import { noteToMidi } from "../../utils/music/core/midi";
 import { musescoreAdapter } from "../../utils/musescoreAdapter";
+import { getPitchClass } from "../../utils/music/core/pitch";
 import type { CanonicalChordEvent } from "../../utils/music/analysis/models/CanonicalChordEvent";
 import { Volume2, RotateCcw, Send } from "lucide-react";
 
@@ -88,31 +91,76 @@ export const VirtualFretboard: React.FC = () => {
     }
   };
 
-  // Geometria Fretboard
-  const width = 860;
-  const height = 40 + (state.tuning.length - 1) * 32;
-  const fretCount = 15; // 15 trastes
-  const fretWidth = (width - 40) / fretCount;
-  const nutWidth = 30;
+  // Mapear marcadores clássicos de escala no braço
+  const FRET_MARKERS = [3, 5, 7, 9, 15, 17, 19, 21];
+  const DOUBLE_FRET_MARKERS = [12, 24];
+
+  // Geometria Fretboard (24 Trastes para consistência estética com o Harmony Lab)
+  const width = 1360;
+  const height = 40 + (state.tuning.length - 1) * 36;
+  const fretCount = 24;
+  const fretWidth = (width - 60) / fretCount;
+  const nutWidth = 40;
+
+  const { activeScale, fretboardExplorerMode } = useChordStore();
+
+  const activeChord = state.activeChord;
+  const activeChordRootPC = activeChord ? getPitchClass(activeChord.root) : -1;
+
+  const activeChordPCs = activeChord && activeChord.quality in CHORD_REGISTRY
+    ? CHORD_REGISTRY[activeChord.quality as keyof typeof CHORD_REGISTRY].semitones.map(s => (activeChordRootPC + s) % 12)
+    : [];
+
+  // Retorna a cor correspondente ao grau relativo de um pitch class em formato HEX para SVG Fills
+  const getNoteColor = (notePC: number, rootPC: number): string => {
+    if (notePC === rootPC) return "#0165e7"; // Tônica (Azul Fretastic)
+    
+    // Distância em semitons da tônica
+    const intervalDist = (notePC - rootPC + 12) % 12;
+    switch (intervalDist) {
+      case 3: // Terça menor
+      case 4: // Terça Maior
+        return "#ff4e8c"; // Terça (Pink Fretastic)
+      case 5: // Quarta justa
+      case 6: // Quinta diminuta
+      case 7: // Quinta Justa
+      case 8: // Quinta aumentada / sexta menor
+        return "#00FF88"; // Quinta (Verde Esmeralda)
+      case 10: // Sétima menor
+      case 11: // Sétima Maior
+        return "#BD00FF"; // Sétima (Roxo/Violeta)
+      default: // Extensões
+        return "#FF9900"; // Extensões (Laranja Âmbar)
+    }
+  };
+
+  // Retorna o grau simplificado relativo à tônica
+  const getDegreeLabel = (notePC: number, rootPC: number): string => {
+    if (notePC === rootPC) return "R";
+    const dist = (notePC - rootPC + 12) % 12;
+    const mapping: Record<number, string> = {
+      1: "b9", 2: "9", 3: "b3", 4: "3", 5: "11", 6: "#11", 7: "5", 8: "b13", 9: "13", 10: "b7", 11: "7"
+    };
+    return mapping[dist] || `${dist}`;
+  };
 
   return (
-    <div className="w-full p-5 rounded-2xl border border-zinc-850 bg-zinc-900/40 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-3 animate-scale-up">
       {/* Header Fretboard */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-        <div className="flex flex-col">
-          <h2 className="text-sm font-extrabold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-            {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço Virtual (15 Trastes)"}
-          </h2>
-          <p className="text-[10px] text-zinc-400 leading-normal mt-0.5">
-            Clique nas casas para pressionar notas. Clique nos botões "×" à esquerda do braço para abafar as cordas.
-          </p>
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold tracking-wider uppercase text-zinc-400">
+            {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço Virtual (24 Trastes)"}
+          </span>
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
         </div>
 
+        {/* Ações do Braço */}
         <div className="flex items-center gap-2">
           {state.activeChord && (
             <button
               onClick={handleSendToMuseScore}
-              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-650 hover:brightness-110 text-white font-extrabold text-xs rounded-lg flex items-center gap-1.5 shadow-md hover:shadow-purple-950/25 active:scale-[0.98] transition cursor-pointer animate-scale-up"
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-600 to-pink-650 hover:brightness-110 text-white shadow-md active:scale-95 transition cursor-pointer"
               title="Enviar acorde atual ao MuseScore"
             >
               <Send className="h-3.5 w-3.5" />
@@ -123,104 +171,163 @@ export const VirtualFretboard: React.FC = () => {
           <button
             onClick={playCurrentFretboard}
             disabled={state.selectedFrets.every(f => f === null)}
-            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg border border-zinc-700/60 hover:text-white transition disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 border border-zinc-700/60 hover:bg-zinc-700 text-zinc-200 cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed"
             title="Tocar dedilhado"
           >
-            <Volume2 className="h-4 w-4" />
+            <Volume2 className="h-3.5 w-3.5" />
+            Tocar Acorde do Braço
           </button>
+
           <button
             onClick={actions.clearFretboard}
-            className="p-2 bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-lg border border-zinc-900 transition cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-950 border border-zinc-900 hover:bg-zinc-900 hover:text-white text-zinc-400 cursor-pointer transition active:scale-95 shadow-sm"
             title="Limpar braço"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-3.5 w-3.5" />
+            Limpar Braço
           </button>
         </div>
       </div>
 
       {/* SVG Fretboard */}
-      <div className="w-full overflow-x-auto p-2 border border-zinc-800 bg-zinc-950/80 rounded-xl relative select-none">
-        <div className="min-w-[860px] relative">
+      <div className="w-full overflow-x-auto rounded-xl border border-zinc-800/80 glass-panel p-4 shadow-2xl relative select-none">
+        
+        {/* Braço Principal em SVG */}
+        <div className="min-w-[1360px] relative fretboard-wood">
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-            {/* Background da escala de madeira escura */}
-            <rect x={nutWidth} y="8" width={width - nutWidth} height={height - 16} fill="#1d1d1f" rx="3" />
-            
-            {/* Pestana de metal */}
-            <rect x={nutWidth - 4} y="6" width="4" height={height - 12} fill="#555" rx="1" />
-            
-            {/* Desenhar trastes */}
-            {Array.from({ length: fretCount }).map((_, idx) => {
-              const x = nutWidth + (idx + 1) * fretWidth;
-              return <line key={idx} x1={x} y1="8" x2={x} y2={height - 8} stroke="hsl(0, 0%, 25%)" strokeWidth="1.5" />;
-            })}
+            {/* Definições de gradiente e estilos */}
+            <defs>
+              <linearGradient id="fretboard-wood-grad-builder" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#252528" />
+                <stop offset="50%" stopColor="#1a1a1c" />
+                <stop offset="100%" stopColor="#131315" />
+              </linearGradient>
+              <linearGradient id="nut-grad-builder" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#444" />
+                <stop offset="50%" stopColor="#777" />
+                <stop offset="100%" stopColor="#222" />
+              </linearGradient>
+              <radialGradient id="inlay-glow-builder" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FFF" stopOpacity="0.9" />
+                <stop offset="70%" stopColor="#E5E5DB" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#B5B5A5" stopOpacity="0.2" />
+              </radialGradient>
+            </defs>
 
-            {/* Marcadores de bolinha tradicionais (casas 3, 5, 7, 9, 15) */}
-            {[3, 5, 7, 9, 15].map(f => {
-              const x = nutWidth + (f - 0.5) * fretWidth;
-              return <circle key={f} cx={x} cy={height / 2} r="4" fill="#555" opacity="0.6" />;
-            })}
-            
-            {/* Marcador duplo casa 12 */}
-            {(() => {
-              const x = nutWidth + (12 - 0.5) * fretWidth;
-              return (
-                <g>
-                  <circle cx={x} cy={height / 2 - 20} r="3.5" fill="#555" opacity="0.6" />
-                  <circle cx={x} cy={height / 2 + 20} r="3.5" fill="#555" opacity="0.6" />
-                </g>
-              );
-            })()}
+            {/* Madeira do Braço */}
+            <rect 
+              x={nutWidth} 
+              y="10" 
+              width={width - nutWidth} 
+              height={height - 20} 
+              fill="url(#fretboard-wood-grad-builder)"
+              rx="4"
+            />
 
-            {/* Desenhar Cordas Metálicas */}
-            {state.tuning.map((_, idx) => {
-              const y = 20 + idx * 32;
-              const isVibrating = vibratingStrings[idx];
+            {/* Marcadores de Traste (Fret Inlays) */}
+            {FRET_MARKERS.map(fret => {
+              const x = nutWidth + (fret - 0.5) * fretWidth;
               return (
-                <line 
-                  key={idx} 
-                  x1="0" 
-                  y1={y} 
-                  x2={width} 
-                  y2={y} 
-                  stroke={isVibrating ? "#FFFFFF" : "hsl(0, 0%, 35%)"} 
-                  strokeWidth={1 + idx * 0.4} 
-                  opacity={isVibrating ? 1.0 : 0.6}
-                  className={isVibrating ? "animate-pulse" : ""}
+                <circle 
+                  key={`inlay-b-${fret}`}
+                  cx={x} 
+                  cy={height / 2} 
+                  r="6" 
+                  fill="url(#inlay-glow-builder)"
                 />
               );
             })}
 
-            {/* Área invisível de detecção de clique por traste */}
-            {state.tuning.map((_, stringIdx) => {
-              const y = 20 + stringIdx * 32;
+            {/* Marcadores Duplos */}
+            {DOUBLE_FRET_MARKERS.map(fret => {
+              const x = nutWidth + (fret - 0.5) * fretWidth;
               return (
-                <g key={stringIdx}>
-                  {/* Casa 0 (solta) no nut */}
+                <g key={`inlay-double-b-${fret}`}>
+                  <circle cx={x} cy={height / 2 - 40} r="5.5" fill="url(#inlay-glow-builder)" />
+                  <circle cx={x} cy={height / 2 + 40} r="5.5" fill="url(#inlay-glow-builder)" />
+                </g>
+              );
+            })}
+
+            {/* Trastes Metálicos */}
+            <rect 
+              x={nutWidth - 6} 
+              y="8" 
+              width="6" 
+              height={height - 16} 
+              fill="url(#nut-grad-builder)"
+              rx="1"
+            />
+
+            {Array.from({ length: fretCount }).map((_, idx) => {
+              const x = nutWidth + (idx + 1) * fretWidth;
+              return (
+                <line 
+                  key={`fret-b-${idx + 1}`}
+                  x1={x}
+                  y1="10"
+                  x2={x}
+                  y2={height - 10}
+                  stroke="hsl(0, 0%, 27%)"
+                  strokeWidth="1.5"
+                />
+              );
+            })}
+
+            {/* Cordas */}
+            {state.tuning.map((_, idx) => {
+              const y = 20 + idx * 36;
+              const gauge = 0.8 + idx * 0.5;
+              const isVibrating = vibratingStrings[idx];
+              
+              return (
+                <line 
+                  key={`string-b-${idx}`}
+                  x1="0" 
+                  y1={y} 
+                  x2={width} 
+                  y2={y} 
+                  stroke={isVibrating ? "#FFFFFF" : "hsl(0, 0%, 37%)"} 
+                  strokeWidth={gauge} 
+                  opacity={isVibrating ? 1.0 : 0.7 - idx * 0.04}
+                  className={isVibrating ? "animate-vibrate" : ""}
+                />
+              );
+            })}
+
+            {/* Área interativa invisível */}
+            {state.tuning.map((_, stringIdx) => {
+              const y = 20 + stringIdx * 36;
+
+              return (
+                <g key={`click-row-b-${stringIdx}`}>
                   <rect 
                     x="0" 
-                    y={y - 16} 
+                    y={y - 18} 
                     width={nutWidth} 
-                    height="32" 
+                    height="36" 
                     fill="transparent" 
-                    className="cursor-pointer hover:fill-zinc-800/20"
+                    className="cursor-pointer hover:fill-zinc-800/10"
                     onClick={() => {
                       const isCurrentlyFretted = state.selectedFrets[stringIdx] === 0;
                       if (!isCurrentlyFretted) triggerStringPlay(stringIdx, getNoteAt(state.tuning[stringIdx], 0));
                       actions.toggleFret(stringIdx, 0);
                     }}
                   />
-                  {/* Trastes de 1 a 15 */}
+
                   {Array.from({ length: fretCount }).map((_, fretIdx) => {
                     const fret = fretIdx + 1;
+                    const xStart = nutWidth + fretIdx * fretWidth;
+                    
                     return (
-                      <rect
-                        key={fret}
-                        x={nutWidth + fretIdx * fretWidth}
-                        y={y - 16}
-                        width={fretWidth}
-                        height="32"
-                        fill="transparent"
-                        className="cursor-pointer hover:fill-zinc-700/10"
+                      <rect 
+                        key={`click-b-${stringIdx}-${fret}`}
+                        x={xStart} 
+                        y={y - 18} 
+                        width={fretWidth} 
+                        height="36" 
+                        fill="transparent" 
+                        className="cursor-pointer hover:fill-zinc-400/5 transition-colors"
                         onClick={() => {
                           const isCurrentlyFretted = state.selectedFrets[stringIdx] === fret;
                           if (!isCurrentlyFretted) triggerStringPlay(stringIdx, getNoteAt(state.tuning[stringIdx], fret));
@@ -233,45 +340,171 @@ export const VirtualFretboard: React.FC = () => {
               );
             })}
 
-            {/* Notas Pressionadas (Círculos coloridos) */}
+            {/* 6. Renderização dos Marcadores de Notas no SVG */}
             {state.tuning.map((_, stringIdx) => {
-              const y = 20 + stringIdx * 32;
+              const y = 20 + stringIdx * 36;
+              const baseNote = state.tuning[stringIdx];
               const selectedFret = state.selectedFrets[stringIdx];
-              if (selectedFret === null) return null;
 
-              const x = selectedFret === 0 
-                ? nutWidth / 2 
-                : nutWidth + (selectedFret - 0.5) * fretWidth;
-
-              const noteName = getNoteAt(state.tuning[stringIdx], selectedFret);
-
+              // Desenhar as notas do braço baseado no modo ativo
               return (
-                <g key={stringIdx} className="pointer-events-none">
-                  <circle cx={x} cy={y} r="11" fill="#a855f7" className="stroke-2 stroke-zinc-950" style={{ filter: "drop-shadow(0 0 6px #a855f7)" }} />
-                  <text x={x} y={y + 3.5} textAnchor="middle" fontSize="9" fontWeight="900" fill="#FFF">{noteName.replace(/\d/, "")}</text>
+                <g key={`marks-row-b-${stringIdx}`}>
+                  {/* Trastes 0 a 24 */}
+                  {Array.from({ length: fretCount + 1 }).map((_, fret) => {
+                    const noteName = getNoteAt(baseNote, fret);
+                    const notePC = getPitchClass(noteName);
+                    
+                    // Posição x centralizada no traste
+                    const x = fret === 0 
+                      ? nutWidth / 2 
+                      : nutWidth + (fret - 0.5) * fretWidth;
+
+                    const isFretted = selectedFret === fret;
+
+                    // --- 1. MODO FRETBOARD EXPLORER (Highlights do acorde ativo) ---
+                    if (fretboardExplorerMode && activeChord && activeChordPCs.includes(notePC)) {
+                      // Se além de estar no acorde, o traste está ativado, desenhamos com maior brilho
+                      const opacity = isFretted ? "opacity-100" : "opacity-40 hover:opacity-90";
+                      const size = isFretted ? 14 : 11;
+
+                      return (
+                        <g key={`explorer-b-${stringIdx}-${fret}`} className={`transition-all duration-300 pointer-events-none ${opacity}`}>
+                          <circle 
+                            cx={x} 
+                            cy={y} 
+                            r={size} 
+                            className="stroke-2 stroke-zinc-900 shadow-lg"
+                            style={{ 
+                              fill: getNoteColor(notePC, activeChordRootPC),
+                              filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" 
+                            }}
+                          />
+                          <text 
+                            x={x} 
+                            y={y + 3.5} 
+                            textAnchor="middle" 
+                            fontSize={isFretted ? "10" : "8.5"} 
+                            fontWeight="800" 
+                            fill="#FFFFFF"
+                          >
+                            {getDegreeLabel(notePC, activeChordRootPC)}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    // --- 2. MODO SCALE OVERLAY (Notas da escala selecionada acesas) ---
+                    if (activeScale && activeScale.notes.map(n => getPitchClass(n)).includes(notePC)) {
+                      const scaleRootPC = getPitchClass(activeScale.notes[0]);
+                      const opacity = isFretted ? "opacity-100" : "opacity-45 hover:opacity-95";
+                      const size = isFretted ? 14 : 11;
+
+                      return (
+                        <g key={`scale-b-${stringIdx}-${fret}`} className={`transition-all duration-300 pointer-events-none ${opacity}`}>
+                          <circle 
+                            cx={x} 
+                            cy={y} 
+                            r={size} 
+                            className="stroke-2 stroke-zinc-900"
+                            style={{ fill: getNoteColor(notePC, scaleRootPC) }}
+                          />
+                          <text 
+                            x={x} 
+                            y={y + 3.5} 
+                            textAnchor="middle" 
+                            fontSize={isFretted ? "10" : "8.5"} 
+                            fontWeight="800" 
+                            fill="#FFFFFF"
+                          >
+                            {getDegreeLabel(notePC, scaleRootPC)}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    // --- 3. MODO DE ENTRADA LIVRE (Desenha apenas a nota ativada fisicamente) ---
+                    if (isFretted) {
+                      // Se houver um acorde ativo detectado, colorimos com base no intervalo harmônico do acorde principal
+                      // Caso contrário, usamos cor padrão (tônica genérica azul)
+                      const circleColor = activeChord 
+                        ? getNoteColor(notePC, activeChordRootPC) 
+                        : "#0165e7";
+
+                      const displayNoteName = activeChord
+                        ? activeChord.notes.find(n => getPitchClass(n) === notePC) || noteName.replace(/\d/, "")
+                        : noteName.replace(/\d/, "");
+
+                      return (
+                        <g 
+                          key={`fretted-b-${stringIdx}-${fret}`} 
+                          className="pointer-events-none"
+                        >
+                          <circle 
+                            cx={x} 
+                            cy={y} 
+                            r="13.5" 
+                            className="stroke-2 stroke-zinc-900 animate-scale-up"
+                            style={{ 
+                              fill: circleColor,
+                              filter: `drop-shadow(0 0 8px ${circleColor})` 
+                            }}
+                          />
+                          <text 
+                            x={x} 
+                            y={y + 4} 
+                            textAnchor="middle" 
+                            fontSize="10" 
+                            fontWeight="900" 
+                            fill="#FFFFFF"
+                          >
+                            {displayNoteName}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    return null;
+                  })}
                 </g>
               );
             })}
           </svg>
+        </div>
 
-          {/* Botões Mute rápidos no Nut esquerdo */}
-          <div className="absolute left-0.5 top-[20px] bottom-[20px] flex flex-col justify-between py-1 bg-zinc-950 border-r border-zinc-900 rounded-l-md">
-            {state.tuning.map((_, idx) => {
-              const isMuted = state.selectedFrets[idx] === null;
-              return (
+        {/* Botões Mute rápidos no Nut esquerdo */}
+        <div className="absolute left-1 top-[20px] bottom-[20px] flex flex-col justify-between py-1 bg-[#121216]/90 border-r border-zinc-800/80 px-2 rounded-l-lg pointer-events-auto">
+          {state.tuning.map((_, idx) => {
+            const isMuted = state.selectedFrets[idx] === null;
+            const isOpen = state.selectedFrets[idx] === 0;
+
+            return (
+              <div key={`nut-control-b-${idx}`} className="flex flex-col items-center justify-center h-9">
                 <button
-                  key={idx}
-                  onClick={() => actions.muteString(idx)}
-                  className={`w-5 h-5 flex items-center justify-center text-[10px] font-bold border rounded transition cursor-pointer ${isMuted ? "bg-zinc-900 border-zinc-800 text-zinc-500" : "bg-purple-950/45 border-purple-800 text-purple-400"}`}
-                  title={isMuted ? "Tocar corda" : "Abafar corda"}
+                  onClick={() => {
+                    if (isMuted) {
+                      actions.toggleFret(idx, 0);
+                    } else if (isOpen) {
+                      actions.muteString(idx);
+                    } else {
+                      actions.muteString(idx);
+                    }
+                  }}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold transition border cursor-pointer ${
+                    isMuted 
+                      ? "bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300" 
+                      : isOpen 
+                        ? "bg-emerald-950/80 border-emerald-700/60 text-emerald-400" 
+                        : "bg-zinc-800 border-zinc-700 text-zinc-300"
+                  }`}
+                  title={isMuted ? "Corda Mutada (Clique para soltar)" : "Corda Ativa (Clique para mutar)"}
                 >
-                  {isMuted ? "×" : "•"}
+                  {isMuted ? "×" : isOpen ? "0" : "•"}
                 </button>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
-  );
+);
 };

@@ -176,7 +176,7 @@ export const VoicingSearchLayer: React.FC = () => {
   };
 
   return (
-    <div className="p-5 rounded-2xl border border-zinc-850 bg-zinc-900/40 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {/* Header do buscador */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800 pb-3 gap-3">
         <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export const VoicingSearchLayer: React.FC = () => {
       {/* Grid de Formatos/Shapes */}
       {activeChord ? (
         processedVoicings.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 gap-4 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin select-none py-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 gap-4 overflow-y-auto pr-1 scrollbar-thin select-none py-1">
             {processedVoicings.map((voicing, idx) => {
               const isSelected = selectedFrets.every((f, index) => f === voicing.frets[index]);
               const ergScore = getErgonomicScore(voicing);

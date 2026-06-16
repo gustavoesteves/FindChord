@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 interface ExplorerProps {
-  setCurrentTab: (tab: "lab" | "playground" | "builder" | "explorer") => void;
+  setCurrentTab: (tab: "lab" | "builder" | "explorer") => void;
 }
 
 const ROOT_OPTIONS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];

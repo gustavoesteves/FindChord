@@ -1,91 +1,66 @@
-import type { FunctionalChord } from '../models/FunctionalAnalysis';
+import type { FunctionalAnalysis } from '../models/FunctionalAnalysis';
 import type {
-  HarmonicNarrativeFacts,
   HarmonicNarrativeExplanation,
   ChordExplanation,
-
-  PeriodRelationFact,
-  StandalonePhraseFact,
   SecondaryDominantPreparationFact,
   PrimaryDominantResolutionFact,
   ModalBorrowingColorationFact,
-  RegionalModulationFact,
   PhraseOpeningProlongationFact
 } from '../models/HarmonicNarrative';
+
+import { generateGlobalNarrative } from './globalNarrativeEngine';
+import { inferGlobalHarmonicArc } from './harmonicArcEngine';
 
 /**
  * Compila os fatos narrativos estruturados em explicações em linguagem natural (F9B).
  * 
- * @param facts - Fatos harmônicos extraídos do grafo
- * @param chords - Lista de acordes funcionais da progressão
- * @returns HarmonicNarrativeExplanation contendo a visão geral e explicações por acorde
+ * @param analysis - Objeto FunctionalAnalysis completo contendo fatos, acordes, seções e sumário.
+ * @returns HarmonicNarrativeExplanation contendo a visão macro (global), meso (sections), e micro (chords).
  */
 export function compileNarrativeExplanation(
-  facts: HarmonicNarrativeFacts,
-  chords: FunctionalChord[]
+  analysis: FunctionalAnalysis
 ): HarmonicNarrativeExplanation {
-  // 1. COMPILAÇÃO DA VISÃO GERAL (OVERVIEW)
-  const overviewParts: string[] = [];
+  const { narrativeFacts: facts, chords, analyticalSections } = analysis;
+  if (!facts) throw new Error("narrativeFacts missing in FunctionalAnalysis");
 
-  if (facts.overviewFacts.length === 0) {
-    overviewParts.push(
-      "Esta progressão harmônica apresenta um fluxo contínuo. A condução de vozes e a distribuição das funções harmônicas criam um senso de equilíbrio e coesão diatônica."
-    );
-  } else {
-    facts.overviewFacts.forEach((fact) => {
-      if (fact.type === 'PERIOD_RELATION') {
-        const f = fact as PeriodRelationFact;
-        const periodNamePT = f.periodName === 'Authentic Period' ? 'Período Autêntico' : 
-                             f.periodName === 'Half Period' ? 'Período de Meia Cadência' : f.periodName;
-        
-        overviewParts.push(
-          `A progressão está estruturada na forma de um ${periodNamePT}, estabelecendo uma relação formal de pergunta e resposta entre as frases ${f.antecedentPhraseIndex + 1} (Antecedente) e ${f.consequentPhraseIndex + 1} (Consequente). A frase antecedente gera uma expectativa suspensa que é respondida e plenamente resolvida pela frase consequente.`
-        );
-      } else if (fact.type === 'REGIONAL_MODULATION') {
-        const f = fact as RegionalModulationFact;
-        let relText: string;
+  // 1. MACRO: COMPILAÇÃO DA VISÃO GERAL GLOBAL (Arc & Story)
+  const arc = inferGlobalHarmonicArc(analysis);
+  const globalNarrative = generateGlobalNarrative(analysis);
 
-        switch (f.relation) {
-          case 'RELATIVE':
-            relText = 'relação relativa';
-            break;
-          case 'PARALLEL':
-            relText = 'relação homônima (paralela)';
-            break;
-          case 'DOMINANT':
-            relText = 'relação de dominante (quinto grau)';
-            break;
-          case 'SUBDOMINANT':
-            relText = 'relação de subdominante (quarto grau)';
-            break;
-          case 'MEDIANT':
-            relText = 'relação de mediante';
-            break;
-          case 'CHROMATIC_MEDIANT':
-            relText = 'relação de mediante cromática';
-            break;
-          case 'TRITONE':
-            relText = 'relação de trítono (distante)';
-            break;
-          default:
-            relText = 'região distante';
-        }
+  // 2. MESO: COMPILAÇÃO DAS SEÇÕES
+  const sectionsArray: Array<{ label: string; prose: string }> = [];
+
+  if (analyticalSections && analyticalSections.length > 0) {
+    // F12-C2: Narrativa guiada por Fatos da Seção (Musical Meaning)
+    analyticalSections.forEach(aSec => {
+      if (!aSec.facts.state) return;
+      
+      const label = aSec.section.label || 'A seção';
+      const { tonalClarity, stability, tensionTrend, closureLevel, directionality } = aSec.facts.state;
+      let prose = '';
+
+      if (tonalClarity === 'ambiguous' && (closureLevel === 'open' || closureLevel === 'partial')) {
+        prose = `A ${label} evita afirmar imediatamente um único centro tonal. A alternância entre regiões próximas cria uma sensação de abertura e expectativa, deixando a resolução para a seção seguinte.`;
+      } else if (stability === 'high' && closureLevel === 'resolved') {
+        prose = `A ${label} consolida o discurso harmônico. As resoluções reforçam a estabilidade do centro tonal e estabelecem uma sensação clara de chegada.`;
+      } else if (stability === 'low' && tensionTrend === 'rising') {
+        prose = `A ${label} rompe temporariamente o equilíbrio construído anteriormente. O aumento da instabilidade e a ausência de fechamento conclusivo ampliam a tensão antes do próximo movimento da obra.`;
+      } else if (tonalClarity === 'clear' && tensionTrend === 'rising') {
+        prose = `A ${label} mantém a clareza da identidade tonal principal, porém aumenta progressivamente a expectativa direcional, impulsionando o discurso em direção a um clímax ou retorno.`;
+      } else {
+        const clarityText = tonalClarity === 'clear' ? "estabelece firmeza tonal" : tonalClarity === 'shifting' ? "oscila fluidamente entre centros tonais" : "constrói uma identidade tonal ambígua";
+        const tensionText = tensionTrend === 'rising' ? "expandindo a sensação de expectativa" : tensionTrend === 'falling' ? "trazendo a energia de volta ao repouso" : tensionTrend === 'fluctuating' ? "alternando momentos de atração e alívio" : "mantendo um nível de tensão estático";
+        const directionText = directionality === 'forward-moving' ? "A seção parece caminhar constantemente em direção a uma chegada" : directionality === 'suspended' ? "O trecho flutua sem buscar repouso imediato" : directionality === 'returning' ? "O discurso recolhe a energia gravitando de volta" : "A base se assenta de forma estável";
+        const closureText = closureLevel === 'resolved' ? "encerrando com uma percepção clara de conclusão." : closureLevel === 'partial' ? "terminando em suspensão parcial." : closureLevel === 'deceptive' ? "desviando a expectativa final do ouvinte." : "mantendo a passagem conectada e em aberto.";
         
-        overviewParts.push(
-          `Ocorre uma modulação regional de ${f.fromKey} para ${f.toKey} (${relText}), adicionando contraste dramático e tensão estrutural ao desenvolvimento da música.`
-        );
-      } else if (fact.type === 'STANDALONE_PHRASE') {
-        const f = fact as StandalonePhraseFact;
-        overviewParts.push(
-          `A Frase ${f.phraseIndex + 1} se comporta como uma estrutura independente e estável, com ponto de partida na tonalidade de ${f.initialKey || 'Tônica'}.`
-        );
+        prose = `A ${label} ${clarityText}, ${tensionText}. ${directionText}, ${closureText}`;
       }
+      
+      sectionsArray.push({ label, prose });
     });
   }
 
-  const overview = overviewParts.join('\n\n');
-
-  // 2. COMPILAÇÃO DE EXPLICAÇÕES POR ACORDE (CHORD-LEVEL)
+  // 3. MICRO: COMPILAÇÃO DE EXPLICAÇÕES POR ACORDE (CHORD-LEVEL)
   const chordExplanations: ChordExplanation[] = chords.map((chord) => {
     const idx = chord.index;
     const cFacts = facts.chordFacts[idx] || [];
@@ -244,7 +219,9 @@ export function compileNarrativeExplanation(
   });
 
   return {
-    overview,
+    global: globalNarrative,
+    arc,
+    sections: sectionsArray.length > 0 ? sectionsArray : undefined,
     chords: chordExplanations
   };
 }

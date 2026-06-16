@@ -68,12 +68,18 @@ export function analyzeFormalStructure(phrases: Phrase[]): PhraseGroup[] {
       p2.formalRole = 'CONSEQUENT';
       p2.phraseGroupId = groupIndex;
 
+      let sectionLabel: string | undefined;
+      if (p1.sectionLabel && p1.sectionLabel === p2.sectionLabel) {
+        sectionLabel = p1.sectionLabel;
+      }
+
       phraseGroups.push({
         index: groupIndex,
         type: 'PERIOD',
         phraseIndices: [i, i + 1],
         confidence,
-        name: periodName
+        name: periodName,
+        sectionLabel
       });
 
       groupIndex++;

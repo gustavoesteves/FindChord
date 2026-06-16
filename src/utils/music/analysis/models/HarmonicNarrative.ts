@@ -1,11 +1,8 @@
 export type NarrativeFactType =
-  | 'PERIOD_RELATION'
-  | 'STANDALONE_PHRASE'
   | 'SECONDARY_DOMINANT_PREPARATION'
   | 'PRIMARY_DOMINANT_RESOLUTION'
   | 'MODAL_BORROWING_COLORATION'
   | 'CHROMATIC_APPROACH_PASSING'
-  | 'REGIONAL_MODULATION'
   | 'PHRASE_OPENING_PROLONGATION'
   | 'PHRASE_PRE_CADENTIAL_PREPARATION';
 
@@ -15,19 +12,7 @@ export interface BaseFact {
   sourceEngine: 'F6' | 'F7' | 'F8' | 'GRAPH'; // Módulo de origem do fato
 }
 
-export interface PeriodRelationFact extends BaseFact {
-  type: 'PERIOD_RELATION';
-  antecedentPhraseIndex: number;
-  consequentPhraseIndex: number;
-  periodName: string;
-  confidence: number;
-}
 
-export interface StandalonePhraseFact extends BaseFact {
-  type: 'STANDALONE_PHRASE';
-  phraseIndex: number;
-  initialKey: string;
-}
 
 export interface SecondaryDominantPreparationFact extends BaseFact {
   type: 'SECONDARY_DOMINANT_PREPARATION';
@@ -58,14 +43,7 @@ export interface ChromaticApproachPassingFact extends BaseFact {
   chordIndex: number;
 }
 
-export interface RegionalModulationFact extends BaseFact {
-  type: 'REGIONAL_MODULATION';
-  sourceRegionIndex: number;
-  targetRegionIndex: number;
-  fromKey: string;
-  toKey: string;
-  relation: string;
-}
+
 
 export interface PhraseOpeningProlongationFact extends BaseFact {
   type: 'PHRASE_OPENING_PROLONGATION';
@@ -79,18 +57,14 @@ export interface PhrasePreCadentialPreparationFact extends BaseFact {
 }
 
 export type NarrativeFact =
-  | PeriodRelationFact
-  | StandalonePhraseFact
   | SecondaryDominantPreparationFact
   | PrimaryDominantResolutionFact
   | ModalBorrowingColorationFact
   | ChromaticApproachPassingFact
-  | RegionalModulationFact
   | PhraseOpeningProlongationFact
   | PhrasePreCadentialPreparationFact;
 
 export interface HarmonicNarrativeFacts {
-  overviewFacts: NarrativeFact[];
   chordFacts: Record<number, NarrativeFact[]>;
 }
 
@@ -102,7 +76,70 @@ export interface ChordExplanation {
   compositionalChoice: string; // Explicação final compilada em PT-BR
 }
 
+export interface NarrativeObservation {
+  type: 'identity' | 'journey' | 'tension' | 'resolution';
+  prose: string;
+  confidence: number;
+}
+
+export interface GlobalNarrative {
+  observations: NarrativeObservation[];
+}
+
 export interface HarmonicNarrativeExplanation {
-  overview: string; // Texto geral em português
+  global: GlobalNarrative;
+  arc?: GlobalHarmonicArc;
+  sections?: Array<{ label: string; prose: string }>;
+  overview?: string; // Fallback legado
   chords: ChordExplanation[];
+}
+
+export interface GlobalHarmonicMeaning {
+  identity: {
+      strength: 'strong'|'moderate'|'weak';
+      reason: string;
+  };
+
+  departure: {
+      strength: 'none'|'brief'|'significant'|'transformative';
+      mechanism: string;
+  };
+
+  return: {
+      strength: 'full'|'partial'|'none';
+      mechanism: string;
+  };
+
+  tension: {
+      profile: 'high-frequency'|'smooth-waves'|'static';
+      source: string;
+  };
+
+  closure: {
+      type: 'resolute'|'open'|'deceptive'|'suspended';
+      reason: string;
+  };
+}
+
+export type HarmonicPhaseType = 
+  | 'ESTABLISHMENT' 
+  | 'CONSOLIDATION' 
+  | 'DESTABILIZATION' 
+  | 'FRAGMENTATION' 
+  | 'EXPANSION' 
+  | 'RECONSTRUCTION' 
+  | 'RESOLUTION'
+  | 'DISSOLUTION';
+
+export interface HarmonicPhase {
+    type: HarmonicPhaseType;
+    confidence: number;
+    causes: string[];
+    startSectionIndex?: number;
+    endSectionIndex?: number;
+    relativeDuration?: 'short' | 'moderate' | 'long';
+}
+
+export interface GlobalHarmonicArc {
+    phases: HarmonicPhase[];
 }

@@ -1,5 +1,6 @@
 import type { CanonicalProgressionEvent } from "../models/CanonicalProgressionEvent";
 import type { InspectorDiagnostic } from "../models/InspectorDiagnostic";
+import type { FunctionalAnalysis } from "../models/FunctionalAnalysis";
 import { analyzeProgression } from "../orchestrators/progressionAnalysis";
 import { runFragilityDiagnostics } from "./rules/FragilityDiagnostic";
 import { runTheoryConflictDiagnostics } from "./rules/TheoryConflictDiagnostic";
@@ -12,7 +13,7 @@ export class InspectorEngine {
   /**
    * Executa a auditoria completa da progressão harmônica de forma puramente observacional.
    */
-  public static inspect(progression: CanonicalProgressionEvent): InspectorDiagnostic[] {
+  public static inspect(progression: CanonicalProgressionEvent, precomputedAnalysis?: FunctionalAnalysis | null): InspectorDiagnostic[] {
     if (!progression || !progression.chordEvents || progression.chordEvents.length === 0) {
       return [];
     }
@@ -21,7 +22,7 @@ export class InspectorEngine {
     const symbols = progression.chordEvents.map(evt => evt.symbol);
 
     // 2. Executar a análise harmônica funcional completa para obter a telemetria do resolvedor (MIG, CFS, ADI, ISS, etc.)
-    const analysis = analyzeProgression(symbols);
+    const analysis = precomputedAnalysis || analyzeProgression(symbols);
 
     // 3. Executar as regras e obter diagnósticos brutos
     const fragilityList = runFragilityDiagnostics(progression, analysis);

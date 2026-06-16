@@ -101,7 +101,7 @@ MuseScore {
             repeat: true
             onTriggered: {
                   checkPendingEvents()
-                  checkSelectionDiagnostics()
+                  // checkSelectionDiagnostics() // Desativado para evitar loop de terminal
             }
       }
 
@@ -182,6 +182,98 @@ MuseScore {
 
             if (event.type === "chord") {
                   transcribeChord(event.data);
+            } else if (event.type === "request_score") {
+                  extractScoreSnapshot();
+            }
+      }
+
+      function extractScoreSnapshot() {
+            var score = curScore;
+            if (!score) {
+                  postLog("Error: curScore is null during extractScoreSnapshot");
+                  return;
+            }
+
+            postLog("Extracting ScoreSnapshot...");
+            var snapshot = {
+                  timestamp: new Date().getTime(),
+                  harmonies: [],
+                  sections: [],
+                  metadata: {
+                        title: score.title || "",
+                        composer: score.composer || "",
+                        measures: 0
+                  }
+            };
+
+            try {
+                  var cursor = score.newCursor();
+                  if (!cursor) {
+                        postLog("Error: Failed to create cursor for extraction.");
+                        return;
+                  }
+
+                  cursor.rewind(0); // SCORE_START
+
+                  var currentMeasure = 1;
+                  var lastSegment = null;
+
+                  while (cursor.segment) {
+                        // Detecta mudança de compasso comparando o parent do segmento (que é o Measure)
+                        if (lastSegment && lastSegment.parent !== cursor.segment.parent) {
+                              currentMeasure++;
+                        }
+                        lastSegment = cursor.segment;
+
+                        var annotations = cursor.segment.annotations;
+                        if (annotations && annotations.length > 0) {
+                              for (var i = 0; i < annotations.length; i++) {
+                                    var ann = annotations[i];
+                                    if (ann.type === Element.HARMONY) {
+                                          var harmonyText = ann.text;
+                                          snapshot.harmonies.push({
+                                                measure: currentMeasure,
+                                                beat: 1, // Placeholder
+                                                harmony: harmonyText
+                                          });
+                                          postLog("Extracted harmony: " + harmonyText + " at measure " + currentMeasure);
+                                    } else if (ann.type === Element.REHEARSAL_MARK || ann.type === 62) {
+                                          var markText = ann.text;
+                                          snapshot.sections.push({
+                                                id: "sec_" + currentMeasure + "_" + i,
+                                                label: markText,
+                                                startMeasure: currentMeasure
+                                          });
+                                          postLog("Extracted section: " + markText + " at measure " + currentMeasure);
+                                    }
+                              }
+                        }
+
+                        if (!cursor.next()) {
+                              break;
+                        }
+                  }
+
+                  snapshot.metadata.measures = currentMeasure;
+
+                  // Infer endMeasures for sections
+                  for (var s = 0; s < snapshot.sections.length; s++) {
+                        if (s < snapshot.sections.length - 1) {
+                              snapshot.sections[s].endMeasure = snapshot.sections[s + 1].startMeasure - 1;
+                        } else {
+                              snapshot.sections[s].endMeasure = currentMeasure; // Last section goes until the end
+                        }
+                  }
+
+                  var doc = new XMLHttpRequest();
+                  doc.open("POST", "http://localhost:9000/api/v1/score", true);
+                  doc.setRequestHeader("Content-Type", "application/json");
+                  doc.send(JSON.stringify(snapshot));
+                  
+                  logText.text = "Partitura Sincronizada: " + snapshot.harmonies.length + " acordes.";
+
+            } catch (err) {
+                  postLog("Error extracting score: " + err.message);
             }
       }
 

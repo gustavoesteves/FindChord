@@ -2,19 +2,15 @@ import type { FunctionalAnalysis } from '../models/FunctionalAnalysis';
 import type {
   HarmonicNarrativeFacts,
   NarrativeFact,
-  PeriodRelationFact,
-  StandalonePhraseFact,
   SecondaryDominantPreparationFact,
   PrimaryDominantResolutionFact,
   ModalBorrowingColorationFact,
   ChromaticApproachPassingFact,
-  RegionalModulationFact,
   PhraseOpeningProlongationFact,
   PhrasePreCadentialPreparationFact
 } from '../models/HarmonicNarrative';
 import { HarmonicGraphEngine } from './knowledgeGraphEngine';
 import { buildHarmonicKnowledgeGraph } from './knowledgeGraphBuilder';
-import { getKeyRelation } from '../../theory/tonalRelations';
 
 /**
  * Analisa o Grafo de Conhecimento Harmônico e extrai fatos estruturados (F9A).
@@ -23,112 +19,14 @@ import { getKeyRelation } from '../../theory/tonalRelations';
  * @returns HarmonicNarrativeFacts com fatos globais e locais
  */
 export function extractNarrativeFacts(analysis: FunctionalAnalysis): HarmonicNarrativeFacts {
-  const overviewFacts: NarrativeFact[] = [];
   const chordFacts: Record<number, NarrativeFact[]> = {};
 
   const graph = analysis.knowledgeGraph || buildHarmonicKnowledgeGraph(analysis);
   const engine = new HarmonicGraphEngine(graph);
 
-  const phraseGroups = engine.getNodesByType('PHRASE_GROUP');
-  const phrases = engine.getNodesByType('PHRASE');
-  const regions = engine.getNodesByType('REGION');
   const chords = engine.getNodesByType('CHORD');
 
   // ──────────────────────────────────────────────────────────────
-  // 1. EXTRAÇÃO DE FATOS GERAIS (OVERVIEW)
-  // ──────────────────────────────────────────────────────────────
-
-  // 1.1 Relações de Período (F8)
-  phraseGroups.forEach((pg) => {
-    if (pg.properties.type === 'PERIOD') {
-      const phraseIndices = pg.properties.phraseIndices as number[];
-      if (phraseIndices && phraseIndices.length >= 2) {
-        const antIdx = phraseIndices[0];
-        const consIdx = phraseIndices[1];
-        
-        overviewFacts.push({
-          type: 'PERIOD_RELATION',
-          priority: 100,
-          sourceEngine: 'F8',
-          antecedentPhraseIndex: antIdx,
-          consequentPhraseIndex: consIdx,
-          periodName: pg.properties.name as string || 'Período',
-          confidence: pg.properties.confidence as number || 1.0
-        } as PeriodRelationFact);
-      }
-    }
-  });
-
-  // 1.2 Frases Independentes (F8)
-  phrases.forEach((phraseNode) => {
-    const phraseIdx = phraseNode.properties.index as number;
-    const isPartOfPeriod = phraseGroups.some((pg) => {
-      if (pg.properties.type === 'PERIOD') {
-        const phraseIndices = pg.properties.phraseIndices as number[];
-        return phraseIndices && phraseIndices.includes(phraseIdx);
-      }
-      return false;
-    });
-
-    if (!isPartOfPeriod) {
-      const startIndex = phraseNode.properties.startIndex as number;
-      const initialChord = analysis.chords[startIndex];
-      let initialKey = '';
-      if (initialChord && initialChord.state) {
-        const modeLabel = initialChord.state.mode === 'IONIAN' ? 'Maior' : 'Menor';
-        initialKey = `${initialChord.state.root} ${modeLabel}`;
-      }
-
-      overviewFacts.push({
-        type: 'STANDALONE_PHRASE',
-        priority: 50,
-        sourceEngine: 'F8',
-        phraseIndex: phraseIdx,
-        initialKey
-      } as StandalonePhraseFact);
-    }
-  });
-
-  // 1.3 Modulações Regionais (Infra-1)
-  regions.forEach((regNode) => {
-    const regIdx = regNode.properties.index as number;
-    const outgoing = engine.getOutgoingRelations(regNode.id);
-    outgoing.forEach((edge) => {
-      if (edge.relation === 'MODULATES_TO') {
-        const targetNode = engine.getNodeById(edge.targetId);
-        if (targetNode && targetNode.type === 'REGION') {
-          const targetIdx = targetNode.properties.index as number;
-
-          const fromRoot = regNode.properties.root as string;
-          const fromMode = regNode.properties.mode as 'MAJOR' | 'MINOR';
-          const toRoot = targetNode.properties.root as string;
-          const toMode = targetNode.properties.mode as 'MAJOR' | 'MINOR';
-
-          const fromKey = `${fromRoot} ${fromMode === 'MAJOR' ? 'Maior' : 'Menor'}`;
-          const toKey = `${toRoot} ${toMode === 'MAJOR' ? 'Maior' : 'Menor'}`;
-
-          const rel = getKeyRelation(
-            { root: fromRoot, mode: fromMode },
-            { root: toRoot, mode: toMode }
-          );
-
-          overviewFacts.push({
-            type: 'REGIONAL_MODULATION',
-            priority: 80,
-            sourceEngine: 'GRAPH',
-            sourceRegionIndex: regIdx,
-            targetRegionIndex: targetIdx,
-            fromKey,
-            toKey,
-            relation: rel
-          } as RegionalModulationFact);
-        }
-      }
-    });
-  });
-
-  // Sort overview facts: Priority descending, then index ascending
-  overviewFacts.sort((a, b) => b.priority - a.priority);
 
   // ──────────────────────────────────────────────────────────────
   // 2. EXTRAÇÃO DE FATOS POR ACORDE (CHORD-LEVEL)
@@ -254,7 +152,6 @@ export function extractNarrativeFacts(analysis: FunctionalAnalysis): HarmonicNar
   });
 
   return {
-    overviewFacts,
     chordFacts
   };
 }

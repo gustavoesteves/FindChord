@@ -72,7 +72,8 @@ export function buildHarmonicKnowledgeGraph(analysis: FunctionalAnalysis): Harmo
         startIndex: p.startIndex,
         endIndex: p.endIndex,
         formalRole: p.formalRole || 'STANDALONE',
-        phraseGroupId: p.phraseGroupId
+        phraseGroupId: p.phraseGroupId,
+        sectionLabel: p.sectionLabel
       }
     });
   });
@@ -88,7 +89,8 @@ export function buildHarmonicKnowledgeGraph(analysis: FunctionalAnalysis): Harmo
         type: g.type,
         phraseIndices: g.phraseIndices,
         confidence: g.confidence,
-        name: g.name
+        name: g.name,
+        sectionLabel: g.sectionLabel
       }
     });
   });

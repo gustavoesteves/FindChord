@@ -5,6 +5,7 @@ import type { HarmonicKnowledgeGraph } from './HarmonicGraph';
 import type { HarmonicNarrativeFacts, HarmonicNarrativeExplanation } from './HarmonicNarrative';
 import type { HarmonicFingerprint } from './HarmonicFingerprint';
 import type { AdaptiveTonalState } from './AdaptiveTonalState';
+import type { ScoreSection } from './ScoreSnapshot';
 
 
 /**
@@ -39,6 +40,42 @@ export const AnalysisTag = {
 } as const;
 
 export type AnalysisTag = typeof AnalysisTag[keyof typeof AnalysisTag];
+
+export type MusicalEvent =
+  | 'chromaticBorrowing'
+  | 'secondaryDominant'
+  | 'deceptiveCadence'
+  | 'modalInterchange'
+  | 'tonicization'
+  | 'regionalShift'
+  | 'suspension'
+  | 'authenticResolution'
+  | 'halfCadence'
+  | 'plagalResolution';
+
+export interface SectionHarmonicState {
+  tonalClarity: "clear" | "ambiguous" | "shifting";
+  stability: "low" | "medium" | "high";
+  tensionTrend: "rising" | "falling" | "static" | "fluctuating";
+  closureLevel: "open" | "partial" | "resolved" | "deceptive";
+  directionality: "static" | "forward-moving" | "returning" | "suspended";
+}
+
+export interface SectionNarrativeFacts {
+  tonalCenters: string[];
+  openingCharacter: string;
+  closingCharacter: string;
+  notableEvents: MusicalEvent[];
+  cadentialSummary: string;
+  harmonicSummary: string;
+  state?: SectionHarmonicState;
+}
+
+export interface AnalyticalSection {
+  section: ScoreSection;
+  facts: SectionNarrativeFacts;
+}
+
 
 
 
@@ -403,6 +440,7 @@ export interface PhraseGroup {
   phraseIndices: number[];
   confidence: number;
   name: string; // Ex: "Período Autêntico", "Frase Isolada"
+  sectionLabel?: string;
 }
 
 export interface Phrase {
@@ -411,10 +449,9 @@ export interface Phrase {
   endIndex: number;
   terminatingCadence?: CadenceInfo;
   regions: HarmonicRegion[];
-  
-  // Novos campos F8
-  formalRole?: PhraseFormalRole;
+  formalRole?: 'ANTECEDENT' | 'CONSEQUENT' | 'STANDALONE';
   phraseGroupId?: number;
+  sectionLabel?: string;
 }
 
 export interface HarmonicRegionNode {
@@ -504,6 +541,9 @@ export interface FunctionalAnalysis {
   /** Frases musicais estruturais detectadas (Sprint 9B) */
   phrases?: Phrase[];
 
+  /** Seções formais explícitas do compositor (Sprint F12-C) */
+  sections?: ScoreSection[];
+
   /** Grupos de frases formais detectadas (Sprint F8) */
   phraseGroups?: PhraseGroup[];
 
@@ -524,6 +564,9 @@ export interface FunctionalAnalysis {
 
   /** Explicação narrativa compilada em português (Sprint F9) */
   narrativeExplanation?: HarmonicNarrativeExplanation;
+
+  /** Análise interpretativa das seções do autor (Sprint F12-C2) */
+  analyticalSections?: AnalyticalSection[];
 
   /** Assinatura estrutural em camadas da progressão (Sprint Infra-3) */
   fingerprint?: HarmonicFingerprint;

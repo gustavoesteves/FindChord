@@ -11,6 +11,7 @@ import type {
   ModalMode,
   ModalAxis
 } from '../models/FunctionalAnalysis';
+import type { ScoreSection } from '../models/ScoreSnapshot';
 import { resolveTonalCenter } from '../tonalCenter';
 import { analyzeProgressionUnderKey, mapStateToTonalCenter } from '../facade/analyzeProgressionUnderKey';
 import { detectCadences } from '../cadenceDetector';
@@ -31,6 +32,8 @@ import { compileNarrativeExplanation } from '../narrative/harmonicNarrativeCompi
 import { generateFingerprint } from '../narrative/narrativeFingerprint';
 import { computeStabilityAndCausality } from '../calibration/InterpretiveStabilityEngine';
 import { computeTheoryAdequacyAndFrontier } from '../calibration/TheoryFrontierDetector';
+import { extractSectionFacts } from '../narrative/sectionFactsEngine';
+import { inferHarmonicState } from '../narrative/harmonicStateEngine';
 
 
 
@@ -46,7 +49,8 @@ import { computeTheoryAdequacyAndFrontier } from '../calibration/TheoryFrontierD
 export function analyzeProgression(
   progression: string[],
   profile: HarmonicGrammarProfile = 'GENERAL',
-  isPerturbation = false
+  isPerturbation = false,
+  sections?: ScoreSection[]
 ): FunctionalAnalysis {
   if (progression.length === 0) {
     return {
@@ -272,7 +276,7 @@ export function analyzeProgression(
 
   // 8. Segment regions and phrases (Sprint Infra-1)
   const regions = segmentHarmonicRegions(chords, cadences, finalTonalCenter);
-  const phrases = segmentPhrases(progression.length, regions, cadences);
+  const phrases = segmentPhrases(progression.length, regions, cadences, sections);
 
   // 8b. Perform semantic analysis (Sprint F6)
   analyzeSemanticContext(chords, phrases);
@@ -302,18 +306,29 @@ export function analyzeProgression(
   };
   const knowledgeGraph = buildHarmonicKnowledgeGraph(intermediateDTO);
 
-  // 13. Extract Narrative Facts & Compile natural language explanation (Sprint F9)
+  const analyticalSections = sections
+    ? extractSectionFacts(sections, chords, regions, cadences, finalTonalCenter)
+    : undefined;
+
+  if (analyticalSections) {
+    analyticalSections.forEach(aSec => {
+      aSec.facts.state = inferHarmonicState(aSec.facts);
+    });
+  }
+
   const fullAnalysisDTO: FunctionalAnalysis = {
     tonalCenter: finalTonalCenter,
     chords,
     cadences,
     globalPath,
     regions,
+    sections,
     phrases,
     phraseGroups,
     regionTree: regionTree || undefined,
     summary: summary || undefined,
     narrative: narrative || undefined,
+    analyticalSections,
     knowledgeGraph
   };
 
@@ -323,7 +338,8 @@ export function analyzeProgression(
   }
 
   const narrativeFacts = extractNarrativeFacts(fullAnalysisDTO);
-  const narrativeExplanation = compileNarrativeExplanation(narrativeFacts, chords);
+  fullAnalysisDTO.narrativeFacts = narrativeFacts;
+  const narrativeExplanation = compileNarrativeExplanation(fullAnalysisDTO);
 
   fullAnalysisDTO.narrativeFacts = narrativeFacts;
   fullAnalysisDTO.narrativeExplanation = narrativeExplanation;

@@ -14,7 +14,7 @@ Este documento centraliza a visibilidade do desenvolvimento do ecossistema Find 
 | **Fase F12-0**| Congelamento da Core API v1 | **🟢 CONCLUÍDA** | Modelos imutáveis (`Chord`, `Progression`, `Score`) |
 | **Fase F11-AUD-REM**| Remediação de Código Pós-Auditoria | **🟢 CONCLUÍDA** | Resolução de telemetria morta (ADI/CFS), limpeza de campos órfãos, tipagem de romanNumeral/matchedTemplate e congelamento definitivo da v1 |
 | **Fase F12-A0**| Contract Metadata Generation | **🟢 CONCLUÍDA** | Geração e mapeamento dinâmico de metadados de contratos, telemetria e rotas da API |
-| **Fase F12** | Camada de Produto & Plugins MuseScore | **📅 PLANEJADA** | Integração dos plugins Builder, Inspector, Reharmonizer, Narrative e Hardening |
+| **Fase F12** | Camada de Produto & Plugins MuseScore | **📅 PLANEJADA** | Integração dos plugins Builder, Analyzer, Reharmonizer, MuseScore Hardening e Suno |
 
 ---
 
@@ -114,23 +114,28 @@ Aqui estão consolidadas as sprints finalizadas que fundamentam o motor analíti
 
 Esta fase encapsula a transição da pesquisa científica pura para a entrega de ferramentas reais de produtividade musical. Toda a inteligência cognitiva construída permanece encapsulada no núcleo, exposta por meio de contratos de dados imutáveis de intercâmbio ([CanonicalChordEvent](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/analysis/models/CanonicalChordEvent.ts), [CanonicalProgressionEvent](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/analysis/models/CanonicalProgressionEvent.ts), [CanonicalScoreEvent](file:///Volumes/Documents/Development/Find%20Chord/src/utils/music/analysis/models/CanonicalScoreEvent.ts)) e da governança descrita em [plugin-interaction-contract-v1.md](file:///Volumes/Documents/Development/Find%20Chord/docs/plugin-interaction-contract-v1.md).
 
-#### Ordem de Valor e Prioridade de Entrega:
-1.  **Find Chord Builder** (Transcritor de Voicings e Entrada Física)
-2.  **Find Chord Inspector** (Linter e Diagnóstico de Condução)
-3.  **Find Chord Reharmonizer** (Assistente Criativo por Paradigmas)
-4.  **Find Chord Narrative** (Síntese e Relatório Musicológico)
-5.  **Find Chord Performer** (Estudo e Ergonomia Instrumental - Futuro)
+#### Ordem de Valor e Prioridade de Entrega (Taxonomia do Compositor):
+1.  **Escrever (Builder / F12-B)**: *"Eu escrevo a harmonia"* (Captura de digitação física do braço, identificação de cifras e envio ao MuseScore).
+2.  **Entender (Analyzer / F12-C)**: *"Eu entendo o que escrevi"* (Estrutura formal, Narrativa explicável, Mapa de Tensão/Energia e Auditoria/Linter).
+3.  **Explorar (Reharmonizer / F12-D)**: *"O que posso fazer de diferente?"* (Sugestões direcionadas por intenções criativas: mais tensão, mais estabilidade, mais surpresa, etc.).
+4.  **Sincronizar (MuseScore Bridge / F12-E)**: *"Eu mantenho a estabilidade"* (Ponte local robusta sob múltiplos compassos).
+5.  **Expandir (Suno Integration / F12-F)**: *"Eu crio a partir do significado"* (Exportador de narrativa estrutural e curvas de energia para IAs musicais).
 
 #### Cronograma de Sprints da Fase F12
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
 | **F12-0** | Core API Stabilization | **🟢 CONCLUÍDA** | Especificação em [core-api-v1.md](file:///Volumes/Documents/Development/Find%20Chord/docs/core-api-v1.md) e [plugin-interaction-contract-v1.md](file:///Volumes/Documents/Development/Find%20Chord/docs/plugin-interaction-contract-v1.md). |
-| **F12-A** | Core API Playground | **🟢 CONCLUÍDA** | Painel interativo isolado para entrada e renderização de JSON da API v1. |
-| **F12-B** | Builder MVP | **📅 PLANEJADA** | Transcritor de voicings sem IA. Captura a digitação física do braço de guitarra virtual e identifica as notas, cifras, inversões e voicings (Drop 2, Close, Open, Quartal, etc.) inserindo-os diretamente na partitura como acordes, cifras e grids. |
-| **F12-C** | Inspector MVP | **📅 PLANEJADA** | Linter harmônico visual (Diagnóstico - Nível 1): exibe e alerta sobre paralelismos proibidos (oitavas/quintas seguidas), saltos melódicos excessivos, problemas graves de condução física de vozes (Voice Leading) e acúmulo de tensão. |
-| **F12-D** | Reharmonizer MVP | **📅 PLANEJADA** | Assistente Criativo (Sugestões - Nível 2 & Rearmonização - Nível 3): propõe voicings alternativos, inversões suaves e rearmonizações completas ou parciais guiadas por paradigmas teóricos (**Funcional** como ii-V-I/subV, **Transformacional** como Neo-Riemanniano LPR, **Simétrica** como Lendvai/Eixos, **Modal** como empréstimos, e **Linear** como aproximações cromáticas). |
-| **F12-E** | Narrative MVP | **📅 PLANEJADA** | Painel lateral musicológico desacoplado. Consome a `CanonicalScoreEvent` para formatar e gerar relatórios de narrativas analíticas e textuais. Inclui a resolução das tipagens implícitas remanescentes (`cisTotal` e `ontologyId`) para eliminar os últimos `as any` do modelo. |
-| **F12-F** | Performance Hardening | **📅 PLANEJADA** | Otimização e correção de gargalos de complexidade $O(N^2)$ (mutação contrafactual) e controle do estouro de memória (RAM/V8 Heap) do resolvedor Viterbi para grandes progressões através de cache compartilhado antes do lançamento final. |
+| **F12-A** | Core API Playground | **🟢 CONCLUÍDA** | Painel interativo isolado (removido para focar no fluxo simplificado do usuário). |
+| **F12-B** | Builder MVP (Escrever) | **🟢 CONCLUÍDA** | Captura a digitação física no braço virtual de 24 trastes com efeito de madeira e insere notas e cifras diretamente na partitura do MuseScore local. |
+| **F12-C1** | Analyzer MVP (Estrutura) | **🟢 CONCLUÍDA** | Motor estrutural base para reconhecer centro tonal, limites e telemetria (ADI, MIG, ISS). |
+| **F12-C2** | Analyzer MVP (Section State) | **🟢 CONCLUÍDA** | Tradução de fatos (Facts) em Significado de Seção (HarmonicState) separando micro e meso-narrativa. |
+| **F12-C3** | Analyzer MVP (Global Meaning) | **🟢 CONCLUÍDA** | Tradução de métricas globais em uma camada de Significado Global (Identity, Departure, Return, Tension, Closure). |
+| **F12-C4** | Global Harmonic Arc | **🟢 CONCLUÍDA** | Evolução do *Global Meaning* transitório para uma Trajetória Harmônica Contínua (Arc), modelando a peça como uma linha do tempo de fases (Establishment, Destabilization, Fragmentation, Reconstruction, Resolution) em vez de estados estáticos finais. |
+| **F12-C5** | Harmonic Behavioral Identity | **📅 PLANEJADA** | Camada superior ao Arco: modelagem do "Comportamento" da música (ondulatório, acumulativo, centrífugo, cíclico). Distingue peças com o mesmo *Arc* mas comportamentos estruturais e repetições duracionais diferentes. |
+| **F12-C6** | Analyzer MVP (Linter/Mapa) | **📅 PLANEJADA** | Componente visual do Mapa de Tensão e Linter Técnico de quintas/oitavas paralelas. |
+| **F12-D** | Reharmonizer MVP (Explorar) | **📅 PLANEJADA** | Assistente Criativo direcionado por **intenções artísticas**. O compositor escolhe o objetivo desejado (ex: *"Mais tensão"*, *"Mais surpresa"*, *"Mais cromatismo"*, *"Mais movimento modal"*, *"Mais estabilidade"*, *"Mais contraste"*) e o resolvedor calcula as alternativas adequadas. |
+| **F12-E** | MuseScore Hardening | **📅 PLANEJADA** | Tratamento robusto de erros, controle de concorrência e bufferização de mensagens para a ponte do MuseScore. |
+| **F12-F** | Suno Integration (Expandir) | **📅 PLANEJADA** | Exportador que transforma o mapa de tensão, modulações e narrativa do Analyzer em prompts textuais focados em emoções e estrutura formal para envio à API do Suno. |
 
 ---
 

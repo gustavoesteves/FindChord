@@ -55,10 +55,16 @@ export function getIntervalSymbol(semitones: number): string {
   return mapping[semitones] || `${semitones} semitones`;
 }
 
+const PARSE_CACHE: Record<string, CustomChord> = {};
+
 export function parseChord(symbol: string): CustomChord {
+  if (PARSE_CACHE[symbol]) return PARSE_CACHE[symbol];
+
   const match = symbol.match(/^([A-G][b#]?)(.*)$/);
   if (!match) {
-    return { empty: true, root: "", quality: "major", notes: [], intervals: [], symbol };
+    const res = { empty: true, root: "", quality: "major" as ChordQuality, notes: [], intervals: [], symbol };
+    PARSE_CACHE[symbol] = res;
+    return res;
   }
   const root = simplifyNote(match[1]).replace(/\d/, "");
   let qualityString = match[2];
@@ -136,7 +142,7 @@ export function parseChord(symbol: string): CustomChord {
     notes.push(bass);
   }
 
-  return {
+  const result: CustomChord = {
     empty: false,
     root,
     quality: detectedQuality,
@@ -145,4 +151,7 @@ export function parseChord(symbol: string): CustomChord {
     symbol,
     bass
   };
+
+  PARSE_CACHE[symbol] = result;
+  return result;
 }

@@ -173,7 +173,53 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 6. Endpoint: GET /api/v1/status -> Telemetria e status (Sprint B.5)
+  // 6. Endpoint: POST /api/v1/score -> Recebe ScoreSnapshot estruturado do QML
+  if (req.method === 'POST' && url.pathname === '/api/v1/score') {
+    pluginLastSeen = new Date().toISOString();
+    let body = '';
+    let exceeded = false;
+
+    req.on('data', chunk => {
+      if (exceeded) return;
+      body += chunk.toString();
+      if (body.length > 1048576) { // 1MB limite para partituras grandes
+        exceeded = true;
+        eventsRejected++;
+        writeJson(res, 413, { error: 'Payload de partitura muito grande.' });
+        req.destroy();
+      }
+    });
+
+    req.on('end', () => {
+      if (exceeded) return;
+      try {
+        const payload = JSON.parse(body);
+        console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML (${payload.harmonies?.length || 0} acordes).`);
+        
+        // Retransmite via WebSocket para o React
+        const scoreEvent = {
+          type: "score_snapshot",
+          data: payload
+        };
+        const messageStr = JSON.stringify(scoreEvent);
+        const frame = encodeWebSocketFrame(messageStr);
+        activeSockets.forEach(socket => {
+          try {
+            socket.write(frame);
+          } catch (e) {
+            activeSockets.delete(socket);
+          }
+        });
+        
+        writeJson(res, 200, { status: 'success' });
+      } catch (e) {
+        writeJson(res, 400, { error: 'JSON malformado.' });
+      }
+    });
+    return;
+  }
+
+  // 7. Endpoint: GET /api/v1/status -> Telemetria e status (Sprint B.5)
   if (req.method === 'GET' && url.pathname === '/api/v1/status') {
     writeJson(res, 200, {
       apiVersion: '1.0',
@@ -190,7 +236,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 7. Endpoint: GET /api/v1/health -> Health Check básico (Sprint B.5)
+  // 8. Endpoint: GET /api/v1/health -> Health Check básico (Sprint B.5)
   if (req.method === 'GET' && url.pathname === '/api/v1/health') {
     writeJson(res, 200, {
       status: 'ok',
