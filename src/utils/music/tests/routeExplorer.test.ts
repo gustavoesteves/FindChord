@@ -1,4 +1,5 @@
 import { RouteExplorerOrchestrator } from '../../src/utils/music/generation/routeExplorerOrchestrator';
+import { WhyThisEngine } from '../../src/utils/music/generation/engines/whyThisEngine';
 import { RawMelodyNote } from '../../src/utils/music/generation/engines/melodyExtractionEngine';
 import { CanonicalChordEvent } from '../../src/utils/music/analysis/models/CanonicalChordEvent';
 import { GenerationRequest } from '../../src/utils/music/generation/models/GenerationContext';
@@ -142,7 +143,6 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
   });
 
   it('F13-A2.0: WhyThisEngine should generate positive explanations', () => {
-    const { WhyThisEngine } = require('../../src/utils/music/generation/engines/whyThisEngine');
     const whyThisEngine = new WhyThisEngine();
     
     const explanation = whyThisEngine.explain(mockChords, {
