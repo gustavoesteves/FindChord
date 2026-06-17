@@ -1,26 +1,26 @@
 import type { FunctionalFingerprint } from '../models/FunctionalFingerprint';
-import type { SimilarityScore, DriftProfile } from '../models/FunctionalSimilarity';
+import type { 
+  SimilarityBands, 
+  AsymmetricComparison, 
+  DriftProfile, 
+  WeightProfile
+} from '../models/FunctionalSimilarity';
+import { TONAL_WEIGHT_PROFILE } from '../models/FunctionalSimilarity';
 
 /**
  * Functional Similarity Engine (F14-A2)
- * Compares two FunctionalFingerprints and returns a SimilarityScore
- * using the weighted and critical-axes-penalized mathematics defined in RFC F14-A2.0.
+ * Compares two FunctionalFingerprints and returns SimilarityBands or AsymmetricComparisons
+ * using hierarchical weighting and Identity Collapse prevention.
  */
 export class FunctionalSimilarityEngine {
-  // Matriz de Pesos (Weight Matrix)
-  private readonly WEIGHTS = {
-    narrative: 0.30,
-    cadential: 0.20,
-    structural: 0.20,
-    modal: 0.15,
-    energy: 0.10,
-    color: 0.05
-  };
-
   // Limiar de colapso de identidade
   private readonly CRITICAL_THRESHOLD = 0.20;
 
-  public calculateSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): SimilarityScore {
+  public calculateSimilarity(
+    a: FunctionalFingerprint, 
+    b: FunctionalFingerprint, 
+    profile: WeightProfile = TONAL_WEIGHT_PROFILE
+  ): SimilarityBands {
     const narrativeSimilarity = this.calculateNarrativeSimilarity(a, b);
     const cadentialSimilarity = this.calculateCadentialSimilarity(a, b);
     const structuralSimilarity = this.calculateStructuralSimilarity(a, b);
@@ -28,32 +28,71 @@ export class FunctionalSimilarityEngine {
     const energySimilarity = this.calculateEnergySimilarity(a, b);
     const colorSimilarity = this.calculateColorSimilarity(a, b);
 
-    // Soma ponderada
-    let overallSimilarity = 
-      (narrativeSimilarity * this.WEIGHTS.narrative) +
-      (cadentialSimilarity * this.WEIGHTS.cadential) +
-      (structuralSimilarity * this.WEIGHTS.structural) +
-      (modalSimilarity * this.WEIGHTS.modal) +
-      (energySimilarity * this.WEIGHTS.energy) +
-      (colorSimilarity * this.WEIGHTS.color);
+    // Texture similarity is derived from color's density components
+    const textureSimilarity = this.calculateEuclideanSimilarity(
+      [a.color.extensionDensity, a.color.chromaticColor],
+      [b.color.extensionDensity, b.color.chromaticColor]
+    );
+
+    let identitySimilarity = 
+      (structuralSimilarity * profile.axes.structural) + (cadentialSimilarity * profile.axes.cadential);
+
+    let behaviorSimilarity = 
+      (narrativeSimilarity * profile.axes.narrative) + (modalSimilarity * profile.axes.modal);
+
+    let surfaceSimilarity = 
+      (energySimilarity * profile.axes.energy) + (colorSimilarity * profile.axes.color);
 
     // Critical Axes Penalty (Identity Collapse)
     const criticalAxes = [narrativeSimilarity, cadentialSimilarity, structuralSimilarity];
-    const hasCollapsed = criticalAxes.some(score => score < this.CRITICAL_THRESHOLD);
-
-    if (hasCollapsed) {
-      // Penalidade geométrica massiva
-      overallSimilarity = overallSimilarity * 0.1;
+    if (criticalAxes.some(score => score < this.CRITICAL_THRESHOLD)) {
+      identitySimilarity *= 0.1;
+      behaviorSimilarity *= 0.1;
     }
 
     return {
-      narrativeSimilarity,
-      cadentialSimilarity,
-      structuralSimilarity,
-      modalSimilarity,
-      energySimilarity,
-      colorSimilarity,
-      overallSimilarity
+      identitySimilarity,
+      behaviorSimilarity,
+      surfaceSimilarity,
+      textureSimilarity
+    };
+  }
+
+  public calculateAsymmetricSimilarity(
+    a: FunctionalFingerprint, 
+    b: FunctionalFingerprint, 
+    profile: WeightProfile = TONAL_WEIGHT_PROFILE
+  ): AsymmetricComparison {
+    const similarity = this.calculateSimilarity(a, b, profile);
+
+    // Mock calculations for preservation based on "richness" (extensions, density, structural weight)
+    const richnessA = a.color.extensionDensity + a.hierarchy.decorativeWeight;
+    const richnessB = b.color.extensionDensity + b.hierarchy.decorativeWeight;
+
+    let preservationA_to_B = similarity.identitySimilarity;
+    let preservationB_to_A = similarity.identitySimilarity;
+
+    let expansionScore = 0.0;
+    let compressionScore = 0.0;
+
+    if (richnessB > richnessA) {
+      // B expands A
+      preservationA_to_B = Math.min(1.0, similarity.identitySimilarity + 0.1);
+      preservationB_to_A = Math.max(0.0, similarity.identitySimilarity - 0.2);
+      expansionScore = Math.min(1.0, (richnessB - richnessA) * 2);
+    } else if (richnessA > richnessB) {
+      // B compresses A
+      preservationA_to_B = Math.max(0.0, similarity.identitySimilarity - 0.2);
+      preservationB_to_A = Math.min(1.0, similarity.identitySimilarity + 0.1);
+      compressionScore = Math.min(1.0, (richnessA - richnessB) * 2);
+    }
+
+    return {
+      similarity,
+      preservationScoreA_to_B: preservationA_to_B,
+      preservationScoreB_to_A: preservationB_to_A,
+      expansionScore,
+      compressionScore
     };
   }
 
@@ -76,88 +115,50 @@ export class FunctionalSimilarityEngine {
       sumSq += Math.pow(vecA[i] - vecB[i], 2);
     }
     const distance = Math.sqrt(sumSq);
-    const maxDistance = Math.sqrt(vecA.length); // Assuming domain [0, 1] per dimension
+    const maxDistance = Math.sqrt(vecA.length);
     
     return Math.max(0, 1 - (distance / maxDistance));
   }
 
   private calculateNarrativeSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.narrativeIntent.expansion, a.narrativeIntent.preparation, a.narrativeIntent.suspension,
-      a.narrativeIntent.confirmation, a.narrativeIntent.diversion, a.narrativeIntent.resolution,
-      a.momentum.forwardPull, a.momentum.backwardPull, a.momentum.staticHold
-    ];
-    const vecB = [
-      b.narrativeIntent.expansion, b.narrativeIntent.preparation, b.narrativeIntent.suspension,
-      b.narrativeIntent.confirmation, b.narrativeIntent.diversion, b.narrativeIntent.resolution,
-      b.momentum.forwardPull, b.momentum.backwardPull, b.momentum.staticHold
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.narrativeIntent.expansion, a.narrativeIntent.preparation, a.narrativeIntent.suspension, a.narrativeIntent.resolution],
+      [b.narrativeIntent.expansion, b.narrativeIntent.preparation, b.narrativeIntent.suspension, b.narrativeIntent.resolution]
+    );
   }
 
   private calculateCadentialSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.cadentialSignature.authentic, a.cadentialSignature.plagal, 
-      a.cadentialSignature.deceptive, a.cadentialSignature.modal,
-      a.perception.closureStrength
-    ];
-    const vecB = [
-      b.cadentialSignature.authentic, b.cadentialSignature.plagal, 
-      b.cadentialSignature.deceptive, b.cadentialSignature.modal,
-      b.perception.closureStrength
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.cadentialSignature.authentic, a.cadentialSignature.plagal, a.cadentialSignature.deceptive, a.cadentialSignature.modal, a.perception.closureStrength],
+      [b.cadentialSignature.authentic, b.cadentialSignature.plagal, b.cadentialSignature.deceptive, b.cadentialSignature.modal, b.perception.closureStrength]
+    );
   }
 
   private calculateStructuralSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.structure.establishmentWeight, a.structure.prolongationWeight, 
-      a.structure.dominantWeight, a.structure.cadentialWeight,
-      a.hierarchy.structuralWeight, a.hierarchy.decorativeWeight
-    ];
-    const vecB = [
-      b.structure.establishmentWeight, b.structure.prolongationWeight, 
-      b.structure.dominantWeight, b.structure.cadentialWeight,
-      b.hierarchy.structuralWeight, b.hierarchy.decorativeWeight
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.structure.establishmentWeight, a.structure.prolongationWeight, a.structure.dominantWeight, a.hierarchy.structuralWeight],
+      [b.structure.establishmentWeight, b.structure.prolongationWeight, b.structure.dominantWeight, b.hierarchy.structuralWeight]
+    );
   }
 
   private calculateModalSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.modalProfile.dorianWeight, a.modalProfile.phrygianWeight, 
-      a.modalProfile.lydianWeight, a.modalProfile.mixolydianWeight, 
-      a.modalProfile.aeolianWeight, a.gravity.tonalGravity, 
-      a.gravity.modalGravity, a.gravity.symmetricGravity
-    ];
-    const vecB = [
-      b.modalProfile.dorianWeight, b.modalProfile.phrygianWeight, 
-      b.modalProfile.lydianWeight, b.modalProfile.mixolydianWeight, 
-      b.modalProfile.aeolianWeight, b.gravity.tonalGravity, 
-      b.gravity.modalGravity, b.gravity.symmetricGravity
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.modalProfile.dorianWeight, a.modalProfile.phrygianWeight, a.modalProfile.mixolydianWeight, a.gravity.tonalGravity, a.gravity.modalGravity],
+      [b.modalProfile.dorianWeight, b.modalProfile.phrygianWeight, b.modalProfile.mixolydianWeight, b.gravity.tonalGravity, b.gravity.modalGravity]
+    );
   }
 
   private calculateEnergySimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.energy.tensionIndex, a.energy.relaxationIndex, 
-      a.stability.harmonicStability, a.perception.ambiguityIndex
-    ];
-    const vecB = [
-      b.energy.tensionIndex, b.energy.relaxationIndex, 
-      b.stability.harmonicStability, b.perception.ambiguityIndex
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.energy.tensionIndex, a.energy.relaxationIndex, a.stability.harmonicStability],
+      [b.energy.tensionIndex, b.energy.relaxationIndex, b.stability.harmonicStability]
+    );
   }
 
   private calculateColorSimilarity(a: FunctionalFingerprint, b: FunctionalFingerprint): number {
-    const vecA = [
-      a.color.modalColor, a.color.chromaticColor, a.color.extensionDensity
-    ];
-    const vecB = [
-      b.color.modalColor, b.color.chromaticColor, b.color.extensionDensity
-    ];
-    return this.calculateEuclideanSimilarity(vecA, vecB);
+    return this.calculateEuclideanSimilarity(
+      [a.color.modalColor, a.color.chromaticColor, a.color.extensionDensity],
+      [b.color.modalColor, b.color.chromaticColor, b.color.extensionDensity]
+    );
   }
 }

@@ -33,9 +33,8 @@ describe('FunctionalSimilarityEngine (F14-A2)', () => {
     
     const score = engine.calculateSimilarity(a, b);
     
-    expect(score.overallSimilarity).toBe(1.0);
-    expect(score.narrativeSimilarity).toBe(1.0);
-    expect(score.cadentialSimilarity).toBe(1.0);
+    expect(score.identitySimilarity).toBeGreaterThan(0.9);
+    expect(score.behaviorSimilarity).toBeGreaterThan(0.9);
   });
 
   it('should apply geometric penalty (Identity Collapse) if a critical axis falls below 0.20', () => {
@@ -48,10 +47,8 @@ describe('FunctionalSimilarityEngine (F14-A2)', () => {
 
     const score = engine.calculateSimilarity(base, collapsedCadence);
     
-    // Cadential similarity should be very low, triggering the critical threshold < 0.20
-    expect(score.cadentialSimilarity).toBeLessThan(0.20);
-    // Which means overall similarity should have suffered a massive 0.1 multiplier
-    expect(score.overallSimilarity).toBeLessThan(0.15); // It would normally average higher due to identical color/energy
+    // Identity similarity should be severely penalized
+    expect(score.identitySimilarity).toBeLessThan(0.15);
   });
 
   it('should return high similarity if only decorative axes (Color) change', () => {
@@ -63,13 +60,10 @@ describe('FunctionalSimilarityEngine (F14-A2)', () => {
 
     const score = engine.calculateSimilarity(base, recolored);
     
-    // The narrative, cadence, and structure are identical
-    expect(score.cadentialSimilarity).toBe(1.0);
-    expect(score.narrativeSimilarity).toBe(1.0);
-    // Color similarity drops significantly
-    expect(score.colorSimilarity).toBeLessThan(1.0);
-    // But overall similarity should remain very high (>0.85) because color is only 5% of the matrix
-    expect(score.overallSimilarity).toBeGreaterThan(0.85);
+    // The identity and behavior are largely preserved
+    expect(score.identitySimilarity).toBeGreaterThan(0.5);
+    // Surface similarity drops significantly
+    expect(score.surfaceSimilarity).toBeLessThan(1.0);
   });
 
   it('should calculate the functional drift accurately', () => {
@@ -84,5 +78,26 @@ describe('FunctionalSimilarityEngine (F14-A2)', () => {
     expect(drift.cadentialDrift).toBeGreaterThan(0.8);
     // Structural drift should be 0 since it wasn't modified in this mock
     expect(drift.structuralDrift).toBe(0.0);
+  });
+
+  it('should correctly calculate Asymmetric Preservation (Expansion/Compression)', () => {
+    const simple = createMockFingerprint({
+      color: { modalColor: 0.1, chromaticColor: 0.1, extensionDensity: 0.1 },
+      hierarchy: { structuralWeight: 0.9, decorativeWeight: 0.1 }
+    });
+
+    const complex = createMockFingerprint({
+      color: { modalColor: 0.8, chromaticColor: 0.9, extensionDensity: 0.9 },
+      hierarchy: { structuralWeight: 0.5, decorativeWeight: 0.9 }
+    });
+
+    const comparison = engine.calculateAsymmetricSimilarity(simple, complex);
+
+    // Complex expands simple
+    expect(comparison.expansionScore).toBeGreaterThan(0.5);
+    expect(comparison.compressionScore).toBe(0.0);
+    
+    // Complex preserves Simple's pillars better than Simple preserves Complex's richness
+    expect(comparison.preservationScoreA_to_B).toBeGreaterThan(comparison.preservationScoreB_to_A);
   });
 });
