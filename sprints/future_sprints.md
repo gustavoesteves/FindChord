@@ -162,8 +162,10 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | :--- | :--- | :--- | :--- |
 | **F14-A1** | Functional Identity Engine | **📅 PLANEJADA** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Ex: `Edim` pode conter múltiplas identidades ocultas (`C7(b9)`, `E7(b9)`, etc). Separa `VisualChord` de `FunctionalIdentity`. |
 | **F14-A2** | Functional Substitution Engine | **📅 PLANEJADA** | Substituição por **equivalência funcional** (não apenas sonora). Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas. |
-| **F14-A3** | Cadence Grammar Engine | **📅 PLANEJADA** | O sistema aprende a **Sintaxe Frasal**. Trata cadências (Autêntica, Plagal, Modal, Deceptiva) como entidades estruturais de primeira classe (ex: `CadentialPattern`). |
-| **F14-A4** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: narra a música em `NarrativeVectors` (ex: "Centro → Afastamento → Retorno", "Estabilidade → Tensão → Resolução"). O Composer Mode passa a aceitar "Quero prolongar a suspensão" em vez de "Quero um acorde tenso". |
+| **F14-A3** | Cadence Grammar Engine | **📅 PLANEJADA** | Modelagem das leis formais de movimento: cadências autênticas, imperfeitas, dominantes secundários, `II-V` e `II-subV`. O sistema aprende a sintaxe das frases musicais estruturais subjacentes aos acordes de superfície. |
+| **F14-A4** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: em vez de acordes, o sistema narra a música em termos de "Afastamento → Preparação → Resolução". A harmonia deixa de ser um bloco vertical e passa a ser compreendida puramente como **histórias harmônicas**. |
+| **F14-A5** | Harmonic Tension Field Engine | **📅 PLANEJADA** | Criação de um `TensionField` contínuo, independente da função tonal. Permite ao sistema responder "Essa rota aumenta tensão?" e buscar "Aumentar energia sem alterar função". |
+| **F14-A6** | Harmonic Momentum Engine | **📅 PLANEJADA** | Medição vetorial do impulso harmônico (`Forward Pull`, `Backward Pull`, `Expansion`, `Contraction`). Diferencia progressões com mesma tensão mas sensações de movimento diametralmente opostas. |
 
 ---
 
@@ -175,6 +177,17 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | **F15-A1** | Modal Center Engine | **📅 PLANEJADA** | Separa "Tonal Function" de "Modal Gravity". O sistema responde "Qual nota está sendo orbitada?" em vez de "Qual acorde resolve?". Base fundamental para análise não-tonal. |
 | **F15-A2** | Modal Color Engine | **📅 PLANEJADA** | Mede a `Modal Identity Strength` de uma progressão através da detecção de notas-identidade (ex: 6ª maior no Dórico, b2 no Frígio, #4 no Lídio). |
 | **F15-A3** | Modal Reharmonization Engine | **📅 PLANEJADA** | O equivalente modal da F13. Descobre rotas harmônicas baseando-se na **Preservação Modal** ao invés de preservação tonal, abrindo um universo inteiro de exploração hoje invisível ao sistema. |
+| **F15-A4** | Modal Narrative Engine | **📅 PLANEJADA** | Abandona a narrativa tonal (ex: Tensão -> Resolução) e cria `ModalNarrativeProfiles`. Ex: Dórico (Centro → Movimento → Retorno), Lídio (Centro → Expansão → Flutuação). Impede o erro de analisar música modal como "música tonal defeituosa". |
+| **F15-A5** | Modal Identity Preservation Engine | **📅 PLANEJADA** | Analisa se uma mutação harmônica manteve a integridade do modo original (`Mode Integrity Score`). Ex: rearmonizar um D Dórico mas remover o B natural resulta em baixa integridade. |
+
+---
+
+#### Cronograma de Sprints da Fase F16 (Harmonic Grammar Learning)
+*O cérebro musical autônomo. O sistema para de apenas consumir regras codificadas e passa a aprender microgramáticas observando o comportamento recorrente da música real.*
+
+| Sprint | Nome / Objetivo | Status | Foco / Entregável |
+| :--- | :--- | :--- | :--- |
+| **F16-A1** | Harmonic Grammar Learning Engine | **📅 PLANEJADA** | Descobre e armazena **Pattern Grammars** (ex: `ii -> Vsus -> V -> I`). Conecta os motores de descoberta (F11) diretamente com o Composer Mode, criando um sistema que expande seu próprio vocabulário sintático infinitamente a partir do uso. |
 
 ---
 

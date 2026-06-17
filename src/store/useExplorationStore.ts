@@ -36,7 +36,7 @@ export interface ExplorationState {
     parentNodeId?: string
   ) => void;
   selectNode: (nodeId: string) => void;
-  acceptRoute: (nodeId: string) => void;
+  promoteRoute: (nodeId: string) => void;
   toggleFavorite: (nodeId: string) => void;
   updateRequest: (request: Partial<GenerationRequest>) => void;
 }
@@ -65,7 +65,7 @@ export const useExplorationStore = create<ExplorationState>()((set, get) => ({
 
   selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
 
-  acceptRoute: (nodeId) => set((state) => {
+  promoteRoute: (nodeId) => set((state) => {
     const node = state.nodes[nodeId];
     if (!node) return state;
 

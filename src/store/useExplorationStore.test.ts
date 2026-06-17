@@ -78,12 +78,12 @@ describe('useExplorationStore F13-A2.1', () => {
     expect(children[0].mutationType).toBe('modal_expansion');
   });
 
-  it('should update both activeNodeId and selectedNodeId on acceptRoute', () => {
+  it('should update both activeNodeId and selectedNodeId on promoteRoute', () => {
     useExplorationStore.getState().generateMutations('mock-region', mockNotes, mockChords);
     const state = useExplorationStore.getState();
     const nodeId = Object.keys(state.nodes)[0];
 
-    useExplorationStore.getState().acceptRoute(nodeId);
+    useExplorationStore.getState().promoteRoute(nodeId);
     
     const newState = useExplorationStore.getState();
     expect(newState.activeNodeId).toBe(nodeId);
@@ -96,8 +96,8 @@ describe('useExplorationStore F13-A2.1', () => {
     const state = useExplorationStore.getState();
     const nodeId = Object.keys(state.nodes)[0];
 
-    // Accept it so activeNodeId is set
-    useExplorationStore.getState().acceptRoute(nodeId);
+    // Promote it so activeNodeId is set
+    useExplorationStore.getState().promoteRoute(nodeId);
     
     // Generate a child
     useExplorationStore.getState().generateMutations('mock-region', mockNotes, mockChords, nodeId);

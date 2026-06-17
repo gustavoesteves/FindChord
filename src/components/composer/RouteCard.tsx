@@ -9,7 +9,7 @@ interface RouteCardProps {
 }
 
 export const RouteCard: React.FC<RouteCardProps> = ({ node, originalChords }) => {
-  const acceptRoute = useExplorationStore((state) => state.acceptRoute);
+  const promoteRoute = useExplorationStore((state) => state.promoteRoute);
   const toggleFavorite = useExplorationStore((state) => state.toggleFavorite);
   const selectNode = useExplorationStore((state) => state.selectNode);
   const activeNodeId = useExplorationStore((state) => state.activeNodeId);
@@ -57,10 +57,10 @@ export const RouteCard: React.FC<RouteCardProps> = ({ node, originalChords }) =>
           </button>
           {!isActive && (
             <button 
-              onClick={(e) => { e.stopPropagation(); acceptRoute(node.nodeId); }}
+              onClick={(e) => { e.stopPropagation(); promoteRoute(node.nodeId); }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
             >
-              Aceitar Rota
+              Promover Rota
             </button>
           )}
           {isActive && (
