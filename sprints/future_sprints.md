@@ -155,13 +155,15 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 ---
 
-#### Cronograma de Sprints da Fase F14 (A Ilusão Funcional)
-*A quebra do paradigma: "O acorde escrito não é necessariamente a função percebida." O sistema passa a descobrir funções implícitas antes de sugerir rearmonizações.*
+#### Cronograma de Sprints da Fase F14 (A Ilusão Funcional & Navegação Tonal)
+*A quebra do paradigma clássico: "O acorde escrito não é necessariamente a função percebida." A evolução do sistema de análise de acordes para análise de intenções harmônicas e mapas de transformação funcional.*
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F14-A1** | Functional Identity Explorer | **📅 PLANEJADA** | Implementa o **Hidden Function Engine**. Transforma a classificação rasa (Tônica/Predominante/Dominante) em três eixos (Função Tonal, Função Aparente, Função Cromática). Analisa um acorde (ex: Edim) e retorna suas múltiplas identidades funcionais ocultas (ex: C7(b9), E7(b9), etc.). |
-| **F14-A2** | Apparent Route Generation | **📅 PLANEJADA** | O Composer Mode passa a gerar rotas baseadas nas "Leituras" funcionais, oferecendo interpretações alternativas da harmonia existente antes de gerar acordes inteiramente novos. |
+| **F14-A1** | Functional Identity Engine | **📅 PLANEJADA** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Ex: `Edim` pode conter múltiplas identidades ocultas (`C7(b9)`, `E7(b9)`, etc). Diferencia intenções de movimento: *Dominante* (quer resolver), *Subdominante* (quer suspender) e *Cromático* (quer mover). |
+| **F14-A2** | Functional Substitution Engine | **📅 PLANEJADA** | Transforma o *Composer Mode* num verdadeiro **Mapa de Transformações**. Permite substituição não apenas por similaridade de som, mas por correspondência de função (ex: trocar `IVmaj7` por `#IVm7(b5)` mantendo a função Subdominante intacta). |
+| **F14-A3** | Cadence Grammar Engine | **📅 PLANEJADA** | Modelagem das leis formais de movimento: cadências autênticas, imperfeitas, dominantes secundários, `II-V` e `II-subV`. O sistema aprende a sintaxe das frases musicais estruturais subjacentes aos acordes de superfície. |
+| **F14-A4** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: em vez de acordes, o sistema narra a música em termos de "Afastamento → Preparação → Resolução". A harmonia deixa de ser um bloco vertical e passa a ser compreendida puramente como **histórias harmônicas**. |
 
 ---
 
