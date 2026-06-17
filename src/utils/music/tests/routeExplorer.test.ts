@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { RouteExplorerOrchestrator } from '../generation/routeExplorerOrchestrator';
 import { WhyThisEngine } from '../generation/engines/whyThisEngine';
 import type { RawMelodyNote } from '../generation/engines/melodyExtractionEngine';
