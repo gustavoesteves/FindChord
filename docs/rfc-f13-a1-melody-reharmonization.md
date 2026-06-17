@@ -22,12 +22,16 @@ Nenhuma sugestão utilizará conceitos culturais como "Jazz", "Rock", "Clássico
 Antes de sugerir alternativas, o sistema precisa entender a função estrutural: `Estabelecimento -> Prolongamento -> Dominante`.
 
 ### 3.3 Harmonic Intent Engine (A Intenção Oculta)
-Mesmos acordes podem ter propósitos diferentes. Este motor infere o que o compositor está tentando realizar antes de alterar a harmonia.
-- *Caso A:* Quero chegar na dominante.
-- *Caso B:* Quero manter estabilidade.
-- *Caso C:* Quero criar tensão crescente.
+Mesmos acordes podem ter propósitos diferentes. Este motor infere o que a frase original tenta realizar.
 
-### 3.4 Harmonic Region Engine (A Unidade de Pensamento)
+### 3.4 Harmonic Goal Engine (A Tradução Composicional)
+*O elo entre desejo e restrição matemática.* O compositor não trabalha apenas com "adjetivos" (mais tensão), mas com **objetivos** composicionais concretos:
+- *Objetivo 1:* "Quero evitar que pareça uma resolução final." -> Restrição: Evitar cadência autêntica, favorecer prolongamentos ou cadência enganosa.
+- *Objetivo 2:* "Quero preparar uma modulação."
+- *Objetivo 3:* "Quero aumentar a energia sem mudar a melodia."
+O motor transforma esses verbos/objetivos nas restrições vetoriais (adição de cromatismo, alteração de polo) que guiarão as substituições.
+
+### 3.5 Harmonic Region Engine (A Unidade de Pensamento)
 O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrupará a frase em blocos funcionais (Regiões).
 - **Região de Estabelecimento** (`C -> Am -> F`)
 - **Região Predominante** (`Dm -> F`)
@@ -35,11 +39,11 @@ O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrup
 - **Região Cadencial** (`ii -> V -> I`)
 A substituição passará a ocorrer no nível da **Região**, não do acorde.
 
-### 3.5 Harmonic Compatibility Engine
+### 3.6 Harmonic Compatibility Engine
 Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
 
-### 3.6 Harmonic Possibility Engine
-O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original, as Regiões e a `HarmonicIntent` para gerar leituras alternativas da mesma frase. As explorações não são rotuladas por estética, mas por comportamento harmônico direto.
+### 3.7 Harmonic Possibility Engine
+O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original, as Regiões e o `HarmonicGoal` para gerar leituras alternativas da frase (como Reinterpretação Funcional ou Expansão). O motor atende aos objetivos definidos no passo anterior.
 
 ## 4. Exploração Formal (F13-A3: Section Reharmonization)
 Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda ocorrência admite interpretação harmônica diferente mantendo a melodia intacta.
@@ -47,24 +51,28 @@ Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda 
 - Exemplo A': `Cmaj7 → Am9 → G13`
 
 ## 5. Redesenho da UI (ScoreAnalysisDashboard)
-A UI passa a focar no fluxo criativo e empurra ferramentas de "inspeção dura" para segundo plano. A arquitetura passa a servir às escolhas do compositor.
+A UI foi fragmentada em três universos paralelos (Modos) para limpar a carga cognitiva e alinhar-se à expectativa do usuário:
 
-### Núcleo Principal (Painel de Possibilidades Guiado por Intenção)
-1. **O que você quer mudar?** (Interface central interativa)
-   - `[ ] Mais estabilidade`
-   - `[ ] Mais tensão`
-   - `[ ] Mais surpresa`
-   - `[ ] Mais movimento`
-   - `[ ] Mais ambiguidade`
-   - `[ ] Mais direção`
-2. **Narrativa Harmônica (Encurtada):** Muito resumida. Ex: *"Função da frase: Estabelece o centro tonal e cria expectativa de resolução."*
-3. **Curva Dramática:** Apenas suporte visual simplificado para as flutuações de tensão.
+### Modo 1: Composer Mode (Ação: "O que essa frase pode ser?")
+A interface de criação.
+1. **Painel de Objetivos (Goal Selection):**
+   - `[ ] Quero evitar resolução final`
+   - `[ ] Quero aumentar a energia direcional`
+   - `[ ] Quero desestabilizar o centro tonal`
+   - `[ ] Quero preparar modulação`
+2. **Explorar Alternativas:** O resultado. "Aqui estão 3 caminhos." (Explicando o que foi preservado e alterado).
 
-### Abas Separadas / Modos
-A partir de agora, o Find Chord separa o **Compositor (Análise Criativa)** do **Professor (Auditoria/Teoria)**.
-1. **Estrutura Formal:** (Oculto / Modo Acadêmico).
-2. **Auditoria / Linter:** (Aba separada para o "Professor").
-3. **Métricas Epistêmicas.**
+### Modo 2: Analyst Mode (Observação: "O que essa frase está fazendo?")
+Para estudo de obra.
+1. **Narrativa Harmônica:** "Estabelece o centro tonal e cria expectativa de resolução."
+2. **Curva Dramática Visual:** Gráficos simplificados de flutuação de tensão.
+3. **Estrutura Formal:** Divisão em Frases e Períodos (Autêntico, etc.).
+
+### Modo 3: Academic / Developer Mode (Telemetria e Linter)
+Escondido por padrão, para os cientistas e nerds de teoria.
+1. **Auditoria / Linter:** Caça às quintas e oitavas paralelas.
+2. **Métricas Brutais:** ADI, ISS, CFS, Estabilidade Interpretativa.
+3. **Conflitos Epistêmicos:** Torneios das IAs metateóricas, Lakatos.
 
 ## 6. Critérios de Sucesso e Explicabilidade
 1. **Frase simples:** O sistema produz múltiplas leituras harmônicas (Expansivas, Cromáticas, etc.) perfeitamente compatíveis com a melodia.
