@@ -148,9 +148,20 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
 | **F13-A1** | Harmonic Possibility Explorer | **📅 FEITO** | O motor base da exploração. Traz **Rotas Harmônicas**, o **Opportunity Engine**, a **Explicabilidade Negativa (Why Not Engine)** e o **Histórico de Exploração**. Transforma a UI em 3 universos isolados: **Composer Mode** (com controles desacoplados de *Exploração* vs *Memória*), **Analysis Mode** e **Research Mode**. |
-| **F13-A2.0** | Exploration State Engine | **📅 NEXT UP** | Gerencia o estado e o grafo das rotas (`ExplorationGraph`). Traz Métricas de Distância Relativa (Original vs Parent) e a **Explicabilidade Positiva (WhyThis Engine)** para justificar escolhas ao compositor. |
-| **F13-A2.1** | Composer Mode UI | **📅 PLANEJADA** | Cria a interface visual do Composer Mode, conectando a pipeline F13-A1 e o grafo de estado da F13-A2.0 aos controles (Exploração vs Memória) e exibindo a árvore de rotas. |
+| **F13-A2.0** | Exploration State Engine | **📅 FEITO** | Gerencia o estado e o grafo das rotas (`ExplorationGraph`). Traz Métricas de Distância Relativa (Original vs Parent) e a **Explicabilidade Positiva (WhyThis Engine)** para justificar escolhas ao compositor. |
+| **F13-A2.1** | Composer Mode UI | **📅 FEITO** | Cria a interface visual do Composer Mode, conectando a pipeline F13-A1 e o grafo de estado da F13-A2.0 aos controles (Exploração vs Memória) e exibindo a árvore de rotas. |
 | **F13-A3** | Route Mutation & Section Reharmonization | **📅 PLANEJADA** | Introduz a **Mutação de Rotas** (gerar N variações de uma rota aceita). Avalia também repetições macro (Forma A e A') sugerindo texturas e funções harmônicas alternativas para a segunda exposição. |
+
+
+---
+
+#### Cronograma de Sprints da Fase F14 (A Ilusão Funcional)
+*A quebra do paradigma: "O acorde escrito não é necessariamente a função percebida." O sistema passa a descobrir funções implícitas antes de sugerir rearmonizações.*
+
+| Sprint | Nome / Objetivo | Status | Foco / Entregável |
+| :--- | :--- | :--- | :--- |
+| **F14-A1** | Functional Identity Explorer | **📅 PLANEJADA** | Implementa o **Hidden Function Engine**. Transforma a classificação rasa (Tônica/Predominante/Dominante) em três eixos (Função Tonal, Função Aparente, Função Cromática). Analisa um acorde (ex: Edim) e retorna suas múltiplas identidades funcionais ocultas (ex: C7(b9), E7(b9), etc.). |
+| **F14-A2** | Apparent Route Generation | **📅 PLANEJADA** | O Composer Mode passa a gerar rotas baseadas nas "Leituras" funcionais, oferecendo interpretações alternativas da harmonia existente antes de gerar acordes inteiramente novos. |
 
 ---
 
