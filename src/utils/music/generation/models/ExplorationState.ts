@@ -1,6 +1,8 @@
 import { HarmonicRoute } from './HarmonicRoute';
 
 export type RouteMutationType = 
+  | 'identity'
+  | 'unknown'
   | 'functional_reinterpretation' 
   | 'modal_expansion' 
   | 'chromatic_displacement' 
@@ -16,7 +18,8 @@ export interface ExplorationNode {
   nodeId: string;
   parentId?: string; // Links back to the parent ExplorationNode, or undefined if it directly branches from Original
   
-  mutationType?: RouteMutationType; // The compositional technique used to derive this from the parent
+  routeDepth: number; // 0 for Original/Roots, 1 for first variations, 2 for variations of variations...
+  mutationType: RouteMutationType; // The compositional technique used to derive this from the parent
   
   route: HarmonicRoute; // The generated payload
   

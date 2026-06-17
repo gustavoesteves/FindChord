@@ -118,6 +118,8 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
     // Simulate an existing node
     const parentNode = {
       nodeId: 'node_A_123',
+      routeDepth: 1,
+      mutationType: 'modal_expansion' as const,
       route: {
         id: 'A',
         routeLabel: 'Tonal Drift',
@@ -154,6 +156,6 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
 
     expect(explanation.preserved).toBeInstanceOf(Array);
     expect(explanation.altered).toBeInstanceOf(Array);
-    expect(explanation.consequence).toBeInstanceOf(Array);
+    expect(explanation.effect).toBeInstanceOf(Array);
   });
 });

@@ -55,7 +55,7 @@ export class RouteExplorerOrchestrator {
     // We will cast/access it for the mock.
     const routes = this.possibilityEngine.generateRoutes(region, request, melody);
 
-    // 4. Wrap Routes into ExplorationNodes with State Tracking
+      // 4. Wrap Routes into ExplorationNodes with State Tracking
     const nodes: ExplorationNode[] = routes.map(route => {
       const isMutation = !!parentNode;
       
@@ -68,7 +68,8 @@ export class RouteExplorerOrchestrator {
       const node: ExplorationNode = {
         nodeId: `node_${route.id}_${Date.now()}`,
         parentId: parentNode?.nodeId,
-        mutationType: isMutation ? 'modal_expansion' : undefined, // Mock derivation
+        routeDepth: parentNode ? parentNode.routeDepth + 1 : 1, // Depth from the root (roots are 1 in UI typically, or 0. Let's use parent + 1)
+        mutationType: isMutation ? 'modal_expansion' : 'identity', // Mock derivation
         route: route,
         distance: { fromOriginal, fromParent },
         accepted: false,

@@ -4,7 +4,7 @@ import { HarmonicRoute } from '../models/HarmonicRoute';
 export interface WhyThisExplanation {
   preserved: string[];
   altered: string[];
-  consequence: string[];
+  effect: string[];
 }
 
 export class WhyThisEngine {
@@ -20,7 +20,7 @@ export class WhyThisEngine {
     const explanation: WhyThisExplanation = {
       preserved: [],
       altered: [],
-      consequence: []
+      effect: []
     };
 
     // Very naive heuristic for the skeleton
@@ -29,11 +29,11 @@ export class WhyThisEngine {
     if (isSameRoot) {
       explanation.preserved.push('Centro Tonal Original');
       explanation.altered.push('Densidade Harmônica (Extensões)');
-      explanation.consequence.push('Adiciona coloração sem deslocar a percepção gravitacional da frase');
+      explanation.effect.push('Adiciona coloração sem deslocar a percepção gravitacional da frase');
     } else {
       explanation.preserved.push('Direção Dominante (Vetor Cadencial)');
       explanation.altered.push('Polo de Resolução');
-      explanation.consequence.push('Aumenta a ambiguidade direcional, postergando a resolução final');
+      explanation.effect.push('Aumenta a ambiguidade direcional, postergando a resolução final');
     }
 
     return explanation;

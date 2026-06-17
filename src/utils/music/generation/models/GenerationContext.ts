@@ -83,12 +83,3 @@ export interface PhraseAnalysis {
   directionalVector: number;
 }
 
-/**
- * The full directed graph representing the exploration space for a given root progression.
- * State is purely managed by the frontend/UI.
- */
-export interface ExplorationGraph {
-  rootRegionId: string;
-  nodes: import('./ExplorationState').ExplorationNode[];
-}
-
