@@ -16,6 +16,12 @@ O motor não dita "Aqui deveria ser um Fmaj7". Ele afirma: "Esta frase admite ou
 ### 2.3 O Sistema não Fala sobre Gênero (Abolição de Rótulos Estilísticos)
 Nenhuma sugestão utilizará conceitos culturais como "Jazz", "Rock", "Clássico" ou "Cinemático". Tais rótulos misturam harmonia com produção e estética. Toda a exploração permanecerá no rigoroso domínio da teoria musical (ex: *Mais Cromático*, *Mais Expansivo*).
 
+### 2.4 A Harmonia Original é Válida
+A rearmonização não pressupõe erro. A harmonia existente não é um "problema a ser consertado", mas sim o ponto de partida do mapa.
+
+### 2.5 O Sistema Trabalha por Exploração Incremental
+O objetivo não é entregar a "versão final perfeita" em um clique. O objetivo é apresentar o *próximo passo plausível* de exploração composicional. A ferramenta é um parceiro iterativo, não um oráculo.
+
 ## 3. A Nova Arquitetura de Motores (F13)
 
 ### 3.2 Phrase Function Engine
@@ -52,17 +58,28 @@ Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detec
 ### 3.8 Harmonic Possibility Engine (As Rotas)
 O motor atende aos objetivos definidos gerando **Rotas Harmônicas** (Caminhos) e não apenas opções avulsas. Em vez de "Sugestão 1", o sistema oferece "Rota de Deslocamento Tonal".
 
-### 3.9 Why Not? Engine (Explicabilidade Negativa)
+### 3.9 Opportunity Engine (A Curadoria)
+Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? Este motor mede a utilidade criativa da rota através de 4 eixos:
+- `novelty`: O quão distante a rota está da solução original.
+- `structuralImpact`: Quanto a percepção global da região muda.
+- `melodicRisk`: Sensibilidade de atrito com a melodia.
+- `reversibility`: O quão fácil é desfazer a mudança (ex: adicionar nonas é mais reversível do que mudar de tom).
+O sistema deixa de jogar uma lista na tela e passa a classificar as rotas (ex: "Rota A - Baixo Risco, Alto Retorno").
+
+### 3.10 Why Not? Engine (Explicabilidade Negativa)
 Tão importante quanto saber *por que* algo foi sugerido, é saber *por que* algo foi descartado. Este motor fornece o racional de exclusão:
 - *Não foi sugerido:* `C -> F -> G -> C`
 - *Motivo:* "Produz uma cadência autêntica forte, contrariando o objetivo escolhido de 'evitar resolução'."
 
-## 4. Exploração Formal (F13-A3: Section Reharmonization)
+## 4. Histórico de Exploração e Sessão Iterativa
+A composição é iterativa. O sistema rastreia as rotas aceitas e rejeitadas pelo usuário em uma `ExplorationSession`. Sem "IA mágica", apenas memória de decisão. Se o usuário rejeitou 3 rotas cromáticas seguidas, o sistema ajusta a prioridade para rotas mais diatônicas ou estruturais.
+
+## 5. Exploração Formal (F13-A3: Section Reharmonization)
 Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda ocorrência admite interpretação harmônica diferente mantendo a melodia intacta.
 - Exemplo A: `C → Am → G7`
 - Exemplo A': `Cmaj7 → Am9 → G13`
 
-## 5. Redesenho da UI (ScoreAnalysisDashboard)
+## 6. Redesenho da UI (ScoreAnalysisDashboard)
 A UI foi fragmentada em três universos paralelos (Modos) para limpar a carga cognitiva:
 
 ### Modo 1: Composer Mode (O que essa frase pode ser?)
@@ -84,9 +101,9 @@ Escondido por padrão, para pesquisadores.
 1. **Auditoria / Linter:** Caça às quintas e oitavas paralelas.
 2. **Métricas Brutais:** ADI, ISS, CFS, Lakatos, Torneios Epistêmicos.
 
-## 6. O Fluxo de Decisão (Resumo)
+## 7. O Fluxo de Decisão (Resumo)
 O sistema deixa de ser um analisador passivo e passa a operar o seguinte fluxo lógico cognitivo:
-1. *O que esta frase está fazendo?*
-2. *O que eu quero que ela faça?*
-3. *Quais rotas existem?*
-4. *Por que algumas rotas foram descartadas?*
+1. *O que esta frase está fazendo?* (Phrase Function / Region)
+2. *O que eu quero que ela faça?* (Harmonic Goal / Phrase Memory)
+3. *Quais rotas existem e quais são mais promissoras?* (Possibility Engine / Opportunity Engine)
+4. *Por que algumas rotas foram descartadas?* (Why Not Engine)
