@@ -1,5 +1,5 @@
 import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import type { MelodicPhrase, MelodicAnchor } from './melodyExtractionEngine';
+import type { MelodicPhrase, MelodicAnchor } from '../models/GenerationContext';
 import { parseChord } from '../../theory/chordParser';
 
 export class HarmonicCompatibilityEngine {
@@ -8,7 +8,7 @@ export class HarmonicCompatibilityEngine {
    * Returns true if compatible, false if it creates structural friction.
    */
   public isCompatible(chords: CanonicalChordEvent[], melody: MelodicPhrase): boolean {
-    const structuralAnchors = melody.anchors.filter(a => a.isStructural);
+    const structuralAnchors = melody.anchors.filter((a: MelodicAnchor) => a.isStructural);
 
     for (const chord of chords) {
       const parsedChord = parseChord(chord.symbol);
