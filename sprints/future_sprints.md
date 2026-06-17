@@ -170,11 +170,11 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | **F14-A2.4** | Functional Neighbor Search | **📅 FEITO** | O Spotify das progressões harmônicas. Descobre rotas similares agrupadas em clusters (IdentityTwin, ModalTwin, etc) usando as ferramentas A2.1 ~ A2.3. |
 | **F14-X** | Harmonic DNA Layer RFC | **📅 FEITO** | Formaliza a abstração suprema por trás do Fingerprint. Extrai o "DNA" estrutural (ex: Preparation → Dominance → Closure) que alimenta F15 e F16. |
 | **F14-A0** | Harmonic Ontology Bridge | **📅 FEITO** | Ponte formal entre a F11 (Descoberta) e a F13/F14. Transforma progressões em Fingerprints, abstrai em Arquétipos e alimenta o Grafo de Ontologia e Gramáticas. |
-| **F14-X1** | Structural Skeleton Engine | **📅 NEXT UP** | Extrai o esqueleto estrutural separando rigorosamente a narrativa em Pilares, Conectores e Decorações. |
-| **F14-X2** | Harmonic Memory Engine | **📅 NEXT UP** | Introduz o `PhraseContext` para calcular a Expectativa criada pelo histórico recente, alterando a força de fechamento e percepção. |
-| **F14-A3** | Functional Drift Engine | **📅 PLANEJADA** | Avalia trajetórias mutantes usando a ponte ontológica, o esqueleto e a memória. Entende se o Drift ocorreu na Cadência, Gravidade ou Estrutura. |
-| **F14-A3.5** | Functional Drift Taxonomy | **📅 PLANEJADA** | Explicabilidade do Drift ("Você perdeu identidade porque teve 45% Cadential Drift e 30% Gravity Drift"). |
-| **F14-A4** | Functional Substitution Engine | **📅 PLANEJADA** | Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas mantendo a função intacta. |
+| **F14-X1** | Structural Skeleton Engine | **📅 FEITO** | Extrai o esqueleto estrutural separando rigorosamente a narrativa em Pilares, Conectores e Decorações. |
+| **F14-X2** | Harmonic Memory Engine | **📅 FEITO** | Introduz o `PhraseContext` para calcular a Expectativa criada pelo histórico recente, alterando a força de fechamento e percepção. |
+| **F14-A3** | Functional Drift Engine | **📅 FEITO** | Avalia trajetórias mutantes usando a ponte ontológica, o esqueleto e a memória. Entende se o Drift ocorreu na Cadência, Gravidade ou Estrutura. |
+| **F14-A3.5** | Functional Drift Taxonomy | **📅 FEITO** | Explicabilidade do Drift ("Você perdeu identidade porque teve 45% Cadential Drift e 30% Gravity Drift"). Implementado junto à F14-A3. |
+| **F14-A4** | Functional Substitution Engine | **📅 NEXT UP** | Usa o arsenal da F14 (Neighbor + Drift) para recomendar substituições harmonicamente seguras (ex: Db7 no lugar de G7), prevendo a severidade do Drift antes da mutação. |
 | **F14-A5** | Cadence Grammar Engine | **📅 PLANEJADA** | O sistema aprende a **Sintaxe Frasal**. Trata cadências como entidades estruturais de primeira classe (ex: `CadentialPattern`). |
 | **F14-A6** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: narra a música em `NarrativeVectors` (ex: "Centro → Afastamento → Retorno"). |
 | **F14-A7** | Harmonic Tension Field Engine | **📅 PLANEJADA** | Criação de um `TensionField` contínuo, independente da função tonal. |
