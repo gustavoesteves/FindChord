@@ -41,13 +41,20 @@ O compositor raramente quer apagar o passado; ele quer rearmonizar mantendo resq
 Isso permite ao usuário escolher o nível de exploração: **Conservadora, Moderada ou Radical**.
 
 ### 3.4 Harmonic Goal Engine (A Tradução Composicional)
-*O elo entre desejo e restrição matemática.* O compositor não trabalha apenas com "adjetivos" (mais tensão), mas com **objetivos** composicionais concretos:
-- *Objetivo 1:* "Quero evitar que pareça uma resolução final." -> Restrição: Evitar cadência autêntica, favorecer prolongamentos ou cadência enganosa.
+*O elo entre desejo e restrição vetorial.* O compositor não trabalha apenas com "adjetivos" (mais tensão), mas com **objetivos** composicionais concretos:
+- *Objetivo 1:* "Quero evitar que pareça uma resolução final."
 - *Objetivo 2:* "Quero preparar uma modulação."
 - *Objetivo 3:* "Quero aumentar a energia sem mudar a melodia."
-O motor transforma esses verbos/objetivos nas restrições vetoriais (adição de cromatismo, alteração de polo) que guiarão as substituições.
 
-### 3.5 Harmonic Region Engine (A Unidade de Pensamento)
+### 3.5 Harmonic Constraint Engine (A Filtração Fina)
+*O elo limitador.* Mesmo com um objetivo claro, o compositor possui restrições práticas intransponíveis para aquela frase:
+- `Não alterar o baixo`
+- `Limitar cromatismo`
+- `Manter centro tonal original`
+- `Evitar extensões complexas`
+Este motor traduz restrições de "vida real" em filtros absolutos que vão barrar caminhos no Possibility Engine antes mesmo deles serem avaliados.
+
+### 3.6 Harmonic Region Engine (A Unidade de Pensamento)
 O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrupará a frase em blocos funcionais (Regiões).
 - **Região de Estabelecimento** (`C -> Am -> F`)
 - **Região Predominante** (`Dm -> F`)
@@ -55,13 +62,13 @@ O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrup
 - **Região Cadencial** (`ii -> V -> I`)
 A substituição passará a ocorrer no nível da **Região**, não do acorde.
 
-### 3.6 Harmonic Compatibility Engine
+### 3.7 Harmonic Compatibility Engine
 Valida a compatibilidade entre a melodia soberana (respeitando as `MelodicAnchors`) e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
 
-### 3.7 Harmonic Possibility Engine (As Rotas)
-O motor atende aos objetivos definidos gerando **Rotas Harmônicas** (Caminhos) e não apenas opções avulsas. Em vez de "Sugestão 1", o sistema oferece "Rota de Deslocamento Tonal".
+### 3.8 Harmonic Possibility Engine (As Rotas)
+O motor atende aos objetivos (Goals) e respeita as restrições (Constraints), gerando **Rotas Harmônicas** (Caminhos). Em vez de "Sugestão 1", o sistema oferece "Rota de Deslocamento Tonal".
 
-### 3.8 Opportunity Engine (A Curadoria)
+### 3.9 Opportunity Engine (A Curadoria)
 Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? Este motor mede a utilidade criativa da rota através de 4 eixos:
 - `novelty`: O quão distante a rota está da solução original.
 - `structuralImpact`: Quanto a percepção global da região muda.
@@ -69,7 +76,7 @@ Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? 
 - `reversibility`: O quão fácil é desfazer a mudança (ex: adicionar nonas é mais reversível do que mudar de tom).
 O sistema deixa de jogar uma lista na tela e passa a classificar as rotas (ex: "Rota A - Baixo Risco, Alto Retorno").
 
-### 3.9 Why Not? Engine (Explicabilidade Negativa)
+### 3.10 Why Not? Engine (Explicabilidade Negativa)
 Tão importante quanto saber *por que* algo foi sugerido, é saber *por que* algo foi descartado. Este motor fornece o racional de exclusão:
 - *Não foi sugerido:* `C -> F -> G -> C`
 - *Motivo:* "Produz uma cadência autêntica forte, contrariando o objetivo escolhido de 'evitar resolução'."
@@ -87,10 +94,14 @@ A UI foi fragmentada em três universos paralelos (Modos) para limpar a carga co
 
 ### Modo 1: Composer Mode (O que essa frase pode ser?)
 A interface de criação.
-1. **Intensidade:** `[ ] Conservadora  [ ] Moderada  [ ] Radical`
-2. **Objetivo:** `[x] Quero evitar resolução final`
-3. **Gerar Rotas Harmônicas:**
-   - *Exibe as Rotas (ex: "Rota de Deslocamento Tonal") mostrando o que foi preservado, o que foi alterado e o resultado.*
+1. **Controles Independentes:**
+   - **Exploração:** Baixa → Alta (O quanto inovar).
+   - **Memória:** Baixa → Alta (O quanto respeitar o passado).
+   *Isso permite (Exploração Alta + Memória Alta) para grandes rearmonizações estruturais que retêm a intenção, ou (Exploração Alta + Memória Baixa) para reinterpretações dramáticas totais.*
+2. **Restrições Práticas (Constraints):** `[ ] Manter baixo  [ ] S/ empréstimos`
+3. **Objetivo:** `[x] Quero evitar resolução final`
+4. **Gerar Rotas Harmônicas:**
+   - *Exibe as Rotas (ex: "Rota de Deslocamento Tonal") avaliadas pelo Opportunity Engine.*
    - *Inclui a aba "Why Not?" explicando os caminhos vetados.*
 
 ### Modo 2: Analysis Mode (O que essa frase está fazendo?)
@@ -107,6 +118,6 @@ Escondido por padrão, para pesquisadores.
 ## 7. O Fluxo de Decisão (Resumo)
 O sistema deixa de ser um analisador passivo e passa a operar o seguinte fluxo lógico cognitivo:
 1. *O que esta frase está fazendo?* (Phrase Function / Region)
-2. *O que eu quero que ela faça?* (Harmonic Goal / Phrase Memory)
+2. *O que eu quero que ela faça, e o que não pode mudar?* (Harmonic Goal / Constraint Engine / Phrase Memory)
 3. *Quais rotas existem e quais são mais promissoras?* (Possibility Engine / Opportunity Engine)
 4. *Por que algumas rotas foram descartadas?* (Why Not Engine)
