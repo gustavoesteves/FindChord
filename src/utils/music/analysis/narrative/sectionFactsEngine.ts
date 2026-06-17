@@ -2,16 +2,12 @@ import type {
   FunctionalChord,
   CadenceInfo,
   HarmonicRegion,
-  ScoreSection,
   TonalCenter,
   AnalyticalSection,
   SectionNarrativeFacts,
   MusicalEvent
 } from '../models/FunctionalAnalysis';
-
-function formatChordName(chord: FunctionalChord): string {
-  return chord.chordSymbol;
-}
+import type { ScoreSection } from '../models/ScoreSnapshot';
 
 export function extractSectionFacts(
   sections: ScoreSection[],

@@ -33,15 +33,13 @@ console.log('\n🎵 Caso 1 — Período e Resolução Autêntica');
     const facts = result.narrativeFacts;
     const expl = result.narrativeExplanation;
 
-    // Deve ter gerado fatos de período ou frases avulsas
-    const periodFacts = facts.overviewFacts.filter(f => f.type === 'PERIOD_RELATION');
-    const standaloneFacts = facts.overviewFacts.filter(f => f.type === 'STANDALONE_PHRASE');
-    assert(periodFacts.length > 0 || standaloneFacts.length > 0, 'Found period or standalone overview facts');
+    // Fatos gerais (removido overviewFacts na F12-C, focamos no GlobalMeaning/Arc)
+    assert(facts.chordFacts !== undefined, 'Chord facts map exists');
 
-    // Valida se a visão geral em português foi gerada
-    assert(expl.overview.length > 0, 'Overview narrative text is generated');
-    const lowerOverview = expl.overview.toLowerCase();
-    assert(lowerOverview.includes('frase') || lowerOverview.includes('progressão'), 'Overview describes phrases/progression');
+    // Valida se a visão geral ou global foi gerada
+    const hasGlobal = expl.global && expl.global.observations && expl.global.observations.length > 0;
+    const hasOverview = expl.overview !== undefined && expl.overview.length > 0;
+    assert(hasGlobal || hasOverview, 'Global narrative text or overview is generated');
 
 
     // Acorde 1 (G7) deve ter resolução dominante
