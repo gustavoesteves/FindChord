@@ -17,7 +17,7 @@ export function correctChordSpelling(chordName: string, root: string): string {
 export function formatChordName(
   root: string,
   quality: ChordQuality,
-  omissions: string[],
+  _omissions: string[],
   bass?: string,
   style: "Jazz" | "Brazilian" | "Academic" = "Jazz"
 ): string {
