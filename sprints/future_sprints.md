@@ -150,7 +150,7 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | **F13-A1** | Harmonic Possibility Explorer | **📅 FEITO** | O motor base da exploração. Traz **Rotas Harmônicas**, o **Opportunity Engine**, a **Explicabilidade Negativa (Why Not Engine)** e o **Histórico de Exploração**. Transforma a UI em 3 universos isolados: **Composer Mode** (com controles desacoplados de *Exploração* vs *Memória*), **Analysis Mode** e **Research Mode**. |
 | **F13-A2.0** | Exploration State Engine | **📅 FEITO** | Gerencia o estado e o grafo das rotas (`ExplorationGraph`). Traz Métricas de Distância Relativa (Original vs Parent) e a **Explicabilidade Positiva (WhyThis Engine)** para justificar escolhas ao compositor. |
 | **F13-A2.1** | Composer Mode UI | **📅 FEITO** | Cria a interface visual do Composer Mode, conectando a pipeline F13-A1 e o grafo de estado da F13-A2.0 aos controles (Exploração vs Memória) e exibindo a árvore de rotas. |
-| **F13-A3** | Route Mutation & Section Reharmonization | **📅 PLANEJADA** | Introduz a **Mutação de Rotas** (gerar N variações de uma rota aceita). Avalia também repetições macro (Forma A e A') sugerindo texturas e funções harmônicas alternativas para a segunda exposição. |
+| **F13-A3** | Route Mutation & Section Reharmonization | **📅 ADIADA (Espera F14-A3)** | Introduz a **Mutação de Rotas** (gerar N variações de uma rota aceita). Adiada para que a mutação opere sobre **Fingerprints Funcionais** (F14) e não apenas sobre acordes. |
 
 
 ---
@@ -160,12 +160,15 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F14-A1** | Functional Identity Engine | **📅 PLANEJADA** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Ex: `Edim` pode conter múltiplas identidades ocultas (`C7(b9)`, `E7(b9)`, etc). Separa `VisualChord` de `FunctionalIdentity`. |
-| **F14-A2** | Functional Substitution Engine | **📅 PLANEJADA** | Substituição por **equivalência funcional** (não apenas sonora). Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas. |
-| **F14-A3** | Cadence Grammar Engine | **📅 PLANEJADA** | Modelagem das leis formais de movimento: cadências autênticas, imperfeitas, dominantes secundários, `II-V` e `II-subV`. O sistema aprende a sintaxe das frases musicais estruturais subjacentes aos acordes de superfície. |
-| **F14-A4** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: em vez de acordes, o sistema narra a música em termos de "Afastamento → Preparação → Resolução". A harmonia deixa de ser um bloco vertical e passa a ser compreendida puramente como **histórias harmônicas**. |
-| **F14-A5** | Harmonic Tension Field Engine | **📅 PLANEJADA** | Criação de um `TensionField` contínuo, independente da função tonal. Permite ao sistema responder "Essa rota aumenta tensão?" e buscar "Aumentar energia sem alterar função". |
-| **F14-A6** | Harmonic Momentum Engine | **📅 PLANEJADA** | Medição vetorial do impulso harmônico (`Forward Pull`, `Backward Pull`, `Expansion`, `Contraction`). Diferencia progressões com mesma tensão mas sensações de movimento diametralmente opostas. |
+| **F14-A0** | Harmonic Ontology Bridge | **📅 PLANEJADA** | Ponte formal entre a F11 (Descoberta) e a F13 (Composer). Transforma um arquétipo descoberto em um `FunctionalFingerprint` e o disponibiliza como nova rota composicional. |
+| **F14-A1** | Functional Identity Engine | **📅 NEXT UP** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Separa `VisualChord` de `FunctionalIdentity`. Criação do `FunctionalFingerprint` (ex: Preparação → Acumulação → Resolução). |
+| **F14-A2** | Functional Similarity Engine | **📅 PLANEJADA** | Avalia a distância semântica real entre duas rotas. Capaz de responder: "Quão parecidas são essas duas rotas funcionalmente?" (mesmo que os acordes sejam completamente diferentes). |
+| **F14-A3** | Functional Drift Engine | **📅 PLANEJADA** | Avalia trajetórias mutantes. Capaz de responder: "Em que momento desta mutação a identidade funcional original foi perdida?". |
+| **F14-A4** | Functional Substitution Engine | **📅 PLANEJADA** | Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas mantendo a função intacta. |
+| **F14-A5** | Cadence Grammar Engine | **📅 PLANEJADA** | O sistema aprende a **Sintaxe Frasal**. Trata cadências como entidades estruturais de primeira classe (ex: `CadentialPattern`). |
+| **F14-A6** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: narra a música em `NarrativeVectors` (ex: "Centro → Afastamento → Retorno"). |
+| **F14-A7** | Harmonic Tension Field Engine | **📅 PLANEJADA** | Criação de um `TensionField` contínuo, independente da função tonal. |
+| **F14-A8** | Harmonic Momentum Engine | **📅 PLANEJADA** | Medição vetorial do impulso harmônico (`Forward Pull`, `Backward Pull`, `Expansion`, `Contraction`). |
 
 ---
 
