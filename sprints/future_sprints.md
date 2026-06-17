@@ -160,10 +160,11 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F14-A0** | Harmonic Ontology Bridge | **📅 PLANEJADA** | Ponte formal entre a F11 (Descoberta) e a F13 (Composer). Transforma um arquétipo descoberto em um `FunctionalFingerprint` e o disponibiliza como nova rota composicional. |
-| **F14-A1** | Functional Identity Engine | **📅 NEXT UP** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Separa `VisualChord` de `FunctionalIdentity`. Criação do `FunctionalFingerprint` (ex: Preparação → Acumulação → Resolução). |
-| **F14-A2** | Functional Similarity Engine | **📅 PLANEJADA** | Avalia a distância semântica real entre duas rotas. Capaz de responder: "Quão parecidas são essas duas rotas funcionalmente?" (mesmo que os acordes sejam completamente diferentes). |
+| **F14-A1.0** | Fingerprint Taxonomy RFC | **📅 NEXT UP** | Documento puramente conceitual respondendo "Quais dimensões definem identidade?". Mapeia a taxonomia exata (Estrutura, Energia, Movimento, Gravidade, etc) do futuro `FunctionalFingerprint`. |
+| **F14-A1** | Functional Identity Engine | **📅 PLANEJADA** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Separa `VisualChord` de `FunctionalIdentity`. Criação do `FunctionalFingerprint` (ex: Preparação → Acumulação → Resolução). |
+| **F14-A2** | Functional Similarity Engine | **📅 PLANEJADA** | Avalia a distância semântica real entre duas rotas. Capaz de responder: "Quão parecidas são essas duas rotas funcionalmente?" comparando seus Fingerprints. |
 | **F14-A3** | Functional Drift Engine | **📅 PLANEJADA** | Avalia trajetórias mutantes. Capaz de responder: "Em que momento desta mutação a identidade funcional original foi perdida?". |
+| **F14-A0** | Harmonic Ontology Bridge | **📅 PLANEJADA** | Ponte formal entre a F11 (Descoberta) e a F13/F14. Transforma um arquétipo descoberto pelo F11 no novo `FunctionalFingerprint` gerado em F14 e o disponibiliza como rota no Composer Mode. |
 | **F14-A4** | Functional Substitution Engine | **📅 PLANEJADA** | Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas mantendo a função intacta. |
 | **F14-A5** | Cadence Grammar Engine | **📅 PLANEJADA** | O sistema aprende a **Sintaxe Frasal**. Trata cadências como entidades estruturais de primeira classe (ex: `CadentialPattern`). |
 | **F14-A6** | Functional Narrative Engine | **📅 PLANEJADA** | A abstração máxima: narra a música em `NarrativeVectors` (ex: "Centro → Afastamento → Retorno"). |
