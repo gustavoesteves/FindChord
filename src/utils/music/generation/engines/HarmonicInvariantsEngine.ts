@@ -39,24 +39,42 @@ export class HarmonicInvariantsEngine {
       targetFingerprint.gravity.modalGravity :
       0.0;
 
-    // Compute Global Weight for this invariant
-    const weight = (closureWeight + dominanceWeight + narrativeWeight + modalWeight) / 4.0;
+    // 5. Extract Direction Weight
+    // The psychological vector (compression vs expansion)
+    const directionWeight = Math.max(
+      targetFingerprint.direction.compression,
+      targetFingerprint.direction.expansion,
+      targetFingerprint.direction.resolution
+    );
 
-    const constraints = {
+    // Compute Global Weight for this invariant
+    const weight = (closureWeight + dominanceWeight + narrativeWeight + modalWeight + directionWeight) / 5.0;
+
+    const discovered = {
       weight,
       closureWeight,
       dominanceWeight,
       narrativeWeight,
-      modalWeight
+      modalWeight,
+      directionWeight
     };
 
-    // 5. Populate required pillars
+    // Calculate fragility index
+    // A progression is fragile if it relies heavily on specific tensions, specific modal colors, 
+    // or has a very complex hierarchical decoration.
+    const fragilityIndex = Math.min(1.0, 
+      (targetFingerprint.color.extensionDensity * 0.4) + 
+      (targetFingerprint.perception.ambiguityIndex * 0.4) + 
+      ((1 - targetFingerprint.stability.harmonicStability) * 0.2)
+    );
+
+    // 6. Populate required pillars
     // Any pillar with weight > 0.7 is required
     const requiredStructuralPillars = targetSkeleton.pillars
       .filter(p => p.weight >= 0.7)
       .map(p => p.strand);
 
-    // 6. Populate forbidden changes
+    // 7. Populate forbidden changes
     const forbiddenStructuralChanges: ForbiddenStructuralChange[] = [];
 
     // If dominance is absolutely critical, forbid removing it
@@ -81,7 +99,9 @@ export class HarmonicInvariantsEngine {
     }
 
     return {
-      constraints,
+      discovered,
+      locked: {}, // Initially empty, populated by Composer Mode UI
+      fragilityIndex,
       requiredStructuralPillars,
       forbiddenStructuralChanges
     };

@@ -55,8 +55,11 @@ describe('HarmonicInvariantsEngine (F14-A6)', () => {
 
     const invariants = engine.extractInvariants(fingerprint, dna, skeleton);
 
-    expect(invariants.constraints.closureWeight).toBeGreaterThanOrEqual(0.95);
-    expect(invariants.constraints.dominanceWeight).toBeGreaterThanOrEqual(0.95);
+    expect(invariants.discovered.closureWeight).toBeGreaterThanOrEqual(0.95);
+    expect(invariants.discovered.dominanceWeight).toBeGreaterThanOrEqual(0.95);
+    expect(invariants.discovered.directionWeight).toBeGreaterThanOrEqual(0.0);
+    expect(invariants.fragilityIndex).toBeLessThan(0.5); // should be fairly robust
+    
     expect(invariants.requiredStructuralPillars).toContain(DnaStrand.Dominance);
     expect(invariants.requiredStructuralPillars).toContain(DnaStrand.Anchor);
     
@@ -81,9 +84,10 @@ describe('HarmonicInvariantsEngine (F14-A6)', () => {
 
     const invariants = engine.extractInvariants(fingerprint, dna, skeleton);
 
-    expect(invariants.constraints.closureWeight).toBeLessThan(0.2);
-    expect(invariants.constraints.dominanceWeight).toBeLessThan(0.2);
-    expect(invariants.constraints.modalWeight).toBeGreaterThan(0.9);
+    expect(invariants.discovered.closureWeight).toBeLessThan(0.2);
+    expect(invariants.discovered.dominanceWeight).toBeLessThan(0.2);
+    expect(invariants.discovered.modalWeight).toBeGreaterThan(0.9);
+    expect(invariants.fragilityIndex).toBeGreaterThan(0.3); // High ambiguity -> fragile
     
     const dominanceForbidden = invariants.forbiddenStructuralChanges.find(c => c.pillar === DnaStrand.Dominance);
     expect(dominanceForbidden).toBeUndefined(); // Dominance is not critical here
