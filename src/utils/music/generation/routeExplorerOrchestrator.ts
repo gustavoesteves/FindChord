@@ -1,4 +1,4 @@
-import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { CanonicalChordEvent } from '../analysis/models/CanonicalChordEvent';
 import type { GenerationRequest } from './models/GenerationContext';
 import type { WhyNotExclusion } from './models/HarmonicRoute';
 import type { ExplorationNode } from './models/ExplorationState';
