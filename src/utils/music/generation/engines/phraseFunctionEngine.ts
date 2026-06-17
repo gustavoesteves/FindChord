@@ -1,23 +1,27 @@
 import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-
-export type PhraseFunction = 'Establishment' | 'Predominant' | 'Dominant' | 'Cadential' | 'Prolongation';
+import { PhraseAnalysis, HarmonicRegion } from '../models/GenerationContext';
 
 export class PhraseFunctionEngine {
   /**
    * Analyzes a sequence of chords to determine the primary structural function of the phrase.
    * This is a placeholder logic for the architectural scaffolding.
    */
-  public determineFunction(chords: CanonicalChordEvent[]): PhraseFunction {
-    if (chords.length === 0) return 'Establishment';
+  public analyzePhrase(chords: CanonicalChordEvent[]): PhraseAnalysis {
+    let baseFunction: HarmonicRegion['function'] = 'Establishment';
     
-    // Naive heuristic for architecture:
-    const lastChord = chords[chords.length - 1];
-    
-    // If it ends on a dominant chord, it's likely a Dominant/Preparation phrase
-    if (lastChord.symbol.includes('7') && !lastChord.symbol.includes('maj7') && !lastChord.symbol.includes('m7')) {
-      return 'Dominant';
+    if (chords.length > 0) {
+      const lastChord = chords[chords.length - 1];
+      if (lastChord.symbol.includes('7') && !lastChord.symbol.includes('maj7') && !lastChord.symbol.includes('m7')) {
+        baseFunction = 'Dominant';
+      }
     }
 
-    return 'Establishment'; // Default fallback
+    return {
+      regions: [], // Will be populated by HarmonicRegionEngine
+      functionNarrative: baseFunction,
+      tonalCenter: 'C', // Mock
+      cadentialWeight: baseFunction === 'Dominant' ? 0.8 : 0.2,
+      directionalVector: baseFunction === 'Dominant' ? 1.0 : 0.0
+    };
   }
 }

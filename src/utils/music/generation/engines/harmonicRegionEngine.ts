@@ -1,5 +1,5 @@
 import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { HarmonicRegion } from '../models/GenerationContext';
+import { HarmonicRegion, PhraseAnalysis } from '../models/GenerationContext';
 import { PhraseFunctionEngine } from './phraseFunctionEngine';
 
 export class HarmonicRegionEngine {
@@ -7,17 +7,22 @@ export class HarmonicRegionEngine {
 
   /**
    * Groups individual chords into a unified macro-functional block (HarmonicRegion) for substitution.
+   * Returns the full PhraseAnalysis containing the regions.
    */
-  public extractRegion(id: string, name: string, chords: CanonicalChordEvent[], startMeasure: number, endMeasure: number): HarmonicRegion {
-    const regionFunction = this.phraseFunctionEngine.determineFunction(chords);
+  public extractRegion(id: string, name: string, chords: CanonicalChordEvent[], startMeasure: number, endMeasure: number): PhraseAnalysis {
+    const analysis = this.phraseFunctionEngine.analyzePhrase(chords);
 
-    return {
+    const region: HarmonicRegion = {
       id,
       name,
-      function: regionFunction,
+      function: analysis.functionNarrative as HarmonicRegion['function'],
       originalChords: chords,
       startMeasure,
       endMeasure
     };
+    
+    analysis.regions.push(region);
+
+    return analysis;
   }
 }

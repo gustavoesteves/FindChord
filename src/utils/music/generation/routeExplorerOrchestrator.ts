@@ -30,13 +30,16 @@ export class RouteExplorerOrchestrator {
     const melody = this.melodyEngine.extractMelodicPhrase(regionId + '-melody', rawNotes);
 
     // 2. Form the atomic unit of substitution (Harmonic Region)
-    const region = this.regionEngine.extractRegion(
+    const phraseAnalysis = this.regionEngine.extractRegion(
       regionId,
       'Target Region',
       chords,
       1, // mock start measure
       chords.length // mock end measure
     );
+    
+    // For this prototype, we just process the first region.
+    const region = phraseAnalysis.regions[0];
 
     // 3. Generate possibilities (injecting Goals, Constraints, and preserving Melody)
     // The PossibilityEngine internally calls CompatibilityEngine, OpportunityEngine and WhyNotEngine.

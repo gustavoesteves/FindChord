@@ -149,7 +149,7 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | :--- | :--- | :--- | :--- |
 | **F13-A1** | Harmonic Possibility Explorer | **📅 NEXT UP** | O motor base da exploração. Traz **Rotas Harmônicas**, o **Opportunity Engine**, a **Explicabilidade Negativa (Why Not Engine)** e o **Histórico de Exploração**. Transforma a UI em 3 universos isolados: **Composer Mode** (com controles desacoplados de *Exploração* vs *Memória*), **Analysis Mode** e **Research Mode**. |
 | **F13-A2** | Phrase Function, Goal & Constraint Engine | **📅 PLANEJADA** | O sistema entende a intenção original, capta o objetivo (*Goal*) e barra caminhos usando restrições práticas da vida real (*Constraint Engine*: não mudar baixo, manter centro, etc.). Introduz as **Regiões Harmônicas** como a unidade atômica de substituição. |
-| **F13-A3** | Section Reharmonization | **📅 PLANEJADA** | Avalia repetições macro (Forma A e A'). Quando o material se repete, o sistema sugere texturas e funções harmônicas alternativas para a segunda exposição, mantendo a melodia intacta. |
+| **F13-A3** | Route Mutation & Section Reharmonization | **📅 PLANEJADA** | Introduz a **Mutação de Rotas** (gerar N variações de uma rota aceita). Avalia também repetições macro (Forma A e A') sugerindo texturas e funções harmônicas alternativas para a segunda exposição. |
 
 ---
 

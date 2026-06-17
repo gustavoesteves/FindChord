@@ -71,3 +71,15 @@ export interface HarmonicRegion {
   startMeasure: number;
   endMeasure: number;
 }
+
+/**
+ * The unified output of the PhraseFunctionEngine before passing to the RegionEngine.
+ */
+export interface PhraseAnalysis {
+  regions: HarmonicRegion[];
+  functionNarrative: string;
+  tonalCenter: string;
+  cadentialWeight: number;
+  directionalVector: number;
+}
+
