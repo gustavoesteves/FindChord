@@ -147,8 +147,8 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F13-A1** | Harmonic Possibility Explorer | **📅 NEXT UP** | O motor base da exploração. Traz o `MelodyExtractionEngine`, `HarmonicCompatibilityEngine` e `PossibilityEngine`. Transforma a UI em 3 universos isolados: **Composer Mode** (O que pode ser?), **Analyst Mode** (O que está fazendo?) e **Academic Mode** (Auditoria/CFS). |
-| **F13-A2** | Phrase Function & Goal Engine | **📅 PLANEJADA** | O "elo entre desejo e matemática". O sistema entende a intenção da frase e traduz objetivos composicionais (ex: "Quero evitar resolução") em restrições harmônicas. Introduz o agrupamento por **Regiões Harmônicas** para substituição de blocos narrativos. |
+| **F13-A1** | Harmonic Possibility Explorer | **📅 NEXT UP** | O motor base da exploração. Transforma "Alternativas" em **Rotas Harmônicas** e introduz a **Explicabilidade Negativa (Why Not Engine)** para educar o compositor sobre caminhos descartados. Transforma a UI em 3 universos isolados: **Composer Mode**, **Analysis Mode** e **Research Mode**. |
+| **F13-A2** | Phrase Function & Goal Engine | **📅 PLANEJADA** | Adiciona o **Phrase Memory Engine** (controle de intensidade: Conservadora, Moderada, Radical) e o **Goal Engine**. O sistema entende a intenção da frase e traduz objetivos composicionais em restrições harmônicas agrupadas por **Regiões Harmônicas**. |
 | **F13-A3** | Section Reharmonization | **📅 PLANEJADA** | Avalia repetições macro (Forma A e A'). Quando o material se repete, o sistema sugere texturas e funções harmônicas alternativas para a segunda exposição, mantendo a melodia intacta. |
 
 ---
