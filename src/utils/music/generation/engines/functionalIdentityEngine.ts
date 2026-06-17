@@ -8,7 +8,11 @@ import type {
   DirectionProfile,
   PerceptualMetrics,
   StabilityProfile,
-  ColorProfile
+  ColorProfile,
+  HierarchyProfile,
+  CadentialSignature,
+  ModalProfile,
+  NarrativeIntent
 } from '../models/FunctionalFingerprint';
 
 /**
@@ -27,6 +31,10 @@ export class FunctionalIdentityEngine {
       perception: this.calculatePerceptualMetrics(progression),
       stability: this.calculateStabilityProfile(progression),
       color: this.calculateColorProfile(progression),
+      hierarchy: this.calculateHierarchyProfile(progression),
+      cadentialSignature: this.calculateCadentialSignature(progression),
+      modalProfile: this.calculateModalProfile(progression),
+      narrativeIntent: this.calculateNarrativeIntent(progression),
       identitySignature: this.detectIdentitySignature(progression)
     };
   }
@@ -98,6 +106,43 @@ export class FunctionalIdentityEngine {
       modalColor: 0.2,
       chromaticColor: 0.3,
       extensionDensity: 0.5
+    };
+  }
+
+  private calculateHierarchyProfile(_progression: CanonicalProgressionEvent): HierarchyProfile {
+    return {
+      structuralWeight: 0.6,
+      decorativeWeight: 0.4
+    };
+  }
+
+  private calculateCadentialSignature(_progression: CanonicalProgressionEvent): CadentialSignature {
+    return {
+      authentic: 0.5,
+      plagal: 0.2,
+      deceptive: 0.1,
+      modal: 0.2
+    };
+  }
+
+  private calculateModalProfile(_progression: CanonicalProgressionEvent): ModalProfile {
+    return {
+      dorianWeight: 0.1,
+      phrygianWeight: 0.0,
+      lydianWeight: 0.0,
+      mixolydianWeight: 0.0,
+      aeolianWeight: 0.0
+    };
+  }
+
+  private calculateNarrativeIntent(_progression: CanonicalProgressionEvent): NarrativeIntent {
+    return {
+      expansion: 0.1,
+      preparation: 0.3,
+      suspension: 0.2,
+      confirmation: 0.1,
+      diversion: 0.1,
+      resolution: 0.2
     };
   }
 

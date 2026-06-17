@@ -53,6 +53,22 @@ describe('FunctionalIdentityEngine (F14-A1)', () => {
     expect(fingerprint.color).toBeDefined();
     expect(fingerprint.color.chromaticColor).toBeGreaterThanOrEqual(0);
 
+    // Hierarchy
+    expect(fingerprint.hierarchy).toBeDefined();
+    expect(fingerprint.hierarchy.structuralWeight).toBeGreaterThanOrEqual(0);
+
+    // Cadential Signature
+    expect(fingerprint.cadentialSignature).toBeDefined();
+    expect(fingerprint.cadentialSignature.authentic).toBeGreaterThanOrEqual(0);
+
+    // Modal Profile
+    expect(fingerprint.modalProfile).toBeDefined();
+    expect(fingerprint.modalProfile.dorianWeight).toBeGreaterThanOrEqual(0);
+
+    // Narrative Intent
+    expect(fingerprint.narrativeIntent).toBeDefined();
+    expect(fingerprint.narrativeIntent.expansion).toBeGreaterThanOrEqual(0);
+
     // Identity Signature
     expect(fingerprint.identitySignature).toBeInstanceOf(Array);
     expect(fingerprint.identitySignature.length).toBeGreaterThan(0);
