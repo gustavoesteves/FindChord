@@ -87,13 +87,32 @@ Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? 
 - `reversibility`: O quão fácil é desfazer a mudança (ex: adicionar nonas é mais reversível do que mudar de tom).
 O sistema deixa de jogar uma lista na tela e passa a classificar as rotas (ex: "Rota A - Baixo Risco, Alto Retorno").
 
-### 3.10 Why Not? Engine (Explicabilidade Negativa)
+### 3.11 Why Not? Engine (Explicabilidade Negativa)
 Tão importante quanto saber *por que* algo foi sugerido, é saber *por que* algo foi descartado. Este motor fornece o racional de exclusão:
 - *Não foi sugerido:* `C -> F -> G -> C`
 - *Motivo:* "Produz uma cadência autêntica forte, contrariando o objetivo escolhido de 'evitar resolução'."
 
+### 3.12 Why This? Engine (Explicabilidade Positiva)
+O simétrico natural do *Why Not*. Explica de forma pragmática e amigável o que a rota selecionada realmente realiza:
+- *Preservado:* Direção dominante.
+- *Alterado:* Centro tonal percebido.
+- *Resultado:* Maior ambiguidade antes da resolução.
+
+### 3.13 Distance Metrics (Original vs Parent)
+O `ExplorationDelta` mede a audácia absoluta. Porém, dentro de um grafo de exploração, a distância precisa ser contextualizada:
+- **DistanceFromOriginal:** O quão longe a rota atual está da partitura raiz.
+- **DistanceFromParent:** O quão longe a rota atual está da rota imediatamente anterior (útil ao gerar variações sucessivas de uma rota já alterada).
+
+### 3.14 Exploration State Engine
+A exploração na UI não será um processo linear ou "fogo-e-esquece", mas sim a navegação de um espaço de possibilidades. O sistema estrutura isso através de um **Grafo de Exploração (`ExplorationGraph`)**:
+- O usuário gera `Rota A` e `Rota B`.
+- Aceita a `Rota B`.
+- Pede variações: nascem `B1`, `B2`.
+- Volta para testar a `Rota A`.
+O estado deixa de ser apenas uma lista de cifras e se consolida em nós (`ExplorationNode`), permitindo viagens entre realidades harmônicas sem perder o contexto de decisões passadas.
+
 ## 4. Histórico de Exploração e Sessão Iterativa
-A composição é iterativa. O sistema rastreia as rotas aceitas e rejeitadas pelo usuário em uma `ExplorationSession`. Sem "IA mágica", apenas memória de decisão. Se o usuário rejeitou 3 rotas cromáticas seguidas, o sistema ajusta a prioridade para rotas mais diatônicas ou estruturais.
+A composição é iterativa. O sistema rastreia as rotas aceitas e rejeitadas pelo usuário em uma `ExplorationSession` ligada ao `ExplorationGraph`. Sem "IA mágica", apenas memória de decisão. Se o usuário rejeitou 3 rotas cromáticas seguidas, o sistema ajusta a prioridade para rotas mais diatônicas ou estruturais.
 
 ## 5. Exploração Formal (F13-A3: Section Reharmonization)
 Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda ocorrência admite interpretação harmônica diferente mantendo a melodia intacta.
