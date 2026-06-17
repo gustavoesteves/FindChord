@@ -1,4 +1,4 @@
-import { HarmonicRoute } from './HarmonicRoute';
+import type { HarmonicRoute } from './HarmonicRoute';
 
 export type RouteMutationType = 
   | 'identity'

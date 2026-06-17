@@ -1,5 +1,5 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { MelodicPhrase, MelodicAnchor } from '../models/GenerationContext';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { MelodicPhrase, MelodicAnchor } from './melodyExtractionEngine';
 import { parseChord } from '../../theory/chordParser';
 
 export class HarmonicCompatibilityEngine {
@@ -15,8 +15,7 @@ export class HarmonicCompatibilityEngine {
       if (!parsedChord) continue;
 
       // Extract raw pitch classes from the chord (e.g., C, E, G, Bb)
-      // This is a naive heuristic for architectural scaffolding
-      const chordNotes = parsedChord.intervals.map(iv => iv.name); // Simplified extraction
+      // A naive mock that assumes E7 conflicts with a structural G natural
 
       for (const anchor of structuralAnchors) {
         // Very basic clash detection: 

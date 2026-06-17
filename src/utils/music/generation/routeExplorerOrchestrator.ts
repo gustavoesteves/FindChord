@@ -1,11 +1,11 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { GenerationRequest } from './models/GenerationContext';
-import { HarmonicRoute, WhyNotExclusion } from './models/HarmonicRoute';
-import { ExplorationNode } from './models/ExplorationState';
-import { MelodyExtractionEngine, RawMelodyNote } from './engines/melodyExtractionEngine';
-import { HarmonicRegionEngine } from './engines/harmonicRegionEngine';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { GenerationRequest } from './models/GenerationContext';
+import type { WhyNotExclusion } from './models/HarmonicRoute';
+import type { ExplorationNode } from './models/ExplorationState';
+import type { RawMelodyNote } from './engines/melodyExtractionEngine';
+import { MelodyExtractionEngine } from './engines/melodyExtractionEngine';
 import { HarmonicPossibilityEngine } from './engines/harmonicPossibilityEngine';
-import { WhyThisEngine } from './engines/whyThisEngine';
+import { HarmonicRegionEngine } from './engines/harmonicRegionEngine';
 
 export interface ExplorationResult {
   nodes: ExplorationNode[];
@@ -16,7 +16,6 @@ export class RouteExplorerOrchestrator {
   private melodyEngine = new MelodyExtractionEngine();
   private regionEngine = new HarmonicRegionEngine();
   private possibilityEngine = new HarmonicPossibilityEngine();
-  private whyThisEngine = new WhyThisEngine();
 
   /**
    * Orchestrates the entire F13-A1/F13-A2.0 compositional pipeline.

@@ -1,4 +1,4 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
 
 /**
  * A extracted melody tied to a structural harmony.

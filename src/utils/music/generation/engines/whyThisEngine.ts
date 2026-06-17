@@ -1,5 +1,5 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { HarmonicRoute } from '../models/HarmonicRoute';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { HarmonicRoute } from '../models/HarmonicRoute';
 
 export interface WhyThisExplanation {
   preserved: string[];

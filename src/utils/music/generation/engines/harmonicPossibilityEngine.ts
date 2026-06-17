@@ -1,5 +1,4 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { GenerationRequest, HarmonicRegion } from '../models/GenerationContext';
+import type { GenerationRequest, HarmonicRegion } from '../models/GenerationContext';
 import { HarmonicRoute } from '../models/HarmonicRoute';
 import { HarmonicCompatibilityEngine } from './harmonicCompatibilityEngine';
 import { OpportunityEngine } from './opportunityEngine';
