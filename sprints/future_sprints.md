@@ -160,9 +160,11 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 
 | Sprint | Nome / Objetivo | Status | Foco / Entregável |
 | :--- | :--- | :--- | :--- |
-| **F14-A1.0** | Fingerprint Taxonomy RFC | **📅 NEXT UP** | Documento puramente conceitual respondendo "Quais dimensões definem identidade?". Mapeia a taxonomia exata (Estrutura, Energia, Movimento, Gravidade, etc) do futuro `FunctionalFingerprint`. |
-| **F14-A1** | Functional Identity Engine | **📅 PLANEJADA** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Separa `VisualChord` de `FunctionalIdentity`. Criação do `FunctionalFingerprint` (ex: Preparação → Acumulação → Resolução). |
-| **F14-A2** | Functional Similarity Engine | **📅 PLANEJADA** | Avalia a distância semântica real entre duas rotas. Capaz de responder: "Quão parecidas são essas duas rotas funcionalmente?" comparando seus Fingerprints. |
+| **F14-A1.0** | Fingerprint Taxonomy RFC | **📅 FEITO** | Documento puramente conceitual respondendo "Quais dimensões definem identidade?". Mapeia a taxonomia exata (Estrutura, Energia, Movimento, Gravidade, etc) do futuro `FunctionalFingerprint`. |
+| **F14-A1** | Functional Identity Engine | **📅 FEITO** | O fim da classificação rasa. Identifica a **Função Aparente** do acorde. Separa `VisualChord` de `FunctionalIdentity`. Criação do `FunctionalFingerprint` (ex: Preparação → Acumulação → Resolução). |
+| **F14-A2.0** | Fingerprint Distance Theory RFC | **📅 NEXT UP** | Define a matemática ponderada (Hierárquica, Narrativa, Cadencial, etc) para calcular a similaridade entre Fingerprints sem cair na armadilha da Euclidiana pura ingênua. |
+| **F14-A2** | Functional Similarity Engine | **📅 PLANEJADA** | Avalia a distância semântica real entre duas rotas. Capaz de responder: "Quão parecidas são essas duas rotas funcionalmente?" usando a teoria da F14-A2.0. |
+| **F14-A2.1** | Functional Neighbor Search | **📅 PLANEJADA** | O Spotify das progressões harmônicas. Descobre rotas funcionalmente similares no grafo inteiro a partir de uma rota de referência. |
 | **F14-A3** | Functional Drift Engine | **📅 PLANEJADA** | Avalia trajetórias mutantes. Capaz de responder: "Em que momento desta mutação a identidade funcional original foi perdida?". |
 | **F14-A0** | Harmonic Ontology Bridge | **📅 PLANEJADA** | Ponte formal entre a F11 (Descoberta) e a F13/F14. Transforma um arquétipo descoberto pelo F11 no novo `FunctionalFingerprint` gerado em F14 e o disponibiliza como rota no Composer Mode. |
 | **F14-A4** | Functional Substitution Engine | **📅 PLANEJADA** | Agrupa acordes em classes (Tônica, Subdominante, Dominante) e mapeia transformações válidas mantendo a função intacta. |
