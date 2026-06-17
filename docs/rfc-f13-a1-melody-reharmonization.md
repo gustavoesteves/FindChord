@@ -19,9 +19,15 @@ Nenhuma sugestão utilizará conceitos culturais como "Jazz", "Rock", "Clássico
 ## 3. A Nova Arquitetura de Motores (F13)
 
 ### 3.2 Phrase Function Engine
-Antes de sugerir alternativas, o sistema precisa entender a intenção: `Estabelecimento -> Prolongamento -> Dominante`. Isso garante que a rearmonização preserve o papel dramático.
+Antes de sugerir alternativas, o sistema precisa entender a função estrutural: `Estabelecimento -> Prolongamento -> Dominante`.
 
-### 3.3 Harmonic Region Engine (A Unidade de Pensamento)
+### 3.3 Harmonic Intent Engine (A Intenção Oculta)
+Mesmos acordes podem ter propósitos diferentes. Este motor infere o que o compositor está tentando realizar antes de alterar a harmonia.
+- *Caso A:* Quero chegar na dominante.
+- *Caso B:* Quero manter estabilidade.
+- *Caso C:* Quero criar tensão crescente.
+
+### 3.4 Harmonic Region Engine (A Unidade de Pensamento)
 O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrupará a frase em blocos funcionais (Regiões).
 - **Região de Estabelecimento** (`C -> Am -> F`)
 - **Região Predominante** (`Dm -> F`)
@@ -29,19 +35,11 @@ O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrup
 - **Região Cadencial** (`ii -> V -> I`)
 A substituição passará a ocorrer no nível da **Região**, não do acorde.
 
-### 3.4 Harmonic Compatibility Engine
+### 3.5 Harmonic Compatibility Engine
 Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
 
-### 3.5 Harmonic Possibility Engine
-O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original e o contexto tonal para produzir leituras alternativas da mesma frase sob intenções puramente estruturais:
-- **Mais Estável:** Reforça o centro tonal.
-- **Mais Tenso:** Aumenta direcionamento e expectativa cadencial.
-- **Mais Cromático:** Introduz deslocamentos externos ao campo principal.
-- **Mais Modal:** Explora regiões e empréstimos modais relacionados.
-- **Mais Ambíguo:** Reduz a percepção clara do centro tonal.
-- **Mais Expansivo:** Amplia densidade funcional (tensões/extensões) sem alterar a identidade base.
-- **Mais Econômico:** Simplifica o movimento harmônico (redução).
-- **Reinterpretação Funcional:** *Nova categoria.* Mesma melodia, mas habitando outro universo funcional. Ex: `C → Am → G7` vira `Em → A7 → D`. Transforma radicalmente a percepção sem quebrar a restrição física.
+### 3.6 Harmonic Possibility Engine
+O novo motor principal. Ele consome a `MelodicPhrase`, a harmonia original, as Regiões e a `HarmonicIntent` para gerar leituras alternativas da mesma frase. As explorações não são rotuladas por estética, mas por comportamento harmônico direto.
 
 ## 4. Exploração Formal (F13-A3: Section Reharmonization)
 Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda ocorrência admite interpretação harmônica diferente mantendo a melodia intacta.
@@ -49,17 +47,24 @@ Quando houver repetições formais (`A` e `A'`), o sistema analisa se a segunda 
 - Exemplo A': `Cmaj7 → Am9 → G13`
 
 ## 5. Redesenho da UI (ScoreAnalysisDashboard)
-A UI passa a focar no fluxo criativo e empurra ferramentas de "inspeção dura" para segundo plano.
+A UI passa a focar no fluxo criativo e empurra ferramentas de "inspeção dura" para segundo plano. A arquitetura passa a servir às escolhas do compositor.
 
-### Núcleo Principal (Foco Invertido - Ação antes de Explicação)
-1. **Explorar Alternativas:** O coração absoluto da aba. "Mostre-me algo útil antes de me explicar".
-2. **Narrativa Harmônica:** Curta, direta ("Estabelece o centro tonal"). Serve para justificar a sugestão, não para antecedê-la.
-3. **Curva Dramática:** Secundária. Gráfico simplificado. Continua sendo *observação*, perdendo o destaque.
+### Núcleo Principal (Painel de Possibilidades Guiado por Intenção)
+1. **O que você quer mudar?** (Interface central interativa)
+   - `[ ] Mais estabilidade`
+   - `[ ] Mais tensão`
+   - `[ ] Mais surpresa`
+   - `[ ] Mais movimento`
+   - `[ ] Mais ambiguidade`
+   - `[ ] Mais direção`
+2. **Narrativa Harmônica (Encurtada):** Muito resumida. Ex: *"Função da frase: Estabelece o centro tonal e cria expectativa de resolução."*
+3. **Curva Dramática:** Apenas suporte visual simplificado para as flutuações de tensão.
 
-### Modo Avançado / Acadêmico (Oculto por Padrão)
-1. **Estrutura Formal:** (Ex: "Período Autêntico").
-2. **Auditoria / Linter:** Caça às quintas e oitavas paralelas.
-3. **Métricas Acadêmicas e Epistêmicas.**
+### Abas Separadas / Modos
+A partir de agora, o Find Chord separa o **Compositor (Análise Criativa)** do **Professor (Auditoria/Teoria)**.
+1. **Estrutura Formal:** (Oculto / Modo Acadêmico).
+2. **Auditoria / Linter:** (Aba separada para o "Professor").
+3. **Métricas Epistêmicas.**
 
 ## 6. Critérios de Sucesso e Explicabilidade
 1. **Frase simples:** O sistema produz múltiplas leituras harmônicas (Expansivas, Cromáticas, etc.) perfeitamente compatíveis com a melodia.
