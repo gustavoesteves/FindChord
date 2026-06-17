@@ -24,6 +24,12 @@ O objetivo não é entregar a "versão final perfeita" em um clique. O objetivo 
 
 ## 3. A Nova Arquitetura de Motores (F13)
 
+### 3.1 Melody Extraction Engine
+Responsável por conectar-se à partitura, extrair a linha principal (lead) e gerar objetos `MelodicPhrase`.
+Introduz o conceito de **Melodic Anchors**: o motor identifica notas estruturais e notas ornamentais.
+- **Notas Estruturais:** Recebem prioridade máxima de compatibilidade (rejeitam fortes atritos harmônicos).
+- **Notas Ornamentais:** Toleram maior grau de atrito harmônico (podem conflitar momentaneamente com a harmonia sem quebrar a restrição física).
+
 ### 3.2 Phrase Function Engine
 Antes de sugerir alternativas, o sistema precisa entender a função estrutural: `Estabelecimento -> Prolongamento -> Dominante`.
 
@@ -34,17 +40,14 @@ O compositor raramente quer apagar o passado; ele quer rearmonizar mantendo resq
 - `directionalMemory`: Retenção do vetor de tensão.
 Isso permite ao usuário escolher o nível de exploração: **Conservadora, Moderada ou Radical**.
 
-### 3.4 Harmonic Intent Engine (A Intenção Oculta)
-Mesmos acordes podem ter propósitos diferentes. Este motor infere o que a frase original tenta realizar.
-
-### 3.5 Harmonic Goal Engine (A Tradução Composicional)
+### 3.4 Harmonic Goal Engine (A Tradução Composicional)
 *O elo entre desejo e restrição matemática.* O compositor não trabalha apenas com "adjetivos" (mais tensão), mas com **objetivos** composicionais concretos:
 - *Objetivo 1:* "Quero evitar que pareça uma resolução final." -> Restrição: Evitar cadência autêntica, favorecer prolongamentos ou cadência enganosa.
 - *Objetivo 2:* "Quero preparar uma modulação."
 - *Objetivo 3:* "Quero aumentar a energia sem mudar a melodia."
 O motor transforma esses verbos/objetivos nas restrições vetoriais (adição de cromatismo, alteração de polo) que guiarão as substituições.
 
-### 3.6 Harmonic Region Engine (A Unidade de Pensamento)
+### 3.5 Harmonic Region Engine (A Unidade de Pensamento)
 O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrupará a frase em blocos funcionais (Regiões).
 - **Região de Estabelecimento** (`C -> Am -> F`)
 - **Região Predominante** (`Dm -> F`)
@@ -52,13 +55,13 @@ O compositor não pensa em acordes soltos, ele pensa em trechos. O sistema agrup
 - **Região Cadencial** (`ii -> V -> I`)
 A substituição passará a ocorrer no nível da **Região**, não do acorde.
 
-### 3.7 Harmonic Compatibility Engine
-Valida a compatibilidade entre a melodia soberana e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
+### 3.6 Harmonic Compatibility Engine
+Valida a compatibilidade entre a melodia soberana (respeitando as `MelodicAnchors`) e a harmonia subjacente. Detecta atritos estruturais severos e pontua a tensão geral.
 
-### 3.8 Harmonic Possibility Engine (As Rotas)
+### 3.7 Harmonic Possibility Engine (As Rotas)
 O motor atende aos objetivos definidos gerando **Rotas Harmônicas** (Caminhos) e não apenas opções avulsas. Em vez de "Sugestão 1", o sistema oferece "Rota de Deslocamento Tonal".
 
-### 3.9 Opportunity Engine (A Curadoria)
+### 3.8 Opportunity Engine (A Curadoria)
 Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? Este motor mede a utilidade criativa da rota através de 4 eixos:
 - `novelty`: O quão distante a rota está da solução original.
 - `structuralImpact`: Quanto a percepção global da região muda.
@@ -66,7 +69,7 @@ Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? 
 - `reversibility`: O quão fácil é desfazer a mudança (ex: adicionar nonas é mais reversível do que mudar de tom).
 O sistema deixa de jogar uma lista na tela e passa a classificar as rotas (ex: "Rota A - Baixo Risco, Alto Retorno").
 
-### 3.10 Why Not? Engine (Explicabilidade Negativa)
+### 3.9 Why Not? Engine (Explicabilidade Negativa)
 Tão importante quanto saber *por que* algo foi sugerido, é saber *por que* algo foi descartado. Este motor fornece o racional de exclusão:
 - *Não foi sugerido:* `C -> F -> G -> C`
 - *Motivo:* "Produz uma cadência autêntica forte, contrariando o objetivo escolhido de 'evitar resolução'."
