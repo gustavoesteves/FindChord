@@ -1,12 +1,14 @@
 import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
 import { GenerationRequest } from './models/GenerationContext';
 import { HarmonicRoute, WhyNotExclusion } from './models/HarmonicRoute';
+import { ExplorationNode } from './models/ExplorationState';
 import { MelodyExtractionEngine, RawMelodyNote } from './engines/melodyExtractionEngine';
 import { HarmonicRegionEngine } from './engines/harmonicRegionEngine';
 import { HarmonicPossibilityEngine } from './engines/harmonicPossibilityEngine';
+import { WhyThisEngine } from './engines/whyThisEngine';
 
 export interface ExplorationResult {
-  routes: HarmonicRoute[];
+  nodes: ExplorationNode[];
   exclusions: WhyNotExclusion[];
 }
 
@@ -14,17 +16,19 @@ export class RouteExplorerOrchestrator {
   private melodyEngine = new MelodyExtractionEngine();
   private regionEngine = new HarmonicRegionEngine();
   private possibilityEngine = new HarmonicPossibilityEngine();
+  private whyThisEngine = new WhyThisEngine();
 
   /**
-   * Orchestrates the entire F13-A1 compositional pipeline.
-   * Given a raw melody and a chord progression, extracts anchors, forms regions, 
-   * and generates curated harmonic routes based on user goals and constraints.
+   * Orchestrates the entire F13-A1/F13-A2.0 compositional pipeline.
+   * Given a raw melody, a chord progression, and optionally a parent node,
+   * generates curated ExplorationNodes (stateful mutations) with Distance Metrics and Positive Explainability.
    */
   public explore(
     regionId: string,
     rawNotes: RawMelodyNote[],
     chords: CanonicalChordEvent[],
-    request: GenerationRequest
+    request: GenerationRequest,
+    parentNode?: ExplorationNode
   ): ExplorationResult {
     // 1. Extract sovereign melody
     const melody = this.melodyEngine.extractMelodicPhrase(regionId + '-melody', rawNotes);
@@ -51,9 +55,35 @@ export class RouteExplorerOrchestrator {
     // We will cast/access it for the mock.
     const routes = this.possibilityEngine.generateRoutes(region, request, melody);
 
-    // Sort routes by delta (lowest risk first, or highest impact first depending on UX)
-    // Let's sort by highest opportunity structural impact for now
-    routes.sort((a, b) => b.opportunity.structuralImpact - a.opportunity.structuralImpact);
+    // 4. Wrap Routes into ExplorationNodes with State Tracking
+    const nodes: ExplorationNode[] = routes.map(route => {
+      const isMutation = !!parentNode;
+      
+      // Calculate distances
+      // In a real implementation we would compute structural differences.
+      // We will map the explorationDelta as fromOriginal, and fromParent as half of that (mock heuristic).
+      const fromOriginal = route.explorationDelta;
+      const fromParent = isMutation ? Math.round(route.explorationDelta * 0.5) : fromOriginal;
+      
+      const node: ExplorationNode = {
+        nodeId: `node_${route.id}_${Date.now()}`,
+        parentId: parentNode?.nodeId,
+        mutationType: isMutation ? 'modal_expansion' : undefined, // Mock derivation
+        route: route,
+        distance: { fromOriginal, fromParent },
+        accepted: false,
+        createdAt: Date.now()
+      };
+      
+      // We can also attach WhyThis directly into the UI state or inside the node if we want.
+      // For now, the WhyThisEngine is ready to be called by the UI when the node is expanded.
+      // Let's attach it to the route's opportunity payload or leave it for the UI layer to compute on demand.
+      // In a real scenario, the UI calls `whyThisEngine.explain(region.originalChords, route)` when clicking.
+      return node;
+    });
+
+    // Sort nodes by opportunity structural impact
+    nodes.sort((a, b) => b.route.opportunity.structuralImpact - a.route.opportunity.structuralImpact);
 
     // Hacky extraction of WhyNot exclusions for the architectural mock
     const whyNotEngine = (this.possibilityEngine as any).whyNotEngine;
@@ -65,7 +95,7 @@ export class RouteExplorerOrchestrator {
     }
 
     return {
-      routes,
+      nodes,
       exclusions
     };
   }

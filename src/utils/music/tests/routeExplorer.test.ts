@@ -58,7 +58,7 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
     
     // The PossibilityEngine mock injects a 'Sovereignty Violation' candidate with E7(b9).
     // The CompatibilityEngine should reject it because E7 has a G# clash with the structural G natural.
-    const hasE7b9 = result.routes.some(r => r.chords[0].symbol === 'E7(b9)');
+    const hasE7b9 = result.nodes.some(n => n.route.chords[0].symbol === 'E7(b9)');
     expect(hasE7b9).toBe(false);
 
     // Verify it was logged in WhyNot
@@ -67,7 +67,7 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
     expect(exclusion?.reason).toContain('Violates Melodic Sovereignty');
   });
 
-  it('should evaluate Delta score correctly for Tonal Drift', () => {
+  it('should evaluate Delta score correctly for Tonal Drift and return ExplorationNodes', () => {
     const rawNotes: RawMelodyNote[] = [
       { noteName: 'C4', midiNote: 60, duration: 1.0, isOnStrongBeat: true }
     ];
@@ -75,12 +75,17 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
     const result = orchestrator.explore('region1', rawNotes, mockChords, mockRequest);
     
     // Tonal Drift candidate (Em7) should be generated
-    const tonalDrift = result.routes.find(r => r.routeLabel === 'Tonal Drift');
-    expect(tonalDrift).toBeDefined();
+    const tonalDriftNode = result.nodes.find(n => n.route.routeLabel === 'Tonal Drift');
+    expect(tonalDriftNode).toBeDefined();
     
-    // Check Delta property is calculated
-    expect(tonalDrift?.explorationDelta).toBeGreaterThan(0);
-    expect(tonalDrift?.explorationDelta).toBeLessThanOrEqual(100);
+    // Check distances are calculated (Original == Parent when no parent is provided)
+    expect(tonalDriftNode?.distance.fromOriginal).toBeGreaterThan(0);
+    expect(tonalDriftNode?.distance.fromOriginal).toBeLessThanOrEqual(100);
+    expect(tonalDriftNode?.distance.fromOriginal).toBe(tonalDriftNode?.distance.fromParent);
+    
+    // Check graph state
+    expect(tonalDriftNode?.parentId).toBeUndefined();
+    expect(tonalDriftNode?.createdAt).toBeDefined();
   });
 
   it('Why Not Validation: should bar routes that violate constraints with explicit reason', () => {
@@ -103,5 +108,52 @@ describe('RouteExplorerOrchestrator F13-A1', () => {
     // In our mock PossibilityEngine, we didn't add a 'Modulation' candidate, 
     // but the test logic holds for the structural setup.
     expect(result.exclusions).toBeDefined();
+  });
+
+  it('F13-A2.0: should map parent relations and differential distances for a Mutation request', () => {
+    const rawNotes: RawMelodyNote[] = [
+      { noteName: 'C4', midiNote: 60, duration: 1.0, isOnStrongBeat: true }
+    ];
+
+    // Simulate an existing node
+    const parentNode = {
+      nodeId: 'node_A_123',
+      route: {
+        id: 'A',
+        routeLabel: 'Tonal Drift',
+        derivedFromRegionId: 'region1',
+        chords: mockChords,
+        explorationDelta: 40,
+        opportunity: { novelty: 0.5, structuralImpact: 0.5, melodicRisk: 0.1, reversibility: 0.9 }
+      },
+      distance: { fromOriginal: 40, fromParent: 40 },
+      accepted: true,
+      createdAt: Date.now()
+    };
+
+    const result = orchestrator.explore('region1', rawNotes, mockChords, mockRequest, parentNode);
+    
+    const childNode = result.nodes[0];
+    expect(childNode.parentId).toBe('node_A_123');
+    expect(childNode.mutationType).toBeDefined();
+    expect(childNode.distance.fromOriginal).not.toBe(childNode.distance.fromParent);
+  });
+
+  it('F13-A2.0: WhyThisEngine should generate positive explanations', () => {
+    const { WhyThisEngine } = require('../../src/utils/music/generation/engines/whyThisEngine');
+    const whyThisEngine = new WhyThisEngine();
+    
+    const explanation = whyThisEngine.explain(mockChords, {
+      id: 'mock',
+      chords: [{ ...mockChords[0], symbol: 'Em7' }],
+      routeLabel: 'Mock',
+      derivedFromRegionId: 'reg1',
+      explorationDelta: 30,
+      opportunity: { novelty: 0.5, structuralImpact: 0.5, melodicRisk: 0.1, reversibility: 0.9 }
+    });
+
+    expect(explanation.preserved).toBeInstanceOf(Array);
+    expect(explanation.altered).toBeInstanceOf(Array);
+    expect(explanation.consequence).toBeInstanceOf(Array);
   });
 });
