@@ -1,5 +1,5 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { PhraseAnalysis, HarmonicRegion } from '../models/GenerationContext';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { PhraseAnalysis, HarmonicRegion } from '../models/GenerationContext';
 
 export class PhraseFunctionEngine {
   /**

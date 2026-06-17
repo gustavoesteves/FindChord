@@ -1,4 +1,4 @@
-import { WhyNotExclusion } from '../models/HarmonicRoute';
+import type { WhyNotExclusion } from '../models/HarmonicRoute';
 
 export class WhyNotEngine {
   private exclusions: WhyNotExclusion[] = [];

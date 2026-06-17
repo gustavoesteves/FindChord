@@ -1,8 +1,8 @@
-import { RouteExplorerOrchestrator } from '../../src/utils/music/generation/routeExplorerOrchestrator';
-import { WhyThisEngine } from '../../src/utils/music/generation/engines/whyThisEngine';
-import { RawMelodyNote } from '../../src/utils/music/generation/engines/melodyExtractionEngine';
-import { CanonicalChordEvent } from '../../src/utils/music/analysis/models/CanonicalChordEvent';
-import { GenerationRequest } from '../../src/utils/music/generation/models/GenerationContext';
+import { RouteExplorerOrchestrator } from '../generation/routeExplorerOrchestrator';
+import { WhyThisEngine } from '../generation/engines/whyThisEngine';
+import type { RawMelodyNote } from '../generation/engines/melodyExtractionEngine';
+import type { CanonicalChordEvent } from '../analysis/models/CanonicalChordEvent';
+import type { GenerationRequest } from '../generation/models/GenerationContext';
 
 describe('RouteExplorerOrchestrator F13-A1', () => {
   let orchestrator: RouteExplorerOrchestrator;

@@ -1,5 +1,5 @@
-import { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
-import { HarmonicOpportunity } from '../models/HarmonicRoute';
+import type { CanonicalChordEvent } from '../../analysis/models/CanonicalChordEvent';
+import type { HarmonicOpportunity } from '../models/HarmonicRoute';
 
 export class OpportunityEngine {
   /**

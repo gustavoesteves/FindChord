@@ -1,5 +1,5 @@
 import type { GenerationRequest, HarmonicRegion } from '../models/GenerationContext';
-import { HarmonicRoute } from '../models/HarmonicRoute';
+import type { HarmonicRoute } from '../models/HarmonicRoute';
 import { HarmonicCompatibilityEngine } from './harmonicCompatibilityEngine';
 import { OpportunityEngine } from './opportunityEngine';
 import { WhyNotEngine } from './whyNotEngine';

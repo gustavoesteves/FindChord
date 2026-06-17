@@ -1,4 +1,4 @@
-import { MelodicAnchor, MelodicPhrase } from '../models/GenerationContext';
+import type { MelodicAnchor, MelodicPhrase } from '../models/GenerationContext';
 
 export interface RawMelodyNote {
   noteName: string;
