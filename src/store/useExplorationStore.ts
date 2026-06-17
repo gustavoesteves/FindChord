@@ -9,10 +9,17 @@ const orchestrator = new RouteExplorerOrchestrator();
 
 // Default request configuration
 const defaultRequest: GenerationRequest = {
-  explorationIntensity: 50,
-  memoryIntensity: 80,
-  goals: ['add_color'],
-  constraints: ['preserve_tonal_center'],
+  explorationIntensity: 'Medium',
+  memoryIntensity: 'Medium',
+  goals: [{ type: 'Custom', description: 'Add color' }],
+  constraints: [{ type: 'PreserveTonalCenter', description: 'Preserve tonal center' }],
+  preservation: {
+    preserveMelody: true,
+    preserveCadentialFunction: true,
+    preserveTonalCenter: true,
+    allowDensityChange: true,
+    allowSecondaryDominants: true
+  }
 };
 
 export interface ExplorationState {
@@ -34,7 +41,7 @@ export interface ExplorationState {
   updateRequest: (request: Partial<GenerationRequest>) => void;
 }
 
-export const useExplorationStore = create<ExplorationState>((set, get) => ({
+export const useExplorationStore = create<ExplorationState>()((set, get) => ({
   nodes: {},
   activeNodeId: null,
   selectedNodeId: null,

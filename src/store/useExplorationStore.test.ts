@@ -11,20 +11,27 @@ describe('useExplorationStore F13-A2.1', () => {
       activeNodeId: null,
       selectedNodeId: null,
       generationRequest: {
-        explorationIntensity: 50,
-        memoryIntensity: 80,
-        goals: ['add_color'],
-        constraints: ['preserve_tonal_center'],
+        explorationIntensity: 'Medium',
+        memoryIntensity: 'Medium',
+        goals: [{ type: 'Custom', description: 'Add color' }],
+        constraints: [{ type: 'PreserveTonalCenter', description: 'Preserve tonal center' }],
+        preservation: {
+          preserveMelody: true,
+          preserveCadentialFunction: true,
+          preserveTonalCenter: true,
+          allowDensityChange: true,
+          allowSecondaryDominants: true
+        }
       }
     });
   });
 
   const mockNotes: RawMelodyNote[] = [
-    { noteName: 'C4', startMeasure: 1, endMeasure: 1.5, isRest: false, durationStr: '0.5' }
+    { noteName: 'C4', midiNote: 60, duration: 1.0, isOnStrongBeat: true }
   ];
   
   const mockChords: CanonicalChordEvent[] = [
-    { symbol: 'Cmaj7', root: 'C', bass: 'C', quality: 'maj7', extensions: [], measure: 1, beat: 1, duration: 4 }
+    { id: '1', symbol: 'Cmaj7', voicing: { notes: [48, 52, 55, 59] }, onset: 0, duration: 4, functionalLabel: 'T' } as unknown as CanonicalChordEvent
   ];
 
   it('should initialize with empty nodes and null active/selected ids', () => {
@@ -35,8 +42,8 @@ describe('useExplorationStore F13-A2.1', () => {
   });
 
   it('should update generationRequest', () => {
-    useExplorationStore.getState().updateRequest({ explorationIntensity: 90 });
-    expect(useExplorationStore.getState().generationRequest.explorationIntensity).toBe(90);
+    useExplorationStore.getState().updateRequest({ explorationIntensity: 'High' });
+    expect(useExplorationStore.getState().generationRequest.explorationIntensity).toBe('High');
   });
 
   it('should generate mutations and store them', () => {
