@@ -2,9 +2,10 @@ import { useState } from "react";
 import BuilderMVP from "./components/BuilderMVP";
 import ScoreAnalysisDashboard from "./components/ScoreAnalysisDashboard";
 import HarmonicNarrativeOverlayPanel from "./components/HarmonicNarrativeOverlayPanel";
-import { PenLine, ScanLine } from "lucide-react";
+import { PenLine, ScanLine, Compass } from "lucide-react";
+import { ComposerModeLayout } from "./components/composer/ComposerModeLayout";
 
-type MainDomain = "escrever" | "analisar";
+type MainDomain = "escrever" | "analisar" | "composer";
 
 export default function App() {
   const [activeDomain, setActiveDomain] = useState<MainDomain>("escrever");
@@ -52,6 +53,18 @@ export default function App() {
               <ScanLine className="h-3.5 w-3.5" />
               Analisar Partitura
             </button>
+            <button
+              id="domain-composer"
+              onClick={() => setActiveDomain("composer")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                activeDomain === "composer"
+                  ? "bg-purple-600 text-white shadow-md animate-scale-up"
+                  : "text-zinc-500 hover:text-zinc-350"
+              }`}
+            >
+              <Compass className="h-3.5 w-3.5" />
+              Composer Mode
+            </button>
           </div>
         </div>
 
@@ -66,6 +79,13 @@ export default function App() {
         {activeDomain === "analisar" && (
           <div className="animate-scale-up">
             <ScoreAnalysisDashboard />
+          </div>
+        )}
+
+        {/* ── Composer Mode Domain ─────────────────────────────── */}
+        {activeDomain === "composer" && (
+          <div className="animate-scale-up">
+            <ComposerModeLayout />
           </div>
         )}
 
