@@ -175,8 +175,10 @@ Esta fase encapsula a transição da pesquisa científica pura para a entrega de
 | **F14-A3** | Functional Drift Engine | **📅 FEITO** | Avalia trajetórias mutantes usando a ponte ontológica, o esqueleto e a memória. Entende se o Drift ocorreu na Cadência, Gravidade ou Estrutura. |
 | **F14-A3.5** | Functional Drift Taxonomy | **📅 FEITO** | Explicabilidade do Drift ("Você perdeu identidade porque teve 45% Cadential Drift e 30% Gravity Drift"). Implementado junto à F14-A3. |
 | **F14-A4** | Functional Substitution Engine | **📅 FEITO** | Usa o arsenal da F14 (Neighbor + Drift) para recomendar substituições harmonicamente seguras (ex: Db7 no lugar de G7), prevendo a severidade do Drift antes da mutação. |
-| **F14-A5** | Explainability Engine | **📅 NEXT UP** | Traduz a matemática da ontologia (Drift, DNA, Skeleton, Intent) em narrativas textuais compreensíveis para o compositor (ex: "A função dominante foi preservada..."). |
-| **F13-A3** | Route Mutation Engine | **📅 PLANEJADA** | Mutação de Rotas. O usuário pede "Aumente a cor da progressão" e o motor localiza os candidatos ideais com a Intent correspondente e substitui o trecho preservando o esqueleto. |
+| **F14-A5** | Explainability Engine | **📅 FEITO** | Traduz a matemática da ontologia (Drift, DNA, Skeleton, Intent) em narrativas textuais compreensíveis para o compositor (ex: "A função dominante foi preservada..."). |
+| **F14-A6** | Harmonic Invariants Engine | **📅 NEXT UP** | Responde a pergunta "O que NÃO pode mudar?", extraindo o núcleo invariável de uma ideia musical baseada em restrições contínuas de peso. |
+| **F14-A7** | Harmonic Attractors Engine | **📅 PLANEJADA** | Mapeia o campo de atrações probabilísticas ("Para onde esta progressão quer ir?"), criando um `FunctionalAttractorField`. |
+| **F13-A3** | Route Mutation Engine | **📅 PLANEJADA** | Mutação de Rotas utilizando Invariantes e Attractors para gerar transformações cirúrgicas baseadas na intenção do compositor. |
 | **F15** | Modal Engine | **📅 PLANEJADA** | Expansão profunda da ontologia para tratar sistemas modais. |
 | **F16** | Grammar Learning | **📅 PLANEJADA** | O sistema aprende a **Sintaxe Frasal** observando meta-arquétipos em ação (DNA + Esqueleto). |
 | **F14-X3** | MetaArchetype Engine | **📅 PLANEJADA** | Agrupa arquétipos (ii-V-I, Backdoor, Tritone Sub) em famílias semânticas baseadas em Cadeias Estruturais universais. |
