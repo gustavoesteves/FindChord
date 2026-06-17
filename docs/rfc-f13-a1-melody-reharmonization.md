@@ -33,8 +33,12 @@ Introduz o conceito de **Melodic Anchors**: o motor identifica notas estruturais
 ### 3.2 Phrase Function Engine
 Antes de sugerir alternativas, o sistema precisa entender a função estrutural: `Estabelecimento -> Prolongamento -> Dominante`.
 
-### 3.3 Phrase Memory Engine (O Fio Condutor)
-O compositor raramente quer apagar o passado; ele quer rearmonizar mantendo resquícios da intenção original. Este motor mede:
+### 3.3 Phrase Memory Engine & Preservation Contract
+O compositor raramente quer apagar o passado; ele quer rearmonizar mantendo resquícios da intenção original. Este motor estabelece um **Contrato de Preservação** explícito antes de gerar rotas:
+- **Preservar:** `[x] Melodia (Anchors)  [x] Função Cadencial  [x] Centro Tonal`
+- **Permitir Alteração:** `[x] Densidade Harmônica  [x] Dominantes Secundárias`
+
+Internamente, ele mede:
 - `tonalMemory`: Grau de retenção do centro original.
 - `cadentialMemory`: Retenção de peso resolutivo.
 - `directionalMemory`: Retenção do vetor de tensão.
@@ -68,7 +72,14 @@ Valida a compatibilidade entre a melodia soberana (respeitando as `MelodicAnchor
 ### 3.8 Harmonic Possibility Engine (As Rotas)
 O motor atende aos objetivos (Goals) e respeita as restrições (Constraints), gerando **Rotas Harmônicas** (Caminhos). Em vez de "Sugestão 1", o sistema oferece "Rota de Deslocamento Tonal".
 
-### 3.9 Opportunity Engine (A Curadoria)
+### 3.9 Exploration Delta (O Quão Diferente Ficou?)
+Junto a cada rota, o sistema calcula um `Delta` (0 a 100) que quantifica a audácia da rearmonização:
+- `Delta: 18` (Pequena variação, ex: adição de nonas).
+- `Delta: 47` (Reinterpretação moderada, ex: substituição diatônica).
+- `Delta: 83` (Releitura radical, ex: mudança de centro tonal e polo funcional).
+Isso permite navegação visual rápida sem precisar ler as cifras.
+
+### 3.10 Opportunity Engine (A Curadoria)
 Se o sistema encontra 12 rotas, qual delas o compositor deveria olhar primeiro? Este motor mede a utilidade criativa da rota através de 4 eixos:
 - `novelty`: O quão distante a rota está da solução original.
 - `structuralImpact`: Quanto a percepção global da região muda.
