@@ -35,12 +35,13 @@ export function formatChordName(
 
   let finalName = `${root}${qualityString}`;
 
-  // Se houver omissão da Quinta e não for Power Chord
-  if (omissions.includes("5") && !omissions.includes("3") && !omissions.includes("1") && quality !== "power") {
-    if (!finalName.includes("(no5)")) {
-      finalName = `${finalName}(no5)`;
-    }
-  }
+  // A regra antiga de adicionar "(no5)" para acordes que omitem a quinta 
+  // foi desativada pois confunde a notação (ex: Dm9(no5) deve ser lido apenas como Dm9)
+  // if (omissions.includes("5") && !omissions.includes("3") && !omissions.includes("1") && quality !== "power") {
+  //   if (!finalName.includes("(no5)")) {
+  //     finalName = `${finalName}(no5)`;
+  //   }
+  // }
 
   // Baixo invertido
   if (bass) {
