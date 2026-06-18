@@ -58,6 +58,9 @@ export function getIntervalSymbol(semitones: number): string {
 const PARSE_CACHE: Record<string, CustomChord> = {};
 
 export function parseChord(symbol: string): CustomChord {
+  if (!symbol) {
+    return { empty: true, root: "", quality: "major" as ChordQuality, notes: [], intervals: [], symbol: String(symbol) };
+  }
   if (PARSE_CACHE[symbol]) return PARSE_CACHE[symbol];
 
   const match = symbol.match(/^([A-G][b#]?)(.*)$/);

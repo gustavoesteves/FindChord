@@ -1,164 +1,99 @@
 import type { CanonicalChordEvent } from "./music/analysis/models/CanonicalChordEvent";
 import type { CanonicalProgressionEvent } from "./music/analysis/models/CanonicalProgressionEvent";
 import { useChordStore } from "../store/useChordStore";
+import { WebSocketTransport } from "./music/bridge/TransportLayer";
+import type { BridgeMessage, MutationCommand } from "./music/bridge/Protocol";
 
 export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
 type StatusListener = (status: ConnectionStatus) => void;
 
 class MuseScoreAdapter {
-  private socket: WebSocket | null = null;
-  private status: ConnectionStatus = "disconnected";
-  private listeners: Set<StatusListener> = new Set();
-  private reconnectInterval: any = null;
+  private transport: WebSocketTransport;
+
+  constructor() {
+    this.transport = new WebSocketTransport("ws://localhost:9000/dashboard");
+    this.transport.onMessage((msg) => {
+      if (msg.messageType === 'SESSION') {
+        const sessionCmd = msg.payload as any;
+        if (sessionCmd.type === 'SCORE_SNAPSHOT' && sessionCmd.data) {
+          useChordStore.getState().setScoreSnapshot(sessionCmd.data);
+        }
+      }
+    });
+  }
 
   public getStatus(): ConnectionStatus {
-    return this.status;
+    return this.transport.getStatus();
   }
 
   public subscribe(listener: StatusListener) {
-    this.listeners.add(listener);
-    listener(this.status);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  }
-
-  private setStatus(newStatus: ConnectionStatus) {
-    this.status = newStatus;
-    this.listeners.forEach(l => l(newStatus));
+    return this.transport.subscribeStatus(listener);
   }
 
   public connect() {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
-
-    this.setStatus("connecting");
-    try {
-      this.socket = new WebSocket("ws://localhost:9000");
-
-      this.socket.onopen = () => {
-        this.setStatus("connected");
-        if (this.reconnectInterval) {
-          clearInterval(this.reconnectInterval);
-          this.reconnectInterval = null;
-        }
-      };
-
-      this.socket.onclose = () => {
-        this.setStatus("disconnected");
-        this.triggerAutoReconnect();
-      };
-
-      this.socket.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.type === "score_snapshot" && payload.data) {
-            useChordStore.getState().setScoreSnapshot(payload.data);
-          }
-        } catch (e) {
-          console.warn("MuseScore bridge received invalid JSON message:", e);
-        }
-      };
-
-      this.socket.onerror = () => {
-        this.setStatus("disconnected");
-      };
-    } catch (e) {
-      this.setStatus("disconnected");
-      this.triggerAutoReconnect();
-    }
+    this.transport.connect();
   }
 
   public disconnect() {
-    if (this.reconnectInterval) {
-      clearInterval(this.reconnectInterval);
-      this.reconnectInterval = null;
-    }
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-    this.setStatus("disconnected");
-  }
-
-  private triggerAutoReconnect() {
-    if (this.reconnectInterval) return;
-    this.reconnectInterval = setInterval(() => {
-      this.connect();
-    }, 3000);
+    this.transport.disconnect();
   }
 
   public async sendChord(chord: CanonicalChordEvent): Promise<boolean> {
-    if (this.status === "connected" && this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ type: "chord", data: chord }));
-      return true;
-    }
-
-    // Fallback: Tentativa via HTTP POST local (Sprint A)
+    const msg: BridgeMessage = {
+      protocolVersion: '1.0',
+      messageType: 'MUTATION',
+      payload: {
+        type: 'MUTATION',
+        action: 'INSERT_CHORD',
+        targetTick: 0,
+        chordSymbol: chord.symbol,
+        data: chord // legado
+      } as MutationCommand & { data: any }
+    };
     try {
-      const response = await fetch("http://localhost:9000/api/v1/send", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "X-FindChord-Client": "compose-suite"
-        },
-        body: JSON.stringify({ type: "chord", data: chord }),
-        mode: "cors"
-      });
-      return response.ok;
+      await this.transport.send(msg);
+      return true;
     } catch (e) {
-      console.warn("MuseScore bridge offline (HTTP fallback failed):", e);
+      console.warn("MuseScore bridge offline", e);
       return false;
     }
   }
 
   public async sendProgression(progression: CanonicalProgressionEvent): Promise<boolean> {
-    if (this.status === "connected" && this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ type: "progression", data: progression }));
-      return true;
-    }
-
-    // Fallback: Tentativa via HTTP POST local (Sprint A)
+    const msg: BridgeMessage = {
+      protocolVersion: '1.0',
+      messageType: 'MUTATION',
+      payload: {
+        type: 'MUTATION',
+        action: 'INSERT_CHORD', // Mock for now, handle full progression appropriately later
+        targetTick: 0,
+        data: progression // legado
+      }
+    };
     try {
-      const response = await fetch("http://localhost:9000/api/v1/send", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "X-FindChord-Client": "compose-suite"
-        },
-        body: JSON.stringify({ type: "progression", data: progression }),
-        mode: "cors"
-      });
-      return response.ok;
+      await this.transport.send(msg);
+      return true;
     } catch (e) {
-      console.warn("MuseScore bridge offline (HTTP fallback failed):", e);
+      console.warn("MuseScore bridge offline", e);
       return false;
     }
   }
 
   public async requestScoreSync(): Promise<boolean> {
-    const payload = { type: "request_score", data: {} };
-    if (this.status === "connected" && this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(payload));
-      return true;
-    }
-
-    // Fallback: Tentativa via HTTP POST local
+    const msg: BridgeMessage = {
+      protocolVersion: '1.0',
+      messageType: 'SESSION',
+      payload: {
+        type: 'request_score',
+        data: {}
+      }
+    };
     try {
-      const response = await fetch("http://localhost:9000/api/v1/send", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "X-FindChord-Client": "compose-suite"
-        },
-        body: JSON.stringify(payload),
-        mode: "cors"
-      });
-      return response.ok;
+      await this.transport.send(msg);
+      return true;
     } catch (e) {
-      console.warn("MuseScore bridge offline (HTTP fallback failed):", e);
+      console.warn("MuseScore bridge offline", e);
       return false;
     }
   }

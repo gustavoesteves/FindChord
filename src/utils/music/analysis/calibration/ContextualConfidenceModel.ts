@@ -3,8 +3,9 @@ export function computeComplexityScore(
   hds: number,
   hdc: number
 ): number {
+  if (!chordSymbol) return 0;
   let score = 0;
-  const symbol = chordSymbol.toUpperCase();
+  const symbol = String(chordSymbol).toUpperCase();
 
   // Diminished or augmented symmetry
   if (symbol.includes('DIM') || symbol.includes('°')) {

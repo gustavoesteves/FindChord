@@ -6,6 +6,8 @@ import { ExplorationHistoryView } from './ExplorationHistoryView';
 import type { RawMelodyNote } from '../../utils/music/generation/engines/melodyExtractionEngine';
 import type { CanonicalChordEvent } from '../../utils/music/analysis/models/CanonicalChordEvent';
 
+import { StandardLayout } from '../ui/StandardLayout';
+
 // Mock data for the prototype
 const MOCK_NOTES: RawMelodyNote[] = [
   { noteName: 'C4', midiNote: 60, duration: 1.0, isOnStrongBeat: true },
@@ -23,9 +25,8 @@ export const ComposerModeLayout: React.FC = () => {
   const originalChordStrings = MOCK_CHORDS.map(c => c.symbol);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-300 p-8 flex justify-center">
-      <div className="max-w-7xl w-full flex gap-8">
-        
+    <StandardLayout>
+      <div className="w-full flex gap-8">
         {/* Left Sidebar: Controls & Context */}
         <ComposerControls 
           originalChords={MOCK_CHORDS} 
@@ -38,8 +39,7 @@ export const ComposerModeLayout: React.FC = () => {
           <ActiveRoutePanel originalChords={originalChordStrings} />
           <RouteFeed originalChords={originalChordStrings} />
         </div>
-
       </div>
-    </div>
+    </StandardLayout>
   );
 };

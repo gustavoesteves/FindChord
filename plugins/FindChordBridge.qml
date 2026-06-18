@@ -199,6 +199,7 @@ MuseScore {
                   timestamp: new Date().getTime(),
                   harmonies: [],
                   sections: [],
+                  notes: [], // Novo: Array para armazenar as melodias
                   metadata: {
                         title: score.title || "",
                         composer: score.composer || "",
@@ -207,54 +208,85 @@ MuseScore {
             };
 
             try {
-                  var cursor = score.newCursor();
-                  if (!cursor) {
-                        postLog("Error: Failed to create cursor for extraction.");
-                        return;
-                  }
-
-                  cursor.rewind(0); // SCORE_START
-
+                  var measure = score.firstMeasure;
                   var currentMeasure = 1;
-                  var lastSegment = null;
 
-                  while (cursor.segment) {
-                        // Detecta mudança de compasso comparando o parent do segmento (que é o Measure)
-                        if (lastSegment && lastSegment.parent !== cursor.segment.parent) {
-                              currentMeasure++;
-                        }
-                        lastSegment = cursor.segment;
-
-                        var annotations = cursor.segment.annotations;
-                        if (annotations && annotations.length > 0) {
-                              for (var i = 0; i < annotations.length; i++) {
-                                    var ann = annotations[i];
-                                    if (ann.type === Element.HARMONY) {
-                                          var harmonyText = ann.text;
-                                          snapshot.harmonies.push({
-                                                measure: currentMeasure,
-                                                beat: 1, // Placeholder
-                                                harmony: harmonyText
-                                          });
-                                          postLog("Extracted harmony: " + harmonyText + " at measure " + currentMeasure);
-                                    } else if (ann.type === Element.REHEARSAL_MARK || ann.type === 62) {
-                                          var markText = ann.text;
-                                          snapshot.sections.push({
-                                                id: "sec_" + currentMeasure + "_" + i,
-                                                label: markText,
-                                                startMeasure: currentMeasure
-                                          });
-                                          postLog("Extracted section: " + markText + " at measure " + currentMeasure);
+                  while (measure) {
+                        var segment = measure.firstSegment;
+                        while (segment) {
+                              var annotations = segment.annotations;
+                              if (annotations && annotations.length > 0) {
+                                    for (var i = 0; i < annotations.length; i++) {
+                                          var ann = annotations[i];
+                                          // Se não for RehearsalMark, vamos logar para descobrir o que é
+                                          if (ann.name !== "RehearsalMark" && ann.type !== Element.REHEARSAL_MARK && ann.type !== 62) {
+                                                postLog("Encontrado na medida " + currentMeasure + " -> type: " + ann.type + ", name: " + ann.name + ", text: " + (ann.text || ""));
+                                          }
+                                          // Procura textos de sistema ou diagramas
+                                          if (ann.type === Element.HARMONY || ann.name === "Harmony" || ann.type === 114 || ann.type === 65 || ann.name === "FretDiagram") {
+                                                var rawText = typeof ann.text === "string" ? ann.text : "";
+                                                var harmonyText = rawText !== "" ? rawText : "FretDiagram(SemTexto)";
+                                                snapshot.harmonies.push({
+                                                      measure: currentMeasure,
+                                                      beat: 1, // Placeholder
+                                                      harmony: harmonyText
+                                                });
+                                                postLog("Extracted harmony/diagram: " + harmonyText + " at measure " + currentMeasure);
+                                          } else if (ann.type === Element.REHEARSAL_MARK || ann.name === "RehearsalMark" || ann.type === 62) {
+                                                var markText = ann.text;
+                                                snapshot.sections.push({
+                                                      id: "sec_" + currentMeasure + "_" + i,
+                                                      label: markText,
+                                                      startMeasure: currentMeasure
+                                                });
+                                                postLog("Extracted section: " + markText + " at measure " + currentMeasure);
+                                          }
                                     }
                               }
-                        }
 
-                        if (!cursor.next()) {
-                              break;
+                              // Extração das Notas (Melodias e Acordes da pauta)
+                              for (var t = 0; t < score.ntracks; t++) {
+                                    var el = segment.elementAt(t);
+                                    if (el) {
+                                          // Se for um bloco de acorde (ChordRest com notas)
+                                          if (el.type === Element.CHORD || el.name === "Chord") {
+                                                var elNotes = el.notes;
+                                                if (elNotes && elNotes.length > 0) {
+                                                      for (var n = 0; n < elNotes.length; n++) {
+                                                            var note = elNotes[n];
+                                                            snapshot.notes.push({
+                                                                  measure: currentMeasure,
+                                                                  track: t,
+                                                                  pitch: note.pitch,
+                                                                  voice: el.voice || 0,
+                                                                  durationTicks: el.duration ? el.duration.ticks : 0
+                                                            });
+                                                      }
+                                                }
+                                          }
+                                          // Também procura se a cifra (Harmony) escapou para dentro dos elementos da faixa
+                                          if (el.type === Element.HARMONY || el.name === "Harmony") {
+                                                snapshot.harmonies.push({
+                                                      measure: currentMeasure,
+                                                      beat: 1,
+                                                      harmony: el.text || ""
+                                                });
+                                          }
+                                    }
+                              }
+
+                              // Crucial: No MuseScore 3, segment.next avança pela partitura inteira.
+                              // Precisamos garantir que só processe os segmentos do compasso atual.
+                              segment = segment.next;
+                              if (segment && segment.parent !== measure) {
+                                    break;
+                              }
                         }
+                        measure = measure.nextMeasure;
+                        currentMeasure++;
                   }
 
-                  snapshot.metadata.measures = currentMeasure;
+                  snapshot.metadata.measures = currentMeasure - 1;
 
                   // Infer endMeasures for sections
                   for (var s = 0; s < snapshot.sections.length; s++) {

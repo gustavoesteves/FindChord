@@ -153,9 +153,12 @@ export type HarmonicIntent =
 export type PhraseRole =
   | 'OPENING'
   | 'BODY'
+  | 'PROLONGATION'
   | 'PRE_CADENTIAL'
   | 'CADENTIAL'
-  | 'CLOSING';
+  | 'CLOSING'
+  | 'BRIDGE'
+  | 'UNKNOWN';
 
 export type SemanticCause =
   | 'TONIC_FUNCTION'
@@ -177,14 +180,38 @@ export type SemanticSupport =
   | 'CADENCE_PREPARATION'
   | 'CADENCE_TENSION'
   | 'CADENCE_RESOLUTION'
-  | 'PHRASE_CLOSING';
+  | 'PHRASE_CLOSING'
+  | 'VAMP_PROLONGATION';
 
 export interface SemanticContext {
   intent: HarmonicIntent;
   phraseRole: PhraseRole;
+  phraseRoleConfidence?: number;
   causes: SemanticCause[];
   supports: SemanticSupport[];
   explanation: string[];
+}
+
+export type AttractorType =
+  | 'TONAL_RESOLUTION'
+  | 'CADENTIAL_DOMINANT'
+  | 'LOCAL_RESOLUTION'
+  | 'MODAL_GRAVITY'
+  | 'PROLONGATION_INERTIA'
+  | 'NARRATIVE_DIVERSION';
+
+export interface AttractorNode {
+  type: AttractorType;
+  targetRoot?: string;
+  targetFunction?: ContextualFunction | HarmonicFunction;
+  targetState?: string;
+  weight: number;
+  alignment: number;
+}
+
+export interface AttractorField {
+  primaryAttractor: AttractorNode;
+  activeAttractors: AttractorNode[];
 }
 
 export interface DebugContext {
@@ -241,6 +268,7 @@ export interface FunctionalChord {
   modal?: ModalContext;
   resolution?: ResolutionContext;
   semantic?: SemanticContext;
+  attractorField?: AttractorField;
   debug?: DebugContext;
 }
 

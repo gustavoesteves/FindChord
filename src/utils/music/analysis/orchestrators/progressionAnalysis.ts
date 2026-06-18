@@ -25,6 +25,7 @@ import { buildHarmonicRegionTree } from '../regions/regionTree';
 import { calculateTonalSummary } from '../narrative/tonalSummary';
 import { generateTonalNarrative } from '../narrative/tonalNarrative';
 import { analyzeSemanticContext } from '../narrative/semanticAnalyzer';
+import { AttractorEngine } from '../narrative/attractorEngine';
 import { analyzeFormalStructure } from '../narrative/formalStructureSolver';
 import { buildHarmonicKnowledgeGraph } from '../narrative/knowledgeGraphBuilder';
 import { extractNarrativeFacts } from '../narrative/narrativeFactEngine';
@@ -280,6 +281,7 @@ export function analyzeProgression(
 
   // 8b. Perform semantic analysis (Sprint F6)
   analyzeSemanticContext(chords, phrases);
+  AttractorEngine.calculateFields(chords, phrases, finalTonalCenter);
 
   // 8c. Perform formal structure analysis (Sprint F8)
   const phraseGroups = analyzeFormalStructure(phrases);

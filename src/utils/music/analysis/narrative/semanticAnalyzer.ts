@@ -6,6 +6,7 @@ import type {
   SemanticCause,
   SemanticSupport
 } from '../models/FunctionalAnalysis';
+import { PhraseRoleEngine } from './phraseRoleEngine';
 
 function getSemanticExplanation(
   intent: HarmonicIntent,
@@ -85,21 +86,18 @@ export function analyzeSemanticContext(
     const cad = phrase.terminatingCadence;
 
     // Identify cadential indexes if there is a terminating cadence
-    let cadStart = -1;
-    let cadEnd = -1;
-    if (cad) {
-      cadStart = cad.startIndex;
-      cadEnd = cad.endIndex;
-    }
+    const inferences = PhraseRoleEngine.inferRoles(chords, phrases);
 
     for (let idx = pStart; idx <= pEnd; idx++) {
       if (idx >= N) break;
 
       const chord = chords[idx];
-      let role: PhraseRole;
-      let intent: HarmonicIntent;
+      const inference = inferences[idx];
+      const role = inference.role;
+      const confidence = inference.confidence;
       const causes: SemanticCause[] = [];
-      const supports: SemanticSupport[] = [];
+      const supports: SemanticSupport[] = inference.supports;
+      let intent: HarmonicIntent;
 
       // A. Populate semantic causes based on active chord analytical tags
       if (chord.isDiatonic) {
@@ -125,50 +123,6 @@ export function analyzeSemanticContext(
         chord.contextualFunction === 'SECONDARY_LEADING_TONE'
       ) {
         causes.push('TONICIZATION');
-      }
-
-      // B. Determine PhraseRole & Supports using cadential evidence from F7
-      if (cad && idx >= cadStart && idx <= cadEnd) {
-        const isResolved = (cad.type === 'AUTHENTIC' || cad.type === 'PLAGAL') &&
-                           (cad.resolution.status === 'RESOLVED' ||
-                            cad.resolution.status === 'DECEPTIVE' ||
-                            cad.resolution.status === 'DELAYED');
-        if (isResolved) {
-          if (idx === cadEnd) {
-            role = 'CLOSING';
-            supports.push('CADENCE_RESOLUTION');
-          } else if (idx === cadEnd - 1) {
-            role = 'CADENTIAL';
-            supports.push('CADENCE_TENSION');
-          } else {
-            role = 'PRE_CADENTIAL';
-            supports.push('CADENCE_PREPARATION');
-          }
-        } else {
-          // Unresolved / Half / Phrygian / Interrupted / Evaded
-          if (idx === cadEnd) {
-            role = 'CADENTIAL';
-            supports.push('CADENCE_TENSION');
-          } else {
-            role = 'PRE_CADENTIAL';
-            supports.push('CADENCE_PREPARATION');
-          }
-        }
-      } else {
-        // Outside of cadence
-        if (idx === pStart) {
-          role = 'OPENING';
-        } else {
-          role = 'BODY';
-        }
-      }
-
-      // Add phrase boundary supports if applicable
-      if (idx === pStart && !supports.includes('PHRASE_OPENING')) {
-        supports.push('PHRASE_OPENING');
-      }
-      if (idx === pEnd && !supports.includes('PHRASE_CLOSING')) {
-        supports.push('PHRASE_CLOSING');
       }
 
       // C. Determine HarmonicIntent (Orthogonal to role)
@@ -207,6 +161,7 @@ export function analyzeSemanticContext(
       chord.semantic = {
         intent,
         phraseRole: role,
+        phraseRoleConfidence: confidence,
         causes,
         supports,
         explanation

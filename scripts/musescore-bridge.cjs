@@ -1,9 +1,9 @@
 const http = require('http');
 const crypto = require('crypto');
+const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT = 9000;
 let eventQueue = [];
-const activeSockets = new Set();
 
 // Telemetria Operacional (Sprint B.5)
 let eventsReceived = 0;
@@ -173,7 +173,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 6. Endpoint: POST /api/v1/score -> Recebe ScoreSnapshot estruturado do QML
+  // 6. Endpoint: POST /api/v1/score -> Recebe ScoreSnapshot estruturado do QML (Legado / Fallback)
   if (req.method === 'POST' && url.pathname === '/api/v1/score') {
     pluginLastSeen = new Date().toISOString();
     let body = '';
@@ -194,22 +194,18 @@ const server = http.createServer((req, res) => {
       if (exceeded) return;
       try {
         const payload = JSON.parse(body);
-        console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML (${payload.harmonies?.length || 0} acordes).`);
+        console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML via HTTP (${payload.harmonies?.length || 0} acordes).`);
         
-        // Retransmite via WebSocket para o React
-        const scoreEvent = {
-          type: "score_snapshot",
-          data: payload
-        };
-        const messageStr = JSON.stringify(scoreEvent);
-        const frame = encodeWebSocketFrame(messageStr);
-        activeSockets.forEach(socket => {
-          try {
-            socket.write(frame);
-          } catch (e) {
-            activeSockets.delete(socket);
+        // Wrap num BridgeMessage e retransmite via WS
+        const scoreMessage = {
+          protocolVersion: "1.0",
+          messageType: "SESSION",
+          payload: {
+            type: "SCORE_SNAPSHOT",
+            data: payload
           }
-        });
+        };
+        broadcastMessage(scoreMessage);
         
         writeJson(res, 200, { status: 'success' });
       } catch (e) {
@@ -256,194 +252,84 @@ let eventsDropped = 0;
 function handleNewEvent(payload) {
   eventsReceived++;
 
-  // Criação da estrutura canônica versionada com UUID e timestamp (Sprint A)
-  const event = {
-    version: payload.version || '1.0',
-    type: payload.type,
-    id: payload.id || `evt_${crypto.randomBytes(8).toString('hex')}`,
-    timestamp: payload.timestamp || Math.floor(Date.now() / 1000),
-    state: payload.state || 'pending', // Preparado para o Reliable Delivery ACK
-    data: payload.data
+  // Wrap em BridgeMessage
+  const bridgeMessage = {
+    protocolVersion: payload.protocolVersion || '1.0',
+    messageType: payload.messageType || 'RENDER',
+    payload: payload.payload || payload
   };
 
   eventsAccepted++;
-  eventQueue.push(event);
-  console.log(`[Find Chord Bridge] Evento enfileirado [${event.type.toUpperCase()}] ID: ${event.id}`);
+  eventQueue.push(bridgeMessage);
+  console.log(`[Find Chord Bridge] HTTP Evento enfileirado [${bridgeMessage.messageType}]`);
   
-  // Limita o tamanho da fila para evitar consumo excessivo de memória
   if (eventQueue.length > 50) {
     eventQueue.shift();
     eventsDropped++;
     console.log('[Find Chord Bridge] Fila cheia. Descartando evento mais antigo (FIFO).');
   }
 
-  // Propaga o evento via WebSocket para clientes conectados
-  const messageStr = JSON.stringify(event);
-  const frame = encodeWebSocketFrame(messageStr);
-  activeSockets.forEach(socket => {
-    try {
-      socket.write(frame);
-    } catch (e) {
-      activeSockets.delete(socket);
+  broadcastMessage(bridgeMessage);
+}
+
+function broadcastMessage(message) {
+  const messageStr = JSON.stringify(message);
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
     }
   });
 }
 
-// WebSocket: Handshake Upgrade
-server.on('upgrade', (req, socket, head) => {
-  // Validação do Origin para WebSocket
+// WebSocket Server integrado ao HTTP
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws, req) => {
+  // Validação do Origin
   const origin = req.headers['origin'];
   if (origin) {
     const isValidOrigin = /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/.test(origin);
-    if (!isValidOrigin) {
-      console.warn(`[Find Chord Bridge] Bloqueado upgrade WS de origem não autorizada: ${origin}`);
-      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-      socket.destroy();
+    if (!isValidOrigin && !req.url.includes('/plugin')) {
+      // Se não for o origin válido e não for a rota do plugin (que pode não ter origin)
+      ws.close(1008, 'Origem não autorizada');
       return;
     }
   }
 
-  // Gera o hash de aceitação do WebSocket
-  const key = req.headers['sec-websocket-key'];
-  if (!key) {
-    socket.destroy();
-    return;
+  const isPlugin = req.url.includes('/plugin');
+  if (isPlugin) {
+    pluginLastSeen = new Date().toISOString();
+    console.log(`[Find Chord Bridge] Plugin WS conectado. Total: ${wss.clients.size}`);
+  } else {
+    frontendLastSeen = new Date().toISOString();
+    console.log(`[Find Chord Bridge] Dashboard WS conectado. Total: ${wss.clients.size}`);
   }
 
-  const acceptValue = crypto
-    .createHash('sha1')
-    .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
-    .digest('base64');
-
-  socket.write(
-    'HTTP/1.1 101 Switching Protocols\r\n' +
-    'Upgrade: websocket\r\n' +
-    'Connection: Upgrade\r\n' +
-    `Sec-WebSocket-Accept: ${acceptValue}\r\n\r\n`
-  );
-
-  activeSockets.add(socket);
-  frontendLastSeen = new Date().toISOString();
-  console.log(`[Find Chord Bridge] Novo cliente WebSocket conectado. Total ativos: ${activeSockets.size}`);
-
-  let bufferAccumulator = Buffer.alloc(0);
-
-  socket.on('data', data => {
-    bufferAccumulator = Buffer.concat([bufferAccumulator, data]);
-
-    while (bufferAccumulator.length >= 2) {
-      const decoded = decodeWebSocketFrame(bufferAccumulator);
-      if (!decoded) {
-        break; // Aguardando mais dados do buffer
-      }
-
-      // Avança o acumulador de buffer
-      const consumedLength = bufferAccumulator.length - (bufferAccumulator.length - getFrameLength(bufferAccumulator));
-      bufferAccumulator = bufferAccumulator.slice(consumedLength);
-
-      if (decoded.type === 'close') {
-        activeSockets.delete(socket);
-        socket.destroy();
-        console.log(`[Find Chord Bridge] Cliente desconectado. Total ativos: ${activeSockets.size}`);
-        break;
-      }
-
-      if (decoded.type === 'text') {
-        try {
-          const payload = JSON.parse(decoded.data);
-          handleNewEvent(payload);
-        } catch (e) {
-          console.warn('[Find Chord Bridge] WebSocket recebeu mensagem não-JSON:', decoded.data);
+  ws.on('message', (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      // Re-broadcast (Fan-out) para os outros clientes, exceto o sender
+      const messageStr = JSON.stringify(message);
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(messageStr);
         }
+      });
+      // Também adiciona à fila HTTP fallback se for direcionado ao plugin
+      if (!isPlugin) {
+        eventQueue.push(message);
+        if (eventQueue.length > 50) eventQueue.shift();
       }
+    } catch (e) {
+      console.warn('[Find Chord Bridge] WS message parse error:', e.message);
     }
   });
 
-  socket.on('close', () => {
-    activeSockets.delete(socket);
-    console.log(`[Find Chord Bridge] Cliente desconectado. Total ativos: ${activeSockets.size}`);
-  });
-
-  socket.on('error', () => {
-    activeSockets.delete(socket);
-    socket.destroy();
+  ws.on('close', () => {
+    console.log(`[Find Chord Bridge] WS desconectado. Total: ${wss.clients.size}`);
   });
 });
 
-// Decodifica frames de texto de cliente mascarados (RFC 6455)
-function decodeWebSocketFrame(buffer) {
-  const secondByte = buffer[1];
-  const isMasked = (secondByte & 0x80) !== 0;
-  let payloadLength = secondByte & 0x7F;
-  
-  let offset = 2;
-  if (payloadLength === 126) {
-    if (buffer.length < 4) return null;
-    payloadLength = buffer.readUInt16BE(2);
-    offset = 4;
-  } else if (payloadLength === 127) {
-    if (buffer.length < 10) return null;
-    payloadLength = buffer.readUInt32BE(6);
-    offset = 10;
-  }
-  
-  if (!isMasked) return null;
-  if (buffer.length < offset + 4 + payloadLength) return null;
-
-  const maskKey = buffer.slice(offset, offset + 4);
-  const payload = buffer.slice(offset + 4, offset + 4 + payloadLength);
-  
-  const decoded = Buffer.alloc(payloadLength);
-  for (let i = 0; i < payloadLength; i++) {
-    decoded[i] = payload[i] ^ maskKey[i % 4];
-  }
-  
-  const firstByte = buffer[0];
-  const opcode = firstByte & 0x0F;
-  if (opcode === 8) return { type: 'close' };
-  
-  return { type: 'text', data: decoded.toString('utf8') };
-}
-
-function getFrameLength(buffer) {
-  const secondByte = buffer[1];
-  let payloadLength = secondByte & 0x7F;
-  let offset = 2;
-  if (payloadLength === 126) {
-    payloadLength = buffer.readUInt16BE(2);
-    offset = 4;
-  } else if (payloadLength === 127) {
-    payloadLength = buffer.readUInt32BE(6);
-    offset = 10;
-  }
-  const isMasked = (secondByte & 0x80) !== 0;
-  return offset + (isMasked ? 4 : 0) + payloadLength;
-}
-
-function encodeWebSocketFrame(text) {
-  const payload = Buffer.from(text, 'utf8');
-  const len = payload.length;
-  let header;
-  
-  if (len < 126) {
-    header = Buffer.alloc(2);
-    header[0] = 0x81;
-    header[1] = len;
-  } else if (len < 65536) {
-    header = Buffer.alloc(4);
-    header[0] = 0x81;
-    header[1] = 126;
-    header.writeUInt16BE(len, 2);
-  } else {
-    header = Buffer.alloc(10);
-    header[0] = 0x81;
-    header[1] = 127;
-    header.writeUInt32BE(0, 2);
-    header.writeUInt32BE(len, 6);
-  }
-  
-  return Buffer.concat([header, payload]);
-}
 
 // Inicializa o Servidor
 server.listen(PORT, () => {

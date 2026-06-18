@@ -35,6 +35,8 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
+import { StandardLayout } from "./ui/StandardLayout";
+import type { TabConfig } from "./ui/StandardLayout";
 
 // ─── Colour maps ────────────────────────────────────────────────
 
@@ -401,7 +403,7 @@ export default function ScoreAnalysisDashboard() {
 
   if (!analysis) return null;
 
-  const panels: { id: DashboardPanel; label: string; icon: typeof BookOpen; badge?: number }[] = [
+  const PANELS: TabConfig<DashboardPanel>[] = [
     { id: "narrativa", label: "Narrativa", icon: BookOpen },
     { id: "estrutura", label: "Estrutura Formal", icon: GitBranch },
     { id: "tensao", label: "Mapa de Tensão", icon: Waves },
@@ -415,59 +417,34 @@ export default function ScoreAnalysisDashboard() {
   ];
 
   return (
-    <div className="w-full flex flex-col gap-0 rounded-2xl border border-zinc-800/60 bg-zinc-900/20 backdrop-blur-xl shadow-2xl overflow-hidden">
-      {/* Top Sync Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800/60 bg-zinc-950/80">
-        <div className="flex items-center gap-2">
-          {connectionStatus === "connected" ? (
-            <Wifi className="h-3 w-3 text-emerald-500" />
-          ) : (
-            <WifiOff className="h-3 w-3 text-rose-500" />
-          )}
-          <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-            {connectionStatus === "connected" ? "MuseScore Sincronizado" : "MuseScore Desconectado"}
-          </span>
+    <StandardLayout
+      tabs={PANELS}
+      activeTab={activePanel}
+      onTabChange={(id) => setActivePanel(id)}
+      headerContent={
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-800/60">
+          <div className="flex items-center gap-2">
+            {connectionStatus === "connected" ? (
+              <Wifi className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-rose-500" />
+            )}
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
+              {connectionStatus === "connected" ? "MuseScore Sincronizado" : "MuseScore Desconectado"}
+            </span>
+          </div>
+          <button
+            onClick={handleSync}
+            disabled={connectionStatus !== "connected" || isSyncing}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+            Sincronizar
+          </button>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={connectionStatus !== "connected" || isSyncing}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[9px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50"
-        >
-          <RefreshCcw className={`h-3 w-3 ${isSyncing ? "animate-spin" : ""}`} />
-          Sincronizar
-        </button>
-      </div>
-
-      {/* Panel Tab Selector */}
-      <div className="flex items-center gap-0 border-b border-zinc-800/60 bg-zinc-950/60 overflow-x-auto">
-        {panels.map((p) => {
-          const Icon = p.icon;
-          const isActive = activePanel === p.id;
-          return (
-            <button
-              key={p.id}
-              id={`analysis-panel-${p.id}`}
-              onClick={() => setActivePanel(p.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-wider border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? "border-purple-500 text-purple-400 bg-purple-950/20"
-                  : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              {p.label}
-              {p.badge !== undefined && p.badge > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-rose-600/30 text-rose-300 text-[9px] font-black border border-rose-500/20">
-                  {p.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Panel Content */}
-      <div className="p-5 flex flex-col gap-5 animate-scale-up">
+      }
+    >
+      <div className="flex flex-col gap-5 animate-scale-up">
 
         {/* ── PANEL: NARRATIVA HARMÔNICA ──────────────────────── */}
         {activePanel === "narrativa" && (
@@ -528,12 +505,21 @@ export default function ScoreAnalysisDashboard() {
                   const chordData = analysis.chords[idx];
                   const isSelected = selectedChordIdx === idx;
                   return (
-                    <button
+                    <div
                       key={idx}
                       id={`narrative-chord-${idx}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => {
                         selectChord(idx);
                         setExpandedChordIdx(isSelected && expandedChordIdx === idx ? null : idx);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          selectChord(idx);
+                          setExpandedChordIdx(isSelected && expandedChordIdx === idx ? null : idx);
+                        }
                       }}
                       className={`group flex flex-col items-center p-2.5 rounded-xl border text-center cursor-pointer transition-all duration-150 hover:scale-[1.03] w-[88px] ${
                         isSelected
@@ -563,7 +549,7 @@ export default function ScoreAnalysisDashboard() {
                           Compasso {scoreSnapshot.harmonies[idx].measure}
                         </span>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -1163,6 +1149,6 @@ export default function ScoreAnalysisDashboard() {
           </div>
         )}
       </div>
-    </div>
+    </StandardLayout>
   );
 }
