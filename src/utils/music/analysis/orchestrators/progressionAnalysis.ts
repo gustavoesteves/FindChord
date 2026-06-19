@@ -9,7 +9,8 @@ import type {
   ModalContext,
   HarmonicState,
   ModalMode,
-  ModalAxis
+  ModalAxis,
+  AnalysisMode
 } from '../models/FunctionalAnalysis';
 import type { ScoreSection } from '../models/ScoreSnapshot';
 import { resolveTonalCenter } from '../tonalCenter';
@@ -50,7 +51,7 @@ import { inferHarmonicState } from '../narrative/harmonicStateEngine';
 export function analyzeProgression(
   progression: string[],
   profile: HarmonicGrammarProfile = 'GENERAL',
-  isPerturbation = false,
+  mode: AnalysisMode = 'FULL',
   sections?: ScoreSection[]
 ): FunctionalAnalysis {
   if (progression.length === 0) {
@@ -286,6 +287,19 @@ export function analyzeProgression(
   // 8c. Perform formal structure analysis (Sprint F8)
   const phraseGroups = analyzeFormalStructure(phrases);
 
+  if (mode !== "FULL") {
+    return {
+      tonalCenter: finalTonalCenter,
+      chords,
+      cadences,
+      globalPath,
+      regions,
+      sections,
+      phrases,
+      phraseGroups
+    };
+  }
+
   // 9. Build region tree hierarchy (Sprint Infra-1)
   const regionTree = buildHarmonicRegionTree(regions);
 
@@ -334,8 +348,8 @@ export function analyzeProgression(
     knowledgeGraph
   };
 
-  if (!isPerturbation) {
-    computeStabilityAndCausality(fullAnalysisDTO, (prog) => analyzeProgression(prog, profile, true));
+  if (mode === "FULL") {
+    computeStabilityAndCausality(fullAnalysisDTO, (prog) => analyzeProgression(prog, profile, "COUNTERFACTUAL"));
     computeTheoryAdequacyAndFrontier(fullAnalysisDTO);
   }
 

@@ -1,8 +1,9 @@
 import type { CanonicalChordEvent } from "./music/analysis/models/CanonicalChordEvent";
 import type { CanonicalProgressionEvent } from "./music/analysis/models/CanonicalProgressionEvent";
-import { useChordStore } from "../store/useChordStore";
+import { useOntologySessionStore } from "../store/useOntologySessionStore";
 import { WebSocketTransport } from "./music/bridge/TransportLayer";
-import type { BridgeMessage, MutationCommand } from "./music/bridge/Protocol";
+import type { BridgeMessage, MutationCommand, RenderOntologyCommand, ClearOntologyCommand, RegionRenderData } from "./music/bridge/Protocol";
+import type { OntologyRegion } from "./music/analysis/regions/OntologyRegion";
 
 export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
@@ -17,7 +18,9 @@ class MuseScoreAdapter {
       if (msg.messageType === 'SESSION') {
         const sessionCmd = msg.payload as any;
         if (sessionCmd.type === 'SCORE_SNAPSHOT' && sessionCmd.data) {
-          useChordStore.getState().setScoreSnapshot(sessionCmd.data);
+          useOntologySessionStore.getState().loadScore(sessionCmd.data);
+        } else if (sessionCmd.type === 'CURSOR_CHANGED' && sessionCmd.cursorTick !== undefined) {
+          useOntologySessionStore.getState().updateCursor(sessionCmd.cursorTick);
         }
       }
     });
@@ -71,6 +74,70 @@ class MuseScoreAdapter {
         data: progression // legado
       }
     };
+    try {
+      await this.transport.send(msg);
+      return true;
+    } catch (e) {
+      console.warn("MuseScore bridge offline", e);
+      return false;
+    }
+  }
+
+  public async renderOntology(regions: OntologyRegion[]): Promise<boolean> {
+    const regionColors: Record<string, string> = {
+      PROLONGATION: "#3b82f6", // azul
+      CADENTIAL: "#ef4444",    // vermelho
+      TRANSITION: "#eab308",   // amarelo
+      NARRATIVE: "#22c55e"     // verde
+    };
+
+    const gravitySymbols: Record<string, string> = {
+      TONAL_RESOLUTION: "→",
+      CADENTIAL_DOMINANT: "⇢",
+      LOCAL_RESOLUTION: "↘",
+      MODAL_GRAVITY: "◉",
+      PROLONGATION_INERTIA: "⟳"
+    };
+
+    const mappedRegions: RegionRenderData[] = regions.map(r => ({
+      tickStart: r.tickStart,
+      regionType: r.regionType,
+      label: `[${r.regionType}]`,
+      gravitySymbol: r.dominantAttractor ? (gravitySymbols[r.dominantAttractor] || "") : "",
+      colorHex: regionColors[r.regionType] || "#9ca3af" // fallback zinc-400
+    }));
+
+    const payload: RenderOntologyCommand = {
+      type: 'RENDER_ONTOLOGY',
+      regions: mappedRegions
+    };
+
+    const msg: BridgeMessage = {
+      protocolVersion: '1.0',
+      messageType: 'RENDER',
+      payload
+    };
+
+    try {
+      await this.transport.send(msg);
+      return true;
+    } catch (e) {
+      console.warn("MuseScore bridge offline", e);
+      return false;
+    }
+  }
+
+  public async clearOntology(): Promise<boolean> {
+    const payload: ClearOntologyCommand = {
+      type: 'CLEAR_ONTOLOGY'
+    };
+
+    const msg: BridgeMessage = {
+      protocolVersion: '1.0',
+      messageType: 'RENDER',
+      payload
+    };
+
     try {
       await this.transport.send(msg);
       return true;

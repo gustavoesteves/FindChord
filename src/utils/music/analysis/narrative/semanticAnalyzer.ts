@@ -83,7 +83,6 @@ export function analyzeSemanticContext(
   for (const phrase of phrases) {
     const pStart = phrase.startIndex;
     const pEnd = phrase.endIndex;
-    const cad = phrase.terminatingCadence;
 
     // Identify cadential indexes if there is a terminating cadence
     const inferences = PhraseRoleEngine.inferRoles(chords, phrases);

@@ -36,7 +36,7 @@ export function evaluateOntologyIntegrity(analysis: FunctionalAnalysis): Ontolog
     let roleOk = true;
     if (role === 'CADENTIAL' && func !== 'DOMINANT' && ctxFunc !== 'SECONDARY_DOMINANT' && ctxFunc !== 'TRITONE_SUBSTITUTION') {
       // Sometimes half cadences land on dominant, but sometimes plagal lands on subdominant.
-      if (analysis.cadences.some(c => c.endIndex === i || c.endIndex - 1 === i)) {
+      if (analysis.cadences?.some(c => c.endIndex === i || c.endIndex - 1 === i)) {
         // Tolerated if it's part of a cadence
       } else {
         roleOk = false;

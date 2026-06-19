@@ -112,9 +112,9 @@ const server = http.createServer((req, res) => {
       if (exceeded) return;
       try {
         const payload = JSON.parse(body);
-        if (!payload.type || !payload.data) {
+        if (!payload.type && !payload.protocolVersion) {
           eventsRejected++;
-          writeJson(res, 400, { error: 'Payload inválido. Necessita de "type" e "data".' });
+          writeJson(res, 400, { error: 'Payload inválido. Necessita ser um evento ou BridgeMessage.' });
           return;
         }
 
@@ -173,8 +173,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 6. Endpoint: POST /api/v1/score -> Recebe ScoreSnapshot estruturado do QML (Legado / Fallback)
+  // 6. Endpoint: POST /api/v1/score -> Recebe eventos de Cifras e Notas do QML
   if (req.method === 'POST' && url.pathname === '/api/v1/score') {
+    frontendLastSeen = new Date().toISOString();
     pluginLastSeen = new Date().toISOString();
     let body = '';
     let exceeded = false;
@@ -182,10 +183,10 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => {
       if (exceeded) return;
       body += chunk.toString();
-      if (body.length > 1048576) { // 1MB limite para partituras grandes
+      if (body.length > 524288) { // 512KB for path/payload
         exceeded = true;
         eventsRejected++;
-        writeJson(res, 413, { error: 'Payload de partitura muito grande.' });
+        writeJson(res, 413, { error: 'Payload de score muito grande.' });
         req.destroy();
       }
     });
@@ -194,22 +195,102 @@ const server = http.createServer((req, res) => {
       if (exceeded) return;
       try {
         const payload = JSON.parse(body);
+
+        // --- FILE BRIDGE INTERCEPTION ---
+        if (payload.action === "PARSE_XML" && payload.path) {
+          const fs = require('fs');
+          if (!fs.existsSync(payload.path)) {
+            writeJson(res, 404, { error: 'Arquivo XML temporário não encontrado.' });
+            return;
+          }
+
+          const xml = fs.readFileSync(payload.path, 'utf8');
+          const snapshot = {
+              timestamp: Date.now(),
+              harmonies: [],
+              notes: [],
+              sections: [],
+              metadata: { title: "Imported Score", composer: "", measures: 0 }
+          };
+          
+          const titleMatch = xml.match(/<work-title>([^<]+)<\/work-title>/);
+          if (titleMatch) snapshot.metadata.title = titleMatch[1];
+          
+          const partMatch = xml.match(/<part id="P1">([\s\S]*?)<\/part>/);
+          const partXml = partMatch ? partMatch[1] : xml;
+          
+          const measureRegex = /<measure number="([^"]+)"[^>]*>([\s\S]*?)<\/measure>/g;
+          let match;
+          let mCount = 0;
+          while ((match = measureRegex.exec(partXml)) !== null) {
+              let mNumber = parseInt(match[1]) || ++mCount;
+              snapshot.metadata.measures = Math.max(snapshot.metadata.measures, mNumber);
+              
+              let mContent = match[2];
+              
+              const { parseXMLHarmonyBlock } = require('./harmony-normalizer.cjs');
+              
+              const harmonyRegex = /<harmony[\s\S]*?<\/harmony>/g;
+              let hMatch;
+              while ((hMatch = harmonyRegex.exec(mContent)) !== null) {
+                  const fullChord = parseXMLHarmonyBlock(hMatch[0]);
+                  if (fullChord) {
+                      snapshot.harmonies.push({ measure: mNumber, beat: 1, harmony: fullChord });
+                  }
+              }
+              
+              const wordsRegex = /<words[^>]*>([^<]+)<\/words>/g;
+              let wMatch;
+              while ((wMatch = wordsRegex.exec(mContent)) !== null) {
+                  let text = wMatch[1];
+                  if (text.length <= 4 && text.toUpperCase() === text) {
+                      snapshot.sections.push({
+                          id: "sec_" + mNumber,
+                          label: text,
+                          startMeasure: mNumber
+                      });
+                  }
+              }
+          }
+
+          console.log(`[Find Chord Bridge] File Bridge: parsed ${snapshot.harmonies.length} chords from MusicXML.`);
+          const scoreMessage = {
+            protocolVersion: "1.0",
+            messageType: "SESSION",
+            payload: { type: "SCORE_SNAPSHOT", data: snapshot }
+          };
+
+          const messageStr = JSON.stringify(scoreMessage);
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(messageStr);
+            }
+          });
+
+          writeJson(res, 200, { status: 'success', parsedChords: snapshot.harmonies.length });
+          return;
+        }
+        // --- END FILE BRIDGE ---
+
         console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML via HTTP (${payload.harmonies?.length || 0} acordes).`);
         
-        // Wrap num BridgeMessage e retransmite via WS
         const scoreMessage = {
           protocolVersion: "1.0",
           messageType: "SESSION",
-          payload: {
-            type: "SCORE_SNAPSHOT",
-            data: payload
-          }
+          payload: { type: "SCORE_SNAPSHOT", data: payload }
         };
-        broadcastMessage(scoreMessage);
+
+        const messageStr = JSON.stringify(scoreMessage);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(messageStr);
+          }
+        });
         
-        writeJson(res, 200, { status: 'success' });
+        writeJson(res, 200, { status: 'success', broadcastedTo: wss.clients.size });
       } catch (e) {
-        writeJson(res, 400, { error: 'JSON malformado.' });
+        eventsRejected++;
+        writeJson(res, 400, { error: 'Falha no processamento do ScoreSnapshot.', details: e.message });
       }
     });
     return;

@@ -23,11 +23,21 @@ export interface SessionCommand {
   metadata?: Record<string, unknown>;
 }
 
-export interface RenderCommand {
-  type: 'RENDER';
-  action: 'DRAW_ATTRACTOR' | 'DRAW_ROLE' | 'HIGHLIGHT';
-  targetTick: number;
-  data: Record<string, unknown>;
+export interface RegionRenderData {
+  tickStart: number;
+  regionType: string;
+  label: string;
+  gravitySymbol: string;
+  colorHex: string;
+}
+
+export interface RenderOntologyCommand {
+  type: 'RENDER_ONTOLOGY';
+  regions: RegionRenderData[];
+}
+
+export interface ClearOntologyCommand {
+  type: 'CLEAR_ONTOLOGY';
 }
 
 export interface MutationCommand {

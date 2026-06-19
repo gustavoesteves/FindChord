@@ -79,6 +79,11 @@ export interface AnalyticalSection {
 
 
 
+export type AnalysisMode = 
+  | "FULL"
+  | "COUNTERFACTUAL"
+  | "MUTATION";
+
 export type HarmonicGrammarProfile =
   | 'COMMON_PRACTICE'
   | 'EXTENDED_FUNCTIONAL'

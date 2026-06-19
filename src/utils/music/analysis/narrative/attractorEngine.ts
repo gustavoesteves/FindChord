@@ -1,9 +1,7 @@
 import type {
   FunctionalChord,
   Phrase,
-  AttractorField,
   AttractorNode,
-  AttractorType,
   TonalCenter
 } from '../models/FunctionalAnalysis';
 
@@ -13,7 +11,7 @@ export class AttractorEngine {
    * Calculates the Attractor Field (gravitational pull) for each chord based on its
    * phrase role, harmonic function, and structural position.
    */
-  public static calculateFields(chords: FunctionalChord[], phrases: Phrase[], tonalCenter: TonalCenter): void {
+  public static calculateFields(chords: FunctionalChord[], _phrases: Phrase[], tonalCenter: TonalCenter): void {
     const N = chords.length;
 
     for (let idx = 0; idx < N; idx++) {

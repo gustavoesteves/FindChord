@@ -121,7 +121,7 @@ export class PhraseRoleEngine {
    * Heuristic to determine if a CadenceInfo is structurally strong enough
    * to dictate a CADENTIAL -> CLOSING narrative.
    */
-  private static evaluateCadentialCandidate(cad: CadenceInfo, chords: FunctionalChord[]): boolean {
+  private static evaluateCadentialCandidate(cad: CadenceInfo, _chords: FunctionalChord[]): boolean {
     if (cad.suppressed) return false;
     
     // If it's explicitly marked as WEAK and low confidence, it's probably a localized motion (like a vamp)

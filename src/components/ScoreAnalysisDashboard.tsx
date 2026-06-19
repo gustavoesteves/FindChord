@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useChordStore } from "../store/useChordStore";
+import { useOntologySessionStore } from "../store/useOntologySessionStore";
 import { musescoreAdapter, type ConnectionStatus } from "../utils/musescoreAdapter";
 import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
 import { InspectorEngine } from "../utils/music/analysis/inspector/InspectorEngine";
@@ -18,25 +19,31 @@ import type {
 } from "../utils/music/analysis/models/FunctionalAnalysis";
 import {
   BookOpen,
-  Activity,
-  ShieldAlert,
-  Lightbulb,
-  Music2,
+  RefreshCcw,
+  WifiOff,
+  Wifi,
   Sparkles,
   Volume2,
-  ChevronDown,
-  ChevronRight,
-  Zap,
-  Waves,
+  Clock,
   Star,
   GitBranch,
-  Clock,
-  RefreshCcw,
-  Wifi,
-  WifiOff
+  ChevronRight,
+  Waves,
+  Zap,
+  Music2,
+  Activity,
+  ShieldAlert,
+  ChevronDown,
+  Lightbulb
 } from "lucide-react";
 import { StandardLayout } from "./ui/StandardLayout";
 import type { TabConfig } from "./ui/StandardLayout";
+import { ExplainabilityTimeline } from "./explainability/ExplainabilityTimeline";
+import { RegionExplainabilityPanel } from "./explainability/RegionExplainabilityPanel";
+import { AttractorRadar } from "./explainability/AttractorRadar";
+import { DecisionTreeVisual } from "./explainability/DecisionTreeVisual";
+import { HarmonicCounterfactual } from "./explainability/HarmonicCounterfactual";
+
 
 // ─── Colour maps ────────────────────────────────────────────────
 
@@ -71,54 +78,7 @@ const roleLabels: Record<string, string> = {
   CLOSING: "Fechamento",
 };
 
-// ─── Reharmonisation buttons ─────────────────────────────────────
-
-const REHARMONISATION_BUTTONS = [
-  {
-    id: "mais_tensao",
-    label: "Mais Tensão",
-    emoji: "⚡",
-    description: "Adiciona tensão dominante ou substituto de trítono",
-    color: "from-orange-600/30 to-rose-600/20 border-orange-700/50 text-orange-300 hover:border-orange-500",
-  },
-  {
-    id: "mais_surpresa",
-    label: "Mais Surpresa",
-    emoji: "✨",
-    description: "Empréstimo modal ou acorde de cor inesperado",
-    color: "from-purple-600/30 to-indigo-600/20 border-purple-700/50 text-purple-300 hover:border-purple-500",
-  },
-  {
-    id: "mais_modal",
-    label: "Mais Modal",
-    emoji: "🌊",
-    description: "Substitui por um acorde modal equivalente",
-    color: "from-sky-600/30 to-cyan-600/20 border-sky-700/50 text-sky-300 hover:border-sky-500",
-  },
-  {
-    id: "mais_jazz",
-    label: "Mais Jazz",
-    emoji: "🎷",
-    description: "Adiciona extensões (7ª, 9ª, 13ª) e alterações",
-    color: "from-amber-600/30 to-yellow-600/20 border-amber-700/50 text-amber-300 hover:border-amber-500",
-  },
-  {
-    id: "mais_estavel",
-    label: "Mais Estável",
-    emoji: "⚓",
-    description: "Simplifica para função tonal primária",
-    color: "from-emerald-600/30 to-teal-600/20 border-emerald-700/50 text-emerald-300 hover:border-emerald-500",
-  },
-  {
-    id: "mais_cromatico",
-    label: "Mais Cromático",
-    emoji: "🎨",
-    description: "Insere movimento cromático ou substituição",
-    color: "from-pink-600/30 to-fuchsia-600/20 border-pink-700/50 text-pink-300 hover:border-pink-500",
-  },
-];
-
-type DashboardPanel = "narrativa" | "estrutura" | "tensao" | "auditoria" | "exploracao";
+type DashboardPanel = "narrativa" | "estrutura" | "tensao" | "auditoria" | "explainability";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
@@ -154,29 +114,33 @@ function getFunctionLabel(fn: string): string {
 
 export default function ScoreAnalysisDashboard() {
   const {
-    scoreSnapshot,
     timelineVoicings,
     tuning,
     activeInstrument,
     activeTimelineIndex,
     setActiveTimelineIndex,
     notationStyle,
+    userCustomVoicings,
   } = useChordStore();
+
+  const { scoreSnapshot } = useOntologySessionStore();
 
   const [activePanel, setActivePanel] = useState<DashboardPanel>("narrativa");
   const [localSelectedChordIdx, setLocalSelectedChordIdx] = useState<number | null>(null);
   const [expandedChordIdx, setExpandedChordIdx] = useState<number | null>(null);
-  const [reharmoResult, setReharmoResult] = useState<string | null>(null);
   const [technicalExpanded, setTechnicalExpanded] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     musescoreAdapter.connect();
-    return musescoreAdapter.subscribe((status) => {
+    const unsubscribe = musescoreAdapter.subscribe((status) => {
       setConnectionStatus(status);
       if (status === "disconnected") setIsSyncing(false);
     });
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const handleSync = async () => {
@@ -196,7 +160,6 @@ export default function ScoreAnalysisDashboard() {
   const selectChord = (idx: number) => {
     setLocalSelectedChordIdx(idx);
     setActiveTimelineIndex(idx);
-    setReharmoResult(null);
   };
 
   // ── Analysis ──────────────────────────────────────────────────
@@ -219,7 +182,7 @@ export default function ScoreAnalysisDashboard() {
       });
     }
 
-    return analyzeProgression(progressionChords, "GENERAL", false, mappedSections);
+    return analyzeProgression(progressionChords, "GENERAL", "FULL", mappedSections);
   }, [progressionChords, scoreSnapshot]);
 
   // ── Inspector (Linter) ────────────────────────────────────────
@@ -248,7 +211,7 @@ export default function ScoreAnalysisDashboard() {
       chordEvents,
       tonalCenters: [],
     };
-  }, [progressionChords, timelineVoicings, tuning, activeInstrument]);
+  }, [progressionChords, timelineVoicings, tuning, userCustomVoicings, activeInstrument]);
 
   const diagnostics = useMemo(() => InspectorEngine.inspect(progressionEvent, analysis), [progressionEvent, analysis]);
 
@@ -321,31 +284,6 @@ export default function ScoreAnalysisDashboard() {
     return blocks;
   }, [analysis]);
 
-  // ── Simulate Reharmonisation ─────────────────────────────────
-  const applyReharmonisation = (buttonId: string) => {
-    if (!analysis || selectedChordIdx === null) return;
-    const chord = progressionChords[selectedChordIdx];
-    const parsed = parseChord(chord);
-    if (parsed.empty) return;
-
-    const suggestions: Record<string, (root: string) => string> = {
-      mais_tensao: (r) => `${r}7(#11)`,
-      mais_surpresa: (r) => `${r}maj7#5`,
-      mais_modal: (r) => `${r}sus2`,
-      mais_jazz: (r) => `${r}9`,
-      mais_estavel: (r) => `${r}`,
-      mais_cromatico: (r) => {
-        const chromatic: Record<string, string> = { C: "Db", D: "Eb", E: "F", F: "Gb", G: "Ab", A: "Bb", B: "C" };
-        return `${chromatic[r] ?? r}7`;
-      },
-    };
-    const fn = suggestions[buttonId];
-    if (fn) {
-      const result = fn(parsed.root);
-      setReharmoResult(result);
-      playChordAudio(result);
-    }
-  };
 
   // ── Tension data per chord ────────────────────────────────────
   const tensionData = useMemo(() => {
@@ -413,7 +351,7 @@ export default function ScoreAnalysisDashboard() {
       icon: ShieldAlert,
       badge: diagnostics.length > 0 ? diagnostics.length : undefined,
     },
-    { id: "exploracao", label: "Exploração", icon: Lightbulb },
+    { id: "explainability", label: "Explainability", icon: Lightbulb },
   ];
 
   return (
@@ -433,18 +371,73 @@ export default function ScoreAnalysisDashboard() {
               {connectionStatus === "connected" ? "MuseScore Sincronizado" : "MuseScore Desconectado"}
             </span>
           </div>
-          <button
-            onClick={handleSync}
-            disabled={connectionStatus !== "connected" || isSyncing}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-            Sincronizar
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const { indexes } = useOntologySessionStore.getState();
+                if (indexes) musescoreAdapter.renderOntology(indexes.regions);
+              }}
+              disabled={connectionStatus !== "connected"}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-800/50 transition text-[10px] font-black text-purple-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Pintar Ontologia
+            </button>
+            <button
+              onClick={() => musescoreAdapter.clearOntology()}
+              disabled={connectionStatus !== "connected"}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
+            >
+              Ocultar
+            </button>
+            <div className="w-px h-4 bg-zinc-800 mx-1" />
+            <button
+              onClick={handleSync}
+              disabled={connectionStatus !== "connected" || isSyncing}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+              Sincronizar
+            </button>
+          </div>
         </div>
       }
     >
       <div className="flex flex-col gap-5 animate-scale-up">
+        <ExplainabilityTimeline />
+
+        {/* ── PANEL: EXPLAINABILITY ──────────────────────── */}
+        {activePanel === "explainability" && (
+          <div className="flex flex-col gap-5">
+            {(() => {
+              const { indexes, activeRegionIndex, getExplanationTrace } = useOntologySessionStore.getState();
+              const region = indexes?.regions[activeRegionIndex ?? 0] || null;
+              
+              // Se o usuário clicou num acorde no minimap/narrativa, usa ele.
+              // Senão, tenta pegar o primeiro acorde da região ativa.
+              let cIdx = expandedChordIdx;
+              if (cIdx === null && region) {
+                // heuristic: 1 compasso = 1 acorde na view atual, ou usa o index de chord (aprox)
+                // O ideal seria procurar qual acorde cai dentro do tickBounds da region.
+                cIdx = Math.floor(region.tickStart / 1920);
+              }
+              const chord = cIdx !== null ? analysis.chords[cIdx] : null;
+              const trace = chord && region ? getExplanationTrace(region, chord) : null;
+              
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4">
+                    <RegionExplainabilityPanel region={region} trace={trace} />
+                    <HarmonicCounterfactual trace={trace} chordIndex={cIdx} />
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <AttractorRadar field={chord?.attractorField || null} />
+                    <DecisionTreeVisual trace={trace} />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* ── PANEL: NARRATIVA HARMÔNICA ──────────────────────── */}
         {activePanel === "narrativa" && (
@@ -1026,128 +1019,7 @@ export default function ScoreAnalysisDashboard() {
           </div>
         )}
 
-        {/* ── PANEL: EXPLORAÇÃO CONTEXTUAL ────────────────────── */}
-        {activePanel === "exploracao" && (
-          <div className="flex flex-col gap-5">
-            <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-              <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-              Rearmonização Contextual — selecione um compasso e explore alternativas
-            </div>
 
-            {/* Chord selector */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] text-zinc-600 font-bold">Compasso selecionado:</span>
-              <div className="flex gap-2 flex-wrap">
-                {progressionChords.map((chord, idx) => {
-                  const isActive = selectedChordIdx === idx;
-                  return (
-                    <button
-                      key={idx}
-                      id={`exploration-chord-${idx}`}
-                      onClick={() => {
-                        selectChord(idx);
-                        setReharmoResult(null);
-                      }}
-                      className={`px-3 py-2 rounded-xl border text-[11px] font-black cursor-pointer transition ${
-                        isActive
-                          ? "bg-purple-950/40 border-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                          : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-                      }`}
-                    >
-                      <span className="block">{getChordDisplay(chord)}</span>
-                      <span className="text-[7.5px] text-zinc-600 font-bold">c.{idx + 1}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Reharmonisation action buttons */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">
-                Intenção de rearmonização para{" "}
-                <span className="text-purple-300">
-                  {selectedChordIdx !== null
-                    ? getChordDisplay(progressionChords[selectedChordIdx])
-                    : "—"}
-                </span>
-                :
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {REHARMONISATION_BUTTONS.map((btn) => (
-                  <button
-                    key={btn.id}
-                    id={`reharmonise-${btn.id}`}
-                    onClick={() => applyReharmonisation(btn.id)}
-                    className={`group flex flex-col gap-1 p-3.5 rounded-xl border bg-gradient-to-br ${btn.color} cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]`}
-                  >
-                    <span className="text-base">{btn.emoji}</span>
-                    <span className="text-[11px] font-black">{btn.label}</span>
-                    <span className="text-[9px] opacity-70 leading-tight">{btn.description}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Reharmonisation Result */}
-            {reharmoResult && (
-              <div className="p-4 rounded-xl border border-amber-700/40 bg-amber-950/20 flex flex-col gap-3 animate-scale-up">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-400" />
-                  <span className="text-xs font-black text-amber-300 uppercase tracking-wider">
-                    Sugestão: {getChordDisplay(reharmoResult)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-zinc-400">
-                    Substituir{" "}
-                    <span className="text-zinc-200 font-bold">
-                      {selectedChordIdx !== null
-                        ? getChordDisplay(progressionChords[selectedChordIdx])
-                        : ""}
-                    </span>{" "}
-                    por{" "}
-                    <span className="text-amber-300 font-black">{getChordDisplay(reharmoResult)}</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => playChordAudio(reharmoResult)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-950/30 hover:bg-amber-900/40 border border-amber-800/40 rounded-lg text-[10px] font-black text-amber-300 cursor-pointer transition"
-                  >
-                    <Volume2 className="h-3 w-3" /> Ouvir
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (selectedChordIdx !== null) {
-                        const { setProgressionChords } = useChordStore.getState();
-                        const newChords = [...progressionChords];
-                        newChords[selectedChordIdx] = reharmoResult;
-                        setProgressionChords(newChords);
-                        setReharmoResult(null);
-                      }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-950/30 hover:bg-purple-900/40 border border-purple-800/40 rounded-lg text-[10px] font-black text-purple-300 cursor-pointer transition"
-                  >
-                    <Zap className="h-3 w-3" /> Aplicar na Partitura
-                  </button>
-                  <button
-                    onClick={() => setReharmoResult(null)}
-                    className="text-zinc-600 hover:text-zinc-400 text-[9px] font-bold cursor-pointer transition"
-                  >
-                    Descartar
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {selectedChordIdx === null && (
-              <div className="p-6 text-center text-zinc-600 text-xs font-bold">
-                Selecione um compasso acima para habilitar as sugestões de rearmonização.
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </StandardLayout>
   );
