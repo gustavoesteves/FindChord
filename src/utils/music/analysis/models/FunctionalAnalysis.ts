@@ -6,6 +6,7 @@ import type { HarmonicNarrativeFacts, HarmonicNarrativeExplanation } from './Har
 import type { HarmonicFingerprint } from './HarmonicFingerprint';
 import type { AdaptiveTonalState } from './AdaptiveTonalState';
 import type { ScoreSection } from './ScoreSnapshot';
+import type { ExplanationTrace } from '../explainability/ExplanationTrace';
 
 
 /**
@@ -603,6 +604,25 @@ export interface FunctionalAnalysis {
 
   /** Assinatura estrutural em camadas da progressão (Sprint Infra-3) */
   fingerprint?: HarmonicFingerprint;
+
+  /** Identidade da análise (hash e versão) (Sprint F15.4.5) */
+  identity?: AnalysisIdentity;
+
+  /** Snapshots pré-computados de explicabilidade por acorde (Sprint F15.4.6) */
+  explainabilitySnapshots?: Record<string, ExplainabilitySnapshot>;
+}
+
+export interface AnalysisIdentity {
+  progressionHash: string;
+  structuralHash?: string;
+}
+
+export interface ExplainabilitySnapshot {
+  chordId: string;
+  role: string;
+  intent: string;
+  attractors: AttractorField | null;
+  explanation: ExplanationTrace;
 }
 
 

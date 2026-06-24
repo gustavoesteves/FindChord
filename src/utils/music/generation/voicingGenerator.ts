@@ -64,9 +64,10 @@ export function generateVoicings(
   targetPitchClasses: number[],
   tuning: string[] = ["E4", "B3", "G3", "D3", "A2", "E2"],
   activeQuality?: string,
-  bassPC: number | null = null
+  bassPC: number | null = null,
+  forceRequiredPCs?: number[]
 ): VoicingShape[] {
-  const cacheKey = `${chordName}-${targetPitchClasses.join(",")}-${tuning.join(",")}`;
+  const cacheKey = `${chordName}-${targetPitchClasses.join(",")}-${tuning.join(",")}-${forceRequiredPCs?.join(",") || ""}`;
   if (voicingCache.has(cacheKey)) {
     return voicingCache.get(cacheKey)!;
   }
@@ -121,7 +122,8 @@ export function generateVoicings(
       const currentFretting = [...context.frets];
       const coveredPCs = new Set(context.pitchClasses.filter((pc): pc is number => pc !== null));
 
-      for (const corePC of req.core) {
+      const mandatoryPCs = forceRequiredPCs || req.core;
+      for (const corePC of mandatoryPCs) {
         if (!coveredPCs.has(corePC)) return;
       }
 

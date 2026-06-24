@@ -204,60 +204,29 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          const xml = fs.readFileSync(payload.path, 'utf8');
-          const snapshot = {
-              timestamp: Date.now(),
-              harmonies: [],
-              notes: [],
-              sections: [],
-              metadata: { title: "Imported Score", composer: "", measures: 0 }
-          };
+          const xmlData = fs.readFileSync(payload.path, 'utf8');
+          const { parseMusicXML } = require('./musicxml-parser.cjs');
           
-          const titleMatch = xml.match(/<work-title>([^<]+)<\/work-title>/);
-          if (titleMatch) snapshot.metadata.title = titleMatch[1];
-          
-          const partMatch = xml.match(/<part id="P1">([\s\S]*?)<\/part>/);
-          const partXml = partMatch ? partMatch[1] : xml;
-          
-          const measureRegex = /<measure number="([^"]+)"[^>]*>([\s\S]*?)<\/measure>/g;
-          let match;
-          let mCount = 0;
-          while ((match = measureRegex.exec(partXml)) !== null) {
-              let mNumber = parseInt(match[1]) || ++mCount;
-              snapshot.metadata.measures = Math.max(snapshot.metadata.measures, mNumber);
-              
-              let mContent = match[2];
-              
-              const { parseXMLHarmonyBlock } = require('./harmony-normalizer.cjs');
-              
-              const harmonyRegex = /<harmony[\s\S]*?<\/harmony>/g;
-              let hMatch;
-              while ((hMatch = harmonyRegex.exec(mContent)) !== null) {
-                  const fullChord = parseXMLHarmonyBlock(hMatch[0]);
-                  if (fullChord) {
-                      snapshot.harmonies.push({ measure: mNumber, beat: 1, harmony: fullChord });
-                  }
-              }
-              
-              const wordsRegex = /<words[^>]*>([^<]+)<\/words>/g;
-              let wMatch;
-              while ((wMatch = wordsRegex.exec(mContent)) !== null) {
-                  let text = wMatch[1];
-                  if (text.length <= 4 && text.toUpperCase() === text) {
-                      snapshot.sections.push({
-                          id: "sec_" + mNumber,
-                          label: text,
-                          startMeasure: mNumber
-                      });
-                  }
-              }
+          let parsedScore;
+          try {
+            parsedScore = parseMusicXML(xmlData);
+          } catch (err) {
+            writeJson(res, 500, { error: 'Failed to parse MusicXML: ' + err.message });
+            return;
           }
 
-          console.log(`[Find Chord Bridge] File Bridge: parsed ${snapshot.harmonies.length} chords from MusicXML.`);
+          console.log(`[Find Chord Bridge] File Bridge: parsed ${parsedScore.harmonies.length} chords and ${parsedScore.notes.length} notes from MusicXML.`);
+          
+          // Omit notes to save websocket payload size (F15.4.14 constraint)
+          const snapshotForFrontend = {
+            ...parsedScore,
+            notes: []
+          };
+
           const scoreMessage = {
             protocolVersion: "1.0",
             messageType: "SESSION",
-            payload: { type: "SCORE_SNAPSHOT", data: snapshot }
+            payload: { type: "SCORE_SNAPSHOT", data: snapshotForFrontend }
           };
 
           const messageStr = JSON.stringify(scoreMessage);
@@ -267,7 +236,7 @@ const server = http.createServer((req, res) => {
             }
           });
 
-          writeJson(res, 200, { status: 'success', parsedChords: snapshot.harmonies.length });
+          writeJson(res, 200, { status: 'success', parsedChords: parsedScore.harmonies.length, parsedNotes: parsedScore.notes.length });
           return;
         }
         // --- END FILE BRIDGE ---

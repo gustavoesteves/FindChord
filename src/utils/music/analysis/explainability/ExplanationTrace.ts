@@ -1,5 +1,5 @@
 import type { HarmonicFunction, PhraseRole, HarmonicIntent, AttractorField, FunctionalChord } from "../models/FunctionalAnalysis";
-import type { OntologyRegion } from "../regions/OntologyRegion";
+
 
 export interface ExplanationEvidence {
   source: "FUNCTION" | "ROLE" | "INTENT" | "ATTRACTOR" | "CONTEXT";
@@ -31,7 +31,8 @@ export interface ExplanationTrace {
  */
 export function generateExplanationTrace(
   chord: FunctionalChord,
-  region: OntologyRegion | null
+  regionId: string | null = null,
+  regionType: string | null = null
 ): ExplanationTrace {
   const evidence: ExplanationEvidence[] = [];
 
@@ -67,7 +68,7 @@ export function generateExplanationTrace(
     confidence: chord.confidence,
     integrity: Math.max(0, integrity),
     evidence,
-    regionId: region ? region.id : null,
-    regionType: region ? region.regionType : null
+    regionId,
+    regionType
   };
 }

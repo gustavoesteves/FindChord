@@ -225,6 +225,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
         quality: quality,
         intervals: def.semitones.map(s => getFriendlyInterval(getIntervalSymbol(s))),
         notes: formulaNotes,
+        drawnNotes: uniqueNoteNames,
         omissions,
         additions,
         bass: bassValue,

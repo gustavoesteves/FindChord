@@ -3,12 +3,29 @@ import type { FunctionalAnalysis, FunctionalChord, PhraseRole, AttractorField } 
 import type { ScoreSnapshot } from "../utils/music/analysis/models/ScoreSnapshot";
 import { analyzeProgression } from "../utils/music/analysis/orchestrators/progressionAnalysis";
 import type { OntologyRegion, RegionType } from "../utils/music/analysis/regions/OntologyRegion";
+import type { SelectionScope, ExplorationResult } from "../utils/music/analysis/models/SuggestedRoute";
+import { DEFAULT_PRIORITIES } from "../utils/music/analysis/models/HarmonicPriorities";
+import type { HarmonicPriorities } from "../utils/music/analysis/models/HarmonicPriorities";
+import { RouteExplorationEngine } from "../utils/music/analysis/engines/RouteExplorationEngine";
 import { type ExplanationTrace, generateExplanationTrace } from "../utils/music/analysis/explainability/ExplanationTrace";
+import type { ParsedScore } from "../utils/music/analysis/models/ParsedScore";
+import { useChordStore } from "./useChordStore";
 
 export interface RegionGraph {
   current: string;
   next?: string;
   previous?: string;
+}
+
+export interface FormalSection {
+  id: string;
+  label: string;
+  startMeasure: number;
+  endMeasure: number;
+  startTick?: number;
+  endTick?: number;
+  startChordIndex?: number;
+  endChordIndex?: number;
 }
 
 export interface AnalysisIndexes {
@@ -17,6 +34,7 @@ export interface AnalysisIndexes {
   phraseByTick: Map<number, PhraseRole>;
   attractorByTick: Map<number, AttractorField>;
   regions: OntologyRegion[];
+  formalSections: FormalSection[];
 }
 
 export interface OntologySession {
@@ -26,15 +44,20 @@ export interface OntologySession {
 
   // Source of Truth
   scoreSnapshot: ScoreSnapshot | null;
+  parsedScore: ParsedScore | null;
   progressionAnalysis: FunctionalAnalysis | null;
   indexes: AnalysisIndexes | null;
 
   // Local Window
+  selectionScope: SelectionScope;
   activeWindow: { tickStart: number; tickEnd: number } | null;
   activeNode: FunctionalChord | null;
   activePhrase: PhraseRole | null;
   activeAttractor: AttractorField | null;
   activeRegion: OntologyRegion | null;
+  activeFormalSection: FormalSection | null;
+  selectedChordId: string | null;
+  selectedRegionId: string | null;
   cursorTick: number | null;
   cursorRegionId: string | null;
   regionChangeCounter: number;
@@ -42,12 +65,20 @@ export interface OntologySession {
   activeRegionGraph: RegionGraph | null;
 
   // Caches
-  explainabilityCache: Record<string, ExplanationTrace>;
   counterfactualCache: Record<string, FunctionalAnalysis>;
-
+  
+  // F14.0 ExplorationResult & Decision Layer
+  activeExplorationResult: ExplorationResult | null;
+  harmonicPriorities: HarmonicPriorities;
+  localIntent: string | null;
+  setHarmonicPriorities: (priorities: HarmonicPriorities) => void;
+  setLocalIntent: (intent: string | null) => void;
+  setSelectionScope: (scope: SelectionScope) => void;
+  
   // Actions
-  loadScore: (snapshot: ScoreSnapshot) => void;
+  loadScore: (snapshot: ScoreSnapshot, parsedScoreContext?: ParsedScore) => void;
   updateCursor: (tick: number) => void;
+  selectChordByIndex: (index: number) => void;
   clearSession: () => void;
 
   // Navigation API
@@ -55,10 +86,15 @@ export interface OntologySession {
   previousRegion: () => void;
   jumpToRegion: (regionId: string) => void;
   jumpToRegionType: (type: RegionType, direction?: "next" | "prev") => void;
+  selectFormalSection: (sectionId: string) => void;
 
   // Explainability & Counterfactual
   getExplanationTrace: (region: OntologyRegion, chord: FunctionalChord) => ExplanationTrace;
   getCounterfactualSimulation: (baseProgression: string[], hypotheticalChord: string, chordIndex: number) => FunctionalAnalysis;
+
+  // F13.1 Route Exploration
+  generateRoutesForRegion: (region: OntologyRegion, userIntentId?: string) => void;
+  clearSuggestedRoutes: () => void;
 }
 
 /**
@@ -87,6 +123,25 @@ function findNearestTick(tickBounds: number[], targetTick: number): number | und
   }
 
   return result;
+}
+
+/**
+ * Helper to find the FormalSection that contains a given chord.
+ */
+function getFormalSectionForChord(formalSections: FormalSection[], node: FunctionalChord | null): FormalSection | null {
+  if (!node || !formalSections || formalSections.length === 0) return null;
+  
+  // If we have chord indexes, use them
+  if (node.index !== undefined) {
+    const idx = node.index;
+    const match = formalSections.find(s => 
+      s.startChordIndex !== undefined && s.endChordIndex !== undefined &&
+      idx >= s.startChordIndex && idx <= s.endChordIndex
+    );
+    if (match) return match;
+  }
+  
+  return null;
 }
 
 /**
@@ -125,24 +180,32 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
   analysisTimestamp: Date.now(),
 
   scoreSnapshot: null,
+  parsedScore: null,
   progressionAnalysis: null,
   indexes: null,
 
+  selectionScope: 'REGION',
   activeWindow: null,
   activeNode: null,
   activePhrase: null,
   activeAttractor: null,
   activeRegion: null,
+  activeFormalSection: null,
+  selectedChordId: null,
+  selectedRegionId: null,
   cursorTick: null,
   cursorRegionId: null,
   regionChangeCounter: 0,
   activeRegionIndex: null,
   activeRegionGraph: null,
+  
+  activeExplorationResult: null,
+  harmonicPriorities: DEFAULT_PRIORITIES,
+  localIntent: null,
 
-  explainabilityCache: {},
   counterfactualCache: {},
 
-  loadScore: (snapshot: ScoreSnapshot) => {
+  loadScore: (snapshot: ScoreSnapshot, parsedScoreContext?: ParsedScore) => {
     console.log("[Ontology Session] Computing Heavy Ontology (analyzeProgression)...");
     
     // 1. Run the heavy analysis once (with Validator safety boundary)
@@ -162,13 +225,46 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     const phraseByTick = new Map<number, PhraseRole>();
     const attractorByTick = new Map<number, AttractorField>();
     const regions: OntologyRegion[] = [];
+    let formalSections: FormalSection[] = (snapshot.sections || []).map(sec => ({
+      id: sec.id,
+      label: sec.label,
+      startMeasure: sec.startMeasure,
+      endMeasure: sec.endMeasure,
+      startTick: sec.startTick || 0,
+      endTick: sec.endTick || 0,
+      startChordIndex: sec.startChordIndex,
+      endChordIndex: sec.endChordIndex
+    }));
+
+    // Auto-generate 8-bar structure if no sections are declared by the composer
+    if (formalSections.length === 0 && snapshot.metadata?.measures) {
+      const total = snapshot.metadata.measures;
+      let current = 1;
+      let partIndex = 1;
+      const letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+      
+      while (current <= total) {
+        const end = Math.min(current + 7, total);
+        formalSections.push({
+          id: `auto_sec_${partIndex}`,
+          label: `Parte ${letters[(partIndex - 1) % letters.length]}`,
+          startMeasure: current,
+          endMeasure: end,
+          startTick: (current - 1) * 1920,
+          endTick: end * 1920
+        });
+        current = end + 1;
+        partIndex++;
+      }
+    }
 
     let currentRegion: OntologyRegion | null = null;
 
     analysis.chords.forEach((node, idx) => {
       const originalChord = snapshot.harmonies[idx];
-      // Use measure * 1920 to approximate tick bounds for now.
-      const startTick = originalChord?.measure ? (originalChord.measure - 1) * 1920 : (idx * 1920);
+      // Use tickStart from parser if available, fallback to measure * 1920
+      const startTick = originalChord?.tickStart !== undefined ? originalChord.tickStart : (originalChord?.measure ? (originalChord.measure - 1) * 1920 : (idx * 1920));
+      const endTick = originalChord?.tickEnd !== undefined ? originalChord.tickEnd : startTick + 1920;
       
       tickBounds.push(startTick);
       nodeByTick.set(startTick, node);
@@ -214,6 +310,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       }
 
       currentRegion.nodes.push(node);
+      currentRegion.tickEnd = endTick; // Continually push tickEnd based on current chord's endTick
       if (originalChord?.measure && !currentRegion.measures.includes(originalChord.measure)) {
         currentRegion.measures.push(originalChord.measure);
       }
@@ -221,7 +318,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
 
     const lastRegion = currentRegion as OntologyRegion | null;
     if (lastRegion) {
-      lastRegion.tickEnd = lastRegion.tickStart + (lastRegion.nodes.length * 1920);
+      // tickEnd was already updated on the last chord
       const roleConfSum = lastRegion.nodes.reduce((sum, n) => sum + (n.semantic?.phraseRoleConfidence || n.confidence || 0.5), 0);
       const avgRoleConf = lastRegion.nodes.length ? (roleConfSum / lastRegion.nodes.length) : 0;
       const alignSum = lastRegion.nodes.reduce((sum, n) => sum + (n.attractorField?.primaryAttractor?.alignment ?? 1.0), 0);
@@ -237,13 +334,15 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       nodeByTick,
       phraseByTick,
       attractorByTick,
-      regions
+      regions,
+      formalSections
     };
 
     set({
       analysisVersion: crypto.randomUUID(),
       analysisTimestamp: Date.now(),
       scoreSnapshot: snapshot,
+      parsedScore: parsedScoreContext || null,
       progressionAnalysis: analysis,
       indexes,
       activeWindow: null,
@@ -251,15 +350,23 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       activePhrase: null,
       activeAttractor: null,
       activeRegion: null,
+      activeFormalSection: null,
+      selectedChordId: null,
+      selectedRegionId: null,
       cursorTick: null,
       cursorRegionId: null,
       regionChangeCounter: 0,
       activeRegionIndex: null,
       activeRegionGraph: null,
-      explainabilityCache: {},
+      activeExplorationResult: null,
       counterfactualCache: {}
     });
     
+    // Select the first chord automatically if available
+    if (analysis.chords.length > 0) {
+      get().selectChordByIndex(0);
+    }
+
     console.log("[Ontology Session] Indexes built. Score loaded successfully.");
   },
 
@@ -280,7 +387,8 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
         cursorTick: tick,
         activeNode: node,
         activePhrase: phrase,
-        activeAttractor: attractor
+        activeAttractor: attractor,
+        activeFormalSection: null
       });
       return;
     }
@@ -299,15 +407,15 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       };
 
       set({
-        cursorTick: tick,
         activeRegion: newRegion,
         activeRegionIndex: newRegionIndex,
-        cursorRegionId: newRegion.id,
         activeRegionGraph: newGraph,
+        activeExplorationResult: null,
         regionChangeCounter: regionChangeCounter + 1,
         activeNode: node,
         activePhrase: phrase,
         activeAttractor: attractor,
+        activeFormalSection: getFormalSectionForChord(indexes.formalSections, node),
         activeWindow: { tickStart: newRegion.tickStart, tickEnd: newRegion.tickEnd }
       });
     } else {
@@ -315,9 +423,34 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
         cursorTick: tick,
         activeNode: node,
         activePhrase: phrase,
-        activeAttractor: attractor
+        activeAttractor: attractor,
+        activeFormalSection: getFormalSectionForChord(indexes.formalSections, node)
       });
     }
+  },
+
+  selectChordByIndex: (index: number) => {
+    const { progressionAnalysis, indexes } = get();
+    if (!progressionAnalysis || !indexes) return;
+
+    const chord = progressionAnalysis.chords[index];
+    if (!chord) return;
+
+    // Achar o tick correspondente (heuristic: usa o tickBounds do índice)
+    const tick = indexes.tickBounds[index] || 0;
+    const match = findRegionForTick(indexes.regions, tick);
+
+    set({
+      selectedChordId: chord.index.toString(),
+      selectedRegionId: match?.region.id || null,
+      activeNode: chord,
+      activePhrase: chord.semantic?.phraseRole || null,
+      activeAttractor: chord.attractorField || null,
+      activeFormalSection: getFormalSectionForChord(indexes.formalSections, chord),
+      cursorTick: tick,
+      selectionScope: 'CHORD',
+      ...(match && { activeRegion: match.region, activeRegionIndex: match.index })
+    });
   },
 
   clearSession: () => {
@@ -325,19 +458,22 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       analysisVersion: crypto.randomUUID(),
       analysisTimestamp: Date.now(),
       scoreSnapshot: null,
+      parsedScore: null,
       progressionAnalysis: null,
       indexes: null,
+      selectionScope: 'REGION',
       activeWindow: null,
       activeNode: null,
       activePhrase: null,
       activeAttractor: null,
       activeRegion: null,
+      activeFormalSection: null,
       cursorTick: null,
       cursorRegionId: null,
       regionChangeCounter: 0,
       activeRegionIndex: null,
       activeRegionGraph: null,
-      explainabilityCache: {},
+      activeExplorationResult: null,
       counterfactualCache: {}
     });
   },
@@ -391,25 +527,41 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     }
   },
 
+  selectFormalSection: (sectionId: string) => {
+    const { indexes, selectChordByIndex } = get();
+    if (!indexes) return;
+    const section = indexes.formalSections?.find(s => s.id === sectionId);
+    if (section) {
+      set({ activeFormalSection: section, selectionScope: 'SECTION' });
+      // Clear generated routes since the focus changed
+      set({ activeExplorationResult: null });
+      
+      // Auto-select the first chord of the section
+      if (section.startChordIndex !== undefined) {
+        useChordStore.getState().setActiveTimelineIndex(section.startChordIndex);
+        selectChordByIndex(section.startChordIndex);
+      }
+    }
+  },
+
+  setSelectionScope: (scope: SelectionScope) => {
+    set({ selectionScope: scope });
+  },
+
   getExplanationTrace: (region: OntologyRegion, chord: FunctionalChord) => {
     const state = get();
-    const cacheKey = `${state.analysisVersion}:${region.id}:${chord.index}`;
+    const snapshot = state.progressionAnalysis?.explainabilitySnapshots?.[chord.index.toString()];
     
-    if (state.explainabilityCache[cacheKey]) {
-      return state.explainabilityCache[cacheKey];
+    if (snapshot) {
+      return {
+        ...snapshot.explanation,
+        regionId: region.id,
+        regionType: region.regionType
+      };
     }
     
-    // Fallbacks to avoid crashing
-    const trace = generateExplanationTrace(chord, region);
-    
-    set((s) => ({
-      explainabilityCache: {
-        ...s.explainabilityCache,
-        [cacheKey]: trace
-      }
-    }));
-    
-    return trace;
+    // Fallback if not found
+    return generateExplanationTrace(chord, region.id, region.regionType);
   },
 
   getCounterfactualSimulation: (baseProgression: string[], hypotheticalChord: string, chordIndex: number) => {
@@ -434,5 +586,48 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     }));
     
     return analysis;
+  },
+
+  setHarmonicPriorities: (priorities) => set({ harmonicPriorities: priorities }),
+  setLocalIntent: (intent) => set({ localIntent: intent }),
+
+  generateRoutesForRegion: (region: OntologyRegion, userIntentId?: string) => {
+    const { activeNode, parsedScore, harmonicPriorities } = get();
+    // F16.6 Forçamos o scope para 'REGION' para garantir a unidade de decisão sobre o trecho, e não sobre o acorde (CHORD)
+    const result = RouteExplorationEngine.exploreScope('REGION', region, activeNode, parsedScore, harmonicPriorities, userIntentId);
+    set({ activeExplorationResult: result });
+  },
+
+  generateRoutesForSection: (section: FormalSection, userIntentId?: string) => {
+    const { activeNode, parsedScore, harmonicPriorities, progressionAnalysis, scoreSnapshot } = get();
+    if (!progressionAnalysis || !scoreSnapshot) return;
+
+    const sectionNodes = progressionAnalysis.chords.filter((c, idx) => {
+      const original = scoreSnapshot.harmonies[idx];
+      const startTick = original?.tickStart !== undefined ? original.tickStart : (original?.measure ? (original.measure - 1) * 1920 : idx * 1920);
+      return startTick >= (section.startTick || 0) && startTick < (section.endTick || Infinity);
+    });
+
+    if (sectionNodes.length === 0) return;
+
+    const mockRegion: OntologyRegion = {
+      id: section.id,
+      tickStart: section.startTick || 0,
+      tickEnd: section.endTick || 0,
+      measures: [],
+      dominantRole: 'NARRATIVE',
+      dominantAttractor: 'UNKNOWN',
+      confidence: 1,
+      regionType: 'NARRATIVE',
+      nodes: sectionNodes
+    };
+
+    const result = RouteExplorationEngine.exploreScope('REGION', mockRegion, activeNode, parsedScore, harmonicPriorities, userIntentId);
+    set({ activeExplorationResult: result });
+  },
+
+  clearSuggestedRoutes: () => {
+    set({ activeExplorationResult: null });
   }
+
 }));

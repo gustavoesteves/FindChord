@@ -5,47 +5,23 @@ import { musescoreAdapter, type ConnectionStatus } from "../utils/musescoreAdapt
 import { analyzeProgression } from "../utils/music/analysis/functionalAnalysis";
 import { InspectorEngine } from "../utils/music/analysis/inspector/InspectorEngine";
 import { InspectorDashboard } from "./InspectorDashboard";
-import { playGuitarChord } from "../utils/audioSynth";
 import { parseChord } from "../utils/music/theory/chordParser";
 import { formatChordName } from "../utils/music/theory/enharmonics";
 import { noteToMidi } from "../utils/music/core/midi";
 import { getNoteAt } from "../utils/music/core/notes";
-import { Note as TonalNote } from "tonal";
 import type { CanonicalProgressionEvent } from "../utils/music/analysis/models/CanonicalProgressionEvent";
 import type { CanonicalChordEvent } from "../utils/music/analysis/models/CanonicalChordEvent";
-import type {
-  Phrase,
-  PhraseGroup,
-} from "../utils/music/analysis/models/FunctionalAnalysis";
-import {
-  BookOpen,
-  RefreshCcw,
-  WifiOff,
-  Wifi,
-  Sparkles,
-  Volume2,
-  Clock,
-  Star,
-  GitBranch,
-  ChevronRight,
-  Waves,
-  Zap,
-  Music2,
-  Activity,
-  ShieldAlert,
-  ChevronDown,
-  Lightbulb
-} from "lucide-react";
+import { DecisionClustersPanel } from "./composer/DecisionClustersPanel";
+import { MelodicAnchorInspector } from "./composer/MelodicAnchorInspector";
+import { Activity, BookOpen, ChevronDown, ChevronRight, GitBranch, Music2, RefreshCcw, ShieldAlert, Star, Waves, Wifi, WifiOff } from "lucide-react";
 import { StandardLayout } from "./ui/StandardLayout";
-import type { TabConfig } from "./ui/StandardLayout";
+import { MusicalObservationsPanel } from "./explainability/MusicalObservationsPanel";
 import { ExplainabilityTimeline } from "./explainability/ExplainabilityTimeline";
 import { RegionExplainabilityPanel } from "./explainability/RegionExplainabilityPanel";
 import { AttractorRadar } from "./explainability/AttractorRadar";
+import { AttractorCompass } from "./explainability/AttractorCompass";
 import { DecisionTreeVisual } from "./explainability/DecisionTreeVisual";
-import { HarmonicCounterfactual } from "./explainability/HarmonicCounterfactual";
-
-
-// ─── Colour maps ────────────────────────────────────────────────
+import { GlobalProgression } from "./explainability/GlobalProgression";// ─── Colour maps ────────────────────────────────────────────────
 
 const intentColors: Record<string, string> = {
   PROLONGATION: "text-sky-400 bg-sky-950/40 border-sky-900/30",
@@ -55,14 +31,7 @@ const intentColors: Record<string, string> = {
   RESOLUTION: "text-emerald-400 bg-emerald-950/40 border-emerald-900/30",
   COLORATION: "text-purple-400 bg-purple-950/40 border-purple-900/30",
 };
-const intentLabels: Record<string, string> = {
-  PROLONGATION: "Prolongamento",
-  PREPARATION: "Preparação",
-  INTENSIFICATION: "Intensificação",
-  ATTRACTION: "Atração",
-  RESOLUTION: "Resolução",
-  COLORATION: "Coloração",
-};
+
 const roleColors: Record<string, string> = {
   OPENING: "text-blue-300 bg-blue-950/20 border-blue-900/20",
   BODY: "text-zinc-400 bg-zinc-900/30 border-zinc-800/20",
@@ -70,15 +39,6 @@ const roleColors: Record<string, string> = {
   CADENTIAL: "text-rose-300 bg-rose-950/20 border-rose-900/20",
   CLOSING: "text-emerald-300 bg-emerald-950/20 border-emerald-900/20",
 };
-const roleLabels: Record<string, string> = {
-  OPENING: "Abertura de Frase",
-  BODY: "Corpo da Frase",
-  PRE_CADENTIAL: "Pré-Cadencial",
-  CADENTIAL: "Área Cadencial",
-  CLOSING: "Fechamento",
-};
-
-type DashboardPanel = "narrativa" | "estrutura" | "tensao" | "auditoria" | "explainability";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
@@ -87,27 +47,6 @@ function getTensionColor(tension: number): string {
   if (tension < 0.5) return "bg-amber-400/80";
   if (tension < 0.75) return "bg-orange-500/80";
   return "bg-rose-500/90";
-}
-
-function getTensionGlowColor(tension: number): string {
-  if (tension < 0.25) return "text-emerald-400 bg-emerald-950/20 border-emerald-800/30";
-  if (tension < 0.5) return "text-amber-400 bg-amber-950/20 border-amber-800/30";
-  if (tension < 0.75) return "text-orange-400 bg-orange-950/20 border-orange-800/30";
-  return "text-rose-400 bg-rose-950/20 border-rose-800/30";
-}
-
-function getTensionLabel(tension: number): string {
-  if (tension < 0.25) return "Estável";
-  if (tension < 0.5) return "Leve";
-  if (tension < 0.75) return "Alta";
-  return "Máxima";
-}
-
-function getFunctionLabel(fn: string): string {
-  if (fn === "TONIC") return "Tônica";
-  if (fn === "DOMINANT") return "Dominante";
-  if (fn === "SUBDOMINANT") return "Subdominante";
-  return fn;
 }
 
 // ─── Main Component ───────────────────────────────────────────────
@@ -123,14 +62,21 @@ export default function ScoreAnalysisDashboard() {
     userCustomVoicings,
   } = useChordStore();
 
-  const { scoreSnapshot } = useOntologySessionStore();
+  const { scoreSnapshot, activeNode, activeFormalSection, activeRegion, selectChordByIndex, activeExplorationResult } = useOntologySessionStore();
 
-  const [activePanel, setActivePanel] = useState<DashboardPanel>("narrativa");
-  const [localSelectedChordIdx, setLocalSelectedChordIdx] = useState<number | null>(null);
-  const [expandedChordIdx, setExpandedChordIdx] = useState<number | null>(null);
   const [technicalExpanded, setTechnicalExpanded] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null);
+
+  // Auto-selecionar o cluster principal assim que um resultado for gerado
+  useEffect(() => {
+    if (activeExplorationResult && activeExplorationResult.clusters.length > 0) {
+      setSelectedClusterId(activeExplorationResult.clusters[0].id);
+    } else {
+      setSelectedClusterId(null);
+    }
+  }, [activeExplorationResult]);
 
   useEffect(() => {
     musescoreAdapter.connect();
@@ -154,12 +100,11 @@ export default function ScoreAnalysisDashboard() {
     return scoreSnapshot ? scoreSnapshot.harmonies.map(h => h.harmony) : [];
   }, [scoreSnapshot]);
 
-  // The globally selected chord is either the timeline's active index or a local selection
-  const selectedChordIdx = activeTimelineIndex ?? localSelectedChordIdx ?? 0;
+  const selectedChordIdx = activeTimelineIndex ?? 0;
 
   const selectChord = (idx: number) => {
-    setLocalSelectedChordIdx(idx);
     setActiveTimelineIndex(idx);
+    selectChordByIndex(idx);
   };
 
   // ── Analysis ──────────────────────────────────────────────────
@@ -192,8 +137,8 @@ export default function ScoreAnalysisDashboard() {
       const frets = voicing ? voicing.frets : Array(tuning.length).fill(null);
       const notes = voicing
         ? voicing.frets
-            .map((f, si) => (f !== null ? noteToMidi(getNoteAt(tuning[si], f)) : null))
-            .filter((n): n is number => n !== null)
+          .map((f, si) => (f !== null ? noteToMidi(getNoteAt(tuning[si], f)) : null))
+          .filter((n): n is number => n !== null)
         : [];
       return {
         id: `ch_${symbol}_${idx}`,
@@ -224,20 +169,6 @@ export default function ScoreAnalysisDashboard() {
     return formatChordName(parsed.root, parsed.quality, omissions, parsed.bass, notationStyle);
   };
 
-  const playChordAudio = (chordSymbol: string) => {
-    const parsed = parseChord(chordSymbol);
-    if (parsed.empty) return;
-    let currentOctave = 3;
-    let lastChroma = -1;
-    const playNotes = parsed.notes.map((note) => {
-      const chroma = TonalNote.get(note).chroma;
-      if (chroma !== undefined && lastChroma !== -1 && chroma < lastChroma) currentOctave++;
-      lastChroma = chroma ?? -1;
-      return `${note}${currentOctave}`;
-    });
-    playGuitarChord(playNotes, 45);
-  };
-
   // ── Suno Prompt Generation ─────────────────────────────────────
   const sunoPrompt = useMemo(() => {
     if (!analysis || progressionChords.length === 0) return "";
@@ -254,36 +185,6 @@ export default function ScoreAnalysisDashboard() {
 
     return `Musical style: Harmonic progression in ${tonic}. Chord sequence: ${progressionChords.join(" - ")}. ${hasModulation ? `Tonal journey: ${regions}.` : ""} Structure: ${phraseCount} phrase${phraseCount !== 1 ? "s" : ""}. ${charText ? `Character: ${charText.substring(0, 200)}...` : ""} Mood: introspective, cinematic. Acoustic guitar with subtle orchestral elements.`;
   }, [analysis, progressionChords]);
-
-  // ── Formal Blocks ─────────────────────────────────────────────
-  const formalBlocks = useMemo(() => {
-    if (!analysis) return [];
-    const blocks: Array<
-      | { type: "PERIOD"; group: PhraseGroup; phrases: Phrase[] }
-      | { type: "STANDALONE"; phrase: Phrase }
-    > = [];
-    const phrases: Phrase[] = analysis.phrases || [];
-    const groups: PhraseGroup[] = analysis.phraseGroups || [];
-    let i = 0;
-    while (i < phrases.length) {
-      const phrase = phrases[i];
-      if (phrase.phraseGroupId !== undefined) {
-        const group = groups.find((g) => g.index === phrase.phraseGroupId);
-        if (group && group.type === "PERIOD") {
-          const next = phrases[i + 1];
-          if (next && next.phraseGroupId === group.index) {
-            blocks.push({ type: "PERIOD", group, phrases: [phrase, next] });
-            i += 2;
-            continue;
-          }
-        }
-      }
-      blocks.push({ type: "STANDALONE", phrase });
-      i++;
-    }
-    return blocks;
-  }, [analysis]);
-
 
   // ── Tension data per chord ────────────────────────────────────
   const tensionData = useMemo(() => {
@@ -317,20 +218,19 @@ export default function ScoreAnalysisDashboard() {
             {connectionStatus === "connected" ? "Sincronizar Partitura" : "MuseScore Desconectado"}
           </h3>
           <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-            {connectionStatus === "connected" 
+            {connectionStatus === "connected"
               ? "Clique abaixo para ler a partitura atualmente aberta no MuseScore e extrair todos os acordes e metadados para análise em tempo real."
               : "Abra o MuseScore 3 e inicie o plugin 'Find Chord Bridge' para permitir a extração contínua da partitura."}
           </p>
         </div>
-        
+
         <button
           onClick={handleSync}
           disabled={connectionStatus !== "connected" || isSyncing}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-200 ${
-            connectionStatus === "connected" && !isSyncing
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-200 ${connectionStatus === "connected" && !isSyncing
               ? "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]"
               : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-          }`}
+            }`}
         >
           <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
           {isSyncing ? "Sincronizando..." : "Sincronizar Partitura"}
@@ -341,686 +241,314 @@ export default function ScoreAnalysisDashboard() {
 
   if (!analysis) return null;
 
-  const PANELS: TabConfig<DashboardPanel>[] = [
-    { id: "narrativa", label: "Narrativa", icon: BookOpen },
-    { id: "estrutura", label: "Estrutura Formal", icon: GitBranch },
-    { id: "tensao", label: "Mapa de Tensão", icon: Waves },
-    {
-      id: "auditoria",
-      label: "Auditoria",
-      icon: ShieldAlert,
-      badge: diagnostics.length > 0 ? diagnostics.length : undefined,
-    },
-    { id: "explainability", label: "Explainability", icon: Lightbulb },
-  ];
-
   return (
-    <StandardLayout
-      tabs={PANELS}
-      activeTab={activePanel}
-      onTabChange={(id) => setActivePanel(id)}
-      headerContent={
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-800/60">
-          <div className="flex items-center gap-2">
-            {connectionStatus === "connected" ? (
-              <Wifi className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <WifiOff className="h-4 w-4 text-rose-500" />
-            )}
-            <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
-              {connectionStatus === "connected" ? "MuseScore Sincronizado" : "MuseScore Desconectado"}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const { indexes } = useOntologySessionStore.getState();
-                if (indexes) musescoreAdapter.renderOntology(indexes.regions);
-              }}
-              disabled={connectionStatus !== "connected"}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-800/50 transition text-[10px] font-black text-purple-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Pintar Ontologia
-            </button>
-            <button
-              onClick={() => musescoreAdapter.clearOntology()}
-              disabled={connectionStatus !== "connected"}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
-            >
-              Ocultar
-            </button>
-            <div className="w-px h-4 bg-zinc-800 mx-1" />
-            <button
-              onClick={handleSync}
-              disabled={connectionStatus !== "connected" || isSyncing}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
-            >
-              <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-              Sincronizar
-            </button>
-          </div>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-5 animate-scale-up">
-        <ExplainabilityTimeline />
-
-        {/* ── PANEL: EXPLAINABILITY ──────────────────────── */}
-        {activePanel === "explainability" && (
-          <div className="flex flex-col gap-5">
-            {(() => {
-              const { indexes, activeRegionIndex, getExplanationTrace } = useOntologySessionStore.getState();
-              const region = indexes?.regions[activeRegionIndex ?? 0] || null;
-              
-              // Se o usuário clicou num acorde no minimap/narrativa, usa ele.
-              // Senão, tenta pegar o primeiro acorde da região ativa.
-              let cIdx = expandedChordIdx;
-              if (cIdx === null && region) {
-                // heuristic: 1 compasso = 1 acorde na view atual, ou usa o index de chord (aprox)
-                // O ideal seria procurar qual acorde cai dentro do tickBounds da region.
-                cIdx = Math.floor(region.tickStart / 1920);
-              }
-              const chord = cIdx !== null ? analysis.chords[cIdx] : null;
-              const trace = chord && region ? getExplanationTrace(region, chord) : null;
-              
-              return (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-4">
-                    <RegionExplainabilityPanel region={region} trace={trace} />
-                    <HarmonicCounterfactual trace={trace} chordIndex={cIdx} />
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <AttractorRadar field={chord?.attractorField || null} />
-                    <DecisionTreeVisual trace={trace} />
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* ── PANEL: NARRATIVA HARMÔNICA ──────────────────────── */}
-        {activePanel === "narrativa" && (
-          <div className="flex flex-col gap-4">
-
-            {/* Global Narrative (Nível 1) */}
-            {analysis.narrativeExplanation?.global && analysis.narrativeExplanation.global.observations.length > 0 && (
-              <div className="p-5 rounded-2xl border border-purple-500/15 bg-purple-950/10 text-xs text-zinc-300 leading-relaxed shadow-lg">
-                <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block mb-4">
-                  Visão Geral da Obra
-                </span>
-                <div className="flex flex-col gap-4">
-                  {analysis.narrativeExplanation.global.observations.map((obs, i) => (
-                    <p key={i} className="font-medium text-[13px] text-purple-100/90 leading-relaxed">{obs.prose}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Section Narrative (Nível 2) */}
-            {analysis.narrativeExplanation?.sections && analysis.narrativeExplanation.sections.length > 0 && (
-              <div className="flex flex-col gap-3 mt-2">
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-                  Narrativa por Seção
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {analysis.narrativeExplanation.sections.map((sec, i) => (
-                    <div key={i} className="p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40">
-                      <span className="text-[11px] font-black text-amber-500/90 uppercase tracking-widest block mb-2">
-                        {sec.label}
-                      </span>
-                      <p className="text-zinc-400 text-xs font-medium leading-relaxed">
-                        {sec.prose}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pedagogical Overview (Legacy Fallback) */}
-            {!analysis.narrativeExplanation?.global && analysis.narrativeExplanation?.overview && (
-              <div className="p-5 rounded-2xl border border-zinc-800/60 bg-zinc-900/40 text-xs text-zinc-400 leading-relaxed shadow-lg">
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                  Visão Geral (Legado)
-                </span>
-                <p className="whitespace-pre-line font-medium">{analysis.narrativeExplanation.overview}</p>
-              </div>
-            )}
-
-            {/* Chord-by-chord pills */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                Acordes — clique para detalhar
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {progressionChords.map((chord, idx) => {
-                  const chordData = analysis.chords[idx];
-                  const isSelected = selectedChordIdx === idx;
-                  return (
-                    <div
-                      key={idx}
-                      id={`narrative-chord-${idx}`}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        selectChord(idx);
-                        setExpandedChordIdx(isSelected && expandedChordIdx === idx ? null : idx);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          selectChord(idx);
-                          setExpandedChordIdx(isSelected && expandedChordIdx === idx ? null : idx);
-                        }
-                      }}
-                      className={`group flex flex-col items-center p-2.5 rounded-xl border text-center cursor-pointer transition-all duration-150 hover:scale-[1.03] w-[88px] ${
-                        isSelected
-                          ? "bg-purple-950/30 border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.2)]"
-                          : "bg-zinc-900/40 border-zinc-850 hover:border-zinc-700"
-                      }`}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          playChordAudio(chord);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition mb-1 p-0.5 rounded text-purple-400 hover:text-purple-200 cursor-pointer"
-                      >
-                        <Volume2 className="h-2.5 w-2.5" />
-                      </button>
-                      <span className={`text-[12px] font-black truncate w-full ${isSelected ? "text-white" : "text-zinc-200"}`}>
-                        {getChordDisplay(chord)}
-                      </span>
-                      {chordData && (
-                        <span className="text-[8.5px] font-black text-purple-400 uppercase tracking-wider mt-0.5">
-                          {getFunctionLabel(chordData.harmonicFunction)}
-                        </span>
-                      )}
-                      {scoreSnapshot.harmonies[idx] && (
-                        <span className="text-[8px] text-zinc-600 font-bold mt-0.5">
-                          Compasso {scoreSnapshot.harmonies[idx].measure}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Selected chord detail */}
-            {expandedChordIdx !== null && analysis.chords[expandedChordIdx] && (
-              <div className="p-4 rounded-xl border border-purple-800/40 bg-purple-950/10 flex flex-col gap-2 animate-scale-up">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-purple-300 uppercase">
-                    {getChordDisplay(progressionChords[expandedChordIdx])} — Compasso {expandedChordIdx + 1}
-                  </span>
-                  <button
-                    onClick={() => playChordAudio(progressionChords[expandedChordIdx])}
-                    className="flex items-center gap-1 px-2 py-1 bg-purple-950/30 hover:bg-purple-900/40 border border-purple-800/40 rounded-lg text-[10px] font-bold text-purple-300 cursor-pointer transition"
-                  >
-                    <Volume2 className="h-3 w-3" /> Ouvir
-                  </button>
-                </div>
-                {(() => {
-                  const cd = analysis.chords[expandedChordIdx];
-                  return (
-                    <div className="flex flex-col gap-1.5 text-[11px] text-zinc-400">
-                      {cd.semantic?.intent && (
-                        <div
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold w-fit ${intentColors[cd.semantic.intent] || "text-zinc-400"}`}
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          Intenção: {intentLabels[cd.semantic.intent] || cd.semantic.intent}
-                        </div>
-                      )}
-                      {cd.semantic?.phraseRole && (
-                        <div
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold w-fit ${roleColors[cd.semantic.phraseRole] || "text-zinc-400"}`}
-                        >
-                          <Clock className="h-3 w-3" />
-                          Papel: {roleLabels[cd.semantic.phraseRole] || cd.semantic.phraseRole}
-                        </div>
-                      )}
-                      {cd.semantic?.explanation && cd.semantic.explanation.length > 0 && (
-                        <p className="text-zinc-400 leading-relaxed mt-1 border-l-2 border-purple-700/40 pl-3">
-                          {cd.semantic.explanation.join(" ")}
-                        </p>
-                      )}
-                      {!cd.semantic && cd.explanation && cd.explanation.length > 0 && (
-                        <p className="text-zinc-400 leading-relaxed mt-1 border-l-2 border-purple-700/40 pl-3">
-                          {cd.explanation.join(" ")}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* Suno Export */}
-            <div className="flex flex-col gap-2 mt-2">
-              <div className="flex items-center gap-1.5">
-                <Star className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                  Prompt Suno (gerado da narrativa)
+    <>
+      <MelodicAnchorInspector />
+      <StandardLayout
+        headerContent={
+          <div className="flex flex-col gap-6 w-full">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-800/60">
+              <div className="flex items-center gap-2">
+                {connectionStatus === "connected" ? (
+                  <Wifi className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-rose-500" />
+                )}
+                <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
+                  {connectionStatus === "connected" ? "MuseScore Sincronizado" : "MuseScore Desconectado"}
                 </span>
               </div>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={sunoPrompt}
-                  rows={4}
-                  className="w-full bg-zinc-950/60 border border-zinc-800/60 rounded-xl p-3 text-[11px] text-zinc-400 font-mono resize-none focus:outline-none focus:border-amber-800/60 transition"
-                />
+
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigator.clipboard.writeText(sunoPrompt)}
-                  className="absolute bottom-2 right-2 px-2 py-1 bg-amber-950/50 hover:bg-amber-900/60 border border-amber-800/40 rounded-lg text-[9px] font-black text-amber-400 cursor-pointer transition"
+                  onClick={handleSync}
+                  disabled={connectionStatus !== "connected" || isSyncing}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition text-[10px] font-black text-zinc-300 uppercase tracking-widest disabled:opacity-50 cursor-pointer"
                 >
-                  Copiar
+                  <RefreshCcw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+                  Sincronizar
                 </button>
               </div>
             </div>
+            <GlobalProgression />
+            <ExplainabilityTimeline />
           </div>
-        )}
+        }
+      >
+        <div className="flex flex-col gap-8 animate-scale-up">
 
-        {/* ── PANEL: ESTRUTURA FORMAL ─────────────────────────── */}
-        {activePanel === "estrutura" && (
-          <div className="flex flex-col gap-4">
-            <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-              <GitBranch className="h-3.5 w-3.5 text-purple-500" />
-              Blocos Formais — Períodos, Frases e Cadências
+          {/* ── F16.7 UI UNIFICADA: DIAGNÓSTICO E EXPLORAÇÃO ──────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+
+            {/* Left Column: Diagnóstico */}
+            <div className="flex flex-col gap-6">
+              <MusicalObservationsPanel />
             </div>
 
-            {formalBlocks.length === 0 && (
-              <div className="p-6 rounded-xl border border-zinc-900 bg-zinc-950/40 text-center text-zinc-500 text-xs">
-                Adicione mais acordes para detectar estrutura formal.
-              </div>
-            )}
+            {/* Right Column: Exploração */}
+            <div className="flex flex-col gap-6">
+              <DecisionClustersPanel
+                selectedClusterId={selectedClusterId}
+                onSelectCluster={setSelectedClusterId}
+              />
+            </div>
+          </div>
 
-            {formalBlocks.map((block, idx) => {
-              if (block.type === "PERIOD") {
-                const [phraseA, phraseB] = block.phrases;
-                return (
-                  <div
-                    key={`period-${idx}`}
-                    className="p-5 rounded-2xl border border-purple-900/35 bg-purple-950/5 flex flex-col gap-4 relative overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.05)]"
-                  >
-                    <div className="absolute -right-20 -top-20 w-48 h-48 rounded-full bg-purple-500/5 blur-3xl animate-pulse" />
-                    <div className="flex items-center justify-between border-b border-purple-900/20 pb-2">
-                      <span className="text-[11px] font-black text-purple-400 uppercase tracking-widest">
-                        🎼 {block.group.name}
-                      </span>
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-900/30 border border-purple-800/35 text-purple-300 font-extrabold uppercase font-mono">
-                        Confiança: {Math.round(block.group.confidence * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      {[phraseA, phraseB].map((phrase, pi) => {
-                        const firstChord = analysis.chords[phrase.startIndex];
-                        const keyName = firstChord?.state
-                          ? `${firstChord.state.root} ${firstChord.state.mode === "IONIAN" ? "Maior" : "Menor"}`
-                          : "";
-                        return (
-                          <div
-                            key={pi}
-                            className={`flex flex-col gap-2 pl-3 border-l-2 ${
-                              pi === 0 ? "border-amber-500/50" : "border-emerald-500/50"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-[9.5px] font-black uppercase tracking-wider ${
-                                  pi === 0 ? "text-amber-400" : "text-emerald-400"
-                                }`}
-                              >
-                                Frase {phrase.index + 1} — {pi === 0 ? "Antecedente" : "Consequente"}
-                              </span>
-                              {keyName && (
-                                <span className="text-[8.5px] text-zinc-500 font-bold">{keyName}</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {Array.from({ length: phrase.endIndex - phrase.startIndex + 1 }).map(
-                                (_, si) => {
-                                  const cIdx = phrase.startIndex + si;
-                                  const cd = analysis.chords[cIdx];
-                                  const isActive = selectedChordIdx === cIdx;
-                                  return (
-                                    <div key={cIdx} className="flex items-center gap-1">
-                                      <button
-                                        id={`structure-chord-${cIdx}`}
-                                        onClick={() => selectChord(cIdx)}
-                                        className={`flex flex-col p-2 rounded-xl border text-center cursor-pointer transition w-[80px] ${
-                                          isActive
-                                            ? "bg-purple-950/30 border-purple-500"
-                                            : "bg-zinc-900/40 border-zinc-800 hover:border-zinc-700"
-                                        }`}
-                                      >
-                                        <span className="text-[11px] font-black text-zinc-200 truncate">
-                                          {getChordDisplay(progressionChords[cIdx])}
-                                        </span>
-                                        {cd && (
-                                          <span className="text-[8px] text-purple-400 font-black uppercase">
-                                            {cd.harmonicFunction === "TONIC"
-                                              ? "Tôn"
-                                              : cd.harmonicFunction === "DOMINANT"
-                                              ? "Dom"
-                                              : cd.harmonicFunction === "SUBDOMINANT"
-                                              ? "Sub"
-                                              : cd.harmonicFunction}
-                                          </span>
-                                        )}
-                                      </button>
-                                      {si < phrase.endIndex - phrase.startIndex && (
-                                        <ChevronRight className="h-3 w-3 text-zinc-700 shrink-0" />
-                                      )}
-                                    </div>
-                                  );
-                                }
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+          {/* ── VISÃO TÉCNICA E ANALISADORES (Modo Desenvolvedor) ──────────────────────── */}
+          <details className="mt-8 group p-6 rounded-2xl border border-zinc-800/60 bg-zinc-900/20">
+            <summary className="flex items-center gap-2 cursor-pointer outline-none marker:content-[''] list-none">
+              <Activity className="h-5 w-5 text-zinc-500 group-open:rotate-90 transition-transform" />
+              <span className="text-sm font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-200 transition-colors">
+                Visão Técnica e Analisadores Primitivos
+              </span>
+            </summary>
+            <div className="flex flex-col gap-12 mt-8 animate-fade-in border-t border-zinc-800/60 pt-8">
+
+              {/* ── STICKY HEADER TÉCNICO ──────────────────────── */}
+              {activeNode && (
+                <div className="sticky top-0 z-50 p-4 rounded-2xl border border-zinc-700/60 bg-zinc-950/80 backdrop-blur-md shadow-2xl flex items-center gap-6 overflow-x-auto">
+                  <div className="flex items-center gap-3 pr-6 border-r border-zinc-800/60">
+                    <span className="text-xl font-black text-white whitespace-nowrap">
+                      [ {activeNode.chordSymbol} ]
+                    </span>
                   </div>
-                );
-              }
 
-              // STANDALONE phrase
-              const phrase = block.phrase;
-              const firstChord = analysis.chords[phrase.startIndex];
-              const keyName = firstChord?.state
-                ? `${firstChord.state.root} ${firstChord.state.mode === "IONIAN" ? "Maior" : "Menor"}`
-                : "";
-              return (
-                <div
-                  key={`phrase-${idx}`}
-                  className="p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/30 flex flex-col gap-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-zinc-300 uppercase tracking-wider">
-                      Frase {phrase.index + 1}
-                      {phrase.formalRole && (
-                        <span className="ml-2 text-[9px] text-zinc-500 font-bold normal-case">
-                          (
-                          {phrase.formalRole === "ANTECEDENT"
-                            ? "Antecedente"
-                            : phrase.formalRole === "CONSEQUENT"
-                            ? "Consequente"
-                            : "Independente"}
-                          )
+                  <div className="flex items-center gap-6 text-[11px] font-medium tracking-wide">
+                    {activeFormalSection && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-zinc-500 uppercase font-black">Section</span>
+                        <span className="px-2 py-0.5 rounded border font-bold text-zinc-300 bg-zinc-800/40 border-zinc-700/40">
+                          {activeFormalSection.label}
                         </span>
-                      )}
-                    </span>
-                    {keyName && <span className="text-[9px] text-zinc-500">{keyName}</span>}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {Array.from({ length: phrase.endIndex - phrase.startIndex + 1 }).map((_, si) => {
-                      const cIdx = phrase.startIndex + si;
-                      const isActive = selectedChordIdx === cIdx;
-                      return (
-                        <div key={cIdx} className="flex items-center gap-1">
-                          <button
-                            id={`structure-standalone-chord-${cIdx}`}
-                            onClick={() => selectChord(cIdx)}
-                            className={`flex flex-col p-2 rounded-xl border text-center cursor-pointer transition w-[80px] ${
-                              isActive
-                                ? "bg-purple-950/30 border-purple-500"
-                                : "bg-zinc-900/40 border-zinc-800 hover:border-zinc-700"
-                            }`}
-                          >
-                            <span className="text-[11px] font-black text-zinc-200 truncate">
-                              {getChordDisplay(progressionChords[cIdx])}
-                            </span>
-                            {scoreSnapshot.harmonies[cIdx] && (
-                              <span className="text-[8px] text-zinc-600 mt-0.5">
-                                c.{scoreSnapshot.harmonies[cIdx].measure}
-                              </span>
-                            )}
-                          </button>
-                          {si < phrase.endIndex - phrase.startIndex && (
-                            <ChevronRight className="h-3 w-3 text-zinc-700 shrink-0" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ── PANEL: MAPA DE TENSÃO ───────────────────────────── */}
-        {activePanel === "tensao" && (
-          <div className="flex flex-col gap-4">
-            <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-              <Waves className="h-3.5 w-3.5 text-purple-500" />
-              Mapa de Tensão Harmônica — clique em uma barra para selecionar
-            </div>
-
-            {/* Tension chart */}
-            <div className="w-full overflow-x-auto">
-              <div className="flex items-end gap-1.5 h-40 min-w-max px-1">
-                {tensionData.map((td, idx) => {
-                  const barHeight = Math.max(8, Math.round(td.tension * 100));
-                  const isActive = selectedChordIdx === idx;
-                  return (
-                    <button
-                      key={idx}
-                      id={`tension-bar-${idx}`}
-                      onClick={() => selectChord(idx)}
-                      className={`flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ${
-                        isActive ? "scale-105" : "hover:scale-[1.03]"
-                      }`}
-                      title={`${getChordDisplay(progressionChords[idx])} — Tensão: ${getTensionLabel(td.tension)}`}
-                    >
-                      {/* Value label */}
-                      <span className="text-[9px] font-black text-zinc-500 group-hover:text-zinc-300 transition">
-                        {Math.round(td.tension * 100)}
-                      </span>
-                      {/* Bar */}
-                      <div
-                        className={`w-10 rounded-t-lg transition-all duration-300 ${getTensionColor(td.tension)} ${
-                          isActive
-                            ? "ring-2 ring-white/40 shadow-[0_0_12px_rgba(255,255,255,0.15)]"
-                            : "opacity-80 group-hover:opacity-100"
-                        }`}
-                        style={{ height: `${barHeight}px` }}
-                      />
-                      {/* Chord label */}
-                      <span
-                        className={`text-[9px] font-black uppercase truncate w-10 text-center transition ${
-                          isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"
-                        }`}
-                      >
-                        {getChordDisplay(progressionChords[idx])}
-                      </span>
-                      {scoreSnapshot.harmonies[idx] && (
-                        <span className="text-[7.5px] text-zinc-700 font-bold">
-                          c.{scoreSnapshot.harmonies[idx].measure}
+                      </div>
+                    )}
+                    {activeRegion && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-zinc-500 uppercase font-black">Ontology</span>
+                        <span className="px-2 py-0.5 rounded border font-bold text-emerald-300 bg-emerald-950/40 border-emerald-900/30">
+                          {activeRegion.regionType}
                         </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center gap-4 text-[10px] text-zinc-500 font-bold flex-wrap">
-              {[
-                { color: "bg-emerald-500/80", label: "Estável (<25%)" },
-                { color: "bg-amber-400/80", label: "Leve (25–50%)" },
-                { color: "bg-orange-500/80", label: "Alta (50–75%)" },
-                { color: "bg-rose-500/90", label: "Máxima (>75%)" },
-              ].map((l) => (
-                <div key={l.label} className="flex items-center gap-1.5">
-                  <div className={`w-3 h-3 rounded-sm ${l.color}`} />
-                  {l.label}
-                </div>
-              ))}
-            </div>
-
-            {/* Selected chord detail in tension view */}
-            {selectedChordIdx !== null && tensionData[selectedChordIdx] && (
-              <div className="p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/30 flex flex-col gap-2 animate-scale-up">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-amber-400" />
-                  <span className="text-xs font-black text-zinc-200">
-                    {getChordDisplay(progressionChords[selectedChordIdx])} — Compasso {selectedChordIdx + 1}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${getTensionGlowColor(tensionData[selectedChordIdx].tension)}`}
-                  >
-                    Tensão: {getTensionLabel(tensionData[selectedChordIdx].tension)}
-                  </span>
-                </div>
-                {analysis.chords[selectedChordIdx]?.harmonicFunction && (
-                  <div className="text-[11px] text-zinc-400">
-                    Função harmônica:{" "}
-                    <span className="text-purple-300 font-bold">
-                      {getFunctionLabel(analysis.chords[selectedChordIdx].harmonicFunction)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── PANEL: AUDITORIA TÉCNICA ────────────────────────── */}
-        {activePanel === "auditoria" && (
-          <div className="flex flex-col gap-4">
-            {/* Tonal Centre Header (Movido da Narrativa) */}
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-purple-900/40 bg-purple-950/10">
-              <Music2 className="h-5 w-5 text-purple-400 shrink-0" />
-              <div>
-                <div className="text-xs font-black text-zinc-200 uppercase tracking-wider">
-                  Centro tonal Global:{" "}
-                  <span className="text-purple-300">
-                    {analysis.tonalCenter.root} {analysis.tonalCenter.mode === "MAJOR" ? "Maior" : "Menor"}
-                  </span>
-                </div>
-                {(analysis.regions || []).length > 1 && (
-                  <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-500">
-                    <Activity className="h-3 w-3 text-purple-500" />
-                    {(analysis.regions || []).length} regiões harmônicas detectadas
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Regional Flow (Movido da Narrativa) */}
-            {(analysis.regions || []).length > 1 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {(analysis.regions || []).map((reg, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5">
-                    <span className="px-2.5 py-1.5 rounded-lg border border-purple-800/40 bg-purple-950/20 text-[10px] font-black text-purple-300 uppercase">
-                      {reg.baseCenter.root} {reg.baseCenter.mode === "MAJOR" ? "M" : "m"}
-                      <span className="ml-1 text-zinc-500 font-bold normal-case">
-                        [{reg.startIndex + 1}–{reg.endIndex + 1}]
-                      </span>
-                    </span>
-                    {idx < (analysis.regions || []).length - 1 && (
-                      <ChevronRight className="h-3 w-3 text-zinc-600" />
+                      </div>
+                    )}
+                    {activeNode.semantic?.phraseRole && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-zinc-500 uppercase font-black">Role</span>
+                        <span className={`px-2 py-0.5 rounded border font-bold ${roleColors[activeNode.semantic.phraseRole] || "text-zinc-400"}`}>
+                          {activeNode.semantic.phraseRole}
+                        </span>
+                      </div>
+                    )}
+                    {activeNode.semantic?.intent && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-zinc-500 uppercase font-black">Intent</span>
+                        <span className={`px-2 py-0.5 rounded border font-bold ${intentColors[activeNode.semantic.intent] || "text-zinc-400"}`}>
+                          {activeNode.semantic.intent}
+                        </span>
+                      </div>
+                    )}
+                    {activeNode.attractorField?.primaryAttractor && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-zinc-500 uppercase font-black">Attractor</span>
+                        <span className="text-purple-300 font-bold bg-purple-950/40 border border-purple-900/30 px-2 py-0.5 rounded">
+                          {activeNode.attractorField.primaryAttractor.type} {(activeNode.attractorField.primaryAttractor.alignment * 100).toFixed(0)}%
+                        </span>
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 mt-4">
-              <ShieldAlert className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-extrabold text-zinc-200 uppercase tracking-wider">
-                Linter Harmônico & Observabilidade
-              </span>
-            </div>
-            <p className="text-[11px] text-zinc-400">
-              Audite a condução de vozes, estabilidade interpretativa e conflitos teóricos.
-            </p>
-
-            {diagnostics.length === 0 ? (
-              <div className="p-8 rounded-xl border border-emerald-900/30 bg-emerald-950/10 text-center text-emerald-400 text-xs font-bold">
-                ✅ Nenhum problema detectado na progressão.
-              </div>
-            ) : (
-              <InspectorDashboard diagnostics={diagnostics} totalMeasures={progressionChords.length} />
-            )}
-
-            {/* Technical metrics toggle */}
-            <button
-              onClick={() => setTechnicalExpanded(!technicalExpanded)}
-              className="flex items-center gap-2 text-[10px] font-black text-zinc-500 hover:text-zinc-300 uppercase tracking-wider cursor-pointer transition"
-            >
-              {technicalExpanded ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
+                </div>
               )}
-              Métricas Técnicas (ADI, CFS, ISS, TAS, TFI)
-            </button>
 
-            {technicalExpanded && (
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 animate-scale-up">
-                {[
-                  {
-                    key: "ADI",
-                    label: "Dens. Analítica",
-                    value: (diagnostics.length / Math.max(1, progressionChords.length)).toFixed(2),
-                    color: "text-sky-400",
-                  },
-                  {
-                    key: "CFS",
-                    label: "Estabilidade",
-                    value:
-                      diagnostics.filter((d) => d.severity === "info").length === diagnostics.length
-                        ? "Alta"
-                        : "Média",
-                    color: "text-emerald-400",
-                  },
-                  {
-                    key: "ISS",
-                    label: "Score Intègre",
-                    value: Math.max(
-                      0,
-                      1 - diagnostics.filter((d) => d.severity === "critical").length * 0.3
-                    ).toFixed(2),
-                    color: "text-amber-400",
-                  },
-                  {
-                    key: "TAS",
-                    label: "Tensão Méd.",
-                    value: tensionData.length
-                      ? (tensionData.reduce((a, b) => a + b.tension, 0) / tensionData.length).toFixed(2)
-                      : "—",
-                    color: "text-orange-400",
-                  },
-                  {
-                    key: "TFI",
-                    label: "Índice Tonal",
-                    value: (analysis.regions || []).length === 1 ? "Monotonal" : "Politonal",
-                    color: "text-purple-400",
-                  },
-                ].map((m) => (
-                  <div
-                    key={m.key}
-                    className="flex flex-col gap-1.5 p-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30"
-                  >
-                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">{m.key}</span>
-                    <span className={`text-base font-black ${m.color}`}>{m.value}</span>
-                    <span className="text-[9px] text-zinc-600">{m.label}</span>
-                  </div>
-                ))}
+              {/* ── COMPONENTES ARQUITETURAIS MOVIDOS ──────────────────────── */}
+              <div className="flex flex-col gap-8 mt-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/60">
+                  <Waves className="h-5 w-5 text-sky-400" />
+                  <span className="text-sm font-black text-zinc-200 uppercase tracking-widest">Attractor Compass (Direção)</span>
+                </div>
+                <div className="w-full p-6 rounded-2xl border border-zinc-800/60 bg-zinc-900/20">
+                  <AttractorCompass field={activeNode?.attractorField || null} />
+                </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* ── NARRATIVA E ESTRUTURA (Técnico) ──────────────────────── */}
+              <div className="flex flex-col gap-8">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/60">
+                  <BookOpen className="h-5 w-5 text-purple-400" />
+                  <span className="text-sm font-black text-zinc-200 uppercase tracking-widest">Narrativa Estrutural</span>
+                </div>
+
+                {analysis.narrativeExplanation?.sections && analysis.narrativeExplanation.sections.length > 0 && (
+                  <div className="flex flex-col gap-3 mt-2">
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                      Narrativa por Seção
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {analysis.narrativeExplanation.sections.map((sec, i) => (
+                        <div key={i} className="p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40">
+                          <span className="text-[11px] font-black text-amber-500/90 uppercase tracking-widest block mb-2">
+                            {sec.label}
+                          </span>
+                          <p className="text-zinc-400 text-xs font-medium leading-relaxed">
+                            {sec.prose}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suno Export */}
+                <div className="flex flex-col gap-2 mt-4">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-3.5 w-3.5 text-amber-400" />
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                      Prompt Suno
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={sunoPrompt}
+                      rows={2}
+                      className="w-full bg-zinc-950/60 border border-zinc-800/60 rounded-xl p-3 text-[11px] text-zinc-400 font-mono resize-none focus:outline-none focus:border-amber-800/60 transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── GRAVIDADE E RADAR (Técnico) ──────────────────────── */}
+              <div className="flex flex-col gap-8 mt-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/60">
+                  <Waves className="h-5 w-5 text-purple-400" />
+                  <span className="text-sm font-black text-zinc-200 uppercase tracking-widest">Gravidade & Tensão (Bruto)</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  <div className="lg:col-span-2 flex flex-col gap-4">
+                    <div className="w-full overflow-x-auto">
+                      <div className="flex items-end gap-1.5 h-40 min-w-max px-1">
+                        {tensionData.map((td, idx) => {
+                          const barHeight = Math.max(8, Math.round(td.tension * 100));
+                          const isActive = selectedChordIdx === idx;
+                          return (
+                            <button
+                              key={idx}
+                              id={`tension-bar-${idx}`}
+                              onClick={() => selectChord(idx)}
+                              className={`flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ${isActive ? "scale-105" : "hover:scale-[1.03]"}`}
+                            >
+                              <span className="text-[9px] font-black text-zinc-500 group-hover:text-zinc-300 transition">
+                                {Math.round(td.tension * 100)}
+                              </span>
+                              <div
+                                className={`w-10 rounded-t-lg transition-all duration-300 ${getTensionColor(td.tension)} ${isActive ? "ring-2 ring-white/40" : "opacity-80"}`}
+                                style={{ height: `${barHeight}px` }}
+                              />
+                              <span className={`text-[9px] font-black uppercase truncate w-10 text-center transition ${isActive ? "text-white" : "text-zinc-500"}`}>
+                                {getChordDisplay(progressionChords[idx])}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-1">
+                    <AttractorRadar field={activeNode?.attractorField || null} />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── AUDITORIA & INSPECTOR ──────────────────────── */}
+              <div className="flex flex-col gap-8 mt-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/60">
+                  <ShieldAlert className="h-5 w-5 text-purple-400" />
+                  <span className="text-sm font-black text-zinc-200 uppercase tracking-widest">Linter Harmônico & Observabilidade</span>
+                </div>
+
+                {/* ── COMO O SISTEMA CHEGOU NESSA CONCLUSÃO ──────────────────────── */}
+                <details className="flex flex-col gap-6 w-full mt-4 group">
+                  <summary className="flex items-center gap-2 pb-2 border-b border-zinc-800/60 cursor-pointer outline-none marker:content-[''] list-none">
+                    <GitBranch className="h-5 w-5 text-emerald-400 group-open:rotate-90 transition-transform" />
+                    <span className="text-sm font-black text-zinc-200 uppercase tracking-widest hover:text-white">Ver raciocínio da IA</span>
+                  </summary>
+                  <div className="mt-6">
+                    {(() => {
+                      const { indexes, activeRegionIndex, getExplanationTrace } = useOntologySessionStore.getState();
+                      const region = indexes?.regions[activeRegionIndex ?? 0] || null;
+                      const trace = activeNode && region ? getExplanationTrace(region, activeNode) : null;
+                      return (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <RegionExplainabilityPanel region={region} trace={trace} />
+                          <DecisionTreeVisual trace={trace} />
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </details>
+
+                <div className="flex flex-col gap-4">
+                  {/* Tonal Centre Header */}
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-purple-900/40 bg-purple-950/10">
+                    <Music2 className="h-5 w-5 text-purple-400 shrink-0" />
+                    <div>
+                      <div className="text-xs font-black text-zinc-200 uppercase tracking-wider">
+                        Centro tonal Global:{" "}
+                        <span className="text-purple-300">
+                          {analysis.tonalCenter.root} {analysis.tonalCenter.mode === "MAJOR" ? "Maior" : "Menor"}
+                        </span>
+                      </div>
+                      {(analysis.regions || []).length > 1 && (
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-500">
+                          <Activity className="h-3 w-3 text-purple-500" />
+                          {(analysis.regions || []).length} regiões harmônicas detectadas
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {diagnostics.length === 0 ? (
+                    <div className="p-8 rounded-xl border border-emerald-900/30 bg-emerald-950/10 text-center text-emerald-400 text-xs font-bold">
+                      ✅ Nenhum problema detectado na progressão.
+                    </div>
+                  ) : (
+                    <InspectorDashboard diagnostics={diagnostics} />
+                  )}
+
+                  {/* Technical metrics toggle */}
+                  <button
+                    onClick={() => setTechnicalExpanded(!technicalExpanded)}
+                    className="flex items-center gap-2 text-[10px] font-black text-zinc-500 hover:text-zinc-300 uppercase tracking-wider cursor-pointer transition mt-4"
+                  >
+                    {technicalExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    Métricas Técnicas (ADI, CFS, ISS, TAS, TFI)
+                  </button>
+
+                  {technicalExpanded && (
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 animate-scale-up">
+                      {[
+                        { key: "ADI", label: "Dens. Analítica", value: (diagnostics.length / Math.max(1, progressionChords.length)).toFixed(2), color: "text-sky-400" },
+                        { key: "CFS", label: "Estabilidade", value: diagnostics.filter((d) => d.severity === "info").length === diagnostics.length ? "Alta" : "Média", color: "text-emerald-400" },
+                        { key: "ISS", label: "Score Intègre", value: Math.max(0, 1 - diagnostics.filter((d) => d.severity === "critical").length * 0.3).toFixed(2), color: "text-amber-400" },
+                        { key: "TAS", label: "Tensão Méd.", value: tensionData.length ? (tensionData.reduce((a, b) => a + b.tension, 0) / tensionData.length).toFixed(2) : "—", color: "text-orange-400" },
+                        { key: "TFI", label: "Índice Tonal", value: (analysis.regions || []).length === 1 ? "Monotonal" : "Politonal", color: "text-purple-400" },
+                      ].map((m) => (
+                        <div key={m.key} className="flex flex-col gap-1.5 p-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30">
+                          <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">{m.key}</span>
+                          <span className={`text-base font-black ${m.color}`}>{m.value}</span>
+                          <span className="text-[9px] text-zinc-600">{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </details>
 
 
-      </div>
-    </StandardLayout>
+        </div>
+      </StandardLayout>
+    </>
   );
 }

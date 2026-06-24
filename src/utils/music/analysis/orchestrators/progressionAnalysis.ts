@@ -10,7 +10,9 @@ import type {
   HarmonicState,
   ModalMode,
   ModalAxis,
-  AnalysisMode
+  AnalysisMode,
+  ExplainabilitySnapshot,
+  AnalysisIdentity
 } from '../models/FunctionalAnalysis';
 import type { ScoreSection } from '../models/ScoreSnapshot';
 import { resolveTonalCenter } from '../tonalCenter';
@@ -36,6 +38,16 @@ import { computeStabilityAndCausality } from '../calibration/InterpretiveStabili
 import { computeTheoryAdequacyAndFrontier } from '../calibration/TheoryFrontierDetector';
 import { extractSectionFacts } from '../narrative/sectionFactsEngine';
 import { inferHarmonicState } from '../narrative/harmonicStateEngine';
+import { generateExplanationTrace } from '../explainability/ExplanationTrace';
+
+function computeStringHash(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
 
 
 
@@ -287,6 +299,21 @@ export function analyzeProgression(
   // 8c. Perform formal structure analysis (Sprint F8)
   const phraseGroups = analyzeFormalStructure(phrases);
 
+  // --- 8. Snapshot & Identity Generation (F15.4.6 & F15.4.5) ---
+  const progressionHash = computeStringHash(progression.join("|"));
+  const identity: AnalysisIdentity = { progressionHash };
+  
+  const explainabilitySnapshots: Record<string, ExplainabilitySnapshot> = {};
+  for (const chord of chords) {
+    explainabilitySnapshots[chord.index.toString()] = {
+      chordId: chord.index.toString(),
+      role: chord.semantic?.phraseRole || 'UNKNOWN',
+      intent: chord.semantic?.intent || 'RESOLUTION',
+      attractors: chord.attractorField || null,
+      explanation: generateExplanationTrace(chord, null, null)
+    };
+  }
+
   if (mode !== "FULL") {
     return {
       tonalCenter: finalTonalCenter,
@@ -296,7 +323,9 @@ export function analyzeProgression(
       regions,
       sections,
       phrases,
-      phraseGroups
+      phraseGroups,
+      identity,
+      explainabilitySnapshots
     };
   }
 
@@ -312,6 +341,8 @@ export function analyzeProgression(
     : undefined;
 
   // 12. Build Knowledge Graph (Sprint Infra-2)
+
+
   const intermediateDTO = {
     tonalCenter: finalTonalCenter,
     chords,
@@ -345,7 +376,9 @@ export function analyzeProgression(
     summary: summary || undefined,
     narrative: narrative || undefined,
     analyticalSections,
-    knowledgeGraph
+    knowledgeGraph,
+    identity,
+    explainabilitySnapshots
   };
 
   if (mode === "FULL") {

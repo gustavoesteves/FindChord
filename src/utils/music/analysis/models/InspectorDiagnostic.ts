@@ -1,4 +1,4 @@
-export type DiagnosticSeverity = "info" | "warning" | "critical";
+export type DiagnosticSeverity = "info" | "warning" | "critical" | "suggestion";
 
 export type DiagnosticSource =
   | "ADI"

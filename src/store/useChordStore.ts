@@ -30,6 +30,7 @@ export interface ChordCandidate {
   quality: ChordQuality;         // Enum de qualidade estrita
   intervals: string[];           // ex: ["Fundamental (1)", "Terça Maior (3)"]
   notes: string[];               // Notas da fórmula teoricamente enarmonizadas (ex: ["E", "G#", "B", "D", "G"])
+  drawnNotes: string[];          // Notas exatas que o usuário desenhou no braço
   score: number;                 // Pontuação absoluta
   confidence: number;            // 0% a 100% de confiança para UX
   omissions: string[];           // Notas omitidas (ex: ["5"])

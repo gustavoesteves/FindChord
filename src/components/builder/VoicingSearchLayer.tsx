@@ -118,11 +118,18 @@ export const VoicingSearchLayer: React.FC = () => {
 
   // 4. Renderizador do Mini Diagrama SVG Adaptável
   const renderMiniDiagram = (frets: (number | null)[], stringCount: number) => {
+    // Calcular a altura dinamicamente baseada no stretch máximo do acorde
+    const fretted = frets.filter(f => f !== null && f > 0) as number[];
+    const capoFret = fretted.length > 0 ? Math.min(...fretted) : 1;
+    const maxFret = fretted.length > 0 ? Math.max(...fretted) : 4;
+    
+    // Stretch é a diferença entre o traste mais agudo e o mais grave.
+    // +1 para garantir espaço visual extra no rodapé do SVG
+    const maxRelativeFret = Math.max(4, maxFret - capoFret + 1); 
+    
     const dWidth = 74;
-    const dHeight = 90;
-    const activeFrets = frets.filter(f => f !== null && f > 0) as number[];
-    const minFret = activeFrets.length > 0 ? Math.min(...activeFrets) : 1;
-    const capoFret = minFret > 4 ? minFret : 1;
+    // Cada traste consome 16px. Altura base (cabeçalho) é 12px.
+    const dHeight = 12 + maxRelativeFret * 16 + 8;
 
     const totalStringsWidth = 50;
     // O espaçamento se adapta dinamicamente ao número de cordas
@@ -130,16 +137,16 @@ export const VoicingSearchLayer: React.FC = () => {
 
     return (
       <svg width={dWidth} height={dHeight} className="overflow-visible select-none">
-        <rect x="12" y="12" width={totalStringsWidth} height="64" fill="#0A0A0C" stroke="#27272A" strokeWidth="1" />
+        <rect x="12" y="12" width={totalStringsWidth} height={maxRelativeFret * 16} fill="#0A0A0C" stroke="#27272A" strokeWidth="1" />
         
         {/* Linhas das cordas */}
         {Array.from({ length: stringCount }).map((_, i) => (
-          <line key={i} x1={12 + i * step} y1="12" x2={12 + i * step} y2={76} stroke="#3F3F46" strokeWidth="1" />
+          <line key={i} x1={12 + i * step} y1="12" x2={12 + i * step} y2={12 + maxRelativeFret * 16} stroke={i === 0 || i === (stringCount - 1) ? "#3F3F46" : "#27272A"} strokeWidth={1 + (stringCount - i) * 0.2} />
         ))}
         
-        {/* Linhas dos trastes */}
-        {Array.from({ length: 5 }).map((_, i) => (
-          <line key={i} x1="12" y1={12 + i * 16} x2={12 + totalStringsWidth} y2={12 + i * 16} stroke="#3F3F46" strokeWidth="1" />
+        {/* Trastes (Linhas horizontais) */}
+        {Array.from({ length: maxRelativeFret + 1 }).map((_, i) => (
+          <line key={i} x1="12" y1={12 + i * 16} x2={12 + totalStringsWidth} y2={12 + i * 16} stroke="#27272A" strokeWidth="1" />
         ))}
         
         {/* Desenhar bolinhas e mutes */}
@@ -160,7 +167,7 @@ export const VoicingSearchLayer: React.FC = () => {
             );
           }
           const relativeFret = f - capoFret + 1;
-          if (relativeFret >= 1 && relativeFret <= 4) {
+          if (relativeFret >= 1 && relativeFret <= maxRelativeFret) {
             const y = 12 + (relativeFret - 0.5) * 16;
             return (
               <circle key={idx} cx={x} cy={y} r="3.8" fill="#BD00FF" className="shadow-md shadow-purple-500/50" />

@@ -2,13 +2,12 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from "
 import { useChordStore } from "../../../store/useChordStore";
 import type { ChordCandidate } from "../../../store/useChordStore";
 import { getPitchClass } from "../../../utils/music/core/pitch";
-import { CHORD_REGISTRY } from "../../../utils/music/constants/chordRegistry";
-import type { ChordQuality } from "../../../utils/music/constants/chordRegistry";
 import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
 
 export interface DetectedChord {
   notes: string[];
+  drawnNotes: string[];
   bass: string;
   symbol: string;
   inversion: string;
@@ -95,6 +94,7 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       return {
         notes: c.notes,
+        drawnNotes: c.drawnNotes || [],
         bass: c.bass || c.root,
         symbol: getDrawnChordName(c),
         inversion,
@@ -123,21 +123,17 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const chordRoot = activeChord.root;
-      const rootPC = getPitchClass(chordRoot);
-      const def = activeChord.quality in CHORD_REGISTRY
-        ? CHORD_REGISTRY[activeChord.quality as ChordQuality]
-        : undefined;
-      const targetPitchClasses = def
-        ? def.semitones.map((s: number) => (rootPC + s) % 12)
-        : [rootPC];
+      // Pegamos as notas exatas que o usuário desenhou no braço
+      const userPCs = Array.from(new Set(activeChord.drawnNotes.map(n => getPitchClass(n))));
 
       const results = generateVoicings(
         activeChord.symbol,
         chordRoot,
-        targetPitchClasses,
+        userPCs, // Permitimos apenas as notas que o usuário tocou
         tuning,
         activeChord.quality,
-        null
+        null,
+        userPCs // Obrigamos que o shape contenha TODAS as notas que o usuário tocou
       );
       setVoicingResults(results);
     } catch (e) {

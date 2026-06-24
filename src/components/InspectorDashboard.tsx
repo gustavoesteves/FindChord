@@ -1,380 +1,180 @@
 import React, { useState, useMemo } from "react";
-import type { InspectorDiagnostic, DiagnosticSeverity } from "../utils/music/analysis/models/InspectorDiagnostic";
+import type { InspectorDiagnostic } from "../utils/music/analysis/models/InspectorDiagnostic";
 import { 
-  AlertCircle, 
   AlertTriangle, 
   Info, 
-  CheckCircle, 
-  Activity, 
-  Sparkles,
-  FilterX
+  Lightbulb, 
+  Activity
 } from "lucide-react";
 
 interface InspectorDashboardProps {
   diagnostics: InspectorDiagnostic[];
-  totalMeasures: number;
 }
 
 export const InspectorDashboard: React.FC<InspectorDashboardProps> = ({ 
-  diagnostics = [], 
-  totalMeasures = 0 
+  diagnostics = []
 }) => {
-  const [selectedMeasure, setSelectedMeasure] = useState<number | null>(null);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // 1. Calcular contadores gerais
-  const stats = useMemo(() => {
-    let critical = 0;
-    let warning = 0;
-    let info = 0;
+  // Agrupamento semântico
+  const groupedDiagnostics = useMemo(() => {
+    const problemas: InspectorDiagnostic[] = [];
+    const atencao: InspectorDiagnostic[] = [];
+    const oportunidades: InspectorDiagnostic[] = [];
 
     diagnostics.forEach(d => {
-      if (d.severity === "critical") critical++;
-      else if (d.severity === "warning") warning++;
-      else if (d.severity === "info") info++;
+      if (d.severity === "critical" || d.severity === "warning") {
+        problemas.push(d);
+      } else if (d.severity === "suggestion") {
+        oportunidades.push(d);
+      } else {
+        // info / notice
+        atencao.push(d);
+      }
     });
 
-    const total = critical + warning + info;
-
-    return { critical, warning, info, total };
+    return { problemas, atencao, oportunidades };
   }, [diagnostics]);
 
-  // 2. Agrupar severidade mais alta por compasso para colorir a timeline
-  const measuresStatus = useMemo(() => {
-    const statusMap: Record<number, DiagnosticSeverity | "clean"> = {};
-    for (let m = 1; m <= totalMeasures; m++) {
-      statusMap[m] = "clean";
+  const renderDiagnosticList = (list: InspectorDiagnostic[], type: "problema" | "atencao" | "oportunidade") => {
+    if (list.length === 0) return null;
+
+    let groupTitle = "";
+    let Icon = Info;
+    let groupColor = "";
+    
+    if (type === "problema") {
+      groupTitle = "Problemas";
+      Icon = AlertTriangle;
+      groupColor = "text-rose-400";
+    } else if (type === "atencao") {
+      groupTitle = "Pontos de Atenção";
+      Icon = Info;
+      groupColor = "text-amber-400";
+    } else {
+      groupTitle = "Oportunidades";
+      Icon = Lightbulb;
+      groupColor = "text-emerald-400";
     }
 
-    diagnostics.forEach(diag => {
-      diag.affectedMeasures.forEach(m => {
-        if (m >= 1 && m <= totalMeasures) {
-          const current = statusMap[m];
+    return (
+      <div className="flex flex-col gap-3 mb-6">
+        <h4 className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${groupColor} mb-1`}>
+          <Icon className="h-4 w-4" />
+          {groupTitle}
+        </h4>
+        {list.map((diag) => {
+          let borderClass = "border-l-4 border-zinc-800/60 bg-zinc-900/40";
+          let badgeColor = "text-zinc-400 bg-zinc-950/60 border-zinc-900";
+          
           if (diag.severity === "critical") {
-            statusMap[m] = "critical";
-          } else if (diag.severity === "warning" && current !== "critical") {
-            statusMap[m] = "warning";
-          } else if (diag.severity === "info" && current === "clean") {
-            statusMap[m] = "info";
+            borderClass = "border-l-4 border-l-rose-500 bg-rose-950/10 border-zinc-800";
+            badgeColor = "text-rose-400 bg-rose-950/60 border-rose-900";
+          } else if (diag.severity === "warning") {
+            borderClass = "border-l-4 border-l-amber-500 bg-amber-950/10 border-zinc-800";
+            badgeColor = "text-amber-400 bg-amber-950/60 border-amber-900";
+          } else if (diag.severity === "suggestion") {
+            borderClass = "border-l-4 border-l-emerald-500 bg-emerald-950/10 border-zinc-800";
+            badgeColor = "text-emerald-400 bg-emerald-950/60 border-emerald-900";
+          } else {
+            borderClass = "border-l-4 border-l-indigo-500 bg-indigo-950/10 border-zinc-800";
+            badgeColor = "text-indigo-400 bg-indigo-950/60 border-indigo-900";
           }
-        }
-      });
-    });
 
-    return statusMap;
-  }, [diagnostics, totalMeasures]);
+          const isExpanded = !!expandedIds[diag.id];
 
-  // 3. Filtrar e ordenar alertas de acordo com a seleção de compasso na timeline
-  const filteredDiagnostics = useMemo(() => {
-    let result = [...diagnostics];
-    if (selectedMeasure !== null) {
-      result = result.filter(d => d.affectedMeasures.includes(selectedMeasure));
-    }
-    return result;
-  }, [diagnostics, selectedMeasure]);
+          return (
+            <div 
+              key={diag.id} 
+              className={`p-4 rounded-xl border flex flex-col gap-3 transition duration-150 shadow-md ${borderClass}`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>{diag.category.replace("-", " ")}</span>
+                    {diag.subcategory && (
+                      <>
+                        <span className="text-zinc-600">•</span>
+                        <span className="text-purple-400">{diag.subcategory}</span>
+                      </>
+                    )}
+                  </span>
+                  <h4 className="text-sm font-extrabold text-zinc-100">{diag.title}</h4>
+                </div>
 
-  const severityBarPercentages = useMemo(() => {
-    if (stats.total === 0) return { critical: 0, warning: 0, info: 0 };
-    return {
-      critical: (stats.critical / stats.total) * 100,
-      warning: (stats.warning / stats.total) * 100,
-      info: (stats.info / stats.total) * 100
-    };
-  }, [stats]);
+                <div className="flex items-center gap-1.5 text-[10px] font-bold">
+                  <span className={`px-2 py-0.5 rounded border ${badgeColor}`}>
+                    {diag.severity.toUpperCase()}
+                  </span>
+                </div>
+              </div>
 
-  return (
-    <div className="flex flex-col gap-6 text-zinc-100 font-sans">
-      
-      {/* 1. Visão Geral (Overview Counters) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Card Críticos */}
-        <div className="p-4 rounded-xl border border-red-900/30 bg-red-950/10 backdrop-blur-md flex items-center justify-between shadow-lg shadow-red-950/5">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Críticos</span>
-            <span className="text-3xl font-extrabold text-red-100">{stats.critical}</span>
-          </div>
-          <div className="p-2.5 bg-red-500/10 rounded-lg text-red-400">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-        </div>
+              <p className="text-xs text-zinc-350 leading-relaxed">{diag.description}</p>
 
-        {/* Card Alertas */}
-        <div className="p-4 rounded-xl border border-amber-900/30 bg-amber-950/10 backdrop-blur-md flex items-center justify-between shadow-lg shadow-amber-950/5">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Alertas</span>
-            <span className="text-3xl font-extrabold text-amber-100">{stats.warning}</span>
-          </div>
-          <div className="p-2.5 bg-amber-500/10 rounded-lg text-amber-400">
-            <AlertTriangle className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Card Informativos */}
-        <div className="p-4 rounded-xl border border-indigo-900/30 bg-indigo-950/10 backdrop-blur-md flex items-center justify-between shadow-lg shadow-indigo-950/5">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Informativos</span>
-            <span className="text-3xl font-extrabold text-indigo-100">{stats.info}</span>
-          </div>
-          <div className="p-2.5 bg-indigo-500/10 rounded-lg text-indigo-400">
-            <Info className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Barra de Distribuição de Severidade */}
-      {stats.total > 0 && (
-        <div className="flex flex-col gap-1.5 p-4 rounded-xl border border-zinc-850 bg-zinc-900/20">
-          <div className="flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-            <span>Distribuição de Gravidade</span>
-            <span>{stats.total} total de diagnósticos</span>
-          </div>
-          <div className="h-2.5 w-full bg-zinc-950 rounded-full flex overflow-hidden border border-zinc-900">
-            {severityBarPercentages.critical > 0 && (
-              <div 
-                style={{ width: `${severityBarPercentages.critical}%` }} 
-                className="bg-gradient-to-r from-red-600 to-red-400 h-full transition-all duration-500" 
-                title={`Crítico: ${stats.critical}`}
-              />
-            )}
-            {severityBarPercentages.warning > 0 && (
-              <div 
-                style={{ width: `${severityBarPercentages.warning}%` }} 
-                className="bg-gradient-to-r from-amber-500 to-amber-350 h-full transition-all duration-500" 
-                title={`Alerta: ${stats.warning}`}
-              />
-            )}
-            {severityBarPercentages.info > 0 && (
-              <div 
-                style={{ width: `${severityBarPercentages.info}%` }} 
-                className="bg-gradient-to-r from-indigo-500 to-sky-400 h-full transition-all duration-500" 
-                title={`Info: ${stats.info}`}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 3. Timeline de Alertas por Compasso */}
-      {totalMeasures > 0 && (
-        <div className="p-5 rounded-2xl border border-zinc-850 bg-zinc-900/40 backdrop-blur-xl shadow-2xl flex flex-col gap-3">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-            <div className="flex items-center gap-1.5 text-zinc-300 font-bold text-xs uppercase tracking-wider">
-              <Activity className="h-4 w-4 text-purple-400" />
-              Linha do Tempo Harmônica (Auditada por Compasso)
-            </div>
-            {selectedMeasure !== null && (
-              <button 
-                onClick={() => setSelectedMeasure(null)}
-                className="text-[10px] text-zinc-400 hover:text-zinc-200 bg-zinc-850 hover:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-800 transition-all flex items-center gap-1 cursor-pointer"
+              <button
+                onClick={() => toggleExpand(diag.id)}
+                className="w-fit text-[9px] text-zinc-500 hover:text-purple-400 font-black uppercase tracking-widest flex items-center gap-1.5 cursor-pointer transition-colors mt-0.5 select-none"
               >
-                <FilterX className="h-3 w-3 text-purple-400" />
-                Limpar Filtro (C{selectedMeasure})
+                <Activity className={`h-3 w-3 ${isExpanded ? "text-purple-400" : ""}`} />
+                {isExpanded ? "Ocultar Telemetria" : "Mostrar Telemetria"}
               </button>
-            )}
-          </div>
 
-          <div className="flex flex-wrap gap-2.5 mt-1">
-            {Array.from({ length: totalMeasures }).map((_, idx) => {
-              const mNum = idx + 1;
-              const status = measuresStatus[mNum];
-              const isSelected = selectedMeasure === mNum;
-
-              let statusClasses = "border-zinc-800 bg-zinc-950/40 text-zinc-500 hover:border-zinc-700 hover:text-zinc-350";
-              if (status === "critical") {
-                statusClasses = `border-red-900 bg-red-950/20 text-red-400 hover:bg-red-950/30 ${
-                  isSelected ? "ring-2 ring-red-500 scale-105" : ""
-                }`;
-              } else if (status === "warning") {
-                statusClasses = `border-amber-900 bg-amber-950/20 text-amber-400 hover:bg-amber-950/30 ${
-                  isSelected ? "ring-2 ring-amber-500 scale-105" : ""
-                }`;
-              } else if (status === "info") {
-                statusClasses = `border-indigo-900 bg-indigo-950/20 text-indigo-400 hover:bg-indigo-950/30 ${
-                  isSelected ? "ring-2 ring-indigo-500 scale-105" : ""
-                }`;
-              } else if (status === "clean") {
-                statusClasses = `border-emerald-950 bg-emerald-950/5 text-emerald-400 hover:border-emerald-800 ${
-                  isSelected ? "ring-2 ring-emerald-500 scale-105" : ""
-                }`;
-              }
-
-              return (
-                <button
-                  key={mNum}
-                  onClick={() => setSelectedMeasure(isSelected ? null : mNum)}
-                  className={`w-11 h-11 rounded-lg border text-center flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${statusClasses}`}
-                  title={`Compasso ${mNum}: ${status.toUpperCase()}`}
-                >
-                  <span className="text-[10px] font-black uppercase select-none opacity-50">Comp</span>
-                  <span className="text-sm font-extrabold leading-none">{mNum}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Diagnostic Feed */}
-      <div className="flex flex-col gap-4">
-        <h3 className="text-xs font-extrabold text-zinc-300 uppercase tracking-wider flex items-center gap-1">
-          <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-          Feed de Diagnósticos e Linter
-        </h3>
-
-        {filteredDiagnostics.length === 0 ? (
-          <div className="p-8 rounded-2xl border border-emerald-900/30 bg-emerald-950/5 flex flex-col items-center justify-center text-center shadow-inner">
-            <CheckCircle className="h-8 w-8 text-emerald-400 mb-2 animate-bounce" />
-            <span className="text-xs font-bold text-emerald-300">Condução Limpa & Consenso Estável</span>
-            <p className="text-[10px] text-zinc-400 mt-1 max-w-sm">
-              Nenhum problema harmônico ou de condução detectado {selectedMeasure !== null ? `para o compasso ${selectedMeasure}` : ""}.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filteredDiagnostics.map((diag) => {
-              // Definir cores com base na severidade
-              let borderClass = "border-l-4 border-l-indigo-500 bg-indigo-950/10 border-zinc-850";
-              let badgeColor = "text-indigo-400 bg-indigo-950/60 border-indigo-900";
-              if (diag.severity === "critical") {
-                borderClass = "border-l-4 border-l-red-500 bg-red-950/10 border-zinc-850";
-                badgeColor = "text-red-400 bg-red-950/60 border-red-900";
-              } else if (diag.severity === "warning") {
-                borderClass = "border-l-4 border-l-amber-500 bg-amber-950/10 border-zinc-850";
-                badgeColor = "text-amber-400 bg-amber-950/60 border-amber-900";
-              }
-
-              const isExpanded = !!expandedIds[diag.id];
-
-              return (
-                <div 
-                  key={diag.id} 
-                  className={`p-4 rounded-xl border flex flex-col gap-3 hover:brightness-105 transition duration-150 shadow-md ${borderClass}`}
-                >
-                  {/* Alert Header - Camada Musical */}
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <span>{diag.category.replace("-", " ")}</span>
-                        {diag.subcategory && (
-                          <>
-                            <span className="text-zinc-600">•</span>
-                            <span className="text-purple-400">{diag.subcategory}</span>
-                          </>
-                        )}
-                      </span>
-                      <h4 className="text-sm font-extrabold text-zinc-100">{diag.title}</h4>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                      <span className={`px-2 py-0.5 rounded border ${badgeColor}`}>
-                        {diag.severity.toUpperCase()}
+              {isExpanded && (
+                <div className="flex flex-col gap-3 p-3.5 mt-1 rounded-xl bg-zinc-950/60 border border-zinc-900/60 animate-scale-up">
+                  <div className="flex items-center gap-4 text-[9px] font-bold font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-zinc-500 uppercase font-black">Fonte:</span>
+                      <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-zinc-400">
+                        {diag.source}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Alert Description - Camada Musical */}
-                  <p className="text-xs text-zinc-350 leading-relaxed">{diag.description}</p>
-
-                  {/* Trigger to toggle Camada Técnica */}
-                  <button
-                    onClick={() => toggleExpand(diag.id)}
-                    className="w-fit text-[9px] text-zinc-500 hover:text-purple-400 font-black uppercase tracking-widest flex items-center gap-1.5 cursor-pointer transition-colors mt-0.5 select-none animate-pulse"
-                  >
-                    <Activity className={`h-3 w-3 ${isExpanded ? "text-purple-400" : ""}`} />
-                    {isExpanded ? "Ocultar Telemetria Técnica" : "Mostrar Telemetria Técnica"}
-                  </button>
-
-                  {/* Camada Técnica - Colapsável */}
-                  {isExpanded && (
-                    <div className="flex flex-col gap-3 p-3.5 mt-1 rounded-xl bg-zinc-950/60 border border-zinc-900/60 animate-scale-up">
-                      {/* Source & Confidence row */}
-                      <div className="flex items-center gap-4 text-[9px] font-bold font-mono">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-zinc-500 uppercase font-black">Fonte do Linter:</span>
-                          <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-zinc-400">
-                            {diag.source}
-                          </span>
-                        </div>
-                        {diag.confidence !== undefined && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-zinc-500 uppercase font-black">Confiança:</span>
-                            <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-purple-400">
-                              {(diag.confidence * 100).toFixed(0)}%
-                            </span>
-                          </div>
-                        )}
+                    {diag.confidence !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-zinc-500 uppercase font-black">Confiança:</span>
+                        <span className="px-2 py-0.5 rounded border border-zinc-850 bg-zinc-950 text-purple-400">
+                          {(diag.confidence * 100).toFixed(0)}%
+                        </span>
                       </div>
-
-                      {/* Evidence List */}
-                      {diag.evidence && diag.evidence.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-widest">Evidências Científicas:</span>
-                          <div className="flex flex-col gap-1 pl-2 border-l border-zinc-850">
-                            {diag.evidence.map((ev, evIdx) => (
-                              <span key={evIdx} className="text-[10px] text-zinc-400 font-mono">
-                                • {ev}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Telemetry Coefficients Grid */}
-                      {diag.telemetry && (
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-widest">Coeficientes Ativos:</span>
-                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                            {diag.telemetry.cfs !== undefined && (
-                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
-                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">CFS (Fragility)</span>
-                                <span className="text-pink-400 font-extrabold mt-0.5">{diag.telemetry.cfs.toFixed(4)}</span>
-                              </div>
-                            )}
-                            {diag.telemetry.adi !== undefined && (
-                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
-                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">ADI (Disaccord)</span>
-                                <span className="text-purple-400 font-extrabold mt-0.5">{diag.telemetry.adi.toFixed(4)}</span>
-                              </div>
-                            )}
-                            {diag.telemetry.iss !== undefined && (
-                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
-                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">ISS (Stability)</span>
-                                <span className="text-emerald-400 font-extrabold mt-0.5">{diag.telemetry.iss.toFixed(4)}</span>
-                              </div>
-                            )}
-                            {diag.telemetry.tas !== undefined && (
-                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
-                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">TAS (Adequacy)</span>
-                                <span className="text-blue-400 font-extrabold mt-0.5">{diag.telemetry.tas.toFixed(4)}</span>
-                              </div>
-                            )}
-                            {diag.telemetry.tfi !== undefined && (
-                              <div className="bg-zinc-950 p-1.5 rounded border border-zinc-850 flex flex-col font-mono text-[9px]">
-                                <span className="text-zinc-500 uppercase font-black tracking-widest text-[7.5px]">TFI (Frontier)</span>
-                                <span className="text-amber-500 font-extrabold mt-0.5">{diag.telemetry.tfi.toFixed(4)}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                    )}
+                  </div>
+                  {diag.evidence && diag.evidence.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[8px] text-zinc-500 uppercase font-black tracking-widest">Evidências Científicas:</span>
+                      <div className="flex flex-col gap-1 pl-2 border-l border-zinc-850">
+                        {diag.evidence.map((ev, evIdx) => (
+                          <span key={evIdx} className="text-[10px] text-zinc-400 font-mono">
+                            • {ev}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
-
-                  {/* Affected measure info - Camada Musical */}
-                  <div className="flex items-center justify-between text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-1 border-t border-zinc-900/40 pt-2">
-                    <span>Compassos afetados: {diag.affectedMeasures.join(", ")}</span>
-                    {diag.cadenceType && <span>Cadência: {diag.cadenceType}</span>}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              )}
+            </div>
+          );
+        })}
       </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col font-sans">
+      {diagnostics.length === 0 ? (
+        <div className="p-8 text-center text-zinc-500 text-sm italic bg-zinc-900/30 rounded-xl border border-zinc-800/40">
+          Nenhuma observação harmônica de destaque neste compasso.
+        </div>
+      ) : (
+        <>
+          {renderDiagnosticList(groupedDiagnostics.problemas, "problema")}
+          {renderDiagnosticList(groupedDiagnostics.atencao, "atencao")}
+          {renderDiagnosticList(groupedDiagnostics.oportunidades, "oportunidade")}
+        </>
+      )}
     </div>
   );
 };
