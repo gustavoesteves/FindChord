@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { MelodicAnchor } from "../utils/music/analysis/models/ProjectionSet";
 import { GravityFieldManager } from "../utils/music/analysis/engines/GravityFieldManager";
 import { PhraseAnalysisEngine, type PhraseContext } from "../utils/music/analysis/engines/PhraseAnalysisEngine";
-import type { ReharmonizationProposal } from "../utils/music/analysis/engines/ReharmonizationProposalEngine";
+import type { ReharmonizationProposal } from "../utils/music/analysis/models/ReharmonizationProposal";
 import type { ScoreSection, ScoreNoteEvent } from "../utils/music/analysis/models/ScoreSnapshot";
 
 interface UseProjectionControllerProps {

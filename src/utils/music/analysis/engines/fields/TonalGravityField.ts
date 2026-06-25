@@ -1,52 +1,30 @@
-import { Interval } from "tonal";
 import type { GravityField } from "./GravityField";
 import type { PhraseContext } from "../PhraseAnalysisEngine";
-import { MelodicInterpretationEngine } from "../MelodicInterpretationEngine";
-import type { TrajectoryInterpretation } from "../../models/MelodicInterpretation";
-import type { PathwayMetrics } from "../HorizontalHarmonyEngine";
+import type { HarmonicSeed } from "../../models/HarmonicSeed";
 
 export class TonalGravityField implements GravityField {
   id = "tonal";
   name = "Tonal Clássico";
 
-  generateCandidates(anchorPitch: string, phraseContext: PhraseContext): TrajectoryInterpretation[] {
-    const raw = MelodicInterpretationEngine.getInterpretations(anchorPitch, phraseContext.selectedCenter);
+  generateArchetypeSeeds(phraseContext: PhraseContext): HarmonicSeed[] {
+    const seeds: HarmonicSeed[] = [];
     
-    // Tonal field heavily restricts to DIATONIC, allowing some DOMINANT
-    return raw.filter(interp => {
-      const behavior = interp.selectedMeaning.behavior;
-      return behavior === "DIATONIC" || behavior === "DOMINANT";
+    // Archetype 1: Diatonic stability, mostly stepwise or 4ths/5ths, pointing to cadence
+    seeds.push({
+      id: "tonal_cadence_motion",
+      type: "DIATONIC_CADENCE_MOTION",
+      fieldId: this.id,
+      bassContour: {
+        direction: "STATIC", // Overall stays in the key area
+        tendency: "CYCLE_OF_5THS", // Or jumps by 4ths/5ths
+        target: phraseContext.cadentialTarget.targetPitch
+      },
+      explanation: [
+        `Progressão orientada por ciclos de 4as/5as até o destino ${phraseContext.cadentialTarget.targetPitch}`,
+        `Estabilidade diatônica em ${phraseContext.selectedCenter.tonic}`
+      ]
     });
-  }
 
-  scoreTransition(
-    _prevChord: string, 
-    _nextChord: string, 
-    prevBass: string, 
-    nextBass: string, 
-    _phraseContext: PhraseContext
-  ): PathwayMetrics {
-    
-    // Tonal scoring favors 4ths (V-I, ii-V) and diatonic stepwise
-    const bassInterval = Interval.distance(prevBass + "4", nextBass + "4");
-    const intervalName = Interval.get(bassInterval).name;
-    const absSemitones = Math.abs(Interval.semitones(intervalName) || 0);
-
-    let score = 0;
-
-    // Perfect 4th up or 5th down (Cycle of 5ths)
-    if (absSemitones === 5 || absSemitones === 7) score += 40;
-    
-    // Diatonic step
-    if (absSemitones === 2) score += 20;
-
-    return {
-      smoothness: 10,
-      commonToneRetention: 10,
-      chromaticMotion: 0,
-      bassCoherence: score,
-      archetypeStrength: score,
-      totalScore: score
-    };
+    return seeds;
   }
 }

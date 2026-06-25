@@ -1,51 +1,45 @@
-import { Interval } from "tonal";
 import type { GravityField } from "./GravityField";
 import type { PhraseContext } from "../PhraseAnalysisEngine";
-import { MelodicInterpretationEngine } from "../MelodicInterpretationEngine";
-import type { TrajectoryInterpretation } from "../../models/MelodicInterpretation";
-import type { PathwayMetrics } from "../HorizontalHarmonyEngine";
+import type { HarmonicSeed } from "../../models/HarmonicSeed";
 
 export class ChromaticGravityField implements GravityField {
   id = "chromatic";
   name = "Cromático Linear";
 
-  generateCandidates(anchorPitch: string, phraseContext: PhraseContext): TrajectoryInterpretation[] {
-    const raw = MelodicInterpretationEngine.getInterpretations(anchorPitch, phraseContext.selectedCenter);
+  generateArchetypeSeeds(phraseContext: PhraseContext): HarmonicSeed[] {
+    const seeds: HarmonicSeed[] = [];
     
-    // Chromatic field embraces all behaviors, especially CHROMATIC and MODAL
-    return raw;
-  }
+    // Archetype 1: Chromatic Ascent
+    seeds.push({
+      id: "chromatic_ascent",
+      type: "CHROMATIC_ASCENT_TO_TARGET",
+      fieldId: this.id,
+      bassContour: {
+        direction: "ASCENDING",
+        tendency: "CHROMATIC",
+        target: phraseContext.cadentialTarget.targetPitch
+      },
+      explanation: [
+        `Cromatismo ascendente rumo ao repouso em ${phraseContext.cadentialTarget.targetPitch}`,
+        `Máxima tensão direcional de aproximação cromática`
+      ]
+    });
 
-  scoreTransition(
-    _prevChord: string, 
-    _nextChord: string, 
-    prevBass: string, 
-    nextBass: string, 
-    _phraseContext: PhraseContext
-  ): PathwayMetrics {
-    
-    // Chromatic scoring aggressively rewards semitone bass motion
-    const bassInterval = Interval.distance(prevBass + "4", nextBass + "4");
-    const intervalName = Interval.get(bassInterval).name;
-    const absSemitones = Math.abs(Interval.semitones(intervalName) || 0);
+    // Archetype 2: Chromatic Descent
+    seeds.push({
+      id: "chromatic_descent",
+      type: "CHROMATIC_DESCENT_TO_TARGET",
+      fieldId: this.id,
+      bassContour: {
+        direction: "DESCENDING",
+        tendency: "CHROMATIC",
+        target: phraseContext.cadentialTarget.targetPitch
+      },
+      explanation: [
+        `Cromatismo descendente contínuo (clichê romântico) rumo a ${phraseContext.cadentialTarget.targetPitch}`
+      ]
+    });
 
-    let chromaticMotion = 0;
-    
-    if (absSemitones === 1) { // Semitone motion is god-tier
-      chromaticMotion = 100;
-    } else if (absSemitones === 0) { // Pedal point is okay
-      chromaticMotion = 20;
-    } else { // Anything else is heavily penalized
-      chromaticMotion = -50; 
-    }
-
-    return {
-      smoothness: 20,
-      commonToneRetention: 10,
-      chromaticMotion: chromaticMotion,
-      bassCoherence: chromaticMotion,
-      archetypeStrength: chromaticMotion,
-      totalScore: chromaticMotion
-    };
+    return seeds;
   }
 }

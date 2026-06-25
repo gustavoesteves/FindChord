@@ -1,8 +1,8 @@
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { PhraseContext } from "./PhraseAnalysisEngine";
-import type { ReharmonizationProposal, ReharmonizationMeasure } from "./ReharmonizationProposalEngine";
-import { HorizontalHarmonyEngine, type HarmonicPathway } from "./HorizontalHarmonyEngine";
-import { HarmonicDivergenceEngine } from "./HarmonicDivergenceEngine";
+import type { ReharmonizationProposal, ReharmonizationMeasure } from "../models/ReharmonizationProposal";
+import { ChordRealizationEngine } from "./ChordRealizationEngine";
+import { BassTrajectoryModel } from "./archetypes/BassTrajectoryModel";
 import type { GravityField } from "./fields/GravityField";
 import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
@@ -24,62 +24,49 @@ export class GravityFieldManager {
     let pIdx = 1;
 
     for (const field of this.fields) {
-      // 1. Run the Multi-Beam search constrained by the GravityField
-      const pathways = HorizontalHarmonyEngine.generatePathways(anchors, phraseContext, field);
       
-      if (pathways.length === 0) continue;
+      // 1. Generate Archetype Seeds
+      const seeds = field.generateArchetypeSeeds(phraseContext);
 
-      // Wrap pathways into "SoftWorld" structure so we can reuse Divergence logic
-      // (This will be refactored eventually, but works perfectly for now)
-      const worlds = pathways.map((p: HarmonicPathway, i: number) => ({
-        id: `${field.id}_world_${i}`,
-        structuralProfile: { diatonicStability: 0, dominantDensity: 0, modalAmbiguity: 0, chromaticDisruption: 0 },
-        coherenceScore: p.metrics.totalScore,
-        events: p.harmonyEvents.map((he: any, i: number) => ({
-          measureIndex: anchors[i].measureIndex,
-          anchorPitch: he.melody,
-          interpretation: he.interpretation,
-          resolvedChord: he.chord
-        })),
-        bassLine: p.bassLine,
-        metrics: p.metrics,
-        detectedMotives: p.detectedMotives,
-        phraseContext: phraseContext
-      }));
+      for (const seed of seeds) {
+        // 2. Realize the Abstract Trajectory into concrete Bass Lines
+        const bassLines = BassTrajectoryModel.realizeSeed(seed, anchors);
 
-      // 2. Extract divergent ideas localized to THIS FIELD
-      const divergentIdeas = HarmonicDivergenceEngine.extractDivergentIdeas(worlds);
+        for (const bassLine of bassLines) {
+          // 3. Realize the Chords that satisfy the Bass Line AND validate against Melody
+          const pathways = ChordRealizationEngine.realize(bassLine, anchors, phraseContext);
 
-      // We only take the top 1 or 2 ideas per field so we don't flood the UI
-      const topIdeas = divergentIdeas.slice(0, 1); // Starting conservative with 1 idea per field
+          if (pathways.length > 0) {
+            // Take the best pathway for this realization
+            const bestPath = pathways[0];
 
-      // 3. Package them into Proposals
-      for (const idea of topIdeas) {
-        const world = idea.primaryWorld;
+            // Map to Measures
+            const measuresMap = new Map<number, string[]>();
+            for (let i = 0; i < anchors.length; i++) {
+              const mIdx = anchors[i].measureIndex;
+              if (!measuresMap.has(mIdx)) {
+                measuresMap.set(mIdx, []);
+              }
+              measuresMap.get(mIdx)!.push(bestPath.harmonyEvents[i].chord);
+            }
 
-        const measuresMap = new Map<number, string[]>();
-        for (const event of world.events) {
-          if (!measuresMap.has(event.measureIndex)) {
-            measuresMap.set(event.measureIndex, []);
+            const measures: ReharmonizationMeasure[] = Array.from(measuresMap.entries())
+              .sort((a, b) => a[0] - b[0])
+              .map(([measureIndex, chords]) => ({ measureIndex, chords }));
+
+            allProposals.push({
+              id: `prop_${pIdx}`,
+              name: `Ideia — ${field.name}`,
+              measures,
+              explanation: seed.explanation, 
+              bassLine: bestPath.bassLine,
+              detectedMotives: [], // We can pull this from the seed type
+              phraseContext: phraseContext
+            });
+
+            pIdx++;
           }
-          measuresMap.get(event.measureIndex)!.push(event.resolvedChord);
         }
-
-        const measures: ReharmonizationMeasure[] = Array.from(measuresMap.entries())
-          .sort((a, b) => a[0] - b[0])
-          .map(([measureIndex, chords]) => ({ measureIndex, chords }));
-
-        allProposals.push({
-          id: `prop_${pIdx}`,
-          name: `Ideia ${pIdx} — ${field.name}`,
-          measures,
-          explanation: idea.archetype, 
-          bassLine: idea.bassLine || [],
-          detectedMotives: idea.detectedMotives || [],
-          phraseContext: idea.phraseContext
-        });
-
-        pIdx++;
       }
     }
 
