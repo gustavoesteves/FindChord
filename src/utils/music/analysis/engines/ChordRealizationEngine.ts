@@ -134,6 +134,34 @@ export class ChordRealizationEngine {
       if (chordData.quality === "Diminished" || chordData.quality === "Augmented") behavior = "CHROMATIC";
       else if (chordData.aliases.includes("7") || chordData.aliases.includes("9")) behavior = "DOMINANT";
 
+      // Structural Function heuristic (T, PD, D, EXT, CHROM)
+      let actualFunction = "CHROM";
+      const anchorChroma = Note.get(phraseContext.selectedCenter.tonic).chroma || 0;
+      const chordChroma = Note.get(chordData.tonic || baseChord).chroma || 0;
+      const relativeDist = (chordChroma - anchorChroma + 12) % 12;
+
+      // Simplistic mapping for Major key
+      if (relativeDist === 0 || relativeDist === 4 || relativeDist === 9) actualFunction = behavior === "DOMINANT" ? "EXT" : "T";
+      else if (relativeDist === 5 || relativeDist === 2) actualFunction = behavior === "DOMINANT" ? "EXT" : "PD";
+      else if (relativeDist === 7 || relativeDist === 11) actualFunction = "D";
+      else actualFunction = behavior === "DOMINANT" ? "EXT" : "CHROM";
+
+      // Functional Compliance Check
+      let fieldFit = 1.0;
+      if (slot.requiredFunction !== actualFunction) {
+        if (slot.requiredFunction === "T" && actualFunction !== "T") fieldFit -= 0.8;
+        if (slot.requiredFunction === "D" && actualFunction !== "D") fieldFit -= 0.8;
+        if (slot.requiredFunction === "PD" && actualFunction !== "PD") fieldFit -= 0.5;
+        
+        // Strict enforcement of constraints
+        if (actualFunction === "EXT" && !seed.constraints.allowSecondaryDominants) {
+          fieldFit -= 2.0; // Hard penalty for using secondary dominants when forbidden
+        }
+        if (actualFunction === "CHROM" && seed.constraints.allowChromaticPassing === "none") {
+          fieldFit -= 2.0; // Hard penalty for chromatic passing when forbidden
+        }
+      }
+
       if (behavior === "DIATONIC") {
         tonalStability = isTonic ? 1.0 : 0.8;
         novelty = 0.1;
@@ -152,7 +180,7 @@ export class ChordRealizationEngine {
       validOptions.push({
         chord: finalChord,
         score: {
-          fieldFit: 1.0,
+          fieldFit: fieldFit,
           voiceLeading: voiceLeadingScore,
           tonalStability: tonalStability,
           novelty: novelty,

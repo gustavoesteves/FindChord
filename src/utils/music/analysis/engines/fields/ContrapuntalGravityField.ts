@@ -15,9 +15,20 @@ export class ContrapuntalGravityField implements GravityField {
       type: "CONTRARY_MOTION_OBLIQUE",
       fieldId: this.id,
       bassContour: {
-        direction: "OBLIQUE", // Contrary to melody
+        direction: "OBLIQUE", // Contrasting with melody if possible
         tendency: "STEPWISE",
         target: phraseContext.cadentialTarget.targetPitch
+      },
+      skeleton: {
+        functions: ["T", "PD", "EXT", "D", "T"],
+        density: 1,
+        cadenceTarget: "authentic"
+      },
+      narrativeGoal: "CIRCULAR_RESOLUTION",
+      constraints: {
+        allowSecondaryDominants: false,
+        allowChromaticPassing: "between-functions-only",
+        enforceCadence: false
       },
       biasVector: {
         preferStability: 0.5,

@@ -32,10 +32,32 @@ export class NarrativeEngine {
         mod.entropyAllowance = 1.5;
         break;
       case "RESOLUTION":
-        mod.stabilityPressure = 2.0;
-        mod.tensionPressure = 0.0;
-        mod.resolutionPressure = 2.0;
-        mod.entropyAllowance = 0.0;
+        if (state.goal === "TONAL_RESOLUTION") {
+          mod.stabilityPressure = 2.0;
+          mod.tensionPressure = 0.0;
+          mod.resolutionPressure = 2.0;
+          mod.entropyAllowance = 0.0;
+        } else if (state.goal === "PERMANENT_TENSION") {
+          mod.stabilityPressure = 0.2;
+          mod.tensionPressure = 1.5;
+          mod.resolutionPressure = 0.0;
+          mod.entropyAllowance = 1.2;
+        } else if (state.goal === "DEFERRED_RESOLUTION") {
+          mod.stabilityPressure = 0.8;
+          mod.tensionPressure = 1.0;
+          mod.resolutionPressure = 0.5;
+          mod.entropyAllowance = 0.8;
+        } else if (state.goal === "CIRCULAR_RESOLUTION") {
+          mod.stabilityPressure = 1.0;
+          mod.tensionPressure = 0.5;
+          mod.resolutionPressure = 1.0;
+          mod.entropyAllowance = 0.5;
+        } else if (state.goal === "AVOID_RESOLUTION") {
+          mod.stabilityPressure = 0.5;
+          mod.tensionPressure = 1.0;
+          mod.resolutionPressure = 0.0;
+          mod.entropyAllowance = 1.0;
+        }
         break;
     }
 

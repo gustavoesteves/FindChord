@@ -1,4 +1,5 @@
 import type { TonalCenterCandidate } from "../engines/PhraseAnalysisEngine";
+import type { NarrativeGoal } from "./HarmonicSeed";
 
 export type NarrativePhase = "EXPOSITION" | "DEVELOPMENT" | "CLIMAX" | "RESOLUTION";
 
@@ -13,6 +14,7 @@ export interface HarmonicEvent {
 export interface NarrativePressure {
   tonalAnchor: TonalCenterCandidate;
   phase: NarrativePhase;
+  goal: NarrativeGoal;
   tension: number; // 0.0 to 1.0
   memory: HarmonicEvent[];
 }

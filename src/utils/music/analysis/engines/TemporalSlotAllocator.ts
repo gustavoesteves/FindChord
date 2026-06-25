@@ -32,7 +32,8 @@ export class TemporalSlotAllocator {
             duration: anchors[anchorIndex].duration
           }],
           bassNote: bass,
-          weight: 1.0
+          weight: 1.0,
+          requiredFunction: seed.skeleton.functions[Math.floor(i / seed.skeleton.density)] || "T"
         };
       });
     }
@@ -110,7 +111,8 @@ export class TemporalSlotAllocator {
         endTick: slotEnd,
         melodyNotes: melodyNotes,
         bassNote: bassLine[i] || bassLine[bassLine.length - 1], // fallback if grid > bass length
-        weight: selectedSlots[i].weight
+        weight: selectedSlots[i].weight,
+        requiredFunction: seed.skeleton.functions[Math.floor(i / seed.skeleton.density)] || "T"
       });
     }
 

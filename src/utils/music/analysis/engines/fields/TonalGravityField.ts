@@ -19,6 +19,17 @@ export class TonalGravityField implements GravityField {
         tendency: "CYCLE_OF_5THS", // Or jumps by 4ths/5ths
         target: phraseContext.cadentialTarget.targetPitch
       },
+      skeleton: {
+        functions: ["T", "PD", "D", "T"],
+        density: 1,
+        cadenceTarget: "authentic"
+      },
+      narrativeGoal: "TONAL_RESOLUTION",
+      constraints: {
+        allowSecondaryDominants: false,
+        allowChromaticPassing: "none",
+        enforceCadence: true
+      },
       requireTonalStability: true,
       biasVector: {
         preferStability: 0.9,

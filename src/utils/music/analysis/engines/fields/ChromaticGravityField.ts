@@ -19,6 +19,17 @@ export class ChromaticGravityField implements GravityField {
         tendency: "CHROMATIC",
         target: phraseContext.cadentialTarget.targetPitch
       },
+      skeleton: {
+        functions: ["T", "CHROM", "EXT", "D"],
+        density: 1,
+        cadenceTarget: "half"
+      },
+      narrativeGoal: "DEFERRED_RESOLUTION",
+      constraints: {
+        allowSecondaryDominants: true,
+        allowChromaticPassing: "freely",
+        enforceCadence: false
+      },
       biasVector: {
         preferStability: 0.2,
         preferResolution: 0.5,
@@ -40,6 +51,17 @@ export class ChromaticGravityField implements GravityField {
         direction: "DESCENDING",
         tendency: "CHROMATIC",
         target: phraseContext.cadentialTarget.targetPitch
+      },
+      skeleton: {
+        functions: ["T", "CHROM", "CHROM", "EXT"],
+        density: 1,
+        cadenceTarget: "open"
+      },
+      narrativeGoal: "PERMANENT_TENSION",
+      constraints: {
+        allowSecondaryDominants: true,
+        allowChromaticPassing: "freely",
+        enforceCadence: false
       },
       biasVector: {
         preferStability: 0.2,

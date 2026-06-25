@@ -30,10 +30,10 @@ export class GravityFieldManager {
       const seeds = field.generateArchetypeSeeds(phraseContext);
 
       for (const seed of seeds) {
-        // 2. Realize the Abstract Trajectory into concrete Bass Lines
-        const bassLines = BassTrajectoryModel.realizeSeed(seed, anchors);
+        // 2. Compute Bass Trajectories based on Skeleton Length
+        const bassTrajectories = BassTrajectoryModel.realizeSeed(seed, anchors);
 
-        for (const bassLine of bassLines) {
+        for (const bassLine of bassTrajectories) {
           // 3. Allocate Temporal Slots using Harmonic Anchor Weighting
           const slots = TemporalSlotAllocator.allocateSlots(bassLine, anchors, seed);
 
@@ -41,6 +41,7 @@ export class GravityFieldManager {
           const initialState = {
             tonalAnchor: phraseContext.selectedCenter,
             phase: "EXPOSITION" as const,
+            goal: seed.narrativeGoal,
             tension: 0.0,
             memory: []
           };
@@ -54,8 +55,8 @@ export class GravityFieldManager {
 
             // Map to Measures
             const measuresMap = new Map<number, string[]>();
-            for (let i = 0; i < anchors.length; i++) {
-              const mIdx = anchors[i].measureIndex;
+            for (let i = 0; i < slots.length; i++) {
+              const mIdx = slots[i].measureIndex;
               if (!measuresMap.has(mIdx)) {
                 measuresMap.set(mIdx, []);
               }

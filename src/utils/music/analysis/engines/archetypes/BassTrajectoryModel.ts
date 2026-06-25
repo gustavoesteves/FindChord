@@ -5,7 +5,7 @@ import type { HarmonicSeed } from "../../models/HarmonicSeed";
 export class BassTrajectoryModel {
   
   public static realizeSeed(seed: HarmonicSeed, anchors: MelodicAnchor[]): string[][] {
-    const len = anchors.length;
+    const len = seed.skeleton.functions.length * seed.skeleton.density;
     if (len === 0) return [];
 
     const targetPitchClass = seed.bassContour.target; // "G" or "Am" (if "Am", strip to "A")

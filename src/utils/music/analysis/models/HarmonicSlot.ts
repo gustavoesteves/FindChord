@@ -7,4 +7,5 @@ export interface HarmonicSlot {
   melodyNotes: MelodicAnchor[];
   bassNote: string;
   weight: number; // Harmonic Anchor Weighting (bassStability + melodicTension + fieldPriority)
+  requiredFunction: string; // "T", "PD", "D", "EXT", "CHROM"
 }
