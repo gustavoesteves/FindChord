@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import type { MelodicAnchor } from "../utils/music/analysis/models/ProjectionSet";
-import { NarrativeWorldGenerator } from "../utils/music/analysis/engines/NarrativeWorldGenerator";
-import { HarmonicDivergenceEngine } from "../utils/music/analysis/engines/HarmonicDivergenceEngine";
-import { ReharmonizationProposalEngine, type ReharmonizationProposal } from "../utils/music/analysis/engines/ReharmonizationProposalEngine";
-import type { PhraseContext } from "../utils/music/analysis/engines/PhraseAnalysisEngine";
+import { GravityFieldManager } from "../utils/music/analysis/engines/GravityFieldManager";
+import { PhraseAnalysisEngine, type PhraseContext } from "../utils/music/analysis/engines/PhraseAnalysisEngine";
+import type { ReharmonizationProposal } from "../utils/music/analysis/engines/ReharmonizationProposalEngine";
 import type { ScoreSection, ScoreNoteEvent } from "../utils/music/analysis/models/ScoreSnapshot";
 
 interface UseProjectionControllerProps {
@@ -30,23 +29,14 @@ export function useProjectionController({
       return;
     }
 
-    // 1. Generate the raw soft worlds (passing key signature, the engine will handle Phrase Analysis)
-    const generatedWorlds = NarrativeWorldGenerator.generateWorlds(melodyAnchors, keySignature);
+    // 1. Phrase Analysis
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(melodyAnchors, keySignature);
 
-    // 2. Filter distinct architectural ideas based on Archetype signatures
-    const distinctIdeas = HarmonicDivergenceEngine.extractDivergentIdeas(generatedWorlds);
-
-    // 3. Extract final proposals
-    const extractedProposals = ReharmonizationProposalEngine.extractProposals(distinctIdeas);
+    // 2. Generate Proposals using GravityFieldManager
+    const extractedProposals = GravityFieldManager.generateProposals(melodyAnchors, phraseContext);
 
     setProposals(extractedProposals);
-    
-    // 4. Extract phrase context
-    if (extractedProposals.length > 0) {
-      setPhraseContext(extractedProposals[0].phraseContext);
-    } else {
-      setPhraseContext(null);
-    }
+    setPhraseContext(phraseContext);
 
   }, [melodyAnchors, section, allNotes, keySignature]);
 

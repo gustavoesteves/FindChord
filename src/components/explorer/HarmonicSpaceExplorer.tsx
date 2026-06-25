@@ -95,24 +95,15 @@ export default function HarmonicSpaceExplorer() {
                 Propostas estruturais geradas a partir da melodia.
               </span>
               {phraseContext && (
-                <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 w-24">Centro Tonal:</span>
-                    <span className="px-2 py-0.5 bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 rounded text-[10px] font-bold uppercase">
-                      {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "Menor" : "Maior"} ({(phraseContext.selectedCenter.confidence * 100).toFixed(0)}%)
-                    </span>
-                    {phraseContext.tonalCenterCandidates.length > 1 && (
-                      <span className="text-[10px] text-zinc-500">
-                        Alt: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "m" : "M"} ({(phraseContext.tonalCenterCandidates[1].confidence * 100).toFixed(0)}%)
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 w-24">Destino da Frase:</span>
-                    <span className="px-2 py-0.5 bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 rounded text-[10px] font-bold uppercase">
-                      {phraseContext.cadentialTarget.targetPitch} ({phraseContext.cadentialTarget.cadenceType})
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4 text-xs font-mono text-zinc-300">
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Contexto Detectado</span>
+                  <span>Centro principal: {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "Menor" : "Maior"}</span>
+                  {phraseContext.tonalCenterCandidates.length > 1 && (
+                    <span>Centro alternativo: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "Menor" : "Maior"}</span>
+                  )}
+                  <span className="mt-1">
+                    Frase termina em: {phraseContext.cadentialTarget.targetPitch} ({phraseContext.cadentialTarget.cadenceType === "HALF" ? "Meia Cadência" : phraseContext.cadentialTarget.cadenceType})
+                  </span>
                 </div>
               )}
             </div>

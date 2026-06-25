@@ -1,9 +1,9 @@
 import { Note, Interval } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import { ChordSpelling } from "./ChordSpelling";
-import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import type { TrajectoryInterpretation } from "../models/MelodicInterpretation";
-import type { TonalCenterCandidate } from "./PhraseAnalysisEngine";
+import type { PhraseContext } from "./PhraseAnalysisEngine";
+import type { GravityField } from "./fields/GravityField";
 
 export const MotiveTag = {
   CHROMATIC_ASCENT: "Aproximação Cromática Ascendente",
@@ -102,14 +102,21 @@ export interface HarmonicPathway {
 
 export class HorizontalHarmonyEngine {
 
-  public static generatePathways(anchors: MelodicAnchor[], tonalCenter?: TonalCenterCandidate): HarmonicPathway[] {
+  public static generatePathways(
+    anchors: MelodicAnchor[], 
+    phraseContext: PhraseContext,
+    field: GravityField
+  ): HarmonicPathway[] {
     if (anchors.length === 0) return [];
 
     const optionsPerAnchor = anchors.map(anchor => 
-      MelodicInterpretationEngine.getInterpretations(anchor.pitch, tonalCenter)
+      field.generateCandidates(anchor.pitch, phraseContext)
     );
 
-    let currentPaths: HarmonicPathway[] = optionsPerAnchor[0].map(interp => {
+    // If a field generated 0 candidates for an anchor, it fails to produce a pathway
+    if (optionsPerAnchor.some(opts => opts.length === 0)) return [];
+
+    let currentPaths: HarmonicPathway[] = optionsPerAnchor[0].map((interp: TrajectoryInterpretation) => {
       const chord = interp.selectedMeaning.impliedChord;
       const bass = ChordSpelling.getBass(chord) || "C";
       return {
@@ -133,7 +140,7 @@ export class HorizontalHarmonyEngine {
       };
     });
 
-    const BEAM_WIDTH = 128;
+    const BEAM_WIDTH = 64; // We can lower this since the field prunes aggressively
 
     for (let i = 1; i < optionsPerAnchor.length; i++) {
       const nextOptions = optionsPerAnchor[i];
@@ -145,16 +152,26 @@ export class HorizontalHarmonyEngine {
         for (const nextInterp of nextOptions) {
           const nextChord = nextInterp.selectedMeaning.impliedChord;
           const nextBass = ChordSpelling.getBass(nextChord) || "C";
+
+          const transitionMetrics = field.scoreTransition(
+            lastState.chord,
+            nextChord,
+            lastState.bass,
+            nextBass,
+            phraseContext,
+            lastState.melody,
+            nextInterp.anchorPitch
+          );
           
           const rawMetrics = this.evaluateVoiceLeadingMetrics(lastState.chord, nextChord);
 
           const newMetrics: PathwayMetrics = {
-            smoothness: path.metrics.smoothness + rawMetrics.smoothness,
-            commonToneRetention: path.metrics.commonToneRetention + rawMetrics.commonTones,
-            chromaticMotion: path.metrics.chromaticMotion + rawMetrics.chromaticApproaches,
-            bassCoherence: path.metrics.bassCoherence, // evaluated at the end
-            archetypeStrength: 0, // evaluated at the end
-            totalScore: 0
+            smoothness: path.metrics.smoothness + rawMetrics.smoothness + transitionMetrics.smoothness,
+            commonToneRetention: path.metrics.commonToneRetention + rawMetrics.commonTones + transitionMetrics.commonToneRetention,
+            chromaticMotion: path.metrics.chromaticMotion + rawMetrics.chromaticApproaches + transitionMetrics.chromaticMotion,
+            bassCoherence: path.metrics.bassCoherence + transitionMetrics.bassCoherence,
+            archetypeStrength: path.metrics.archetypeStrength + transitionMetrics.archetypeStrength,
+            totalScore: 0 // Will be calculated at the end
           };
 
           newPaths.push({
@@ -202,7 +219,7 @@ export class HorizontalHarmonyEngine {
         const dist = Math.abs(Interval.semitones(Interval.distance(path.bassLine[j-1] + "4", path.bassLine[j] + "4"))!) % 12;
         if (dist > 4 && dist !== 5 && dist !== 7) bassJumps++;
       }
-      path.metrics.bassCoherence = 1.0 - (bassJumps * 0.2);
+      path.metrics.bassCoherence += (1.0 - (bassJumps * 0.2));
 
       path.detectedMotives = Array.from(new Set(matchedMotives));
       path.metrics.totalScore = this.calculateTotalScore(path.metrics);
