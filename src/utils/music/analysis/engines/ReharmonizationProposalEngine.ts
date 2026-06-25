@@ -1,8 +1,13 @@
 import type { DivergentIdea } from "./HarmonicDivergenceEngine";
 
+export interface ReharmonizationMeasure {
+  measureIndex: number;
+  chords: string[];
+}
+
 export interface ReharmonizationProposal {
   id: string;
-  progression: string[];
+  measures: ReharmonizationMeasure[];
   explanation: string;
 }
 
@@ -53,9 +58,22 @@ export class ReharmonizationProposalEngine {
         categoryId = "conservative";
       }
 
+      // Group chords by measure
+      const measuresMap = new Map<number, string[]>();
+      for (const event of world.events) {
+        if (!measuresMap.has(event.measureIndex)) {
+          measuresMap.set(event.measureIndex, []);
+        }
+        measuresMap.get(event.measureIndex)!.push(event.resolvedChord);
+      }
+
+      const measures: ReharmonizationMeasure[] = Array.from(measuresMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([measureIndex, chords]) => ({ measureIndex, chords }));
+
       families[categoryId].proposals.push({
         id: `prop_${pIdx++}`,
-        progression: world.events.map(e => e.resolvedChord),
+        measures,
         explanation: idea.signature
       });
     }

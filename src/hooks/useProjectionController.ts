@@ -20,10 +20,8 @@ export function useProjectionController({
       return;
     }
 
-    const anchorPitches = melodyAnchors.map(a => a.pitch);
-    
     // 1. Generate the raw soft worlds
-    const generatedWorlds = NarrativeWorldGenerator.generateWorlds(anchorPitches);
+    const generatedWorlds = NarrativeWorldGenerator.generateWorlds(melodyAnchors);
 
     // 2. Filter true mathematical redundancy
     const distinctIdeas = HarmonicDivergenceEngine.extractDivergentIdeas(generatedWorlds);

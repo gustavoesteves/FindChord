@@ -2,17 +2,19 @@ import type { NarrativeWorld, NarrativeEvent, StructuralProfile } from "../model
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import { VoiceLeadingPrimitiveEngine } from "./VoiceLeadingPrimitiveEngine";
 
+import type { MelodicAnchor } from "../models/ProjectionSet";
+
 export class NarrativeWorldGenerator {
   
   /**
    * Generates competing narrative worlds based on a sequence of melodic anchors.
    * Uses Probabilistic Pruning (Beam Search) to prevent combinatorial explosion.
    */
-  public static generateWorlds(anchors: string[]): NarrativeWorld[] {
+  public static generateWorlds(anchors: MelodicAnchor[]): NarrativeWorld[] {
     if (anchors.length === 0) return [];
 
     const optionsPerAnchor = anchors.map(anchor => 
-      MelodicInterpretationEngine.getInterpretations(anchor)
+      MelodicInterpretationEngine.getInterpretations(anchor.pitch)
     );
 
     const BEAM_WIDTH = 64; // Max viable timelines carried forward
@@ -20,13 +22,14 @@ export class NarrativeWorldGenerator {
 
     for (let i = 0; i < optionsPerAnchor.length; i++) {
       const options = optionsPerAnchor[i];
+      const anchor = anchors[i];
       const newPaths: NarrativeEvent[][] = [];
 
       // Expand all current paths with all options for this anchor
       for (const path of currentPaths) {
         for (const option of options) {
           const event: NarrativeEvent = {
-            measureIndex: i + 1,
+            measureIndex: anchor.measureIndex,
             anchorPitch: option.anchorPitch,
             interpretation: option,
             resolvedChord: option.selectedMeaning.impliedChord
