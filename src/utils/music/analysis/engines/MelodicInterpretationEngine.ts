@@ -1,10 +1,13 @@
 import type { TrajectoryInterpretation } from "../models/MelodicInterpretation";
-import type { TonalCenter } from "./LocalTonalCenterEngine";
+import type { TonalCenterCandidate } from "./PhraseAnalysisEngine";
 import { Note, Chord, Interval } from "tonal";
 
 export class MelodicInterpretationEngine {
   
-  public static getInterpretations(pitchClass: string, tonalCenter?: TonalCenter): TrajectoryInterpretation[] {
+  public static getInterpretations(
+    pitchClass: string, 
+    tonalCenter?: TonalCenterCandidate
+  ): TrajectoryInterpretation[] {
     const tonic = tonalCenter?.tonic || "C";
     
     // Calculate how far the current tonic is from C

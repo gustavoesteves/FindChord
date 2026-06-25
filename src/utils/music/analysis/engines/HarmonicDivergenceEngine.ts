@@ -1,6 +1,7 @@
 import type { SoftWorld } from "../models/NarrativeWorld";
 import { HarmonicArchetypeLibrary } from "./HarmonicArchetypeLibrary";
 import type { MotiveTag } from "./HorizontalHarmonyEngine";
+import type { PhraseContext } from "./PhraseAnalysisEngine";
 
 export interface DivergentIdea {
   signature: string;
@@ -9,6 +10,7 @@ export interface DivergentIdea {
   primaryWorld: SoftWorld;
   bassLine: string[];
   detectedMotives: MotiveTag[];
+  phraseContext: PhraseContext;
 }
 
 export class HarmonicDivergenceEngine {
@@ -46,7 +48,8 @@ export class HarmonicDivergenceEngine {
         worlds: familyWorlds,
         primaryWorld: familyWorlds[0],
         bassLine: familyWorlds[0].bassLine || [],
-        detectedMotives: familyWorlds[0].detectedMotives || []
+        detectedMotives: familyWorlds[0].detectedMotives || [],
+        phraseContext: familyWorlds[0].phraseContext
       });
     }
 

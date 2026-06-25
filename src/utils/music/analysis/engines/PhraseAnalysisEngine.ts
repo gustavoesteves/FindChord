@@ -1,0 +1,181 @@
+import { Scale, Note } from "tonal";
+import type { MelodicAnchor } from "../models/ProjectionSet";
+
+export type CadenceType = 
+  | "AUTHENTIC"
+  | "HALF"
+  | "DECEPTIVE"
+  | "PLAGAL"
+  | "PHRYGIAN"
+  | "EVASIVE"
+  | "OPEN"
+  | "UNKNOWN";
+
+export interface TonalCenterCandidate {
+  tonic: string;
+  mode: "major" | "minor";
+  confidence: number;
+}
+
+export interface CadentialTarget {
+  targetPitch: string;
+  cadenceType: CadenceType;
+  confidence: number;
+}
+
+export interface PhraseContext {
+  tonalCenterCandidates: TonalCenterCandidate[];
+  selectedCenter: TonalCenterCandidate;
+  cadentialTarget: CadentialTarget;
+}
+
+export class PhraseAnalysisEngine {
+  
+  public static analyzePhrase(anchors: MelodicAnchor[], keySignature?: string): PhraseContext {
+    if (anchors.length === 0) {
+      const defaultCenter: TonalCenterCandidate = { tonic: "C", mode: "major", confidence: 0.1 };
+      return {
+        selectedCenter: defaultCenter,
+        tonalCenterCandidates: [defaultCenter],
+        cadentialTarget: { targetPitch: "C", cadenceType: "UNKNOWN", confidence: 0.1 }
+      };
+    }
+
+    const cadentialTarget = this.inferCadentialTarget(anchors);
+    const candidates = this.evaluateTonalCenters(anchors, cadentialTarget, keySignature);
+    
+    // Fallback if no candidate
+    if (candidates.length === 0) {
+      candidates.push({ tonic: "C", mode: "major", confidence: 0.1 });
+    }
+
+    return {
+      tonalCenterCandidates: candidates,
+      selectedCenter: candidates[0],
+      cadentialTarget
+    };
+  }
+
+  private static inferCadentialTarget(anchors: MelodicAnchor[]): CadentialTarget {
+    const lastAnchor = anchors[anchors.length - 1];
+    const targetPitch = Note.pitchClass(lastAnchor.pitch) || "C";
+    
+    // Confidence based on length/weight of the final note
+    // If it's a long note (e.g. whole note), high confidence.
+    const duration = lastAnchor.duration || 4; // default to 4 beats
+    const confidence = Math.min(0.9, 0.4 + (duration * 0.1));
+
+    return {
+      targetPitch,
+      cadenceType: "OPEN", // We will refine this after we know the Tonal Center
+      confidence
+    };
+  }
+
+  private static evaluateTonalCenters(
+    anchors: MelodicAnchor[], 
+    cadentialTarget: CadentialTarget, 
+    keySignature?: string
+  ): TonalCenterCandidate[] {
+    
+    const uniqueNotes = Array.from(new Set(anchors.map(a => Note.pitchClass(a.pitch))));
+    const firstNote = Note.pitchClass(anchors[0].pitch);
+    const lastNote = cadentialTarget.targetPitch;
+
+    const allKeys = [
+      ...Note.names().map(n => ({ tonic: n, mode: "major" as const, scale: Scale.get(`${n} major`).notes })),
+      ...Note.names().map(n => ({ tonic: n, mode: "minor" as const, scale: Scale.get(`${n} minor`).notes }))
+    ];
+
+    const candidates: (TonalCenterCandidate & { score: number })[] = [];
+
+    for (const key of allKeys) {
+      // 1. Pitch Coverage
+      let covered = 0;
+      for (const note of uniqueNotes) {
+        if (key.scale.includes(note)) covered++;
+        // Equivalent enharmonics check could be added here
+      }
+      const pitchCoverage = covered / uniqueNotes.length;
+
+      // 2. Salience Support (Does the scale contain the most repeated/long notes?)
+      // Simplification: Does it contain the first and last notes?
+      let salienceSupport = 0;
+      if (key.scale.includes(firstNote)) salienceSupport += 0.5;
+      if (key.scale.includes(lastNote)) salienceSupport += 0.5;
+
+      // 3. Phrase Boundary Support (Is the phrase starting/ending on stable degrees?)
+      // Tonic = 1.0, Dominant = 0.8, Mediant = 0.6
+      let phraseBoundarySupport = 0;
+      if (firstNote === key.tonic) phraseBoundarySupport += 0.5;
+      else if (firstNote === key.scale[4]) phraseBoundarySupport += 0.3; // Dominant
+      
+      if (lastNote === key.tonic) phraseBoundarySupport += 0.5;
+      else if (lastNote === key.scale[4]) phraseBoundarySupport += 0.3; // Dominant
+
+      // 4. Implied Cadence Support
+      let impliedCadenceSupport = 0;
+      if (lastNote === key.tonic) {
+        impliedCadenceSupport = 1.0; // Authentic expectation
+      } else if (lastNote === key.scale[4]) {
+        impliedCadenceSupport = 0.8; // Half cadence expectation
+      }
+
+      const score = 
+        (pitchCoverage * 0.4) + 
+        (salienceSupport * 0.2) + 
+        (phraseBoundarySupport * 0.2) + 
+        (impliedCadenceSupport * 0.2);
+
+      if (score > 0.4) {
+        candidates.push({
+          tonic: key.tonic,
+          mode: key.mode,
+          confidence: score,
+          score
+        });
+      }
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+
+    // Apply confidence penalty for short snippets
+    const measureCount = anchors[anchors.length-1].measureIndex - anchors[0].measureIndex + 1;
+    let confidencePenalty = 1.0;
+    if (uniqueNotes.length < 6) confidencePenalty *= 0.65;
+    if (measureCount < 8) confidencePenalty *= 0.75;
+
+    // Map to final candidates
+    const finalCandidates = candidates.slice(0, 3).map(c => {
+      // If we have an explicit key signature, boost its confidence
+      let conf = c.confidence * confidencePenalty;
+      if (keySignature && c.tonic === keySignature.replace(/m/i, "").trim()) {
+        conf = Math.min(0.95, conf + 0.3);
+      }
+      return {
+        tonic: c.tonic,
+        mode: c.mode,
+        confidence: Math.round(conf * 100) / 100
+      };
+    });
+
+    // Refine cadence type based on the best candidate
+    if (finalCandidates.length > 0) {
+      const best = finalCandidates[0];
+      const scale = Scale.get(`${best.tonic} ${best.mode}`).notes;
+      if (cadentialTarget.targetPitch === best.tonic) {
+        cadentialTarget.cadenceType = "AUTHENTIC";
+      } else if (cadentialTarget.targetPitch === scale[4]) { // 5th degree
+        cadentialTarget.cadenceType = "HALF";
+      } else if (cadentialTarget.targetPitch === scale[5]) { // 6th degree
+        cadentialTarget.cadenceType = "DECEPTIVE";
+      } else if (cadentialTarget.targetPitch === scale[3]) { // 4th degree
+        cadentialTarget.cadenceType = "PLAGAL";
+      } else {
+        cadentialTarget.cadenceType = "OPEN";
+      }
+    }
+
+    return finalCandidates;
+  }
+}

@@ -3,6 +3,7 @@ import type { MelodicAnchor } from "../models/ProjectionSet";
 import { ChordSpelling } from "./ChordSpelling";
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import type { TrajectoryInterpretation } from "../models/MelodicInterpretation";
+import type { TonalCenterCandidate } from "./PhraseAnalysisEngine";
 
 export const MotiveTag = {
   CHROMATIC_ASCENT: "Aproximação Cromática Ascendente",
@@ -101,7 +102,7 @@ export interface HarmonicPathway {
 
 export class HorizontalHarmonyEngine {
 
-  public static generatePathways(anchors: MelodicAnchor[], tonalCenter?: any): HarmonicPathway[] {
+  public static generatePathways(anchors: MelodicAnchor[], tonalCenter?: TonalCenterCandidate): HarmonicPathway[] {
     if (anchors.length === 0) return [];
 
     const optionsPerAnchor = anchors.map(anchor => 

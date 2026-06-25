@@ -1,15 +1,18 @@
 import type { NarrativeWorld, NarrativeEvent, StructuralProfile } from "../models/NarrativeWorld";
 import type { MelodicAnchor } from "../models/ProjectionSet";
-import type { TonalCenter } from "./LocalTonalCenterEngine";
+import { PhraseAnalysisEngine } from "./PhraseAnalysisEngine";
 import { HorizontalHarmonyEngine } from "./HorizontalHarmonyEngine";
 
 export class NarrativeWorldGenerator {
   
-  public static generateWorlds(anchors: MelodicAnchor[], tonalCenter?: TonalCenter): NarrativeWorld[] {
+  public static generateWorlds(anchors: MelodicAnchor[], keySignature?: string): NarrativeWorld[] {
     if (anchors.length === 0) return [];
 
+    // F22.2: Phrase Analysis
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, keySignature);
+
     // F22.1: Horizontal Generation (Pathway = Bass + Melody + Chords)
-    const pathways = HorizontalHarmonyEngine.generatePathways(anchors, tonalCenter);
+    const pathways = HorizontalHarmonyEngine.generatePathways(anchors, phraseContext.selectedCenter);
 
     const worlds: NarrativeWorld[] = [];
     let worldIdx = 1;
@@ -58,7 +61,8 @@ export class NarrativeWorldGenerator {
         structuralProfile: profile,
         bassLine: pathway.bassLine,
         metrics: pathway.metrics,
-        detectedMotives: pathway.detectedMotives
+        detectedMotives: pathway.detectedMotives,
+        phraseContext
       });
 
       worldIdx++;

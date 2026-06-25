@@ -1,5 +1,6 @@
 import type { DivergentIdea } from "./HarmonicDivergenceEngine";
 import type { MotiveTag } from "./HorizontalHarmonyEngine";
+import type { PhraseContext } from "./PhraseAnalysisEngine";
 
 export interface ReharmonizationMeasure {
   measureIndex: number;
@@ -13,6 +14,7 @@ export interface ReharmonizationProposal {
   explanation: string;
   bassLine: string[];
   detectedMotives: MotiveTag[];
+  phraseContext: PhraseContext;
 }
 
 export class ReharmonizationProposalEngine {
@@ -43,7 +45,8 @@ export class ReharmonizationProposalEngine {
         measures,
         explanation: idea.signature,
         bassLine: idea.bassLine || [],
-        detectedMotives: idea.detectedMotives || []
+        detectedMotives: idea.detectedMotives || [],
+        phraseContext: idea.phraseContext
       });
 
       pIdx++;

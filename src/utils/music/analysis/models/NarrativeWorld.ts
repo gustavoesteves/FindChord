@@ -1,5 +1,6 @@
 import type { TrajectoryInterpretation } from "./MelodicInterpretation";
 import type { PathwayMetrics, MotiveTag } from "../engines/HorizontalHarmonyEngine";
+import type { PhraseContext } from "../engines/PhraseAnalysisEngine";
 
 export interface NarrativeEvent {
   measureIndex: number;
@@ -31,6 +32,8 @@ export interface NarrativeWorld {
   bassLine: string[]; // F22.1
   metrics: PathwayMetrics; // F22.1
   detectedMotives: MotiveTag[]; // F22.1
+  
+  phraseContext: PhraseContext; // F22.2
 }
 
 export type SoftWorld = NarrativeWorld;
