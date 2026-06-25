@@ -11,7 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-type MainDomain = "escrever" | "produzir";
+type MainDomain = "escrever" | "harmonizar";
 
 export default function SuiteApp() {
   const [currentDomain, setCurrentDomain] = useState<MainDomain>("escrever");
@@ -97,16 +97,16 @@ export default function SuiteApp() {
                 Escrever
               </button>
               <button
-                id="domain-produzir"
-                onClick={() => setCurrentDomain("produzir")}
+                id="domain-harmonizar"
+                onClick={() => setCurrentDomain("harmonizar")}
                 className={`flex items-center gap-1.5 px-4 py-2 text-xs font-black rounded-lg transition-all cursor-pointer ${
-                  currentDomain === "produzir"
+                  currentDomain === "harmonizar"
                     ? "bg-purple-600 text-white shadow-lg shadow-purple-950/30"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 <ScanLine className="h-3.5 w-3.5" />
-                Produzir
+                Harmonizar
               </button>
             </div>
           </div>
@@ -121,8 +121,8 @@ export default function SuiteApp() {
           </div>
         )}
 
-        {/* Produzir: Dashboard completo */}
-        {currentDomain === "produzir" && (
+        {/* Harmonizar: caminhos harmônicos para a melodia */}
+        {currentDomain === "harmonizar" && (
           <div className="animate-scale-up">
             <HarmonicSpaceExplorer onNavigateToBuilder={() => setCurrentDomain("escrever")} />
           </div>

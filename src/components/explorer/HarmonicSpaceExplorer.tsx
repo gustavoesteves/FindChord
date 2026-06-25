@@ -106,10 +106,10 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
       headerContent={
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-black text-white">Produzir (Rearmonização)</h2>
+            <h2 className="text-xl font-black text-white">Harmonizar</h2>
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-400">
-                Propostas estruturais geradas a partir da melodia.
+                Caminhos de harmonização possíveis para a melodia selecionada.
               </span>
               {phraseContext && (
                 <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4 text-xs font-mono text-zinc-300">
@@ -173,7 +173,10 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
             <div key={prop.id} className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Estratégia de harmonização</span>
+                    <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
+                  </div>
                   <button
                     onClick={() => {
                       const allChords = prop.measures.flatMap(m => m.chords);
@@ -215,11 +218,10 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
                     ))}
                   </div>
 
-                  {/* Motives (F22.1) */}
-                  {prop.detectedMotives && prop.detectedMotives.length > 0 && (
+                  {(prop.explanation.length > 0 || prop.detectedMotives.length > 0) && (
                     <div className="mt-3 pt-3 border-t border-zinc-800/50 flex flex-col gap-1">
-                      <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Por que esta ideia?</span>
-                      {prop.detectedMotives.map((motive, idx) => (
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Por que funciona?</span>
+                      {[...prop.explanation, ...prop.detectedMotives].map((motive, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-xs text-indigo-300/80">
                           <span className="text-indigo-400">✓</span> {motive}
                         </div>
@@ -238,7 +240,7 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition cursor-pointer"
               >
-                {isExpanded ? "Mostrar Menos" : `Mostrar Mais Ideias (+${proposals.length - 5})`}
+                {isExpanded ? "Mostrar Menos" : `Mostrar Mais Harmonizações (+${proposals.length - 5})`}
               </button>
             </div>
           )}

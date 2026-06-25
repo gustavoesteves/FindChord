@@ -50,6 +50,18 @@ function softplus(x: number): number {
   return Math.log1p(Math.exp(x));
 }
 
+function gaussian(distance: number, sigma: number): number {
+  return Math.exp(-(distance * distance) / (2 * sigma * sigma));
+}
+
+function recentStrength(age: number, tauRecent: number): number {
+  return Math.exp(-age / tauRecent);
+}
+
+function oldStrength(age: number, tauOld: number): number {
+  return 1 - Math.exp(-age / tauOld);
+}
+
 // 1. E_func (Topological Distance in Subspace 1 with Softplus Barrier)
 export const functionalEnergy: EnergyField = {
   id: "functional",
@@ -113,6 +125,33 @@ export const topologicalEnergy: EnergyField = {
     const epsilon = 1e-6;
     // Se a variância total for próxima de zero, a penalidade explode
     return -Math.log(trace + epsilon);
+  }
+};
+
+// 5. E_temporal (Non-local territorial memory inside the active functional basin)
+export const temporalEnergy: EnergyField = {
+  id: "temporal",
+  evaluate(state: LatentState, probe: Float32Array, ctx: EvaluationContext): number {
+    const centroids = state.temporalMemory[ctx.functionIntent];
+    if (!centroids || centroids.length === 0) return 0;
+
+    const penaltyWeight = 0.04;
+    const attractionWeight = 0.025;
+    const sigmaRecent = 0.65;
+    const sigmaOld = 1.1;
+    const tauRecent = 12;
+    const tauOld = 96;
+
+    let energy = 0;
+    for (const centroid of centroids) {
+      const age = Math.max(0, ctx.tick - centroid.lastVisitedTick);
+      const d = euclideanDist(probe, centroid.position, 0, 0, LATENT_DIM);
+      const revisitPenalty = penaltyWeight * centroid.weight * recentStrength(age, tauRecent) * gaussian(d, sigmaRecent);
+      const longArcAttraction = attractionWeight * centroid.weight * oldStrength(age, tauOld) * gaussian(d, sigmaOld);
+      energy += revisitPenalty - longArcAttraction;
+    }
+
+    return energy / centroids.length;
   }
 };
 

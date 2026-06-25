@@ -9,6 +9,7 @@ import type { GravityField } from "./fields/GravityField";
 import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
 import { ContrapuntalGravityField } from "./fields/ContrapuntalGravityField";
+import { StrategyGuidedHarmonizer } from "../strategies/StrategyGuidedHarmonizer";
 
 export class GravityFieldManager {
   private static fields: GravityField[] = [
@@ -22,7 +23,7 @@ export class GravityFieldManager {
     phraseContext: PhraseContext
   ): ReharmonizationProposal[] {
     
-    let allProposals: ReharmonizationProposal[] = [];
+    let allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     let pIdx = 1;
 
     for (const field of this.fields) {
@@ -82,7 +83,7 @@ export class GravityFieldManager {
 
             allProposals.push({
               id: `prop_${pIdx}`,
-              name: `Ideia — ${field.name}`,
+              name: `Estratégia — ${field.name}`,
               measures,
               explanation: seed.explanation, 
               bassLine: bestPath.bassLine,

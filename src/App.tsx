@@ -7,7 +7,7 @@ import TuningSettings from "./components/TuningSettings";
 import { musescoreAdapter } from "./utils/musescoreAdapter";
 import type { ConnectionStatus } from "./utils/musescoreAdapter";
 
-type MainDomain = "escrever" | "produzir";
+type MainDomain = "escrever" | "harmonizar";
 
 export default function App() {
   const [activeDomain, setActiveDomain] = useState<MainDomain>("escrever");
@@ -98,16 +98,16 @@ export default function App() {
               ESCREVER
             </button>
             <button
-              id="domain-produzir"
-              onClick={() => setActiveDomain("produzir")}
+              id="domain-harmonizar"
+              onClick={() => setActiveDomain("harmonizar")}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
-                activeDomain === "produzir"
+                activeDomain === "harmonizar"
                   ? "bg-purple-600 text-white shadow-md animate-scale-up"
                   : "text-zinc-500 hover:text-zinc-350"
               }`}
             >
               <Compass className="h-3.5 w-3.5" />
-              PRODUZIR
+              HARMONIZAR
             </button>
           </div>
         </div>
@@ -119,10 +119,10 @@ export default function App() {
           </div>
         )}
 
-        {/* ── PRODUZIR Domain ─────────────────────────── */}
-        {activeDomain === "produzir" && (
+        {/* ── HARMONIZAR Domain ─────────────────────────── */}
+        {activeDomain === "harmonizar" && (
           <div className="animate-scale-up">
-            <HarmonicSpaceExplorer />
+            <HarmonicSpaceExplorer onNavigateToBuilder={() => setActiveDomain("escrever")} />
           </div>
         )}
 
