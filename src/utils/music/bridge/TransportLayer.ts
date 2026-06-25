@@ -44,9 +44,11 @@ export class WebSocketTransport implements PluginTransport {
     this.setStatus("connecting");
     return new Promise((resolve) => {
       try {
-        this.socket = new WebSocket(this.endpoint);
+        const currentSocket = new WebSocket(this.endpoint);
+        this.socket = currentSocket;
 
-        this.socket.onopen = () => {
+        currentSocket.onopen = () => {
+          if (this.socket !== currentSocket) return;
           this.setStatus("connected");
           if (this.reconnectInterval) {
             clearInterval(this.reconnectInterval);
@@ -55,12 +57,14 @@ export class WebSocketTransport implements PluginTransport {
           resolve();
         };
 
-        this.socket.onclose = () => {
+        currentSocket.onclose = () => {
+          if (this.socket !== currentSocket) return;
           this.setStatus("disconnected");
           this.triggerAutoReconnect();
         };
 
-        this.socket.onmessage = (event) => {
+        currentSocket.onmessage = (event) => {
+          if (this.socket !== currentSocket) return;
           try {
             const payload = JSON.parse(event.data) as BridgeMessage;
             if (payload.protocolVersion) {
@@ -71,7 +75,8 @@ export class WebSocketTransport implements PluginTransport {
           }
         };
 
-        this.socket.onerror = () => {
+        currentSocket.onerror = () => {
+          if (this.socket !== currentSocket) return;
           this.setStatus("disconnected");
         };
       } catch (e) {
@@ -88,7 +93,12 @@ export class WebSocketTransport implements PluginTransport {
       this.reconnectInterval = null;
     }
     if (this.socket) {
-      this.socket.close();
+      if (this.socket.readyState === WebSocket.CONNECTING) {
+        const s = this.socket;
+        s.onopen = () => s.close();
+      } else {
+        this.socket.close();
+      }
       this.socket = null;
     }
     this.setStatus("disconnected");

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import BuilderMVP from "./components/BuilderMVP";
-import ScoreAnalysisDashboard from "./components/ScoreAnalysisDashboard";
+import HarmonicSpaceExplorer from "./components/explorer/HarmonicSpaceExplorer";
 import { musescoreAdapter } from "./utils/musescoreAdapter";
 import type { ConnectionStatus } from "./utils/musescoreAdapter";
 import {
@@ -124,7 +124,7 @@ export default function SuiteApp() {
         {/* Analisar Partitura: Dashboard completo */}
         {currentDomain === "analisar" && (
           <div className="animate-scale-up">
-            <ScoreAnalysisDashboard />
+            <HarmonicSpaceExplorer />
           </div>
         )}
 

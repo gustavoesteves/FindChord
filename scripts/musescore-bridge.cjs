@@ -217,10 +217,10 @@ const server = http.createServer((req, res) => {
 
           console.log(`[Find Chord Bridge] File Bridge: parsed ${parsedScore.harmonies.length} chords and ${parsedScore.notes.length} notes from MusicXML.`);
           
-          // Omit notes to save websocket payload size (F15.4.14 constraint)
+          // F19: We now need notes for the MelodyExtractor, so we send them.
           const snapshotForFrontend = {
             ...parsedScore,
-            notes: []
+            notes: parsedScore.notes
           };
 
           const scoreMessage = {

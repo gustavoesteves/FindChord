@@ -1,14 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BuilderMVP from "./components/BuilderMVP";
-import ScoreAnalysisDashboard from "./components/ScoreAnalysisDashboard";
+import HarmonicSpaceExplorer from "./components/explorer/HarmonicSpaceExplorer";
 import HarmonicNarrativeOverlayPanel from "./components/HarmonicNarrativeOverlayPanel";
-import { PenLine, Compass } from "lucide-react";
+import { PenLine, Compass, Link, Link2Off, RefreshCw } from "lucide-react";
 import TuningSettings from "./components/TuningSettings";
+import { musescoreAdapter } from "./utils/musescoreAdapter";
+import type { ConnectionStatus } from "./utils/musescoreAdapter";
 
 type MainDomain = "escrever" | "produzir";
 
 export default function App() {
   const [activeDomain, setActiveDomain] = useState<MainDomain>("escrever");
+  const [connStatus, setConnStatus] = useState<ConnectionStatus>("disconnected");
+
+  useEffect(() => {
+    musescoreAdapter.connect();
+    const unsubscribe = musescoreAdapter.subscribe((status) => {
+      setConnStatus(status);
+    });
+    return () => {
+      unsubscribe();
+      musescoreAdapter.disconnect();
+    };
+  }, []);
+
+  const handleReconnect = () => {
+    musescoreAdapter.connect();
+  };
 
   return (
     <div className="min-h-screen bg-stage-lights flex flex-col transition-colors duration-300">
@@ -27,7 +45,39 @@ export default function App() {
             </p>
           </div>
 
-          <div className="hidden sm:flex z-10 ml-auto">
+          <div className="hidden sm:flex z-10 ml-auto items-center gap-4">
+            {/* MuseScore connection status */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950/60 rounded-xl border border-zinc-850 text-xs font-semibold text-zinc-300">
+              {connStatus === "connected" && (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <Link className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="text-[10px] uppercase font-black text-emerald-400 tracking-wider">MuseScore Conectado</span>
+                </>
+              )}
+              {connStatus === "connecting" && (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                  <RefreshCw className="h-3.5 w-3.5 text-amber-400 animate-spin" />
+                  <span className="text-[10px] uppercase font-black text-amber-400 tracking-wider">Conectando...</span>
+                </>
+              )}
+              {connStatus === "disconnected" && (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-zinc-650" />
+                  <Link2Off className="h-3.5 w-3.5 text-zinc-500" />
+                  <span className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">MuseScore Offline</span>
+                  <button
+                    onClick={handleReconnect}
+                    className="ml-1.5 p-1 bg-zinc-900 hover:bg-zinc-800 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+                    title="Forçar Reconexão"
+                  >
+                    <RefreshCw className="h-2.5 w-2.5" />
+                  </button>
+                </>
+              )}
+            </div>
+            
             <TuningSettings />
           </div>
         </div>
@@ -72,7 +122,7 @@ export default function App() {
         {/* ── PRODUZIR Domain ─────────────────────────── */}
         {activeDomain === "produzir" && (
           <div className="animate-scale-up">
-            <ScoreAnalysisDashboard />
+            <HarmonicSpaceExplorer />
           </div>
         )}
 

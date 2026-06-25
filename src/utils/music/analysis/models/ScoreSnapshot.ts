@@ -19,10 +19,24 @@ export interface ScoreSection {
   endChordIndex?: number;
 }
 
+export interface ScoreNoteEvent {
+  id: string;
+  step: string;
+  alter: number;
+  octave: number;
+  voice: number;
+  staff: number;
+  measure: number;
+  tickStart: number;
+  tickEnd: number;
+  durationTicks: number;
+}
+
 export interface ScoreSnapshot {
   timestamp: number;
   harmonies: ScoreHarmonyEvent[];
   sections?: ScoreSection[];
+  notes?: ScoreNoteEvent[];
   metadata: {
     title?: string;
     composer?: string;
