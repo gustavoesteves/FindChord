@@ -8,7 +8,7 @@ export class NarrativeWorldGenerator {
   public static generateWorlds(anchors: MelodicAnchor[], tonalCenter?: TonalCenter): NarrativeWorld[] {
     if (anchors.length === 0) return [];
 
-    // F22: Horizontal Generation
+    // F22.1: Horizontal Generation (Pathway = Bass + Melody + Chords)
     const pathways = HorizontalHarmonyEngine.generatePathways(anchors, tonalCenter);
 
     const worlds: NarrativeWorld[] = [];
@@ -23,8 +23,8 @@ export class NarrativeWorldGenerator {
         modalAmbiguity: 0
       };
 
-      for (let i = 0; i < pathway.states.length; i++) {
-        const state = pathway.states[i];
+      for (let i = 0; i < pathway.harmonyEvents.length; i++) {
+        const state = pathway.harmonyEvents[i];
         const anchor = anchors[i];
 
         events.push({
@@ -43,7 +43,7 @@ export class NarrativeWorldGenerator {
       }
 
       // Normalize profile
-      const total = pathway.states.length;
+      const total = pathway.harmonyEvents.length;
       if (total > 0) {
         profile.diatonicStability /= total;
         profile.chromaticDisruption /= total;
@@ -53,10 +53,12 @@ export class NarrativeWorldGenerator {
 
       worlds.push({
         id: `world_${worldIdx}`,
-        coherenceScore: pathway.voiceLeadingScore, // F22: Score is now purely horizontal/voice-leading based
+        coherenceScore: pathway.metrics.totalScore,
         events,
         structuralProfile: profile,
-        structuralMotives: Array.from(new Set(pathway.motives)) // Remove duplicates
+        bassLine: pathway.bassLine,
+        metrics: pathway.metrics,
+        detectedMotives: pathway.detectedMotives
       });
 
       worldIdx++;

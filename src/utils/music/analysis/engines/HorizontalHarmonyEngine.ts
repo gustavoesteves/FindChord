@@ -4,18 +4,27 @@ import { ChordSpelling } from "./ChordSpelling";
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import type { TrajectoryInterpretation } from "../models/MelodicInterpretation";
 
+export const MotiveTag = {
+  CHROMATIC_ASCENT: "Aproximação Cromática Ascendente",
+  CHROMATIC_DESCENT: "Linha Cromática Descendente",
+  CYCLE_OF_FIFTHS: "Ciclo de Quintas",
+  PEDAL_POINT: "Pedal Harmônico",
+  INNER_VOICE_LINE: "Movimento de Voz Interna",
+  SEQUENTIAL_PATTERN: "Padrão Sequencial"
+} as const;
+
+export type MotiveTag = typeof MotiveTag[keyof typeof MotiveTag];
+
 export interface StructuralMotive {
   id: string;
-  name: string;
-  description: string;
+  tag: MotiveTag;
   match(bassNotes: string[]): boolean;
 }
 
 export const MotiveLibrary: StructuralMotive[] = [
   {
     id: "CHROMATIC_DESC",
-    name: "Linha Cromática Descendente",
-    description: "Baixo desce em semitons",
+    tag: MotiveTag.CHROMATIC_DESCENT,
     match: (bassNotes) => {
       if (bassNotes.length < 3) return false;
       let count = 0;
@@ -28,8 +37,7 @@ export const MotiveLibrary: StructuralMotive[] = [
   },
   {
     id: "CHROMATIC_ASC",
-    name: "Linha Cromática Ascendente",
-    description: "Baixo sobe em semitons",
+    tag: MotiveTag.CHROMATIC_ASCENT,
     match: (bassNotes) => {
       if (bassNotes.length < 3) return false;
       let count = 0;
@@ -42,8 +50,7 @@ export const MotiveLibrary: StructuralMotive[] = [
   },
   {
     id: "CIRCLE_OF_FIFTHS",
-    name: "Ciclo de Quintas",
-    description: "Baixo salta em quartas justas (resolução forte)",
+    tag: MotiveTag.CYCLE_OF_FIFTHS,
     match: (bassNotes) => {
       if (bassNotes.length < 2) return false;
       let count = 0;
@@ -56,8 +63,7 @@ export const MotiveLibrary: StructuralMotive[] = [
   },
   {
     id: "PEDAL_POINT",
-    name: "Pedal Harmônico",
-    description: "Nota de baixo se mantém constante enquanto as vozes movem",
+    tag: MotiveTag.PEDAL_POINT,
     match: (bassNotes) => {
       if (bassNotes.length < 2) return false;
       let count = 0;
@@ -69,103 +75,158 @@ export const MotiveLibrary: StructuralMotive[] = [
   }
 ];
 
-export interface HarmonizedState {
+export interface PathwayMetrics {
+  smoothness: number;
+  commonToneRetention: number;
+  chromaticMotion: number;
+  bassCoherence: number;
+  archetypeStrength: number;
+  totalScore: number;
+}
+
+export interface ChordEvent {
   chord: string;
   bass: string;
   melody: string;
   interpretation: TrajectoryInterpretation;
 }
 
-export interface HorizontalPathway {
-  states: HarmonizedState[];
-  motives: string[];
-  voiceLeadingScore: number;
+export interface HarmonicPathway {
+  bassLine: string[];
+  melodyLine: string[];
+  harmonyEvents: ChordEvent[];
+  metrics: PathwayMetrics;
+  detectedMotives: MotiveTag[];
 }
 
 export class HorizontalHarmonyEngine {
 
-  public static generatePathways(anchors: MelodicAnchor[], tonalCenter?: any): HorizontalPathway[] {
+  public static generatePathways(anchors: MelodicAnchor[], tonalCenter?: any): HarmonicPathway[] {
     if (anchors.length === 0) return [];
 
     const optionsPerAnchor = anchors.map(anchor => 
       MelodicInterpretationEngine.getInterpretations(anchor.pitch, tonalCenter)
     );
 
-    let currentPaths: HorizontalPathway[] = optionsPerAnchor[0].map(interp => ({
-      states: [{
-        chord: interp.selectedMeaning.impliedChord,
-        bass: Chord.get(interp.selectedMeaning.impliedChord).tonic || "C",
-        melody: interp.anchorPitch,
-        interpretation: interp
-      }],
-      motives: [],
-      voiceLeadingScore: 0
-    }));
+    let currentPaths: HarmonicPathway[] = optionsPerAnchor[0].map(interp => {
+      const chord = interp.selectedMeaning.impliedChord;
+      const bass = Chord.get(chord).tonic || "C";
+      return {
+        bassLine: [bass],
+        melodyLine: [interp.anchorPitch],
+        harmonyEvents: [{
+          chord: chord,
+          bass: bass,
+          melody: interp.anchorPitch,
+          interpretation: interp
+        }],
+        detectedMotives: [],
+        metrics: {
+          smoothness: 0,
+          commonToneRetention: 0,
+          chromaticMotion: 0,
+          bassCoherence: 0,
+          archetypeStrength: 0,
+          totalScore: 0
+        }
+      };
+    });
 
     const BEAM_WIDTH = 128;
 
     for (let i = 1; i < optionsPerAnchor.length; i++) {
       const nextOptions = optionsPerAnchor[i];
-      let newPaths: HorizontalPathway[] = [];
+      let newPaths: HarmonicPathway[] = [];
 
       for (const path of currentPaths) {
-        const lastState = path.states[path.states.length - 1];
+        const lastState = path.harmonyEvents[path.harmonyEvents.length - 1];
 
         for (const nextInterp of nextOptions) {
           const nextChord = nextInterp.selectedMeaning.impliedChord;
           const nextBass = Chord.get(nextChord).tonic || "C";
           
-          const vlScore = this.evaluateVoiceLeading(lastState.chord, nextChord);
+          const rawMetrics = this.evaluateVoiceLeadingMetrics(lastState.chord, nextChord);
+
+          const newMetrics: PathwayMetrics = {
+            smoothness: path.metrics.smoothness + rawMetrics.smoothness,
+            commonToneRetention: path.metrics.commonToneRetention + rawMetrics.commonTones,
+            chromaticMotion: path.metrics.chromaticMotion + rawMetrics.chromaticApproaches,
+            bassCoherence: path.metrics.bassCoherence, // evaluated at the end
+            archetypeStrength: 0, // evaluated at the end
+            totalScore: 0
+          };
 
           newPaths.push({
-            states: [...path.states, {
+            bassLine: [...path.bassLine, nextBass],
+            melodyLine: [...path.melodyLine, nextInterp.anchorPitch],
+            harmonyEvents: [...path.harmonyEvents, {
               chord: nextChord,
               bass: nextBass,
               melody: nextInterp.anchorPitch,
               interpretation: nextInterp
             }],
-            motives: [],
-            voiceLeadingScore: path.voiceLeadingScore + vlScore
+            detectedMotives: [],
+            metrics: newMetrics
           });
         }
       }
 
-      newPaths.sort((a, b) => b.voiceLeadingScore - a.voiceLeadingScore);
+      // Quick prune based on partial totalScore approximation
+      newPaths.forEach(p => p.metrics.totalScore = this.calculateTotalScore(p.metrics));
+      newPaths.sort((a, b) => b.metrics.totalScore - a.metrics.totalScore);
       currentPaths = newPaths.slice(0, BEAM_WIDTH);
     }
 
     for (const path of currentPaths) {
-      const bassLine = path.states.map(s => s.bass);
-      const matchedMotives: string[] = [];
+      const matchedMotives: MotiveTag[] = [];
 
       for (const motive of MotiveLibrary) {
-        if (motive.match(bassLine)) {
-          matchedMotives.push(motive.name);
-          path.voiceLeadingScore += 3.0; 
+        if (motive.match(path.bassLine)) {
+          matchedMotives.push(motive.tag);
+          path.metrics.archetypeStrength += 1.0;
         }
       }
 
-      if (bassLine.length >= 2) {
-        const lastDist = Interval.semitones(Interval.distance(bassLine[bassLine.length-2] + "4", bassLine[bassLine.length-1] + "4"))! % 12;
+      if (path.bassLine.length >= 2) {
+        const lastDist = Interval.semitones(Interval.distance(path.bassLine[path.bassLine.length-2] + "4", path.bassLine[path.bassLine.length-1] + "4"))! % 12;
         if (lastDist === -1 || lastDist === 11 || lastDist === 1 || lastDist === -11) {
-          matchedMotives.push("Aproximação Cromática na Resolução");
-          path.voiceLeadingScore += 2.0;
+          matchedMotives.push(MotiveTag.CHROMATIC_DESCENT); // close enough for UI feedback
+          path.metrics.archetypeStrength += 0.5;
         }
       }
 
-      path.motives = matchedMotives;
+      // Simple bass coherence: penalize crazy jumps
+      let bassJumps = 0;
+      for (let j = 1; j < path.bassLine.length; j++) {
+        const dist = Math.abs(Interval.semitones(Interval.distance(path.bassLine[j-1] + "4", path.bassLine[j] + "4"))!) % 12;
+        if (dist > 4 && dist !== 5 && dist !== 7) bassJumps++;
+      }
+      path.metrics.bassCoherence = 1.0 - (bassJumps * 0.2);
+
+      path.detectedMotives = Array.from(new Set(matchedMotives));
+      path.metrics.totalScore = this.calculateTotalScore(path.metrics);
     }
 
-    currentPaths.sort((a, b) => b.voiceLeadingScore - a.voiceLeadingScore);
+    currentPaths.sort((a, b) => b.metrics.totalScore - a.metrics.totalScore);
 
     return currentPaths;
   }
 
-  public static evaluateVoiceLeading(chordA: string, chordB: string): number {
+  private static calculateTotalScore(m: PathwayMetrics): number {
+    return (m.smoothness * 0.35) +
+           (m.commonToneRetention * 0.20) +
+           (m.chromaticMotion * 0.15) +
+           (m.bassCoherence * 0.20) +
+           (m.archetypeStrength * 0.10);
+  }
+
+  private static evaluateVoiceLeadingMetrics(chordA: string, chordB: string) {
     const pitchesA = ChordSpelling.getPitches(chordA);
     const pitchesB = ChordSpelling.getPitches(chordB);
 
-    if (pitchesA.length === 0 || pitchesB.length === 0) return 0;
+    if (pitchesA.length === 0 || pitchesB.length === 0) {
+      return { smoothness: 0, commonTones: 0, chromaticApproaches: 0 };
+    }
 
     let commonTones = 0;
     let chromaticApproaches = 0;
@@ -183,15 +244,18 @@ export class HorizontalHarmonyEngine {
           if (dist > 6) dist = 12 - dist;
           if (dist < minDelta) minDelta = dist;
         }
-
         totalMovement += minDelta;
-
-        if (minDelta === 1) {
-          chromaticApproaches++;
-        }
+        if (minDelta === 1) chromaticApproaches++;
       }
     }
 
-    return (commonTones * 3.0) + (chromaticApproaches * 2.0) - (totalMovement * 0.5);
+    // Normalized smoothness: 0 movement is 1.0, 10 movement is 0.0
+    const smoothness = Math.max(0, 1.0 - (totalMovement / 10));
+
+    return {
+      smoothness,
+      commonTones,
+      chromaticApproaches
+    };
   }
 }

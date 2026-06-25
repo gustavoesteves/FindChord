@@ -143,32 +143,49 @@ export default function HarmonicSpaceExplorer() {
             <div key={prop.id} className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
               <div className="flex flex-col gap-1">
                 <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
-                <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mt-2">
-                  {prop.measures.map((measure, mIdx) => (
-                    <div key={mIdx} className="flex items-center gap-2 bg-zinc-950 px-3 py-1.5 rounded-md border border-zinc-800/80">
-                      <span className="text-[10px] text-zinc-600 font-bold uppercase mr-1">M{measure.measureIndex}</span>
-                      <span className="text-zinc-600 font-light">|</span>
-                      {measure.chords.map((chord, cIdx) => (
-                        <span key={cIdx} className="text-sm font-bold text-zinc-100">
-                          {chord}
-                        </span>
-                      ))}
-                      <span className="text-zinc-600 font-light">|</span>
+                <div className="flex gap-4 items-start">
+                
+                <div className="flex-1">
+                  
+                  {/* Explicit Bass Line (F22.1) */}
+                  {prop.bassLine && prop.bassLine.length > 0 && (
+                    <div className="mb-3">
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 mr-2">Baixo:</span>
+                      <span className="text-sm font-mono text-zinc-300">
+                        {prop.bassLine.join(" → ")}
+                      </span>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Chords (Measures) */}
+                  <div className="flex flex-wrap gap-2 items-center text-sm font-medium">
+                    <span className="text-zinc-600 font-light">|</span>
+                    {prop.measures.map(m => (
+                      <div key={m.measureIndex} className="flex gap-2 items-center">
+                        {m.chords.map((chord, i) => (
+                          <span key={i} className="text-white bg-zinc-800 px-2 py-1 rounded">
+                            {chord}
+                          </span>
+                        ))}
+                        <span className="text-zinc-600 font-light">|</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Motives (F22.1) */}
+                  {prop.detectedMotives && prop.detectedMotives.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-zinc-800/50 flex flex-col gap-1">
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Por que esta ideia?</span>
+                      {prop.detectedMotives.map((motive, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-indigo-300/80">
+                          <span className="text-indigo-400">✓</span> {motive}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  </div>
                 </div>
               </div>
-
-              {prop.structuralMotives && prop.structuralMotives.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-zinc-800/50 flex flex-col gap-1">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Por que esta ideia?</span>
-                  {prop.structuralMotives.map((motive, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-indigo-300/80">
-                      <span className="text-indigo-400">✓</span> {motive}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
 

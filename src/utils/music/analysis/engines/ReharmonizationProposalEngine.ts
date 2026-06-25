@@ -1,4 +1,5 @@
 import type { DivergentIdea } from "./HarmonicDivergenceEngine";
+import type { MotiveTag } from "./HorizontalHarmonyEngine";
 
 export interface ReharmonizationMeasure {
   measureIndex: number;
@@ -10,7 +11,8 @@ export interface ReharmonizationProposal {
   name: string;
   measures: ReharmonizationMeasure[];
   explanation: string;
-  structuralMotives: string[];
+  bassLine: string[];
+  detectedMotives: MotiveTag[];
 }
 
 export class ReharmonizationProposalEngine {
@@ -40,7 +42,8 @@ export class ReharmonizationProposalEngine {
         name: `IDEIA ${pIdx}: ${idea.archetype}`,
         measures,
         explanation: idea.signature,
-        structuralMotives: idea.structuralMotives || []
+        bassLine: idea.bassLine || [],
+        detectedMotives: idea.detectedMotives || []
       });
 
       pIdx++;

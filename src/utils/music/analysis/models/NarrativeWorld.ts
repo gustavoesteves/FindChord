@@ -1,4 +1,5 @@
 import type { TrajectoryInterpretation } from "./MelodicInterpretation";
+import type { PathwayMetrics, MotiveTag } from "../engines/HorizontalHarmonyEngine";
 
 export interface NarrativeEvent {
   measureIndex: number;
@@ -27,7 +28,9 @@ export interface NarrativeWorld {
   isStructuralRupture?: boolean;
   ruptureDescription?: string;
   
-  structuralMotives?: string[]; // F22: The horizontal motives
+  bassLine: string[]; // F22.1
+  metrics: PathwayMetrics; // F22.1
+  detectedMotives: MotiveTag[]; // F22.1
 }
 
 export type SoftWorld = NarrativeWorld;

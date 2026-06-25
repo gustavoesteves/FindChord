@@ -1,12 +1,14 @@
 import type { SoftWorld } from "../models/NarrativeWorld";
 import { HarmonicArchetypeLibrary } from "./HarmonicArchetypeLibrary";
+import type { MotiveTag } from "./HorizontalHarmonyEngine";
 
 export interface DivergentIdea {
   signature: string;
   archetype: string;
   worlds: SoftWorld[];
   primaryWorld: SoftWorld;
-  structuralMotives: string[];
+  bassLine: string[];
+  detectedMotives: MotiveTag[];
 }
 
 export class HarmonicDivergenceEngine {
@@ -43,7 +45,8 @@ export class HarmonicDivergenceEngine {
         archetype: mainArchetype,
         worlds: familyWorlds,
         primaryWorld: familyWorlds[0],
-        structuralMotives: familyWorlds[0].structuralMotives || []
+        bassLine: familyWorlds[0].bassLine || [],
+        detectedMotives: familyWorlds[0].detectedMotives || []
       });
     }
 
