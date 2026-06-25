@@ -1,22 +1,25 @@
 import type { SoftWorld } from "../models/NarrativeWorld";
+import { HarmonicArchetypeLibrary } from "./HarmonicArchetypeLibrary";
 
 export interface DivergentIdea {
   signature: string;
+  archetype: string;
   worlds: SoftWorld[];
   primaryWorld: SoftWorld;
 }
 
 export class HarmonicDivergenceEngine {
   /**
-   * Identifies truly distinct musical ideas by grouping worlds with identical functional signatures.
+   * Identifies truly distinct musical ideas by grouping worlds with identical archetype signatures.
    */
   public static extractDivergentIdeas(worlds: SoftWorld[]): DivergentIdea[] {
     const families = new Map<string, SoftWorld[]>();
 
     for (const world of worlds) {
-      // Functional signature: the sequence of narrative behaviors
-      // e.g. "StableTonic -> SubdominantArrival -> AuthenticCadence"
-      const signature = world.events.map(e => e.interpretation.narrativeType).join(" -> ");
+      // Functional signature is now the sequence of Archetypes, not raw narrative types
+      const signature = world.events
+        .map(e => HarmonicArchetypeLibrary.classifyNarrativeType(e.interpretation.narrativeType))
+        .join(" -> ");
       
       if (!families.has(signature)) {
         families.set(signature, []);
@@ -27,11 +30,16 @@ export class HarmonicDivergenceEngine {
     const divergentIdeas: DivergentIdea[] = [];
 
     for (const [signature, familyWorlds] of families.entries()) {
-      // Sort within family to find the most coherent representative
+      // Sort within family to find the most coherent representative (best voice leading/score)
       familyWorlds.sort((a, b) => b.coherenceScore - a.coherenceScore);
       
+      // Determine the dominant archetype name for this specific family
+      const rawNarratives = familyWorlds[0].events.map(e => e.interpretation.narrativeType);
+      const mainArchetype = HarmonicArchetypeLibrary.getProgressionArchetype(rawNarratives);
+
       divergentIdeas.push({
         signature,
+        archetype: mainArchetype,
         worlds: familyWorlds,
         primaryWorld: familyWorlds[0]
       });

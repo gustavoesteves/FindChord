@@ -1,8 +1,8 @@
 import type { NarrativeWorld, NarrativeEvent, StructuralProfile } from "../models/NarrativeWorld";
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import { VoiceLeadingPrimitiveEngine } from "./VoiceLeadingPrimitiveEngine";
-
 import type { MelodicAnchor } from "../models/ProjectionSet";
+import type { TonalCenter } from "./LocalTonalCenterEngine";
 
 export class NarrativeWorldGenerator {
   
@@ -10,11 +10,11 @@ export class NarrativeWorldGenerator {
    * Generates competing narrative worlds based on a sequence of melodic anchors.
    * Uses Probabilistic Pruning (Beam Search) to prevent combinatorial explosion.
    */
-  public static generateWorlds(anchors: MelodicAnchor[]): NarrativeWorld[] {
+  public static generateWorlds(anchors: MelodicAnchor[], tonalCenter?: TonalCenter): NarrativeWorld[] {
     if (anchors.length === 0) return [];
 
     const optionsPerAnchor = anchors.map(anchor => 
-      MelodicInterpretationEngine.getInterpretations(anchor.pitch)
+      MelodicInterpretationEngine.getInterpretations(anchor.pitch, tonalCenter)
     );
 
     const BEAM_WIDTH = 64; // Max viable timelines carried forward

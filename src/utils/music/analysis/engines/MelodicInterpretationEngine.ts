@@ -1,24 +1,57 @@
 import type { TrajectoryInterpretation } from "../models/MelodicInterpretation";
+import type { TonalCenter } from "./LocalTonalCenterEngine";
+import { Note, Chord, Interval } from "tonal";
 
 export class MelodicInterpretationEngine {
   
-  // F18 Expanded Dictionary: 
-  // Maps a Pitch Class to an array of possible meanings (Chord + Behavior).
-  // This feeds the F22 Voice Leading Engine with rich chromatic possibilities.
-  public static getInterpretations(pitchClass: string): TrajectoryInterpretation[] {
+  public static getInterpretations(pitchClass: string, tonalCenter?: TonalCenter): TrajectoryInterpretation[] {
+    const tonic = tonalCenter?.tonic || "C";
+    
+    // Calculate how far the current tonic is from C
+    const upInterval = Interval.distance("C4", tonic + (Note.get(tonic).chroma! < Note.get("C").chroma! ? "5" : "4"));
+    const downInterval = Interval.invert(upInterval);
+
+    // To find the relative pitch in C, transpose the input pitch DOWN by the interval
+    let relativePitch = Note.transpose(pitchClass + "4", downInterval);
+    // strip the octave
+    relativePitch = Note.get(relativePitch).pc;
+
+    const rawInterpretations = this.getCInterpretations(relativePitch);
+
+    // Transpose the implied chords UP to the target tonic
+    return rawInterpretations.map(raw => {
+      let transposedChord = raw.selectedMeaning.impliedChord;
+      if (tonic !== "C") {
+        const tokens = Chord.tokenize(transposedChord);
+        const newRoot = Note.transpose(tokens[0] + "4", upInterval);
+        transposedChord = Note.get(newRoot).pc + tokens[1];
+      }
+
+      return {
+        ...raw,
+        anchorPitch: pitchClass,
+        selectedMeaning: {
+          ...raw.selectedMeaning,
+          anchorPitch: pitchClass,
+          impliedChord: transposedChord
+        }
+      };
+    });
+  }
+
+  private static getCInterpretations(pitchClass: string): TrajectoryInterpretation[] {
     const interpretations: TrajectoryInterpretation[] = [];
 
     const add = (meaningId: string, label: string, behavior: "DIATONIC" | "DOMINANT" | "MODAL" | "CHROMATIC", impliedChord: string, narrativeType: string) => {
       interpretations.push({
         anchorPitch: pitchClass,
         selectedMeaning: { anchorPitch: pitchClass, meaningId, meaningLabel: label, behavior, impliedChord },
-        antecedentOptions: [], // Left loose for F22 to evaluate via voice leading instead of hard rules
+        antecedentOptions: [], 
         consequentOptions: [],
         narrativeType
       });
     };
 
-    // Normalize enharmonics to simplify matching
     const pc = pitchClass.replace('Cb', 'B').replace('Fb', 'E').replace('E#', 'F').replace('B#', 'C');
 
     if (pc === "C") {
@@ -135,7 +168,7 @@ export class MelodicInterpretationEngine {
     }
 
     if (interpretations.length === 0) {
-      add(`Generic_${pc}`, `Generic Diatonic (${pc})`, "DIATONIC", "Cmaj7", "StableTonic");
+      add(`Generic_${pc}`, `Generic Diatonic`, "DIATONIC", "Cmaj7", "StableTonic");
     }
 
     return interpretations;

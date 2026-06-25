@@ -5,6 +5,7 @@ import type { MelodicAnchor } from "../../utils/music/analysis/models/Projection
 import { StandardLayout } from "../ui/StandardLayout";
 import { Music2 } from "lucide-react";
 import { musescoreAdapter, type ConnectionStatus } from "../../utils/musescoreAdapter";
+import type { ScoreSection } from "../../utils/music/analysis/models/ScoreSnapshot";
 
 // --- Main Container ---
 
@@ -76,7 +77,12 @@ export default function HarmonicSpaceExplorer() {
     return anchors.slice(0, 32);
   }, [scoreSnapshot, activeSection]);
 
-  const { families } = useProjectionController({ melodyAnchors });
+  const { proposals, tonalCenter } = useProjectionController({ 
+    melodyAnchors,
+    section: (activeSection as unknown as ScoreSection) || null,
+    allNotes: scoreSnapshot?.notes || [],
+    keySignature: scoreSnapshot?.metadata?.keySignature
+  });
 
   return (
     <StandardLayout
@@ -84,9 +90,16 @@ export default function HarmonicSpaceExplorer() {
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-black text-white">Produzir (Rearmonização)</h2>
-            <span className="text-xs text-zinc-400">
-              Propostas estruturais geradas a partir da melodia.
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-zinc-400">
+                Propostas estruturais geradas a partir da melodia.
+              </span>
+              {tonalCenter && (
+                <span className="px-2 py-0.5 bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 rounded text-[10px] font-bold uppercase">
+                  Centro Inferido: {tonalCenter.tonic} {tonalCenter.mode} (Conf: {(tonalCenter.confidence * 100).toFixed(0)}%)
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={handleSync}
@@ -124,39 +137,39 @@ export default function HarmonicSpaceExplorer() {
           </div>
         )}
 
-        {/* Families layer */}
-        <div className="flex flex-col gap-8">
-          {families.map(family => (
-            <div key={family.id} className="flex flex-col gap-4 border-t border-zinc-800/60 pt-6">
-              <h3 className="text-sm font-black text-zinc-300 uppercase tracking-widest">{family.name}</h3>
-              
-              <div className="flex flex-col gap-3">
-                {family.proposals.slice(0, 4).map((prop, idx) => ( 
-                  <div key={prop.id} className="flex flex-col gap-2 p-4 bg-zinc-900/20 border border-zinc-800/40 rounded-xl hover:bg-zinc-800/30 transition">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-black text-zinc-500 w-full">Proposta {idx + 1}</span>
-                      <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mt-1">
-                        {prop.measures.map((measure, mIdx) => (
-                          <div key={mIdx} className="flex items-center gap-2 bg-zinc-950 px-3 py-1.5 rounded-md border border-zinc-800/80">
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase mr-1">M{measure.measureIndex}</span>
-                            <span className="text-zinc-600 font-light">|</span>
-                            {measure.chords.map((chord, cIdx) => (
-                              <span key={cIdx} className="text-sm font-bold text-zinc-100">
-                                {chord}
-                              </span>
-                            ))}
-                            <span className="text-zinc-600 font-light">|</span>
-                          </div>
-                        ))}
-                      </div>
+        {/* Ideas layer */}
+        <div className="flex flex-col gap-6">
+          {proposals.slice(0, 5).map((prop) => ( 
+            <div key={prop.id} className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
+                <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mt-2">
+                  {prop.measures.map((measure, mIdx) => (
+                    <div key={mIdx} className="flex items-center gap-2 bg-zinc-950 px-3 py-1.5 rounded-md border border-zinc-800/80">
+                      <span className="text-[10px] text-zinc-600 font-bold uppercase mr-1">M{measure.measureIndex}</span>
+                      <span className="text-zinc-600 font-light">|</span>
+                      {measure.chords.map((chord, cIdx) => (
+                        <span key={cIdx} className="text-sm font-bold text-zinc-100">
+                          {chord}
+                        </span>
+                      ))}
+                      <span className="text-zinc-600 font-light">|</span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           ))}
 
-          {families.length === 0 && melodyAnchors.length > 0 && (
+          {proposals.length > 5 && (
+            <div className="w-full py-4 text-center">
+              <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition">
+                Mostrar Mais Ideias (+{proposals.length - 5})
+              </button>
+            </div>
+          )}
+
+          {proposals.length === 0 && melodyAnchors.length > 0 && (
             <div className="text-zinc-500 text-sm italic py-10 text-center">
               Avaliando possibilidades estruturais...
             </div>
