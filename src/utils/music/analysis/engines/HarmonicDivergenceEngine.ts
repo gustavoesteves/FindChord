@@ -6,6 +6,7 @@ export interface DivergentIdea {
   archetype: string;
   worlds: SoftWorld[];
   primaryWorld: SoftWorld;
+  structuralMotives: string[];
 }
 
 export class HarmonicDivergenceEngine {
@@ -41,7 +42,8 @@ export class HarmonicDivergenceEngine {
         signature,
         archetype: mainArchetype,
         worlds: familyWorlds,
-        primaryWorld: familyWorlds[0]
+        primaryWorld: familyWorlds[0],
+        structuralMotives: familyWorlds[0].structuralMotives || []
       });
     }
 

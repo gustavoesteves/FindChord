@@ -158,6 +158,17 @@ export default function HarmonicSpaceExplorer() {
                   ))}
                 </div>
               </div>
+
+              {prop.structuralMotives && prop.structuralMotives.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-zinc-800/50 flex flex-col gap-1">
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Por que esta ideia?</span>
+                  {prop.structuralMotives.map((motive, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-indigo-300/80">
+                      <span className="text-indigo-400">✓</span> {motive}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 

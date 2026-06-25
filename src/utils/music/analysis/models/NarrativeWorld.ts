@@ -16,20 +16,18 @@ export interface StructuralProfile {
 
 export interface NarrativeWorld {
   id: string;
-  structuralCategory: string; // The technically honest name
-  structuralProfile: StructuralProfile; // The behavioral vector
+  structuralCategory?: string; 
+  structuralProfile: StructuralProfile; 
   
-  // The sequence of events that make up this world
   events: NarrativeEvent[];
   
-  // Internal consistency metrics
-  coherenceScore: number; // 0.0 to 1.0 (1.0 = perfectly seamless gravity)
-  isViable: boolean; // Retained for type compatibility but true for F20 unless totally broken
+  coherenceScore: number; 
+  isViable?: boolean; 
   
-  // If true, this world represents a deliberate structural shift rather than continuous gravity
-  isStructuralRupture: boolean;
-  ruptureDescription?: string; // e.g., "Chromatic shift at measure 3"
+  isStructuralRupture?: boolean;
+  ruptureDescription?: string;
+  
+  structuralMotives?: string[]; // F22: The horizontal motives
 }
 
-// Alias for F20 conceptual shift (Soft Coherence over Hard Coherence)
 export type SoftWorld = NarrativeWorld;

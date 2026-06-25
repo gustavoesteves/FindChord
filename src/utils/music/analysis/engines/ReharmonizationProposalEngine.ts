@@ -10,6 +10,7 @@ export interface ReharmonizationProposal {
   name: string;
   measures: ReharmonizationMeasure[];
   explanation: string;
+  structuralMotives: string[];
 }
 
 export class ReharmonizationProposalEngine {
@@ -38,7 +39,8 @@ export class ReharmonizationProposalEngine {
         id: `prop_${pIdx}`,
         name: `IDEIA ${pIdx}: ${idea.archetype}`,
         measures,
-        explanation: idea.signature
+        explanation: idea.signature,
+        structuralMotives: idea.structuralMotives || []
       });
 
       pIdx++;
