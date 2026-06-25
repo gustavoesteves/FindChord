@@ -4,6 +4,7 @@ import type { ReharmonizationProposal, ReharmonizationMeasure } from "../models/
 import { ChordRealizationEngine } from "./ChordRealizationEngine";
 import { BassTrajectoryModel } from "./archetypes/BassTrajectoryModel";
 import { TemporalSlotAllocator } from "./TemporalSlotAllocator";
+import { HarmonicRegionResolver } from "./HarmonicRegionResolver";
 import type { GravityField } from "./fields/GravityField";
 import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
@@ -30,13 +31,6 @@ export class GravityFieldManager {
       const seeds = field.generateArchetypeSeeds(phraseContext);
 
       for (const seed of seeds) {
-        // 2. Compute Bass Trajectories based on Skeleton Length
-        const bassTrajectories = BassTrajectoryModel.realizeSeed(seed, anchors);
-
-        for (const bassLine of bassTrajectories) {
-          // 3. Allocate Temporal Slots using Harmonic Anchor Weighting
-          const slots = TemporalSlotAllocator.allocateSlots(bassLine, anchors, seed);
-
           // 4. Initialize the Musical Narrative State
           const initialState = {
             tonalAnchor: phraseContext.selectedCenter,
@@ -45,6 +39,25 @@ export class GravityFieldManager {
             tension: 0.0,
             memory: []
           };
+
+          // 4.1 F23.0 Tonal Gravity Map
+          const gravityMap = {
+            tonic: phraseContext.selectedCenter.tonic,
+            gravityStrength: { "I": 1.0, "IV": 0.7, "V": 0.8 },
+            inertia: 0.8 // high inertia = slower harmonic rhythm
+          };
+
+          // 4.2 F23.3 Harmonic Region Resolver
+          const form = HarmonicRegionResolver.resolve(anchors, seed, gravityMap, initialState);
+
+          // 3. Allocate Temporal Slots based on the Resolved Form
+          const slots = TemporalSlotAllocator.allocateSlots(form, anchors);
+
+          // 3.1 Realize Bass for the resolved regions
+          const bassLine = BassTrajectoryModel.realizeBassForSlots(slots, phraseContext.selectedCenter);
+          for (let i = 0; i < slots.length; i++) {
+            slots[i].bassNote = bassLine[i];
+          }
 
           // 5. Dual-Force Fusion Loop (Realization)
           const pathways = ChordRealizationEngine.realize(slots, phraseContext, seed, initialState);
@@ -80,7 +93,6 @@ export class GravityFieldManager {
             pIdx++;
           }
         }
-      }
     }
 
     return allProposals;
