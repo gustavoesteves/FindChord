@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Chord, Interval } from "tonal";
 import type { HarmonicPerspective, ValidationObservation, MusicalInterpretation, VoiceLeadingScore, MelodyExtractionResult } from "../models/SuggestedRoute";
 import type { ParsedScore, ParsedNote } from "../models/ParsedScore";

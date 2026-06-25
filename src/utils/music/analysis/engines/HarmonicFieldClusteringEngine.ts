@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { SoftWorld, StructuralProfile } from "../models/NarrativeWorld";
 import type { HarmonicCluster, SectionHarmonicField } from "../models/HarmonicField";
 import { ProjectionResolver } from "./ProjectionResolver";

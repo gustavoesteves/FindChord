@@ -175,11 +175,4 @@ export class NarrativeWorldGenerator {
     return "Mundo de Coerência Híbrida";
   }
 
-  // Utility to generate combinations
-  private static cartesianProduct<T>(arrays: T[][]): T[][] {
-    return arrays.reduce((a, b) =>
-      a.flatMap(d => b.map(e => [...d, e])),
-      [[]] as T[][]
-    );
-  }
 }

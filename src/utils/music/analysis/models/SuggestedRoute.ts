@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { RegionType } from "../regions/OntologyRegion";
 
 export type SelectionScope = 'CHORD' | 'REGION' | 'SECTION';

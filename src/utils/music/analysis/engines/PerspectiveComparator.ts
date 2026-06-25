@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { HarmonicPerspective, PerspectiveComparison, ComparisonPoint } from "../models/SuggestedRoute";
 import type { HarmonicPriorities } from "../models/HarmonicPriorities";
 

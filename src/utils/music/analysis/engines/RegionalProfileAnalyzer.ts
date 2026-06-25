@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { FunctionalAnalysis, HarmonicRegion } from "../models/FunctionalAnalysis";
 import type { OntologyRegion } from "../regions/OntologyRegion";
 

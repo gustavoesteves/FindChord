@@ -1,4 +1,4 @@
-import type { NarrativeWorld, StructuralProfile, NarrativeEvent } from "../models/NarrativeWorld";
+import type { NarrativeWorld, StructuralProfile } from "../models/NarrativeWorld";
 
 export interface TransitionMutation {
   measureIndex: number;

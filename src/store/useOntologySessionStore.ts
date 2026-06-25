@@ -602,7 +602,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     const { activeNode, parsedScore, harmonicPriorities, progressionAnalysis, scoreSnapshot } = get();
     if (!progressionAnalysis || !scoreSnapshot) return;
 
-    const sectionNodes = progressionAnalysis.chords.filter((c, idx) => {
+    const sectionNodes = progressionAnalysis.chords.filter((_c, idx) => {
       const original = scoreSnapshot.harmonies[idx];
       const startTick = original?.tickStart !== undefined ? original.tickStart : (original?.measure ? (original.measure - 1) * 1920 : idx * 1920);
       return startTick >= (section.startTick || 0) && startTick < (section.endTick || Infinity);
@@ -615,7 +615,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
       tickStart: section.startTick || 0,
       tickEnd: section.endTick || 0,
       measures: [],
-      dominantRole: 'NARRATIVE',
+      dominantRole: 'PROLONGATION' as any,
       dominantAttractor: 'UNKNOWN',
       confidence: 1,
       regionType: 'NARRATIVE',

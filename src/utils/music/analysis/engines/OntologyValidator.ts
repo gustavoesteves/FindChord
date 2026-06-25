@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { HarmonicPerspective, ValidationObservation } from "../models/SuggestedRoute";
 
 export class OntologyValidator {

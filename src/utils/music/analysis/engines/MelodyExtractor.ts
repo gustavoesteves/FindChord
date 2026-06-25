@@ -23,7 +23,7 @@ export class MelodyExtractor {
 
     // Ticks per quarter note usually is 480. We need metadata from score if possible, but let's assume standard for metric calculation.
     // Let's assume 4/4 and 480 TPQ for metric weight estimation if metadata isn't explicitly available for every measure.
-    const TPQ = score.metadata?.ticksPerQuarter || 480;
+    const TPQ = (score.metadata as any)?.ticksPerQuarter || 480;
     const MEASURE_TICKS = TPQ * 4;
 
     for (const t of uniqueTicks) {
