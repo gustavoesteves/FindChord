@@ -1,11 +1,10 @@
 import type { HarmonicFunction } from "./HSMKState";
-import { ExpansionIntent } from "./ExpansionIntent";
-import { 
+import type { ExpansionIntent } from "./ExpansionIntent";
+import type { 
   LatentState, 
-  EvaluationContext, 
-  LATENT_DIM, 
-  BUFFER_SIZE 
+  EvaluationContext
 } from "./LatentState";
+import { LATENT_DIM, BUFFER_SIZE } from "./LatentState";
 import { 
   collapseField, 
   decode, 

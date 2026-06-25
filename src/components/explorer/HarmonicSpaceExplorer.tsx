@@ -7,13 +7,22 @@ import { Music2 } from "lucide-react";
 import { musescoreAdapter, type ConnectionStatus } from "../../utils/musescoreAdapter";
 import type { ScoreSection } from "../../utils/music/analysis/models/ScoreSnapshot";
 
+import { useChordStore } from "../../store/useChordStore";
+import { ArrowRight } from "lucide-react";
+
+interface HarmonicSpaceExplorerProps {
+  onNavigateToBuilder?: () => void;
+}
+
 // --- Main Container ---
 
-export default function HarmonicSpaceExplorer() {
+export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicSpaceExplorerProps = {}) {
   const { scoreSnapshot, indexes } = useOntologySessionStore();
+  const setProgressionChords = useChordStore(s => s.setProgressionChords);
   const [connStatus, setConnStatus] = useState<ConnectionStatus>("disconnected");
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = musescoreAdapter.subscribe((status) => {
@@ -33,17 +42,22 @@ export default function HarmonicSpaceExplorer() {
 
   const sections = indexes?.formalSections || [];
   
-  // Set default section if none is selected
+  // Set default section if none is selected or if the selected one was deleted
   useEffect(() => {
-    if (sections.length > 0 && !selectedSectionId) {
-      setSelectedSectionId(sections[0].id);
+    if (sections.length > 0) {
+      const isValid = sections.some(s => s.id === selectedSectionId);
+      if (!selectedSectionId || !isValid) {
+        setSelectedSectionId(sections[0].id);
+      }
+    } else {
+      if (selectedSectionId) setSelectedSectionId(null);
     }
   }, [sections, selectedSectionId]);
 
   const activeSection = sections.find(s => s.id === selectedSectionId);
 
-  const melodyAnchors = useMemo<MelodicAnchor[]>(() => {
-    if (!scoreSnapshot?.notes) return [];
+  const melodyAnchorsData = useMemo<{ anchors: MelodicAnchor[], isTruncated: boolean }>(() => {
+    if (!scoreSnapshot?.notes) return { anchors: [], isTruncated: false };
     
     // Sort notes by tickStart
     const sortedNotes = [...scoreSnapshot.notes].sort((a, b) => a.tickStart - b.tickStart);
@@ -72,13 +86,16 @@ export default function HarmonicSpaceExplorer() {
       });
     });
 
-    // We shouldn't necessarily slice to 16 if it's a section, but let's keep it safe so it doesn't hang.
-    // If sections are small (e.g. 4 bars), 16-32 anchors is fine. Let's limit to 32 to be safe.
-    return anchors.slice(0, 32);
+    // We limit to 32 anchors to preserve performance.
+    const isTruncated = anchors.length > 32;
+    return {
+      anchors: anchors.slice(0, 32),
+      isTruncated
+    };
   }, [scoreSnapshot, activeSection]);
 
   const { proposals, phraseContext } = useProjectionController({ 
-    melodyAnchors,
+    melodyAnchors: melodyAnchorsData.anchors,
     section: (activeSection as unknown as ScoreSection) || null,
     allNotes: scoreSnapshot?.notes || [],
     keySignature: scoreSnapshot?.metadata?.keySignature
@@ -144,12 +161,31 @@ export default function HarmonicSpaceExplorer() {
           </div>
         )}
 
+        {melodyAnchorsData.isTruncated && (
+          <div className="text-amber-500/80 text-xs font-bold bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20 text-center">
+            Mostrando apenas as primeiras 32 âncoras melódicas desta seção para otimização de performance.
+          </div>
+        )}
+
         {/* Ideas layer */}
         <div className="flex flex-col gap-6">
-          {proposals.slice(0, 5).map((prop) => ( 
+          {(isExpanded ? proposals : proposals.slice(0, 5)).map((prop) => ( 
             <div key={prop.id} className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
+                  <button
+                    onClick={() => {
+                      const allChords = prop.measures.flatMap(m => m.chords);
+                      setProgressionChords(allChords);
+                      if (onNavigateToBuilder) onNavigateToBuilder();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"
+                  >
+                    Aplicar em Escrever
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <div className="flex gap-4 items-start">
                 
                 <div className="flex-1">
@@ -198,18 +234,21 @@ export default function HarmonicSpaceExplorer() {
 
           {proposals.length > 5 && (
             <div className="w-full py-4 text-center">
-              <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition">
-                Mostrar Mais Ideias (+{proposals.length - 5})
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition cursor-pointer"
+              >
+                {isExpanded ? "Mostrar Menos" : `Mostrar Mais Ideias (+${proposals.length - 5})`}
               </button>
             </div>
           )}
 
-          {proposals.length === 0 && melodyAnchors.length > 0 && (
+          {proposals.length === 0 && melodyAnchorsData.anchors.length > 0 && (
             <div className="text-zinc-500 text-sm italic py-10 text-center">
               Avaliando possibilidades estruturais...
             </div>
           )}
-          {melodyAnchors.length === 0 && (
+          {melodyAnchorsData.anchors.length === 0 && (
              <div className="text-zinc-500 text-sm italic py-10 text-center">
              Selecione uma seção ou sincronize a partitura para começar.
            </div>

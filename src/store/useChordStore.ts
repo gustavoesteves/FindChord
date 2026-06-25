@@ -365,6 +365,10 @@ export const useChordStore = create<ChordStore>((set, get) => {
       if (voicing) {
         // Ao clicar em um voicing gerado, atualizamos o braço físico para refletir essa forma!
         set({ selectedFrets: [...voicing.frets] });
+        const chords = recalculateChords(voicing.frets, get().tuning);
+        set({ detectedChords: chords });
+        if (chords.length > 0) set({ selectedChordIndex: 0 });
+        else set({ selectedChordIndex: null });
       }
     },
 
@@ -486,7 +490,11 @@ export const useChordStore = create<ChordStore>((set, get) => {
     },
 
     setProgressionChords: (chords) => {
-      set({ progressionChords: [...chords] });
+      set({ 
+        progressionChords: [...chords],
+        userCustomVoicings: {},
+        activeTimelineIndex: null
+      });
       get().updateTimelineVoicings();
     },
 

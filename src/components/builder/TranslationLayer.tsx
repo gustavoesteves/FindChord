@@ -82,13 +82,15 @@ export const TranslationLayer: React.FC = () => {
 
     const chords = analyzeChords(activePositions);
     
+    const activeFrets = frets.filter(f => f !== null && f > 0) as number[];
+    
     // Carrega o voicing diretamente usando a ação consolidada
     actions.loadVoicing({
       chordName: chords.length > 0 ? chords[0].notationJazz : "Acorde",
       frets: [...frets],
       rootString: frets.findIndex(f => f !== null),
       cageShape: "E",
-      positionFret: Math.min(...(frets.filter(f => f !== null && f > 0) as number[])),
+      positionFret: activeFrets.length > 0 ? Math.min(...activeFrets) : 0,
       notes: frets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x")
     });
   };
