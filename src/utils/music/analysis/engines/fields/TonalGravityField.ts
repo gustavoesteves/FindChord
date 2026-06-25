@@ -20,6 +20,12 @@ export class TonalGravityField implements GravityField {
         target: phraseContext.cadentialTarget.targetPitch
       },
       requireTonalStability: true,
+      biasVector: {
+        preferStability: 0.9,
+        preferResolution: 0.8,
+        preferChromaticism: 0.1,
+        preferTension: 0.2
+      },
       explanation: [
         `Progressão orientada por ciclos de 4as/5as até o destino ${phraseContext.cadentialTarget.targetPitch}`,
         `Estabilidade diatônica em ${phraseContext.selectedCenter.tonic}`

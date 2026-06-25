@@ -37,8 +37,16 @@ export class GravityFieldManager {
           // 3. Allocate Temporal Slots using Harmonic Anchor Weighting
           const slots = TemporalSlotAllocator.allocateSlots(bassLine, anchors, seed);
 
-          // 4. Realize the Chords that satisfy the Bass Line AND validate against Melody
-          const pathways = ChordRealizationEngine.realize(slots, phraseContext, seed.requireTonalStability);
+          // 4. Initialize the Musical Narrative State
+          const initialState = {
+            tonalAnchor: phraseContext.selectedCenter,
+            phase: "EXPOSITION" as const,
+            tension: 0.0,
+            memory: []
+          };
+
+          // 5. Dual-Force Fusion Loop (Realization)
+          const pathways = ChordRealizationEngine.realize(slots, phraseContext, seed, initialState);
 
           if (pathways.length > 0) {
             // Take the best pathway for this realization

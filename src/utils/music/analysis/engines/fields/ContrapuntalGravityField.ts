@@ -19,6 +19,12 @@ export class ContrapuntalGravityField implements GravityField {
         tendency: "STEPWISE",
         target: phraseContext.cadentialTarget.targetPitch
       },
+      biasVector: {
+        preferStability: 0.5,
+        preferResolution: 0.5,
+        preferChromaticism: 0.5,
+        preferTension: 0.6
+      },
       explanation: [
         `Movimento contrário (oblíquo) priorizado em relação ao contorno melódico`,
         `Baixo linear e fluido, focando na independência das vozes`

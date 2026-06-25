@@ -7,6 +7,8 @@ export interface PathwayMetrics {
   bassCoherence: number;
   archetypeStrength: number;
   totalScore: number;
+  tensionProfile: number[];
+  harmonicRhythm: any[];
 }
 
 export interface HarmonicPathway {

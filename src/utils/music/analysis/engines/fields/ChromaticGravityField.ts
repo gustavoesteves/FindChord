@@ -19,6 +19,12 @@ export class ChromaticGravityField implements GravityField {
         tendency: "CHROMATIC",
         target: phraseContext.cadentialTarget.targetPitch
       },
+      biasVector: {
+        preferStability: 0.2,
+        preferResolution: 0.5,
+        preferChromaticism: 1.0,
+        preferTension: 0.8
+      },
       explanation: [
         `Cromatismo ascendente rumo ao repouso em ${phraseContext.cadentialTarget.targetPitch}`,
         `Máxima tensão direcional de aproximação cromática`
@@ -34,6 +40,12 @@ export class ChromaticGravityField implements GravityField {
         direction: "DESCENDING",
         tendency: "CHROMATIC",
         target: phraseContext.cadentialTarget.targetPitch
+      },
+      biasVector: {
+        preferStability: 0.2,
+        preferResolution: 0.5,
+        preferChromaticism: 1.0,
+        preferTension: 0.8
       },
       explanation: [
         `Cromatismo descendente contínuo (clichê romântico) rumo a ${phraseContext.cadentialTarget.targetPitch}`
