@@ -1,4 +1,4 @@
-import { Note, Interval, Chord } from "tonal";
+import { Note, Interval } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import { ChordSpelling } from "./ChordSpelling";
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
@@ -110,7 +110,7 @@ export class HorizontalHarmonyEngine {
 
     let currentPaths: HarmonicPathway[] = optionsPerAnchor[0].map(interp => {
       const chord = interp.selectedMeaning.impliedChord;
-      const bass = Chord.get(chord).tonic || "C";
+      const bass = ChordSpelling.getBass(chord) || "C";
       return {
         bassLine: [bass],
         melodyLine: [interp.anchorPitch],
@@ -143,7 +143,7 @@ export class HorizontalHarmonyEngine {
 
         for (const nextInterp of nextOptions) {
           const nextChord = nextInterp.selectedMeaning.impliedChord;
-          const nextBass = Chord.get(nextChord).tonic || "C";
+          const nextBass = ChordSpelling.getBass(nextChord) || "C";
           
           const rawMetrics = this.evaluateVoiceLeadingMetrics(lastState.chord, nextChord);
 

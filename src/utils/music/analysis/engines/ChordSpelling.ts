@@ -7,6 +7,20 @@ export class ChordSpelling {
   };
 
   /**
+   * Returns the explicit bass note if present (e.g., "D7/F#" -> "F#"),
+   * otherwise returns the root note (e.g., "Cmaj7" -> "C").
+   */
+  public static getBass(chordSymbol: string): string | null {
+    if (chordSymbol.includes('/')) {
+      const parts = chordSymbol.split('/');
+      const bassMatch = parts[1].match(/^[A-G][#b]?/);
+      if (bassMatch) return bassMatch[0];
+    }
+    const rootMatch = chordSymbol.match(/^[A-G][#b]?/);
+    return rootMatch ? rootMatch[0] : null;
+  }
+
+  /**
    * Translates a chord symbol into a set of pitch classes (0-11).
    * Example: "Cmaj7" -> [0, 4, 7, 11]
    */
