@@ -19,6 +19,7 @@ export class TonalGravityField implements GravityField {
         tendency: "CYCLE_OF_5THS", // Or jumps by 4ths/5ths
         target: phraseContext.cadentialTarget.targetPitch
       },
+      requireTonalStability: true,
       explanation: [
         `Progressão orientada por ciclos de 4as/5as até o destino ${phraseContext.cadentialTarget.targetPitch}`,
         `Estabilidade diatônica em ${phraseContext.selectedCenter.tonic}`

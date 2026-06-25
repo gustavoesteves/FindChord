@@ -10,4 +10,5 @@ export interface HarmonicSeed {
   fieldId: string; // "TONAL", "CHROMATIC", etc.
   bassContour: BassContour;
   explanation: string[]; // e.g. ["Linha cromática ascendente rumo à tônica relativa", "Intercâmbio modal previsto"]
+  requireTonalStability?: boolean; // Whether the realization should penalize deviations from stable functions
 }

@@ -1,5 +1,5 @@
 import { Note, Chord } from "tonal";
-import type { MelodicAnchor } from "../models/ProjectionSet";
+import type { HarmonicSlot } from "../models/HarmonicSlot";
 import type { PhraseContext } from "./PhraseAnalysisEngine";
 import { MelodicInterpretationEngine } from "./MelodicInterpretationEngine";
 import type { HarmonicPathway, PathwayMetrics } from "../models/HarmonicPathway";
@@ -7,26 +7,26 @@ import type { HarmonicPathway, PathwayMetrics } from "../models/HarmonicPathway"
 export class ChordRealizationEngine {
   
   public static realize(
-    bassLine: string[], 
-    anchors: MelodicAnchor[], 
-    phraseContext: PhraseContext
+    slots: HarmonicSlot[], 
+    phraseContext: PhraseContext,
+    requireTonalStability?: boolean
   ): HarmonicPathway[] {
     
-    if (bassLine.length !== anchors.length) return [];
+    if (slots.length === 0) return [];
 
     let currentPaths: HarmonicPathway[] = [];
 
-    // Initialize with the first anchor
-    const firstOptions = this.getValidChordsForBassAndMelody(bassLine[0], anchors[0].pitch, phraseContext);
+    // Initialize with the first slot
+    const firstOptions = this.getValidChordsForSlot(slots[0], phraseContext, requireTonalStability);
     if (firstOptions.length === 0) return [];
 
     currentPaths = firstOptions.map(opt => ({
-      bassLine: [bassLine[0]],
-      melodyLine: [anchors[0].pitch],
+      bassLine: [slots[0].bassNote],
+      melodyLine: [slots[0].melodyNotes.length > 0 ? slots[0].melodyNotes[0].pitch : ""],
       harmonyEvents: [{
         chord: opt.chord,
-        bass: bassLine[0],
-        melody: anchors[0].pitch,
+        bass: slots[0].bassNote,
+        melody: slots[0].melodyNotes.length > 0 ? slots[0].melodyNotes[0].pitch : "",
         interpretation: opt.interpretation
       }],
       detectedMotives: [],
@@ -34,10 +34,9 @@ export class ChordRealizationEngine {
     }));
 
     // Iterate through the rest
-    for (let i = 1; i < anchors.length; i++) {
-      const nextBass = bassLine[i];
-      const nextMelody = anchors[i].pitch;
-      const nextOptions = this.getValidChordsForBassAndMelody(nextBass, nextMelody, phraseContext);
+    for (let i = 1; i < slots.length; i++) {
+      const nextSlot = slots[i];
+      const nextOptions = this.getValidChordsForSlot(nextSlot, phraseContext, requireTonalStability);
 
       if (nextOptions.length === 0) return []; // Dead end
 
@@ -45,18 +44,16 @@ export class ChordRealizationEngine {
 
       for (const path of currentPaths) {
         for (const opt of nextOptions) {
-          // Simplistic scoring just to keep the best ones
-          // A real implementation would score voice leading between chords here
           const newMetrics = { ...path.metrics };
           newMetrics.totalScore += opt.score;
 
           newPaths.push({
-            bassLine: [...path.bassLine, nextBass],
-            melodyLine: [...path.melodyLine, nextMelody],
+            bassLine: [...path.bassLine, nextSlot.bassNote],
+            melodyLine: [...path.melodyLine, nextSlot.melodyNotes.length > 0 ? nextSlot.melodyNotes[0].pitch : ""],
             harmonyEvents: [...path.harmonyEvents, {
               chord: opt.chord,
-              bass: nextBass,
-              melody: nextMelody,
+              bass: nextSlot.bassNote,
+              melody: nextSlot.melodyNotes.length > 0 ? nextSlot.melodyNotes[0].pitch : "",
               interpretation: opt.interpretation
             }],
             detectedMotives: [],
@@ -65,15 +62,16 @@ export class ChordRealizationEngine {
         }
       }
 
-      // Prune
       newPaths.sort((a, b) => b.metrics.totalScore - a.metrics.totalScore);
-      currentPaths = newPaths.slice(0, 16); // Strict beam width because the structure is already guaranteed
+      currentPaths = newPaths.slice(0, 16);
     }
 
     return currentPaths;
   }
 
-  private static getValidChordsForBassAndMelody(bass: string, melody: string, phraseContext: PhraseContext) {
+  private static getValidChordsForSlot(slot: HarmonicSlot, phraseContext: PhraseContext, requireTonalStability?: boolean) {
+    const melody = slot.melodyNotes.length > 0 ? slot.melodyNotes[0].pitch : phraseContext.selectedCenter.tonic;
+    const bass = slot.bassNote;
     const rawInterpretations = MelodicInterpretationEngine.getInterpretations(melody, phraseContext.selectedCenter);
     
     const validOptions = [];
@@ -81,6 +79,16 @@ export class ChordRealizationEngine {
     for (const interp of rawInterpretations) {
       let baseChord = interp.selectedMeaning.impliedChord;
       let score = 0;
+
+      if (requireTonalStability) {
+        // Simple stability check: if chord is outside the key
+        const chordData = Chord.get(baseChord);
+        if (chordData.quality === "Diminished" || chordData.quality === "Augmented") {
+          score -= 10;
+        } else if (chordData.aliases.includes("7") || chordData.aliases.includes("9")) {
+          score -= 2;
+        }
+      }
       
       const chordNotes = Chord.get(baseChord).notes.map((n: string) => Note.pitchClass(n));
       const bassPC = Note.pitchClass(bass);

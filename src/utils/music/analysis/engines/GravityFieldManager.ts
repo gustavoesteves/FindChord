@@ -3,6 +3,7 @@ import type { PhraseContext } from "./PhraseAnalysisEngine";
 import type { ReharmonizationProposal, ReharmonizationMeasure } from "../models/ReharmonizationProposal";
 import { ChordRealizationEngine } from "./ChordRealizationEngine";
 import { BassTrajectoryModel } from "./archetypes/BassTrajectoryModel";
+import { TemporalSlotAllocator } from "./TemporalSlotAllocator";
 import type { GravityField } from "./fields/GravityField";
 import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
@@ -33,8 +34,11 @@ export class GravityFieldManager {
         const bassLines = BassTrajectoryModel.realizeSeed(seed, anchors);
 
         for (const bassLine of bassLines) {
-          // 3. Realize the Chords that satisfy the Bass Line AND validate against Melody
-          const pathways = ChordRealizationEngine.realize(bassLine, anchors, phraseContext);
+          // 3. Allocate Temporal Slots using Harmonic Anchor Weighting
+          const slots = TemporalSlotAllocator.allocateSlots(bassLine, anchors, seed);
+
+          // 4. Realize the Chords that satisfy the Bass Line AND validate against Melody
+          const pathways = ChordRealizationEngine.realize(slots, phraseContext, seed.requireTonalStability);
 
           if (pathways.length > 0) {
             // Take the best pathway for this realization
