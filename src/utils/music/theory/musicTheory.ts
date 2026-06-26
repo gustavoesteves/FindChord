@@ -22,27 +22,27 @@ export interface ProgressionTemplate {
 
 export const COMMON_PROGRESSIONS: ProgressionTemplate[] = [
   {
-    name: "ii - V - I (Jazz)",
+    name: "ii - V - I (Cadência local)",
     romanNumerals: ["ii", "V", "I"],
-    description: "A cadência mais famosa do Jazz e Bossa Nova, resolvendo na tônica.",
+    description: "Ciclo predominante-dominante-tônica com resolução local.",
     degrees: [2, 5, 1]
   },
   {
-    name: "I - vi - ii - V (Pop/Jazz)",
+    name: "I - vi - ii - V (Ciclo funcional)",
     romanNumerals: ["I", "vi", "ii", "V"],
-    description: "Progressão circular clássica usada em centenas de clássicos dos anos 50 e jazz standard.",
+    description: "Encadeamento funcional circular que prolonga a tônica antes da cadência.",
     degrees: [1, 6, 2, 5]
   },
   {
-    name: "I - V - vi - IV (Pop Standard)",
+    name: "I - V - vi - IV (Eixo tonal recorrente)",
     romanNumerals: ["I", "V", "vi", "IV"],
-    description: "A progressão pop mais famosa do mundo (ex: Let It Be, No Woman No Cry).",
+    description: "Movimento tonal recorrente entre tônica, dominante, relativo menor e subdominante.",
     degrees: [1, 5, 6, 4]
   },
   {
-    name: "i - bVI - bIII - bVII (Rock/Epic)",
+    name: "i - bVI - bIII - bVII (Ciclo modal menor)",
     romanNumerals: ["i", "VI", "III", "VII"],
-    description: "Progressão menor muito comum no Rock e trilhas épicas (ex: Zombie).",
+    description: "Ciclo modal menor com queda para regiões submediante, mediante e subtonica.",
     degrees: [1, 6, 3, 7]
   },
   {
@@ -75,12 +75,12 @@ export const SCALE_CATEGORIES = {
     { name: "Diminuta Semitom/Tom", key: "half-whole diminished" },
     { name: "Tons Inteiros (Whole Tone)", key: "augmented" }
   ],
-  jazzPop: [
+  melodicVocabulary: [
     { name: "Pentatônica Maior", key: "pentatonic" },
     { name: "Pentatônica Menor", key: "minor pentatonic" },
     { name: "Escala de Blues", key: "blues" },
-    { name: "Bebop Dominante", key: "bebop" },
-    { name: "Bebop Maior", key: "bebop major" }
+    { name: "Dominante cromática auxiliar", key: "bebop" },
+    { name: "Maior cromática auxiliar", key: "bebop major" }
   ]
 };
 
@@ -178,4 +178,3 @@ export function getRomanNumeral(chordSymbol: string, keyRoot: string, isMajor: b
   const result = classifyChordFunction(chordSymbol, 0, tonalCenter);
   return result.romanNumeral;
 }
-

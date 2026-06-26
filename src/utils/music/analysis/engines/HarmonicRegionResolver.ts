@@ -85,7 +85,7 @@ export class HarmonicRegionResolver {
 
         // Mutate Narrative State (simulate time passing)
         // Here we just advance the phase slightly based on time
-        currentState = NarrativeEngine.updateNarrative(currentState, null as any, (endTick - startTick) / TICKS_PER_QUARTER);
+        currentState = NarrativeEngine.updateNarrative(currentState, null, (endTick - startTick) / TICKS_PER_QUARTER);
 
         currentFunctionIdx++;
         const nextFunc = skeleton[currentFunctionIdx];

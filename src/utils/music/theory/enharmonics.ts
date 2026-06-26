@@ -17,9 +17,10 @@ export function correctChordSpelling(chordName: string, root: string): string {
 export function formatChordName(
   root: string,
   quality: ChordQuality,
-  _omissions: string[],
+  omissions: string[],
   bass?: string,
-  style: "Jazz" | "Brazilian" | "Academic" = "Jazz"
+  style: "Jazz" | "Brazilian" | "Academic" = "Jazz",
+  additions: string[] = []
 ): string {
   const def = CHORD_REGISTRY[quality];
   if (!def) return `${root}${quality}`;
@@ -35,13 +36,21 @@ export function formatChordName(
 
   let finalName = `${root}${qualityString}`;
 
-  // A regra antiga de adicionar "(no5)" para acordes que omitem a quinta 
-  // foi desativada pois confunde a notação (ex: Dm9(no5) deve ser lido apenas como Dm9)
-  // if (omissions.includes("5") && !omissions.includes("3") && !omissions.includes("1") && quality !== "power") {
-  //   if (!finalName.includes("(no5)")) {
-  //     finalName = `${finalName}(no5)`;
-  //   }
-  // }
+  const additionLabels = additions
+    .map(addition => describeAddedTone(root, addition))
+    .filter((label): label is string => Boolean(label));
+  const explicitOmissions = omissions
+    .filter(omission => (
+      omission === "1" ||
+      omission === "3" ||
+      omission === "b3"
+    ))
+    .map(omission => `no${omission}`);
+  const qualifiers = [...explicitOmissions, ...additionLabels];
+
+  if (qualifiers.length > 0) {
+    finalName = `${finalName}(${Array.from(new Set(qualifiers)).join(" ")})`;
+  }
 
   // Baixo invertido
   if (bass) {
@@ -49,6 +58,30 @@ export function formatChordName(
   }
 
   return correctChordSpelling(finalName, root);
+}
+
+function describeAddedTone(root: string, addition: string): string | null {
+  const rootPC = getPitchClass(root);
+  const additionPC = getPitchClass(addition);
+  if (rootPC < 0 || additionPC < 0) return null;
+
+  const offset = (additionPC - rootPC + 12) % 12;
+  const labels: Record<number, string | null> = {
+    0: null,
+    1: "addb9",
+    2: "add9",
+    3: "add#9",
+    4: "add3",
+    5: "add11",
+    6: "addb5",
+    7: null,
+    8: "add#5",
+    9: "add6",
+    10: "addb7",
+    11: "addmaj7"
+  };
+
+  return labels[offset] ?? null;
 }
 
 /**
@@ -103,9 +136,9 @@ export function enarmonizeChordCandidate(
       root: newRoot,
       notes: newNotes,
       bass: newBass,
-      notationJazz: formatChordName(newRoot, c.quality, c.omissions, newBass, "Jazz"),
-      notationBrazilian: formatChordName(newRoot, c.quality, c.omissions, newBass, "Brazilian"),
-      notationAcademic: formatChordName(newRoot, c.quality, c.omissions, newBass, "Academic"),
+      notationJazz: formatChordName(newRoot, c.quality, c.omissions, newBass, "Jazz", c.additions),
+      notationBrazilian: formatChordName(newRoot, c.quality, c.omissions, newBass, "Brazilian", c.additions),
+      notationAcademic: formatChordName(newRoot, c.quality, c.omissions, newBass, "Academic", c.additions),
       intendedChord: intendedChordName
     };
   }

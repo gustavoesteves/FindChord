@@ -149,7 +149,7 @@ export const VirtualFretboard: React.FC = () => {
       {/* Header Fretboard */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold tracking-wider uppercase text-zinc-400">
+          <span className="text-sm font-semibold tracking-wide text-zinc-400">
             {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço Virtual (24 Trastes)"}
           </span>
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>

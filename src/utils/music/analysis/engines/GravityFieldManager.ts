@@ -32,6 +32,7 @@ export class GravityFieldManager {
       const seeds = field.generateArchetypeSeeds(phraseContext);
 
       for (const seed of seeds) {
+        try {
           // 4. Initialize the Musical Narrative State
           const initialState = {
             tonalAnchor: phraseContext.selectedCenter,
@@ -93,7 +94,14 @@ export class GravityFieldManager {
 
             pIdx++;
           }
+        } catch (error) {
+          console.warn("[GravityFieldManager] Proposal seed skipped.", {
+            field: field.name,
+            seed: seed.narrativeGoal,
+            error
+          });
         }
+      }
     }
 
     return allProposals;

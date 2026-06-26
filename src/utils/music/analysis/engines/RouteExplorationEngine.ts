@@ -237,12 +237,12 @@ export class RouteExplorationEngine {
 
   private static getEffectsForStrategy(strategy: HarmonicStrategy): string[] {
     switch (strategy) {
-      case 'TRITONE_SUBSTITUTION': return ['chromatic bass motion', 'jazz tension'];
-      case 'BACKDOOR_CADENCE': return ['gospel flavor', 'softer resolution', 'plagal gravity'];
+      case 'TRITONE_SUBSTITUTION': return ['chromatic bass motion', 'altered dominant tension'];
+      case 'BACKDOOR_CADENCE': return ['modal-plagal color', 'softer resolution', 'plagal gravity'];
       case 'SECONDARY_DOMINANT': return ['increased forward pull', 'local tension'];
       case 'MODAL_BORROWING': return ['darker emotional shade', 'parallel minor flavor'];
-      case 'PASSING_DIMINISHED': return ['smooth chromatic voice leading', 'classic jazz passing'];
-      case 'CHROMATIC_APPROACH': return ['aggressive lead-in', 'bebop flavor'];
+      case 'PASSING_DIMINISHED': return ['smooth chromatic voice leading', 'passing diminished resolution'];
+      case 'CHROMATIC_APPROACH': return ['aggressive lead-in', 'chromatic approach tension'];
       default: return ['harmonic variation'];
     }
   }

@@ -91,7 +91,14 @@ export class NarrativeEngine {
     return weighted;
   }
 
-  public static updateNarrative(state: NarrativePressure, event: HarmonicEvent, totalSlots: number): NarrativePressure {
+  public static updateNarrative(state: NarrativePressure, event: HarmonicEvent | null, totalSlots: number): NarrativePressure {
+    if (!event) {
+      return {
+        ...state,
+        phase: this.computePhase(state.memory.length + 1, totalSlots)
+      };
+    }
+
     const chordData = Chord.get(event.chord);
     
     // Tonal heuristic for tension change

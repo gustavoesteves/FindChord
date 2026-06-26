@@ -231,9 +231,9 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
         bass: bassValue,
         score,
         confidence: 0, // Definido na normalização
-        notationJazz: formatChordName(chordRoot, quality, omissions, bassValue, "Jazz"),
-        notationBrazilian: formatChordName(chordRoot, quality, omissions, bassValue, "Brazilian"),
-        notationAcademic: formatChordName(chordRoot, quality, omissions, bassValue, "Academic"),
+        notationJazz: formatChordName(chordRoot, quality, omissions, bassValue, "Jazz", additions),
+        notationBrazilian: formatChordName(chordRoot, quality, omissions, bassValue, "Brazilian", additions),
+        notationAcademic: formatChordName(chordRoot, quality, omissions, bassValue, "Academic", additions),
         isIncomplete
       });
     });

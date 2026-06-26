@@ -29,6 +29,24 @@ export interface PhraseContext {
   cadentialTarget: CadentialTarget;
 }
 
+const TONAL_CENTER_ROOTS = [
+  "C",
+  "G",
+  "D",
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
+  "F",
+  "Bb",
+  "Eb",
+  "Ab",
+  "Db",
+  "Gb",
+  "Cb"
+];
+
 export class PhraseAnalysisEngine {
   
   public static analyzePhrase(anchors: MelodicAnchor[], keySignature?: string): PhraseContext {
@@ -83,8 +101,8 @@ export class PhraseAnalysisEngine {
     const lastNote = cadentialTarget.targetPitch;
 
     const allKeys = [
-      ...Note.names().map(n => ({ tonic: n, mode: "major" as const, scale: Scale.get(`${n} major`).notes })),
-      ...Note.names().map(n => ({ tonic: n, mode: "minor" as const, scale: Scale.get(`${n} minor`).notes }))
+      ...TONAL_CENTER_ROOTS.map(n => ({ tonic: n, mode: "major" as const, scale: Scale.get(`${n} major`).notes })),
+      ...TONAL_CENTER_ROOTS.map(n => ({ tonic: n, mode: "minor" as const, scale: Scale.get(`${n} minor`).notes }))
     ];
 
     const candidates: (TonalCenterCandidate & { score: number })[] = [];
@@ -137,27 +155,36 @@ export class PhraseAnalysisEngine {
       }
     }
 
-    candidates.sort((a, b) => b.score - a.score);
-
     // Apply confidence penalty for short snippets
     const measureCount = anchors[anchors.length-1].measureIndex - anchors[0].measureIndex + 1;
     let confidencePenalty = 1.0;
     if (uniqueNotes.length < 6) confidencePenalty *= 0.65;
     if (measureCount < 8) confidencePenalty *= 0.75;
 
-    // Map to final candidates
-    const finalCandidates = candidates.slice(0, 3).map(c => {
-      // If we have an explicit key signature, boost its confidence
+    const normalizedKeySignature = keySignature?.trim();
+    const isMinorKeySignature = normalizedKeySignature ? /m/i.test(normalizedKeySignature) : false;
+    const keySignatureTonic = normalizedKeySignature?.replace(/m/i, "").trim();
+    const relativeMinorTonic = keySignatureTonic && !isMinorKeySignature
+      ? Scale.get(`${keySignatureTonic} major`).notes[5]
+      : undefined;
+
+    // Apply score adjustments before choosing the top candidates. A declared
+    // key can be musically decisive even when a short phrase ranks it fourth.
+    const finalCandidates = candidates.map(c => {
       let conf = c.confidence * confidencePenalty;
-      if (keySignature && c.tonic === keySignature.replace(/m/i, "").trim()) {
+      if (keySignatureTonic && c.tonic === keySignatureTonic && c.mode === (isMinorKeySignature ? "minor" : "major")) {
         conf = Math.min(0.95, conf + 0.3);
+      } else if (relativeMinorTonic && c.tonic === relativeMinorTonic && c.mode === "minor") {
+        conf = Math.min(0.95, conf + 0.18);
       }
       return {
         tonic: c.tonic,
         mode: c.mode,
         confidence: Math.round(conf * 100) / 100
       };
-    });
+    })
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 3);
 
     // Refine cadence type based on the best candidate
     if (finalCandidates.length > 0) {

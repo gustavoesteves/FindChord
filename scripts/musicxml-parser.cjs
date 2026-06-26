@@ -1,6 +1,24 @@
 const { XMLParser } = require('fast-xml-parser');
 const { parseXMLHarmonyBlock } = require('./harmony-normalizer.cjs');
 
+const MAJOR_KEY_BY_FIFTHS = {
+  '-7': 'Cb',
+  '-6': 'Gb',
+  '-5': 'Db',
+  '-4': 'Ab',
+  '-3': 'Eb',
+  '-2': 'Bb',
+  '-1': 'F',
+  '0': 'C',
+  '1': 'G',
+  '2': 'D',
+  '3': 'A',
+  '4': 'E',
+  '5': 'B',
+  '6': 'F#',
+  '7': 'C#'
+};
+
 function getFirstTag(obj, tagName) {
   if (!obj || !Array.isArray(obj)) return null;
   for (let item of obj) {
@@ -79,6 +97,12 @@ function parseMusicXML(xmlData) {
       if (tag === 'attributes') {
         const divs = getText(el.attributes, 'divisions');
         if (divs) currentDivisions = parseInt(divs);
+
+        const key = getFirstTag(el.attributes, 'key');
+        const fifths = getText(key, 'fifths');
+        if (fifths !== null && fifths !== undefined && !snapshot.metadata.keySignature) {
+          snapshot.metadata.keySignature = MAJOR_KEY_BY_FIFTHS[fifths] || undefined;
+        }
       }
 
       if (tag === 'direction') {

@@ -16,7 +16,7 @@ export const GlobalProgression: React.FC = () => {
 
   const { notationStyle, activeTimelineIndex, setActiveTimelineIndex } = useChordStore();
 
-  if (!indexes || !scoreSnapshot || indexes.formalSections?.length === 0) {
+  if (!indexes || !scoreSnapshot || scoreSnapshot.harmonies.length === 0 || indexes.formalSections?.length === 0) {
     return null;
   }
 

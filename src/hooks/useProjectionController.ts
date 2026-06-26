@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import type { MelodicAnchor } from "../utils/music/analysis/models/ProjectionSet";
 import { GravityFieldManager } from "../utils/music/analysis/engines/GravityFieldManager";
 import { PhraseAnalysisEngine, type PhraseContext } from "../utils/music/analysis/engines/PhraseAnalysisEngine";
@@ -14,37 +14,28 @@ interface UseProjectionControllerProps {
 
 export function useProjectionController({
   melodyAnchors,
-  section,
-  allNotes,
   keySignature
 }: UseProjectionControllerProps) {
-  
-  const [proposals, setProposals] = useState<ReharmonizationProposal[]>([]);
-  const [phraseContext, setPhraseContext] = useState<PhraseContext | null>(null);
-
-  useEffect(() => {
+  return useMemo<{
+    proposals: ReharmonizationProposal[];
+    phraseContext: PhraseContext | null;
+  }>(() => {
     if (!melodyAnchors || melodyAnchors.length === 0) {
-      setProposals([]);
-      setPhraseContext(null);
-      return;
+      return {
+        proposals: [],
+        phraseContext: null
+      };
     }
 
     // 1. Phrase Analysis
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(melodyAnchors, keySignature);
 
     // 2. Generate Proposals using GravityFieldManager
-    const extractedProposals = GravityFieldManager.generateProposals(melodyAnchors, phraseContext);
-
-    setProposals(extractedProposals);
-    setPhraseContext(phraseContext);
-
-  }, [melodyAnchors, section, allNotes, keySignature]);
-
-  return {
-    proposals,
-    phraseContext
-  };
+    return {
+      proposals: GravityFieldManager.generateProposals(melodyAnchors, phraseContext),
+      phraseContext
+    };
+  }, [melodyAnchors, keySignature]);
 }
-
 
 

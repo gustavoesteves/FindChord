@@ -92,6 +92,44 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(report.backbone).not.toEqual(["T", "PD", "D", "T"]);
   });
 
+  it("does not count supported apparent-function substitutions as functional escapes", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center: "C",
+      melody: almadaMelody,
+      measures: [
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["F#m7(b5)", "F"] },
+        { measureIndex: 3, chords: ["G7"] },
+        { measureIndex: 4, chords: ["C"] }
+      ]
+    };
+
+    const report = analyzeHarmonicStrategy(candidate);
+
+    expect(report.invalidChromaticEscapes).toBe(0);
+    expect(report.functionalEscapes).toBe(0);
+  });
+
+  it("still counts unresolved apparent chords as functional escapes", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center: "C",
+      melody: almadaMelody,
+      measures: [
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["Dbsus4"] },
+        { measureIndex: 3, chords: ["Am"] },
+        { measureIndex: 4, chords: ["C"] }
+      ]
+    };
+
+    const report = analyzeHarmonicStrategy(candidate);
+
+    expect(report.invalidChromaticEscapes).toBeGreaterThan(0);
+    expect(report.functionalEscapes).toBeGreaterThan(0);
+  });
+
   it("accepts resolved secondary dominant excursions without counting them as functional escapes", () => {
     const candidate: HarmonizationCandidate = {
       strategy: "DOMINANTES_SECUNDARIAS",
@@ -135,6 +173,51 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(validation.report.unresolvedSecondaryDominants).toBe(2);
     expect(validation.failures).toContain("unresolved-secondary-dominant");
   });
+
+  it("accepts passing diminished excursions when they resolve by semitone into a functional target", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "DIMINUTO_PASSAGEM",
+      center: "C",
+      melody: almadaMelody,
+      measures: [
+        { measureIndex: 1, chords: ["C", "Am"] },
+        { measureIndex: 2, chords: ["Edim", "F", "F/C"] },
+        { measureIndex: 3, chords: ["Bm7b5", "F#dim", "G7"] },
+        { measureIndex: 4, chords: ["C"] }
+      ]
+    };
+
+    const validation = validateHarmonicStrategy(candidate);
+
+    expect(validation.accepted).toBe(true);
+    expect(validation.report.backbone).toEqual(["T", "PD", "D", "T"]);
+    expect(validation.report.diminishedPassingExcursions).toBe(2);
+    expect(validation.report.unresolvedDiminishedPassings).toBe(0);
+    expect(validation.report.invalidChromaticEscapes).toBe(0);
+    expect(validation.report.functionalEscapes).toBe(0);
+    expect(validation.report.expansions).toContain("DIMINISHED_PASSING_RESOLUTION");
+  });
+
+  it("rejects passing diminished chords that do not resolve into the next functional target", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "DIMINUTO_PASSAGEM",
+      center: "C",
+      melody: almadaMelody,
+      measures: [
+        { measureIndex: 1, chords: ["C", "Am"] },
+        { measureIndex: 2, chords: ["Edim", "Dm", "F/C"] },
+        { measureIndex: 3, chords: ["Bm7b5", "G#dim", "G7"] },
+        { measureIndex: 4, chords: ["C"] }
+      ]
+    };
+
+    const validation = validateHarmonicStrategy(candidate);
+
+    expect(validation.accepted).toBe(false);
+    expect(validation.report.diminishedPassingExcursions).toBe(2);
+    expect(validation.report.unresolvedDiminishedPassings).toBe(2);
+    expect(validation.failures).toContain("unresolved-diminished-passing");
+  });
 });
 
 describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
@@ -176,5 +259,19 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     expect(attempt.validation.report.chordCount).toBeGreaterThanOrEqual(6);
     expect(attempt.validation.report.chordCount).toBeLessThanOrEqual(9);
     expect(attempt.proposal?.name).toBe("Estratégia — Dominantes secundárias");
+  });
+
+  it("generates and externally validates a passing diminished strategy proposal", () => {
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(almadaMelody, "C");
+    const attempt = StrategyGuidedHarmonizer.tryStrategy("DIMINUTO_PASSAGEM", almadaMelody, phraseContext);
+
+    expect(attempt.validation.accepted).toBe(true);
+    expect(attempt.validation.report.backbone).toEqual(["T", "PD", "D", "T"]);
+    expect(attempt.validation.report.diminishedPassingExcursions).toBeGreaterThan(0);
+    expect(attempt.validation.report.unresolvedDiminishedPassings).toBe(0);
+    expect(attempt.validation.report.invalidChromaticEscapes).toBe(0);
+    expect(attempt.validation.report.chordCount).toBeGreaterThanOrEqual(6);
+    expect(attempt.validation.report.chordCount).toBeLessThanOrEqual(10);
+    expect(attempt.proposal?.name).toBe("Estratégia — Diminutos de passagem");
   });
 });

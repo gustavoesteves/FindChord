@@ -206,17 +206,52 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
   counterfactualCache: {},
 
   loadScore: (snapshot: ScoreSnapshot, parsedScoreContext?: ParsedScore) => {
-    console.log("[Ontology Session] Computing Heavy Ontology (analyzeProgression)...");
+    const normalizedSnapshot: ScoreSnapshot = {
+      ...snapshot,
+      harmonies: snapshot.harmonies || [],
+      notes: snapshot.notes || []
+    };
+    const scoreHarmonies = normalizedSnapshot.harmonies;
+    const scoreNotes = normalizedSnapshot.notes || [];
+    const hasHarmonyLayer = scoreHarmonies.length > 0;
+    const eventsByMeasure = new Map<number, { start: number; end: number }>();
+
+    for (const event of [...scoreNotes, ...scoreHarmonies]) {
+      const measure = event.measure || 1;
+      const current = eventsByMeasure.get(measure);
+      eventsByMeasure.set(measure, {
+        start: Math.min(current?.start ?? event.tickStart, event.tickStart),
+        end: Math.max(current?.end ?? event.tickEnd, event.tickEnd)
+      });
+    }
+
+    const measureNumbers = Array.from(eventsByMeasure.keys()).sort((a, b) => a - b);
+    const getMeasureStartTick = (measure: number): number => {
+      if (measure <= 1) return 0;
+      return eventsByMeasure.get(measure)?.start
+        ?? eventsByMeasure.get(measure - 1)?.end
+        ?? (measure - 1) * 1920;
+    };
+    const getMeasureEndTick = (measure: number): number => {
+      const nextMeasure = measureNumbers.find(item => item > measure);
+      if (nextMeasure !== undefined) return getMeasureStartTick(nextMeasure);
+      return eventsByMeasure.get(measure)?.end
+        ?? getMeasureStartTick(measure + 1);
+    };
+
+    console.log(`[Ontology Session] Loading score (${hasHarmonyLayer ? "melody+harmony" : "melody-only"}).`);
     
     // 1. Run the heavy analysis once (with Validator safety boundary)
-    const chordStrings = snapshot.harmonies.map(h => h.harmony);
-    let analysis: FunctionalAnalysis;
-    try {
-      analysis = analyzeProgression(chordStrings);
-    } catch (err) {
-      console.error("[Ontology Session] 🚨 HARMONY_PARSE_WARNING: Crash during progression analysis! Invalid chords bypassed.", err);
-      // Fallback para evitar morte do Dashboard
-      analysis = { chords: [], cadences: [], tonalCenter: { root: 'C', mode: 'MAJOR' as any, confidence: 0 } } as unknown as FunctionalAnalysis;
+    const chordStrings = scoreHarmonies.map(h => h.harmony);
+    let analysis: FunctionalAnalysis | null = null;
+    if (hasHarmonyLayer) {
+      try {
+        analysis = analyzeProgression(chordStrings);
+      } catch (err) {
+        console.error("[Ontology Session] 🚨 HARMONY_PARSE_WARNING: Crash during progression analysis! Invalid chords bypassed.", err);
+        // Fallback para evitar morte do Dashboard
+        analysis = { chords: [], cadences: [], tonalCenter: { root: 'C', mode: 'MAJOR' as any, confidence: 0 } } as unknown as FunctionalAnalysis;
+      }
     }
 
     // 2. Build the indexes O(N)
@@ -225,20 +260,22 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     const phraseByTick = new Map<number, PhraseRole>();
     const attractorByTick = new Map<number, AttractorField>();
     const regions: OntologyRegion[] = [];
-    let formalSections: FormalSection[] = (snapshot.sections || []).map(sec => ({
+    let formalSections: FormalSection[] = (normalizedSnapshot.sections || []).map(sec => ({
       id: sec.id,
       label: sec.label,
       startMeasure: sec.startMeasure,
       endMeasure: sec.endMeasure,
-      startTick: sec.startTick || 0,
-      endTick: sec.endTick || 0,
+      startTick: sec.startTick ?? getMeasureStartTick(sec.startMeasure),
+      endTick: sec.endTick ?? getMeasureEndTick(sec.endMeasure),
       startChordIndex: sec.startChordIndex,
       endChordIndex: sec.endChordIndex
     }));
 
     // Auto-generate 8-bar structure if no sections are declared by the composer
-    if (formalSections.length === 0 && snapshot.metadata?.measures) {
-      const total = snapshot.metadata.measures;
+    const inferredMeasures = normalizedSnapshot.metadata?.measures
+      || Math.max(0, ...scoreNotes.map(note => note.measure || 0), ...scoreHarmonies.map(chord => chord.measure || 0));
+    if (formalSections.length === 0 && inferredMeasures > 0) {
+      const total = inferredMeasures;
       let current = 1;
       let partIndex = 1;
       const letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
@@ -250,8 +287,8 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
           label: `Parte ${letters[(partIndex - 1) % letters.length]}`,
           startMeasure: current,
           endMeasure: end,
-          startTick: (current - 1) * 1920,
-          endTick: end * 1920
+          startTick: getMeasureStartTick(current),
+          endTick: getMeasureEndTick(end)
         });
         current = end + 1;
         partIndex++;
@@ -260,8 +297,8 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
 
     let currentRegion: OntologyRegion | null = null;
 
-    analysis.chords.forEach((node, idx) => {
-      const originalChord = snapshot.harmonies[idx];
+    analysis?.chords.forEach((node, idx) => {
+      const originalChord = scoreHarmonies[idx];
       // Use tickStart from parser if available, fallback to measure * 1920
       const startTick = originalChord?.tickStart !== undefined ? originalChord.tickStart : (originalChord?.measure ? (originalChord.measure - 1) * 1920 : (idx * 1920));
       const endTick = originalChord?.tickEnd !== undefined ? originalChord.tickEnd : startTick + 1920;
@@ -341,7 +378,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     set({
       analysisVersion: crypto.randomUUID(),
       analysisTimestamp: Date.now(),
-      scoreSnapshot: snapshot,
+      scoreSnapshot: normalizedSnapshot,
       parsedScore: parsedScoreContext || null,
       progressionAnalysis: analysis,
       indexes,
@@ -363,7 +400,7 @@ export const useOntologySessionStore = create<OntologySession>((set, get) => ({
     });
     
     // Select the first chord automatically if available
-    if (analysis.chords.length > 0) {
+    if (analysis?.chords.length) {
       get().selectChordByIndex(0);
     }
 

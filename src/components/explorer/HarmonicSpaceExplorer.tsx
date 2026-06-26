@@ -5,13 +5,55 @@ import type { MelodicAnchor } from "../../utils/music/analysis/models/Projection
 import { StandardLayout } from "../ui/StandardLayout";
 import { Music2 } from "lucide-react";
 import { musescoreAdapter, type ConnectionStatus } from "../../utils/musescoreAdapter";
-import type { ScoreSection } from "../../utils/music/analysis/models/ScoreSnapshot";
+import type { ScoreHarmonyEvent, ScoreNoteEvent, ScoreSection } from "../../utils/music/analysis/models/ScoreSnapshot";
+import type { ReharmonizationProposal } from "../../utils/music/analysis/models/ReharmonizationProposal";
+import type { PhraseContext } from "../../utils/music/analysis/engines/PhraseAnalysisEngine";
+import { analyzeReferenceHarmony } from "../../utils/music/analysis/strategies/ReferenceHarmonyAnalysis";
+import { generateControlledSubstitutionProposals } from "../../utils/music/analysis/strategies/ControlledSubstitutionProposals";
 
 import { useChordStore } from "../../store/useChordStore";
 import { ArrowRight } from "lucide-react";
 
 interface HarmonicSpaceExplorerProps {
   onNavigateToBuilder?: () => void;
+}
+
+const EMPTY_NOTES: ScoreNoteEvent[] = [];
+const EMPTY_SECTIONS: ScoreSection[] = [];
+
+function chordBass(chord: string): string {
+  const slashBass = chord.split("/")[1];
+  if (slashBass) return slashBass;
+  return chord.match(/^[A-G](?:#|b)?/)?.[0] || chord;
+}
+
+function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]) {
+  const measuresMap = new Map<number, string[]>();
+  for (const harmony of harmonies) {
+    const chords = measuresMap.get(harmony.measure) || [];
+    chords.push(harmony.harmony);
+    measuresMap.set(harmony.measure, chords);
+  }
+
+  return Array.from(measuresMap.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([measureIndex, chords]) => ({ measureIndex, chords }));
+}
+
+function fallbackPhraseContext(keySignature?: string): PhraseContext {
+  const tonic = keySignature?.replace(/m/i, "").trim() || "C";
+  const mode: "major" | "minor" = keySignature?.toLowerCase().includes("m") ? "minor" : "major";
+  const center = { tonic, mode, confidence: 0.5 };
+
+  return {
+    selectedCenter: center,
+    tonalCenterCandidates: [center],
+    cadentialTarget: {
+      targetPitch: tonic,
+      cadenceType: "UNKNOWN",
+      confidence: 0.1
+    }
+  };
 }
 
 // --- Main Container ---
@@ -40,7 +82,7 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
     setTimeout(() => setIsSyncing(false), 800);
   };
 
-  const sections = indexes?.formalSections || [];
+  const sections = indexes?.formalSections || EMPTY_SECTIONS;
   
   // Set default section if none is selected or if the selected one was deleted
   useEffect(() => {
@@ -54,7 +96,7 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
     }
   }, [sections, selectedSectionId]);
 
-  const activeSection = sections.find(s => s.id === selectedSectionId);
+  const activeSection = useMemo(() => sections.find(s => s.id === selectedSectionId), [sections, selectedSectionId]);
 
   const melodyAnchorsData = useMemo<{ anchors: MelodicAnchor[], isTruncated: boolean }>(() => {
     if (!scoreSnapshot?.notes) return { anchors: [], isTruncated: false };
@@ -97,9 +139,70 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
   const { proposals, phraseContext } = useProjectionController({ 
     melodyAnchors: melodyAnchorsData.anchors,
     section: (activeSection as unknown as ScoreSection) || null,
-    allNotes: scoreSnapshot?.notes || [],
+    allNotes: scoreSnapshot?.notes || EMPTY_NOTES,
     keySignature: scoreSnapshot?.metadata?.keySignature
   });
+
+  const sectionHarmonies = useMemo<ScoreHarmonyEvent[]>(() => {
+    if (!scoreSnapshot?.harmonies?.length) return [];
+    return scoreSnapshot.harmonies.filter(harmony => {
+      if (!activeSection) return true;
+      return harmony.measure >= activeSection.startMeasure && harmony.measure <= activeSection.endMeasure;
+    });
+  }, [scoreSnapshot, activeSection]);
+
+  const existingHarmonyProposal = useMemo<ReharmonizationProposal | null>(() => {
+    if (sectionHarmonies.length === 0) return null;
+
+    const measures = harmonyEventsToMeasures(sectionHarmonies);
+    const referenceAnalysis = analyzeReferenceHarmony(sectionHarmonies);
+    const context = phraseContext || fallbackPhraseContext(scoreSnapshot?.metadata?.keySignature);
+
+    return {
+      id: "existing-harmony-reference",
+      name: "Referência — Harmonia da partitura",
+      measures,
+      explanation: referenceAnalysis.explanation,
+      bassLine: referenceAnalysis.bassTrajectory.length > 0
+        ? referenceAnalysis.bassTrajectory
+        : sectionHarmonies.map(harmony => chordBass(harmony.harmony)),
+      detectedMotives: [],
+      phraseContext: context
+    };
+  }, [sectionHarmonies, phraseContext, scoreSnapshot]);
+
+  const controlledReharmonizationProposals = useMemo<ReharmonizationProposal[]>(() => {
+    if (sectionHarmonies.length === 0 || !phraseContext || melodyAnchorsData.anchors.length === 0) return [];
+
+    return generateControlledSubstitutionProposals(
+      sectionHarmonies,
+      melodyAnchorsData.anchors,
+      phraseContext.selectedCenter.tonic,
+      1
+    ).map((controlled, index) => {
+      const substitutedEvents = sectionHarmonies.map(harmony => (
+        harmony.measure === controlled.measure && harmony.harmony === controlled.originalChord
+          ? { ...harmony, harmony: controlled.substituteChord }
+          : harmony
+      ));
+
+      return {
+        id: `controlled-substitution-${index}`,
+        name: "Rearmonização controlada — substituição funcional",
+        measures: harmonyEventsToMeasures(substitutedEvents),
+        explanation: controlled.explanation,
+        bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony)),
+        detectedMotives: [],
+        phraseContext
+      };
+    });
+  }, [sectionHarmonies, melodyAnchorsData.anchors, phraseContext]);
+
+  const displayedProposals = useMemo(() => (
+    existingHarmonyProposal
+      ? [existingHarmonyProposal, ...controlledReharmonizationProposals, ...proposals]
+      : proposals
+  ), [existingHarmonyProposal, controlledReharmonizationProposals, proposals]);
 
   return (
     <StandardLayout
@@ -169,12 +272,14 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
 
         {/* Ideas layer */}
         <div className="flex flex-col gap-6">
-          {(isExpanded ? proposals : proposals.slice(0, 5)).map((prop) => ( 
+          {(isExpanded ? displayedProposals : displayedProposals.slice(0, 5)).map((prop) => ( 
             <div key={prop.id} className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Estratégia de harmonização</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      {prop.id === "existing-harmony-reference" ? "Referência harmônica" : "Estratégia de harmonização"}
+                    </span>
                     <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{prop.name}</span>
                   </div>
                   <button
@@ -234,18 +339,18 @@ export default function HarmonicSpaceExplorer({ onNavigateToBuilder }: HarmonicS
             </div>
           ))}
 
-          {proposals.length > 5 && (
+          {displayedProposals.length > 5 && (
             <div className="w-full py-4 text-center">
               <button 
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition cursor-pointer"
               >
-                {isExpanded ? "Mostrar Menos" : `Mostrar Mais Harmonizações (+${proposals.length - 5})`}
+                {isExpanded ? "Mostrar Menos" : `Mostrar Mais Harmonizações (+${displayedProposals.length - 5})`}
               </button>
             </div>
           )}
 
-          {proposals.length === 0 && melodyAnchorsData.anchors.length > 0 && (
+          {displayedProposals.length === 0 && melodyAnchorsData.anchors.length > 0 && (
             <div className="text-zinc-500 text-sm italic py-10 text-center">
               Avaliando possibilidades estruturais...
             </div>
