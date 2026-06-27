@@ -3,13 +3,12 @@ import { SCORING_WEIGHTS } from "../constants/scoringWeights";
 import type { VoiceRoleAnalysis } from "../models/VoiceRoleAnalysis";
 import type { VoicingClassification } from "../models/VoicingClassification";
 import type { VoicingScoreBreakdown } from "../models/VoicingScoreBreakdown";
-import type { VoicingAcoustics } from "../models/AnalyzedVoicing";
-import { CageShape } from "../models/VoicingShape";
+import type { VoicingAcoustics } from "../models/VoicingAcoustics";
 
 /**
  * Calcula o Voice Distribution Score (Métrica Acústica de Espaçamento Físico)
  */
-export function calculateVoiceDistributionScore(notes: string[]): number {
+function calculateVoiceDistributionScore(notes: string[]): number {
   const activeNotes = notes.filter(n => n && n !== "x");
   if (activeNotes.length < 3) return 0;
 
@@ -235,32 +234,4 @@ export function scoreVoicing(
     density,
     ergonomics
   };
-}
-
-import { buildAnalyzedVoicing } from "../analysis/voicingAnalyzer";
-
-/**
- * Interface compatível com o VoicingSelector para cálculo de scores de presets
- */
-export function scoreVoicingQuality(frets: (number | null)[], notes: string[], tuning: string[] = ["E4", "B3", "G3", "D3", "A2", "E2"]): number {
-  const shape = {
-    chordName: "C",
-    frets,
-    rootString: 0,
-    cageShape: CageShape.E,
-    positionFret: 0,
-    notes
-  };
-  const analyzed = buildAnalyzedVoicing(shape, tuning);
-  const targetPCs = Array.from(new Set(analyzed.roles.voices.map(v => v.pitchClass)));
-  const rootPC = targetPCs.length > 0 ? targetPCs[0] : 0;
-  const breakdown = scoreVoicing(
-    analyzed.roles,
-    analyzed.classification,
-    analyzed.acoustics,
-    "major",
-    rootPC,
-    targetPCs
-  );
-  return breakdown.total;
 }

@@ -130,10 +130,7 @@ function parseMusicXML(xmlData) {
       }
 
       if (tag === 'harmony') {
-        // We need the raw XML string of this harmony node to pass to our legacy normalizer
-        // Since we parsed it, building it back is annoying. BUT fast-xml-parser has an XMLBuilder.
-        // Wait, for harmonies, we can just extract the chord symbol if our normalizer wants xml string.
-        // Or we can rebuild the tag:
+        // Rebuild the harmony node so the normalizer can parse the full chord symbol.
         const { XMLBuilder } = require('fast-xml-parser');
         const builder = new XMLBuilder({ ignoreAttributes: false, preserveOrder: true });
         const harmonyXml = builder.build([el]);

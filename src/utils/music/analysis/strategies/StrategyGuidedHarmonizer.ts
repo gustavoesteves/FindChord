@@ -89,7 +89,7 @@ export class StrategyGuidedHarmonizer {
     return {
       candidate,
       validation,
-      proposal: validation.accepted ? this.toProposal(candidate, phraseContext, validation) : null
+      proposal: validation.accepted ? this.toProposal(candidate, validation) : null
     };
   }
 
@@ -449,7 +449,6 @@ export class StrategyGuidedHarmonizer {
 
   private static toProposal(
     candidate: HarmonizationCandidate,
-    phraseContext: PhraseContext,
     validation: HarmonicStrategyValidation
   ): ReharmonizationProposal {
     return {
@@ -468,9 +467,7 @@ export class StrategyGuidedHarmonizer {
           : []),
         `Expansões: ${validation.report.expansions.join(", ")}`
       ],
-      bassLine: candidate.measures.flatMap(measure => measure.chords.map(chord => chord.split("/")[1] || Chord.tokenize(chord)[0] || chord)),
-      detectedMotives: [],
-      phraseContext
+      bassLine: candidate.measures.flatMap(measure => measure.chords.map(chord => chord.split("/")[1] || Chord.tokenize(chord)[0] || chord))
     };
   }
 }

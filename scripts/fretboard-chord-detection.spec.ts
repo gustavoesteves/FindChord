@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeChords } from "../src/utils/music/analysis/chordAnalyzer";
 import { getPitchClass } from "../src/utils/music/core/pitch";
 import { getNoteAt, getOctave } from "../src/utils/music/core/notes";
-import type { FretPosition } from "../src/store/useChordStore";
+import type { FretPosition } from "../src/utils/music/models/FretPosition";
 
 const STANDARD_TUNING = ["E4", "B3", "G3", "D3", "A2", "E2"];
 
@@ -65,11 +65,11 @@ describe("Fretboard chord detection", () => {
     const withEb = analyzeChords(positionsFor(["Ab", "F", "B", "Eb"]));
     const withE = analyzeChords(positionsFor(["Ab", "F", "B", "E"]));
 
-    expect(withEb[0]?.notationJazz).toBeTruthy();
-    expect(withE[0]?.notationJazz).toBeTruthy();
-    expect(withEb[0]?.notationJazz).not.toBe(withE[0]?.notationJazz);
-    expect(withE[0]?.notationJazz).not.toBe("Abm6");
-    expect(withE[0]?.notationJazz).not.toContain("no5");
+    expect(withEb[0]?.notationInternational).toBeTruthy();
+    expect(withE[0]?.notationInternational).toBeTruthy();
+    expect(withEb[0]?.notationInternational).not.toBe(withE[0]?.notationInternational);
+    expect(withE[0]?.notationInternational).not.toBe("Abm6");
+    expect(withE[0]?.notationInternational).not.toContain("no5");
   });
 
   it("does not label any standard-guitar Ab F B E voicing as Abm6", () => {
@@ -77,11 +77,11 @@ describe("Fretboard chord detection", () => {
     const mislabeled = voicings
       .map(voicing => ({
         voicing,
-        chord: analyzeChords(voicing)[0]?.notationJazz
+        chord: analyzeChords(voicing)[0]?.notationInternational
       }))
       .filter(result => result.chord === "Abm6");
     const visibleInternalOmissions = voicings
-      .map(voicing => analyzeChords(voicing)[0]?.notationJazz || "")
+      .map(voicing => analyzeChords(voicing)[0]?.notationInternational || "")
       .filter(chord => chord.includes("no5"));
 
     expect(voicings.length).toBeGreaterThan(0);

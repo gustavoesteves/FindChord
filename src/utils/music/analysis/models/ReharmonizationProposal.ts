@@ -1,5 +1,3 @@
-import type { PhraseContext } from "../engines/PhraseAnalysisEngine";
-
 export interface ReharmonizationMeasure {
   measureIndex: number;
   chords: string[];
@@ -11,6 +9,4 @@ export interface ReharmonizationProposal {
   measures: ReharmonizationMeasure[];
   explanation: string[];
   bassLine: string[];
-  detectedMotives: string[];
-  phraseContext: PhraseContext;
 }

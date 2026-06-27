@@ -92,7 +92,7 @@ export function parseChord(symbol: string): CustomChord {
   for (const q in CHORD_REGISTRY) {
     const def = CHORD_REGISTRY[q as ChordQuality];
     if (
-      def.notation.jazz === qualityString ||
+      def.notation.international === qualityString ||
       def.notation.brazilian === qualityString ||
       def.notation.academic === qualityString ||
       q === qualityString

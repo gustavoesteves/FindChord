@@ -5,10 +5,9 @@ export class NarrativeEngine {
 
   public static getNarrativeModulation(state: NarrativePressure): NarrativeModulation {
     // Determine the macro pressure based on the current Phase and accumulated Tension
-    let mod: NarrativeModulation = {
+    const mod: NarrativeModulation = {
       stabilityPressure: 1.0,
       tensionPressure: 0.0,
-      resolutionPressure: 0.0,
       entropyAllowance: 0.0
     };
 
@@ -16,47 +15,35 @@ export class NarrativeEngine {
       case "EXPOSITION":
         mod.stabilityPressure = 1.5;
         mod.tensionPressure = 0.5;
-        mod.resolutionPressure = 1.0;
         mod.entropyAllowance = 0.2;
         break;
       case "DEVELOPMENT":
         mod.stabilityPressure = 0.8;
         mod.tensionPressure = 1.2;
-        mod.resolutionPressure = 0.5;
         mod.entropyAllowance = 1.0;
         break;
       case "CLIMAX":
         mod.stabilityPressure = 0.2;
         mod.tensionPressure = 2.0;
-        mod.resolutionPressure = 0.0;
         mod.entropyAllowance = 1.5;
         break;
       case "RESOLUTION":
         if (state.goal === "TONAL_RESOLUTION") {
           mod.stabilityPressure = 2.0;
           mod.tensionPressure = 0.0;
-          mod.resolutionPressure = 2.0;
           mod.entropyAllowance = 0.0;
         } else if (state.goal === "PERMANENT_TENSION") {
           mod.stabilityPressure = 0.2;
           mod.tensionPressure = 1.5;
-          mod.resolutionPressure = 0.0;
           mod.entropyAllowance = 1.2;
         } else if (state.goal === "DEFERRED_RESOLUTION") {
           mod.stabilityPressure = 0.8;
           mod.tensionPressure = 1.0;
-          mod.resolutionPressure = 0.5;
           mod.entropyAllowance = 0.8;
         } else if (state.goal === "CIRCULAR_RESOLUTION") {
           mod.stabilityPressure = 1.0;
           mod.tensionPressure = 0.5;
-          mod.resolutionPressure = 1.0;
           mod.entropyAllowance = 0.5;
-        } else if (state.goal === "AVOID_RESOLUTION") {
-          mod.stabilityPressure = 0.5;
-          mod.tensionPressure = 1.0;
-          mod.resolutionPressure = 0.0;
-          mod.entropyAllowance = 1.0;
         }
         break;
     }
@@ -64,7 +51,6 @@ export class NarrativeEngine {
     // Dynamic tension reaction
     if (state.tension > 0.8 && state.phase !== "RESOLUTION") {
       // The system is screaming for resolution
-      mod.resolutionPressure += 1.0;
       mod.entropyAllowance -= 0.5;
     }
 

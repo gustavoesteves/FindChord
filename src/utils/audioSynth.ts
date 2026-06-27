@@ -20,14 +20,14 @@ function getAudioContext(): AudioContext {
 /**
  * Converte nome de nota para frequência
  */
-export function noteToFrequency(noteName: string): number {
+function noteToFrequency(noteName: string): number {
   const note = TonalNote.get(noteName);
   if (note.empty || note.midi === undefined || note.midi === null) return 440;
   return 440 * Math.pow(2, (note.midi - 69) / 12);
 }
 
 /**
- * Sintetizador Subtrativo de Guitarra Elétrica Clean / Jazz
+ * Sintetizador subtrativo de guitarra elétrica limpa.
  * Utiliza osciladores combinados e varredura de filtro passa-baixas para som quente e amadeirado.
  */
 export function playGuitarNote(noteName: string, delayMs: number = 0): void {
@@ -98,50 +98,3 @@ export function playGuitarNote(noteName: string, delayMs: number = 0): void {
     console.warn("Erro ao sintetizar áudio (Web Audio API):", error);
   }
 }
-
-/**
- * Arpeja o acorde no braço
- */
-export function playGuitarChord(notes: string[], strumSpeed: number = 40): void {
-  if (notes.length === 0) return;
-  // O array de notas dos voicings corre da 1ª corda (aguda, index 0) para a 6ª (grave, index 5).
-  // Invertemos para que o dedilhado/arpejo soe de forma natural da mais grave para a mais aguda.
-  const reversedNotes = [...notes].reverse();
-  const activeNotes = reversedNotes.filter(n => n !== "x" && n !== "");
-  activeNotes.forEach((note, index) => {
-    playGuitarNote(note, index * strumSpeed);
-  });
-}
-
-/**
- * Toca o clique do metrônomo usando a Web Audio API
- */
-export function playMetronomeClick(isDownbeat: boolean, delayMs: number = 0): void {
-  try {
-    const ctx = getAudioContext();
-    const startTime = ctx.currentTime + delayMs / 1000;
-    const duration = 0.05; // 50ms para clique nítido e curto
-
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-
-    // Onda triangular dá uma sensação orgânica de bloco de madeira
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(isDownbeat ? 1000 : 700, startTime);
-
-    gainNode.gain.setValueAtTime(0, startTime);
-    // Ataque quase instantâneo
-    gainNode.gain.linearRampToValueAtTime(isDownbeat ? 0.35 : 0.18, startTime + 0.002);
-    // Decaimento rápido exponencial
-    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    osc.start(startTime);
-    osc.stop(startTime + duration);
-  } catch (error) {
-    console.warn("Erro ao reproduzir clique do metrônomo:", error);
-  }
-}
-

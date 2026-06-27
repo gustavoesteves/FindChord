@@ -5,7 +5,7 @@ import { getPhysicalBassInfo } from "../core/physicalVoice";
 import type { VoicingClassification } from "../models/VoicingClassification";
 import type { VoiceRoleAnalysis } from "../models/VoiceRoleAnalysis";
 import { analyzeChords } from "./chordAnalyzer";
-import type { FretPosition } from "../../../store/useChordStore";
+import type { FretPosition } from "../models/FretPosition";
 import { parseChord } from "../theory/chordParser";
 
 // Classifica a inversão harmônica baseando-se no papel harmônico do baixo acústico

@@ -31,22 +31,5 @@ export const SCORING_WEIGHTS = {
   bassFirstInversionScore: 20,     // 3rd in bass
   bassSecondInversionScore: 10,    // 5th in bass
   bassThirdInversionScore: 0,      // 7th or 6th in bass
-  bassExoticInversionPenalty: -15,  // Exotic inversion or rootless without timeline
-
-  // Viterbi Condução Weights
-  viterbiBassCanonicalPenalty: 50,
-  viterbiTransitionWeight: 1.0,
-  viterbiFretDistancePenalty: 6,
-  viterbiMutedStringPenalty: 2,
-  viterbiCommonVoiceBonus: 10,
-  viterbiVoiceJumpPenalty: 8,
-  viterbiVoiceCrossoverPenalty: 15,
-  viterbiParallelPerfectPenalty: 20,
-
-  // Heurísticas de Condução de Vozes Semântica (Viterbi Functional)
-  viterbiSeventhToThirdResolutionBonus: -15, // Resolução de 7ª descendo para a 3ª do próximo acorde
-  viterbiThirdToRootResolutionBonus: -10,    // Resolução da sensível (3ª) subindo para tônica ou 7ª
-  viterbiTensionResolutionBonus: -5,         // Resolução de tensões (9ª, 11ª, 13ª) passo-a-passo para notas estruturais
-  viterbiTritoneResolutionComboBonus: -15,   // Combo de resolução autêntica do trítono dominante
-  viterbiMaxFunctionalBonus: -20             // Teto máximo de influência funcional para preservar ergonomia
+  bassExoticInversionPenalty: -15  // Exotic inversion or rootless without timeline
 };

@@ -1,109 +1,144 @@
-# Arquitetura de Telas: Analisar Partitura & Composer Mode
+# Arquitetura de Telas: Escrever & Harmonizar
 
-O Find Chord Suite (V1.0) consolida sua experiência em dois grandes "Domínios Principais", que podem ser alternados no cabeçalho superior (`SuiteApp.tsx`). Ambos os domínios reagem ao estado de conexão do MuseScore e compartilham acesso ao Fretboard/Chords através de stores do Zustand (`useChordStore` e `useOntologySessionStore`).
+O Find Chord Suite consolida sua experiência em dois domínios principais:
 
-Abaixo está o detalhamento completo do que cada tela exibe e de quais painéis/componentes elas são formadas.
+- **Escrever**: criação, captura e edição de acordes no braço virtual.
+- **Harmonizar**: leitura de partitura, análise de harmonia existente, harmonização e rearmonização.
 
----
+Ambos os domínios são montados pela casca da suíte (`App.tsx`) e compartilham a conexão com o MuseScore por meio de `src/domains/suite`.
 
-## 1. Domain: Escrever (Composer Mode)
+## Casca da Suíte
 
-**Responsabilidade:** Ser a prancheta principal de captação e input de acordes, pesquisa por "voicings" (shapes) e visualização de teoria estática para violão/guitarra.
-**Componente Principal:** `<BuilderMVP />` (renderiza o `<BuilderContent />` encapsulado em um `<BuilderProvider />`).
-**Layout:** Utiliza o `<StandardLayout />` que divide a tela em quatro abas principais (*tabs*).
+`src/domains/suite/SuiteDomain.ts`
 
-### Abas de Navegação (Tabs)
+Define os ids oficiais das abas principais:
 
-#### Aba 1: Captura & Fretboard (Input)
-- **Componente:** `<VirtualFretboard />`
-- **Exibe:** O braço virtual do instrumento (violão/guitarra).
-- **Como fazer:** Responde a cliques no braço do violão. O usuário capta os "shapes" e clica em notas no braço. Ele mapeia fisicamente onde o usuário põe os dedos. É aqui que os acordes são injetados inicialmente no *timeline* caso o usuário não os toque via MuseScore.
+- `escrever`
+- `harmonizar`
 
-#### Aba 2: Teoria & Biblioteca (Translation)
-- **Componente:** `<TranslationLayer />`
-- **Exibe:** Tradução estática entre as notas pressionadas no *Fretboard* e a teoria clássica (ex: quais intervalos formam o acorde X). Provavelmente exibe a cifra e como as cordas soltas ou casas pressionadas formam a extensão do acorde (Tônica, 3ª, 5ª, 7ª, 9ª etc).
-- **Como fazer:** Consome o array de notas/cordas atual e roda cálculos de teoria (`tonal` / teoria musical) para validar ou mostrar as tensões montadas pelo shape atual.
+`src/domains/suite/SuiteShell.tsx`
 
-#### Aba 3: Shapes Alternativos (Voicings)
-- **Componente:** `<VoicingSearchLayer />`
-- **Exibe:** Catálogo de inversões e aberturas diferentes pelo braço do instrumento (Drop 2, Drop 3, aberturas abertas/fechadas).
-- **Como fazer:** Recebe uma cifra base (ex: `Cmaj7`) e consulta a biblioteca/dicionário gerador de voicings do Find Chord, plotando botões/fretboards compactos sugerindo ao usuário onde mais ele pode tocar o mesmo acorde ao longo do braço para otimizar *voice leading*.
+Centraliza a navegação principal, o cabeçalho, a área de conteúdo ativo e o rodapé. `App.tsx` apenas monta essa casca.
 
-#### Aba 4: Escalas Compatíveis (Scales)
-- **Componente:** `<ScaleOverlayPanel inline={true} />`
-- **Exibe:** Sugestões de escalas que repousam em cima do acorde da vez (ex: Jônio, Lídio, Menor Harmônica).
-- **Como fazer:** Pega o contexto da progressão ou apenas o acorde puro e retorna o "pool" de escalas. Geralmente joga "overlays" iluminados por cima do braço da guitarra para o usuário conseguir solar/improvisar.
+`src/domains/suite/useMuseScoreConnection.ts`
 
----
+Centraliza o ciclo de conexão com o MuseScore.
 
-## 2. Domain: Analisar Partitura
+`src/domains/suite/components/MuseScoreConnectionBadge.tsx`
 
-**Responsabilidade:** Receber o Score (partitura) exportado em XML via Bridge, derivar a **Ontologia Harmônica Inteira** da música e renderizar dashboards macro e micro de visualização analítica (F14 e F15).
-**Componente Principal:** `<ScoreAnalysisDashboard />`
-**Fonte de Dados:** `<useOntologySessionStore>` (onde ficam armazenados o `FunctionalAnalysis` e os `Indexes`).
+Renderiza o estado visual da conexão.
 
-Este domínio apresenta um menu em pílulas (*DashboardPanel*) composto por 5 painéis alternáveis:
+`src/domains/suite/components/SuiteHeader.tsx`
 
-### Painel 1: Narrativa (Visão Geral)
-- **O que Exibe:** 
-  - A historinha da música. Resumos textuais em linguagem natural gerados pelo `HarmonicNarrativeCompiler` (ex: "A música abre de maneira estável em Dó Maior e modula intensamente pro fim").
-  - Centro tonal Global e fluxo de regiões macro (ex: `C M [1-4] -> G M [5-8]`).
-  - Blocos dos acordes iluminados por Função e Intenção (`PROLONGATION`, `RESOLUTION`, etc).
-- **Como fazer:** Percorre a prop `narrativeExplanation` do `FunctionalAnalysis` e gera blocos de `text-zinc-200`.
+Renderiza a marca, subtítulo, conexão MuseScore e controles globais do instrumento.
 
-### Painel 2: Estrutura (Visão F14 / Árvore)
-- **O que Exibe:** O grafo de hierarquia (`regionTree` e `Sections`). Expande de Macro seções (A, B, Chorus) para Frases -> Acordes.
-- **Como fazer:** Renderiza árvores (node trees) ou listas indentadas demonstrando fisicamente como os pequenos blocos de acordes pertencem a blocos de transição maiores.
+`src/domains/suite/components/TuningSettings.tsx`
 
-### Painel 3: Tensão (Curva de Intensidade)
-- **O que Exibe:** O "Tension Array" ou "Mapa de Calor" dinâmico. Pinta os acordes na tela da cor Verde (Estável) ao Vermelho (Alta Tensão).
-- **Como fazer:** Baseia-se no cálculo numérico de instabilidade e dissonância da `progressionAnalysis`. Renderiza chips/botões com legendas que variam (`<25%`, `25-50%`, `>75%`).
+Monta os controles globais de instrumento, afinação e estilo de cifragem.
 
-### Painel 4: Auditoria Técnica (Linter Harmônico)
-- **Componente:** `<InspectorDashboard />`
-- **O que Exibe:** Uma caixa de alertas (ShieldAlert) relatando "Violações" ou "Dissonâncias Semânticas". Funciona como o ESLint da harmonia. Exibe erros tipo "Acorde C6/9 caindo sem cadência em área de dominante".
-- **Como fazer:** O `InspectorEngine` roda sob a ontologia e emite um array de "diagnostics". A tela renderiza uma lista apontando o erro, gravidade e a respectiva medida/compasso do incidente.
+`src/domains/suite/components/SuiteDomainSwitcher.tsx`
 
-### Painel 5: Explainability (What / Why / How)
-- **Sub-Componentes Envolvidos:** `<ExplainabilityTimeline />`, `<RegionExplainabilityPanel />`, `<DecisionTreeVisual />`, `<AttractorRadar />` e futuramente `<HarmonicCounterfactual />`.
-- **O que Exibe:** Explica *exatamente por quê* a engine achou que um acorde é de Preparação ao invés de Resolução. Mostra a árvore de decisão visual e o radar de atractores magnéticos do acorde atual (gravidade Tonal vs Modal).
-- **Como fazer:** Aciona os recém-criados `ExplainabilitySnapshots` pré-cacheados na `FunctionalAnalysis` (O(1)) e espalha em gráficos Spider (Radar) e caixas que desconstroem o Score Tonal (`deltaRole`, `deltaIntent`).
+Renderiza os botões de alternância entre **Escrever** e **Harmonizar**.
 
----
+`src/domains/suite/components/SuiteDomainOutlet.tsx`
 
-## Como a Ponte UI -> Engine Acontece
+Renderiza o domínio ativo e conecta a navegação do Harmonizar de volta para Escrever.
 
-Sempre que a partitura atualiza no MuseScore, o plugin despacha as mudanças para o WebSocket no NodeJS, que repassa pro React, ativando:
+`src/domains/suite/components/SuiteFooter.tsx`
 
-```typescript
-useOntologySessionStore.getState().loadScore(snapshot);
+Renderiza o rodapé global da aplicação.
+
+## Escrever
+
+`src/domains/writer/WriterScreen.tsx`
+
+Tela canônica do domínio Escrever. Instala o `WriterProvider` e delega a superfície visual para `WriterTabSurface`.
+
+`src/domains/writer/components/WriterTabSurface.tsx`
+
+Renderiza as quatro abas internas:
+
+- **Captura & Fretboard**: braço virtual e captura de shapes.
+- **Teoria & Biblioteca**: tradução do shape em cifra, intervalos e estrutura.
+- **Shapes Alternativos**: busca de voicings alternativos.
+- **Escalas Compatíveis**: overlays de escala no braço.
+
+`src/domains/writer/context/WriterContext.tsx`
+
+Expõe estado e ações internas da tela Escrever para o braço, a tradução/biblioteca, a busca de voicings e os overlays de escala.
+
+## Harmonizar
+
+`src/domains/harmonizer/HarmonizerScreen.tsx`
+
+Tela canônica do domínio Harmonizar. Coordena sincronização, seção ativa, propostas e aplicação em Escrever.
+
+`src/store/useScoreSessionStore.ts`
+
+Guarda a partitura sincronizada do MuseScore, as seções formais disponíveis e o cursor atual.
+
+### Componentes
+
+`src/domains/harmonizer/components/HarmonizerHeader.tsx`
+
+Renderiza contexto, centro detectado e botão de sincronização da partitura.
+
+`src/domains/harmonizer/components/HarmonizerSectionSelector.tsx`
+
+Renderiza a seleção de seções formais importadas ou inferidas.
+
+`src/domains/harmonizer/components/MelodicAnchorLimitNotice.tsx`
+
+Exibe o aviso de limite de âncoras melódicas por performance.
+
+`src/domains/harmonizer/components/HarmonizerProposalList.tsx`
+
+Renderiza estados vazios, lista colapsada/expandida e controles de visualização.
+
+`src/domains/harmonizer/components/HarmonizationProposalCard.tsx`
+
+Renderiza cada proposta: referência harmônica, harmonização ou rearmonização.
+
+### Hooks
+
+`src/domains/harmonizer/hooks/useScoreSync.ts`
+
+Controla a sincronização da partitura com o MuseScore.
+
+`src/domains/harmonizer/hooks/useActiveSection.ts`
+
+Mantém a seção ativa válida.
+
+`src/domains/harmonizer/hooks/useHarmonizerProposals.ts`
+
+Monta o pacote de propostas exibidas na tela.
+
+`src/domains/harmonizer/hooks/useApplyProposalToWriter.ts`
+
+Aplica uma proposta no domínio Escrever.
+
+### Serviço
+
+`src/domains/harmonizer/services/harmonizerService.ts`
+
+Agrupa lógica de seleção de âncoras, harmonias por seção, referência da partitura, rearmonizações controladas e conversão de proposta em progressão.
+
+## Regra de Direção
+
+```text
+App
+  ↓
+domains/*
+  ↓
+components/*
+  ↓
+utils/music/*
 ```
-Que imediatamente roda a `analyzeProgression()` do zero (gerando o Hash determinístico do novo estado), recalcula as Regiões, engole os `ExplainabilitySnapshots` e joga nas telas que, de forma puramente reativa, redesenham todos os gráficos e narrativas.
 
----
+Novos fluxos de produto devem entrar pelos domínios. Componentes em `src/components` devem permanecer limitados a infraestrutura compartilhada entre domínios.
 
-## 3. Domain: Composer Mode
+## Contratos Musicais
 
-**Responsabilidade:** Ser o laboratório de experimentação e orquestração de hipóteses (Universos Contrafactuais). Onde o usuário aciona a MutationSandbox para explorar rotas alternativas para a mesma melodia.
-**Componente Principal:** `<ComposerModeLayout />`
-**Layout:** Composto por uma Sidebar Lateral (Esquerda) e uma Área Principal (Direita), encapsulado em `<StandardLayout />`.
+Tipos musicais compartilhados vivem em `src/utils/music/models`. O store da tela Escrever consome esses contratos, mas analisadores e teoria musical não importam mais de `useChordStore`.
 
-### Painel 1: Controles & Contexto (Esquerda)
-- **Componente:** `<ComposerControls />`
-- **O que Exibe:** O painel de comando do orquestrador. Mostra a melodia extraída (notas isoladas que precisam ser harmonizadas) e permite configurar os "Harmonic Invariants" (ex: "Preservar a fundamental", "Fixar resolução em Cmaj7").
-- **Como fazer:** Coleta parâmetros do usuário e prepara o DTO `GenerationContext` que será enviado para as engines de mutação.
-
-### Painel 2: Trilha Histórica (Direita, Topo)
-- **Componente:** `<ExplorationHistoryView />`
-- **O que Exibe:** Uma interface estilo "commits" ou "breadcrumbs" com o histórico de bifurcações.
-- **Como fazer:** Rastreia cada decisão ou mutação escolhida pelo usuário. Se o usuário estiver na mutação C, ele pode clicar na A para dar "rollback" da progressão.
-
-### Painel 3: Rota Ativa (Direita, Meio)
-- **Componente:** `<ActiveRoutePanel />`
-- **O que Exibe:** Compara visualmente os acordes originais (`originalChords`) com a rota que o usuário está visualizando ou testando neste momento.
-- **Como fazer:** Provavelmente será o principal cliente do `deltaRole`, `deltaIntent` e do painel comparativo da `MutationSandbox` para destacar o que mudou na função do acorde modificado.
-
-### Painel 4: Feed de Hipóteses (Direita, Base)
-- **Componente:** `<RouteFeed />`
-- **O que Exibe:** O feed infinito ou lista de rotas contrafactuais sugeridas pelo orquestrador (F13).
-- **Como fazer:** Lê do motor de Mutações (RouteMutationEngine) que injeta dezenas de sugestões. O usuário rola por elas, escuta o playback e escolhe uma para "aplicar" (tornando-a a nova Rota Ativa).
+O catálogo de instrumentos e presets de afinação também vive em `src/utils/music/models/InstrumentTuning.ts`, não no store.

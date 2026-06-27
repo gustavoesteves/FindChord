@@ -136,7 +136,7 @@ export function evolveTick(func: HarmonicFunction, observation: Observation, cen
   const ctx: EvaluationContext = {
     tick: globalTick,
     functionIntent: func,
-    expansionIntent: observation.intent || { motion: "STATIC" as any },
+    expansionIntent: observation.intent || { motion: "STATIC" },
     melody: observation.melodyNotes,
     center
   };

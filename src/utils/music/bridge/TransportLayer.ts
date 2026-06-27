@@ -1,20 +1,11 @@
 import type { BridgeMessage } from './Protocol';
 
-export interface PluginTransport {
-  connect(): Promise<void>;
-  disconnect(): void;
-  send(message: BridgeMessage): Promise<void>;
-  onMessage(callback: (message: BridgeMessage) => void): () => void;
-  getStatus(): 'connected' | 'disconnected' | 'connecting';
-  subscribeStatus(listener: (status: 'connected' | 'disconnected' | 'connecting') => void): () => void;
-}
-
-export class WebSocketTransport implements PluginTransport {
+export class WebSocketTransport {
   private socket: WebSocket | null = null;
   private status: 'connected' | 'disconnected' | 'connecting' = 'disconnected';
   private listeners: Set<(status: 'connected' | 'disconnected' | 'connecting') => void> = new Set();
   private messageListeners: Set<(message: BridgeMessage) => void> = new Set();
-  private reconnectInterval: any = null;
+  private reconnectInterval: ReturnType<typeof setInterval> | null = null;
   private endpoint: string;
 
   constructor(endpoint: string = "ws://localhost:9000/dashboard") {
@@ -79,7 +70,7 @@ export class WebSocketTransport implements PluginTransport {
           if (this.socket !== currentSocket) return;
           this.setStatus("disconnected");
         };
-      } catch (e) {
+      } catch {
         this.setStatus("disconnected");
         this.triggerAutoReconnect();
         resolve(); // resolve to not block forever

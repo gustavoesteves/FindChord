@@ -11,29 +11,21 @@ export class TonalGravityField implements GravityField {
     
     // Archetype 1: Diatonic stability, mostly stepwise or 4ths/5ths, pointing to cadence
     seeds.push({
-      id: "tonal_cadence_motion",
-      type: "DIATONIC_CADENCE_MOTION",
       fieldId: this.id,
       bassContour: {
-        direction: "STATIC", // Overall stays in the key area
-        tendency: "CYCLE_OF_5THS", // Or jumps by 4ths/5ths
-        target: phraseContext.cadentialTarget.targetPitch
+        tendency: "CYCLE_OF_5THS" // Or jumps by 4ths/5ths
       },
       skeleton: {
         functions: ["T", "PD", "D", "T"],
-        density: 1,
-        cadenceTarget: "authentic"
+        density: 1
       },
       narrativeGoal: "TONAL_RESOLUTION",
       constraints: {
         allowSecondaryDominants: false,
-        allowChromaticPassing: "none",
-        enforceCadence: true
+        allowChromaticPassing: "none"
       },
-      requireTonalStability: true,
       biasVector: {
         preferStability: 0.9,
-        preferResolution: 0.8,
         preferChromaticism: 0.1,
         preferTension: 0.2
       },

@@ -1,13 +1,14 @@
 import { Note as TonalNote, Interval as TonalInterval } from "tonal";
 import { getPitchClass, simplifyNote } from "../core/pitch";
-import type { FretPosition, ChordCandidate, HarmonicInterpretation } from "../../../store/useChordStore";
+import type { ChordCandidate, HarmonicInterpretation } from "../models/ChordCandidate";
+import type { FretPosition } from "../models/FretPosition";
 import type { ChordQuality } from "../constants/chordRegistry";
 import { CHORD_REGISTRY } from "../constants/chordRegistry";
 import { getIntervalSymbol, getFriendlyInterval } from "../theory/chordParser";
 import { formatChordName } from "../theory/enharmonics";
 
 // Penalidade por Reconstrução Exótica para favorabilidade de acordes canônicos e simples (Canonical Preference)
-export function getQualityExoticPenalty(quality: ChordQuality): number {
+function getQualityExoticPenalty(quality: ChordQuality): number {
   const penalties: Record<ChordQuality, number> = {
     major: 0,
     minor: 0,
@@ -93,7 +94,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       if (rootPresent) {
         score += 20;
       } else {
-        score -= 25; // Rootless voicing (Jazz)
+        score -= 25; // Rootless voicing
         omissions.push("1");
       }
 
@@ -231,7 +232,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
         bass: bassValue,
         score,
         confidence: 0, // Definido na normalização
-        notationJazz: formatChordName(chordRoot, quality, omissions, bassValue, "Jazz", additions),
+        notationInternational: formatChordName(chordRoot, quality, omissions, bassValue, "International", additions),
         notationBrazilian: formatChordName(chordRoot, quality, omissions, bassValue, "Brazilian", additions),
         notationAcademic: formatChordName(chordRoot, quality, omissions, bassValue, "Academic", additions),
         isIncomplete
@@ -274,23 +275,23 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
     };
   });
 
-  // Remover duplicatas de nomes na cifragem Jazz ativa
+  // Remover duplicatas de nomes na cifragem internacional ativa
   const seenNames = new Set<string>();
   const filteredCandidates = mappedCandidates.filter(c => {
-    if (seenNames.has(c.notationJazz)) return false;
-    seenNames.add(c.notationJazz);
+    if (seenNames.has(c.notationInternational)) return false;
+    seenNames.add(c.notationInternational);
     return true;
   }).slice(0, 8);
 
   // Popular equivalências harmônicas classificadas para cada candidato
   return filteredCandidates.map(c => {
     const equivalents: HarmonicInterpretation[] = filteredCandidates
-      .filter(other => other.notationJazz !== c.notationJazz)
+      .filter(other => other.notationInternational !== c.notationInternational)
       .map(other => {
         const category: "literal" | "inversao" = other.bass ? "inversao" : "literal";
         
         return {
-          notationJazz: other.notationJazz,
+          notationInternational: other.notationInternational,
           notationBrazilian: other.notationBrazilian,
           notationAcademic: other.notationAcademic,
           score: other.score,

@@ -1,6 +1,5 @@
 /**
- * Harmony Normalization Layer (F15.1.7)
- * Desacopla o parse do MusicXML da gramática do ChordSymbol.
+ * Normalizes MusicXML harmony blocks into chord symbols used by Harmonizar.
  */
 
 const CANONICAL_CHORD_FORMAT = {

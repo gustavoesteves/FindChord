@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useOntologySessionStore } from "../src/store/useOntologySessionStore";
+import { useScoreSessionStore } from "../src/store/useScoreSessionStore";
 import type { ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
 
 const melodyOnlySnapshot: ScoreSnapshot = {
@@ -30,28 +30,31 @@ const melodyAndHarmonySnapshot: ScoreSnapshot = {
 
 describe("Score ingestion modes", () => {
   beforeEach(() => {
-    useOntologySessionStore.getState().clearSession();
+    useScoreSessionStore.getState().clearSession();
   });
 
-  it("loads a melody-only score without forcing harmonic analysis", () => {
-    useOntologySessionStore.getState().loadScore(melodyOnlySnapshot);
-    const state = useOntologySessionStore.getState();
+  it("loads a melody-only score as a harmonizer snapshot", () => {
+    useScoreSessionStore.getState().loadScore(melodyOnlySnapshot);
+    const state = useScoreSessionStore.getState();
 
     expect(state.scoreSnapshot?.notes?.length).toBe(4);
     expect(state.scoreSnapshot?.harmonies.length).toBe(0);
-    expect(state.progressionAnalysis).toBeNull();
     expect(state.indexes?.formalSections.length).toBeGreaterThan(0);
-    expect(state.indexes?.regions.length).toBe(0);
+    expect(state.indexes?.formalSections[0]).toMatchObject({
+      label: "Parte A",
+      startMeasure: 1,
+      endMeasure: 4
+    });
   });
 
-  it("loads a score with melody and injected chords as a harmonic session", () => {
-    useOntologySessionStore.getState().loadScore(melodyAndHarmonySnapshot);
-    const state = useOntologySessionStore.getState();
+  it("loads a score with melody and injected chords without deriving extra regions", () => {
+    useScoreSessionStore.getState().loadScore(melodyAndHarmonySnapshot);
+    const state = useScoreSessionStore.getState();
 
     expect(state.scoreSnapshot?.notes?.length).toBe(4);
     expect(state.scoreSnapshot?.harmonies.length).toBe(4);
-    expect(state.progressionAnalysis?.chords.length).toBe(4);
-    expect(state.indexes?.regions.length).toBeGreaterThan(0);
-    expect(state.activeNode).not.toBeNull();
+    expect(state.indexes?.formalSections.length).toBeGreaterThan(0);
+    expect(state.indexes?.formalSections[0].startTick).toBe(0);
+    expect(state.indexes?.formalSections[0].endTick).toBeGreaterThan(0);
   });
 });

@@ -94,7 +94,7 @@ export const melodicEnergy: EnergyField = {
 // 3. E_traj (Voice Leading / Hysteresis in full space or Subspace 2)
 export const trajectoryEnergy: EnergyField = {
   id: "trajectory",
-  evaluate(state: LatentState, probe: Float32Array, _ctx: EvaluationContext): number {
+  evaluate(state: LatentState, probe: Float32Array): number {
     // Penalidade se afastar muito da posição anterior
     return euclideanDist(probe, state.position, 0, 0, LATENT_DIM) * 0.1;
   }
@@ -103,7 +103,7 @@ export const trajectoryEnergy: EnergyField = {
 // 4. E_topo (Topological Pressure / Anti-Collapse)
 export const topologicalEnergy: EnergyField = {
   id: "topological",
-  evaluate(state: LatentState, probe: Float32Array, _ctx: EvaluationContext): number {
+  evaluate(state: LatentState, probe: Float32Array): number {
     if (state.buffer.length === 0) return 0;
     
     // Aproximação do Volume: Traço da Covariância (soma das variâncias)

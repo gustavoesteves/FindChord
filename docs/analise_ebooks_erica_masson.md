@@ -118,30 +118,30 @@ A obra é composta por **3 volumes** progressivos, escritos por **Érica Masson*
 
 | Conceito | Status no Find Chord | Observação |
 |----------|---------------------|------------|
-| Empréstimo Modal | ✅ Implementado | Sinalizado como `MODAL_BORROWING` a partir do modo paralelo homônimo |
-| Diminuto com 3 funções | ✅ Implementado | Classificado como de passagem, vizinho ou de tom comum em `chromaticAnalysis.ts` |
-| Acorde Sus com 2 funções | ❌ Não implementado | Planejado para sprints futuras |
-| Acorde m6 como função aparente | ❌ Não implementado | Planejado para sprints futuras |
-| #IVm7(b5) como substituto do IV | ❌ Não implementado | Planejado para sprints futuras |
-| Tabela de Substituições | ❌ Não existe | Planejado para sprints futuras |
+| Empréstimo Modal | Fora do escopo atual | Bloqueado até a base de rearmonização controlada amadurecer |
+| Diminuto com função local | Parcial | Validado como excursão cromática resolvida nos validadores de estratégia |
+| Acorde Sus com função contextual | Parcial | Classificado por `ApparentFunctionAnalysis` quando o contexto sustenta a leitura |
+| Acorde m6 como função aparente | Parcial | Classificado por `ApparentFunctionAnalysis` |
+| #IVm7(b5) como substituto do IV | Parcial | Julgado por `FunctionPreservingSubstitution` |
+| Substituições controladas | Parcial | Geradas e filtradas por `ControlledSubstitutionProposals` |
 
 ---
 
 ## 🎯 Propostas de Implementação no Find Chord
 
-### Prioridade 1 — Análise Funcional Completa (Volumes 1+2)
+### Prioridade 1 — Validação Funcional por Propriedades
 
 > [!IMPORTANT]
-> Esta é a base para tudo que vem depois. Sem análise funcional, não é possível implementar substituições.
+> Esta é a base para tudo que vem depois. Sem validação por propriedades, substituição vira troca decorativa.
 
 **O que fazer:**
-1. **Classificação por função harmônica (T/SD/D)** — Estender `getRomanNumeral` para retornar também a função do grau
-2. **Detecção de tonalidade menor** — Melhorar `detectKey` para distinguir C maior de A menor
-3. **Dominantes secundários** — Detectar V7/X na timeline (ex: A7 antes de Dm7 = V7/II)
-4. **SubV7** — Detectar substituição tritonal (ex: Db7 → Cmaj7)
-5. **Cadências IIm7→V7** — Identificar e agrupar cadências na timeline
+1. **Centro e contexto de frase** — Manter `PhraseAnalysisEngine` como entrada tonal principal do Harmonizar.
+2. **Dominantes secundários** — Validar V7/X apenas quando há resolução local.
+3. **Cadências ii–V funcionais** — Detectar `PD(local) → D(local) → T(local)` com região tonal local.
+4. **Função aparente** — Julgar sus, diminutos, m6 e substitutos cromáticos pelo contexto.
+5. **Substituição preservando função** — Aceitar trocas somente quando preservam backbone, melodia e resolução.
 
-**Onde implementar:** [musicTheory.ts](file:///Volumes/Documents/Development/Find Chord/src/utils/music/theory/musicTheory.ts) + novo módulo `functionalAnalysis.ts`
+**Onde implementar:** validadores em `src/utils/music/analysis/strategies/` e o pipeline do domínio Harmonizar.
 
 ---
 
@@ -201,18 +201,18 @@ graph LR
         A["Escalas (7 modos + menores)"]
         B["Intervalos e Enarmonia"]
         C["Tríades e Tétrades (CHORD_REGISTRY)"]
-        D["Detecção de Tonalidade (básica)"]
-        E["Grau Romano (básico)"]
+        D["Contexto de frase (PhraseAnalysisEngine)"]
+        E["Validadores por propriedades"]
     end
     
     subgraph "⚠️ Parcial"
-        F["Campo Harmônico (dados existem, UI não)"]
-        G["Funções T/SD/D (detectKey existe mas não classifica)"]
+        F["Rearmonização controlada"]
+        G["Função aparente contextual"]
     end
     
     subgraph "❌ Não Implementado"
-        H["Dominante Secundário / SubV7"]
-        I["Cadências IIm7→V7"]
+        H["SubV7"]
+        I["Geração ii–V a partir de melodia"]
         J["Empréstimo Modal"]
         K["Funções Aparentes (dim, sus, m6)"]
         L["Tabela de Substituições"]

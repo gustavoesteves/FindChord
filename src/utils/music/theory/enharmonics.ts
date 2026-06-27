@@ -1,6 +1,6 @@
 import { Note as TonalNote, Interval as TonalInterval } from "tonal";
 import { PREFERRED_SPELLINGS, getPitchClass, simplifyNote } from "../core/pitch";
-import type { ChordCandidate } from "../../../store/useChordStore";
+import type { ChordCandidate } from "../models/ChordCandidate";
 import type { ChordQuality } from "../constants/chordRegistry";
 import { CHORD_REGISTRY } from "../constants/chordRegistry";
 import { parseChord } from "./chordParser";
@@ -19,7 +19,7 @@ export function formatChordName(
   quality: ChordQuality,
   omissions: string[],
   bass?: string,
-  style: "Jazz" | "Brazilian" | "Academic" = "Jazz",
+  style: "International" | "Brazilian" | "Academic" = "International",
   additions: string[] = []
 ): string {
   const def = CHORD_REGISTRY[quality];
@@ -31,7 +31,7 @@ export function formatChordName(
   } else if (style === "Academic") {
     qualityString = def.notation.academic;
   } else {
-    qualityString = def.notation.jazz;
+    qualityString = def.notation.international;
   }
 
   let finalName = `${root}${qualityString}`;
@@ -136,7 +136,7 @@ export function enarmonizeChordCandidate(
       root: newRoot,
       notes: newNotes,
       bass: newBass,
-      notationJazz: formatChordName(newRoot, c.quality, c.omissions, newBass, "Jazz", c.additions),
+      notationInternational: formatChordName(newRoot, c.quality, c.omissions, newBass, "International", c.additions),
       notationBrazilian: formatChordName(newRoot, c.quality, c.omissions, newBass, "Brazilian", c.additions),
       notationAcademic: formatChordName(newRoot, c.quality, c.omissions, newBass, "Academic", c.additions),
       intendedChord: intendedChordName

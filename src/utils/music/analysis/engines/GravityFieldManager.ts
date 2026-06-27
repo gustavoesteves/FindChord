@@ -23,7 +23,7 @@ export class GravityFieldManager {
     phraseContext: PhraseContext
   ): ReharmonizationProposal[] {
     
-    let allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
+    const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     let pIdx = 1;
 
     for (const field of this.fields) {
@@ -42,14 +42,11 @@ export class GravityFieldManager {
             memory: []
           };
 
-          // 4.1 F23.0 Tonal Gravity Map
           const gravityMap = {
-            tonic: phraseContext.selectedCenter.tonic,
             gravityStrength: { "I": 1.0, "IV": 0.7, "V": 0.8 },
             inertia: 0.8 // high inertia = slower harmonic rhythm
           };
 
-          // 4.2 F23.3 Harmonic Region Resolver
           const form = HarmonicRegionResolver.resolve(anchors, seed, gravityMap, initialState);
 
           // 3. Allocate Temporal Slots based on the Resolved Form
@@ -87,9 +84,7 @@ export class GravityFieldManager {
               name: `Estratégia — ${field.name}`,
               measures,
               explanation: seed.explanation, 
-              bassLine: bestPath.bassLine,
-              detectedMotives: [], // We can pull this from the seed type
-              phraseContext: phraseContext
+              bassLine: bestPath.bassLine
             });
 
             pIdx++;

@@ -1,0 +1,53 @@
+import { useState } from "react";
+import { BookOpen, Music, Search, Sliders } from "lucide-react";
+import { TranslationLayer } from "./TranslationLayer";
+import { VirtualFretboard } from "./VirtualFretboard";
+import { VoicingSearchLayer } from "./VoicingSearchLayer";
+import ScaleOverlayPanel from "./ScaleOverlayPanel";
+import { StandardLayout } from "../../../components/ui/StandardLayout";
+import type { TabConfig } from "../../../components/ui/StandardLayout";
+
+type WriterTab = "input" | "translation" | "voicings" | "scales";
+
+const WRITER_TABS: TabConfig<WriterTab>[] = [
+  { id: "input", label: "Captura & Fretboard", icon: Sliders },
+  { id: "translation", label: "Teoria & Biblioteca", icon: BookOpen },
+  { id: "voicings", label: "Shapes Alternativos", icon: Search },
+  { id: "scales", label: "Escalas Compatíveis", icon: Music },
+];
+
+export default function WriterTabSurface() {
+  const [activeTab, setActiveTab] = useState<WriterTab>("input");
+
+  return (
+    <StandardLayout
+      tabs={WRITER_TABS}
+      activeTab={activeTab}
+      onTabChange={(id) => setActiveTab(id)}
+    >
+      {activeTab === "input" && (
+        <div className="w-full">
+          <VirtualFretboard />
+        </div>
+      )}
+
+      {activeTab === "translation" && (
+        <div className="w-full">
+          <TranslationLayer />
+        </div>
+      )}
+
+      {activeTab === "voicings" && (
+        <div className="w-full">
+          <VoicingSearchLayer />
+        </div>
+      )}
+
+      {activeTab === "scales" && (
+        <div className="w-full">
+          <ScaleOverlayPanel />
+        </div>
+      )}
+    </StandardLayout>
+  );
+}

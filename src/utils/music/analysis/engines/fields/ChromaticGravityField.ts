@@ -11,28 +11,21 @@ export class ChromaticGravityField implements GravityField {
     
     // Archetype 1: Chromatic Ascent
     seeds.push({
-      id: "chromatic_ascent",
-      type: "CHROMATIC_ASCENT_TO_TARGET",
       fieldId: this.id,
       bassContour: {
-        direction: "ASCENDING",
-        tendency: "CHROMATIC",
-        target: phraseContext.cadentialTarget.targetPitch
+        tendency: "CHROMATIC"
       },
       skeleton: {
         functions: ["T", "CHROM", "EXT", "D"],
-        density: 1,
-        cadenceTarget: "half"
+        density: 1
       },
       narrativeGoal: "DEFERRED_RESOLUTION",
       constraints: {
         allowSecondaryDominants: true,
-        allowChromaticPassing: "freely",
-        enforceCadence: false
+        allowChromaticPassing: "freely"
       },
       biasVector: {
         preferStability: 0.2,
-        preferResolution: 0.5,
         preferChromaticism: 1.0,
         preferTension: 0.8
       },
@@ -44,28 +37,21 @@ export class ChromaticGravityField implements GravityField {
 
     // Archetype 2: Chromatic Descent
     seeds.push({
-      id: "chromatic_descent",
-      type: "CHROMATIC_DESCENT_TO_TARGET",
       fieldId: this.id,
       bassContour: {
-        direction: "DESCENDING",
-        tendency: "CHROMATIC",
-        target: phraseContext.cadentialTarget.targetPitch
+        tendency: "CHROMATIC"
       },
       skeleton: {
         functions: ["T", "CHROM", "CHROM", "EXT"],
-        density: 1,
-        cadenceTarget: "open"
+        density: 1
       },
       narrativeGoal: "PERMANENT_TENSION",
       constraints: {
         allowSecondaryDominants: true,
-        allowChromaticPassing: "freely",
-        enforceCadence: false
+        allowChromaticPassing: "freely"
       },
       biasVector: {
         preferStability: 0.2,
-        preferResolution: 0.5,
         preferChromaticism: 1.0,
         preferTension: 0.8
       },

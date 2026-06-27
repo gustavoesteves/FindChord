@@ -3,11 +3,8 @@ import { getPitchClass } from "../core/pitch";
 import { getPhysicalBassInfo, getPhysicalSopranoInfo } from "../core/physicalVoice";
 import type { VoiceRoleAnalysis, VoiceRole, HarmonicRole, TensionPresence, VoiceRoleInfo } from "../models/VoiceRoleAnalysis";
 import { analyzeChords } from "./chordAnalyzer";
-import type { FretPosition } from "../../../store/useChordStore";
+import type { FretPosition } from "../models/FretPosition";
 import { parseChord } from "../theory/chordParser";
-import type { AnalyzedVoicing, VoicingAcoustics } from "../models/AnalyzedVoicing";
-import type { VoicingShape } from "../models/VoicingShape";
-import { classifyVoicing } from "./voicingClassifier";
 
 // Mapeia a distância em semitônios para a função harmônica correspondente
 export function getHarmonicRole(interval: number, quality: string): HarmonicRole {
@@ -258,26 +255,5 @@ export function analyzeVoiceRoles(
     effectiveVoices,
     voiceCount: physicalVoices,
     voices
-  };
-}
-export function buildAnalyzedVoicing(shape: VoicingShape, tuning: string[]): AnalyzedVoicing {
-  const roles = analyzeVoiceRoles(shape.frets, tuning, shape.chordName);
-  const classification = classifyVoicing(shape.frets, tuning, roles, shape.chordName);
-  const sortedVoices = [...roles.voices].sort((a, b) => a.pitch - b.pitch);
-  const physicalBass = sortedVoices.length > 0 ? sortedVoices[0].noteName.replace(/\d/, "") : "";
-  const physicalSoprano = sortedVoices.length > 0 ? sortedVoices[sortedVoices.length - 1].noteName.replace(/\d/, "") : "";
-  const acoustics: VoicingAcoustics = {
-    physicalBass,
-    physicalSoprano
-  };
-  return {
-    shape,
-    roles,
-    classification,
-    acoustics,
-    metadata: {
-      source: "generated",
-      chordSymbol: shape.chordName
-    }
   };
 }

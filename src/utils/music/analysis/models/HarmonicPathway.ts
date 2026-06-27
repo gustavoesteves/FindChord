@@ -1,14 +1,8 @@
 import type { TrajectoryInterpretation } from "./MelodicInterpretation";
 
 export interface PathwayMetrics {
-  smoothness: number;
-  commonToneRetention: number;
-  chromaticMotion: number;
-  bassCoherence: number;
-  archetypeStrength: number;
   totalScore: number;
   tensionProfile: number[];
-  harmonicRhythm: any[];
 }
 
 export interface HarmonicPathway {
@@ -20,6 +14,5 @@ export interface HarmonicPathway {
     melody: string;
     interpretation: TrajectoryInterpretation;
   }[];
-  detectedMotives: string[];
   metrics: PathwayMetrics;
 }

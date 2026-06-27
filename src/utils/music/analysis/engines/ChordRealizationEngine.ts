@@ -7,6 +7,10 @@ import type { HarmonicSeed } from "../models/HarmonicSeed";
 import type { NarrativePressure, FieldEvaluation } from "../models/NarrativeState";
 import { NarrativeEngine } from "./NarrativeEngine";
 
+type RealizationPath = HarmonicPathway & {
+  state: NarrativePressure;
+};
+
 export class ChordRealizationEngine {
   
   public static realize(
@@ -18,11 +22,10 @@ export class ChordRealizationEngine {
     
     if (slots.length === 0) return [];
 
-    let currentPaths = [{
-      bassLine: [] as string[],
-      melodyLine: [] as string[],
-      harmonyEvents: [] as any[],
-      detectedMotives: [] as any[],
+    let currentPaths: RealizationPath[] = [{
+      bassLine: [],
+      melodyLine: [],
+      harmonyEvents: [],
       metrics: this.initMetrics(),
       state: initialState
     }];
@@ -33,7 +36,7 @@ export class ChordRealizationEngine {
 
       if (candidates.length === 0) return []; // Dead end
 
-      let newPaths = [];
+      const newPaths: RealizationPath[] = [];
 
       for (const path of currentPaths) {
         for (const candidate of candidates) {
@@ -47,10 +50,7 @@ export class ChordRealizationEngine {
           // 2. Create the Historical Event
           const event = {
             chord: candidate.chord,
-            fieldId: seed.fieldId,
-            bass: slot.bassNote,
-            slotIndex: i,
-            tensionAtTime: path.state.tension
+            fieldId: seed.fieldId
           };
 
           // 3. Mutate Narrative State based on the chosen event
@@ -67,7 +67,6 @@ export class ChordRealizationEngine {
               melody: slot.melodyNotes.length > 0 ? slot.melodyNotes[0].pitch : "",
               interpretation: candidate.interpretation
             }],
-            detectedMotives: [],
             metrics: newMetrics,
             state: newState
           });
@@ -85,13 +84,7 @@ export class ChordRealizationEngine {
   private static initMetrics(): PathwayMetrics {
     return {
       totalScore: 0,
-      smoothness: 0,
-      commonToneRetention: 0,
-      chromaticMotion: 0,
-      bassCoherence: 0,
-      archetypeStrength: 0,
-      tensionProfile: [],
-      harmonicRhythm: []
+      tensionProfile: []
     };
   }
 
@@ -103,29 +96,20 @@ export class ChordRealizationEngine {
     const validOptions: FieldEvaluation[] = [];
 
     for (const interp of rawInterpretations) {
-      let baseChord = interp.selectedMeaning.impliedChord;
+      const baseChord = interp.selectedMeaning.impliedChord;
       
       const chordNotes = Chord.get(baseChord).notes.map((n: string) => Note.pitchClass(n));
       const bassPC = Note.pitchClass(bass);
       
       let finalChord = baseChord;
-      let voiceLeadingScore = 0;
-
-      if (chordNotes[0] === bassPC) {
-        voiceLeadingScore = 1.0;
-      } else if (chordNotes.includes(bassPC)) {
+      const voiceLeadingScore = chordNotes[0] === bassPC ? 1.0 : chordNotes.includes(bassPC) ? 0.6 : -0.5;
+      if (chordNotes[0] !== bassPC && chordNotes.includes(bassPC)) {
         finalChord = `${baseChord}/${bassPC}`;
-        voiceLeadingScore = 0.6;
-      } else {
+      } else if (chordNotes[0] !== bassPC) {
         finalChord = `${baseChord}/${bassPC}`;
-        voiceLeadingScore = -0.5; // Penalize non-chord bass notes slightly, but allow them (pedal point)
       }
 
       // Functional mapping
-      let tonalStability = 0;
-      let novelty = 0;
-      let narrativeAlignment = 0;
-
       const chordData = Chord.get(baseChord);
       const isTonic = chordData.tonic === phraseContext.selectedCenter.tonic;
 
@@ -135,16 +119,19 @@ export class ChordRealizationEngine {
       else if (chordData.aliases.includes("7") || chordData.aliases.includes("9")) behavior = "DOMINANT";
 
       // Structural Function heuristic (T, PD, D, EXT, CHROM)
-      let actualFunction = "CHROM";
       const anchorChroma = Note.get(phraseContext.selectedCenter.tonic).chroma || 0;
       const chordChroma = Note.get(chordData.tonic || baseChord).chroma || 0;
       const relativeDist = (chordChroma - anchorChroma + 12) % 12;
 
       // Simplistic mapping for Major key
-      if (relativeDist === 0 || relativeDist === 4 || relativeDist === 9) actualFunction = behavior === "DOMINANT" ? "EXT" : "T";
-      else if (relativeDist === 5 || relativeDist === 2) actualFunction = behavior === "DOMINANT" ? "EXT" : "PD";
-      else if (relativeDist === 7 || relativeDist === 11) actualFunction = "D";
-      else actualFunction = behavior === "DOMINANT" ? "EXT" : "CHROM";
+      const actualFunction =
+        relativeDist === 0 || relativeDist === 4 || relativeDist === 9
+          ? behavior === "DOMINANT" ? "EXT" : "T"
+          : relativeDist === 5 || relativeDist === 2
+            ? behavior === "DOMINANT" ? "EXT" : "PD"
+            : relativeDist === 7 || relativeDist === 11
+              ? "D"
+              : behavior === "DOMINANT" ? "EXT" : "CHROM";
 
       // Functional Compliance Check
       let fieldFit = 1.0;
@@ -162,20 +149,9 @@ export class ChordRealizationEngine {
         }
       }
 
-      if (behavior === "DIATONIC") {
-        tonalStability = isTonic ? 1.0 : 0.8;
-        novelty = 0.1;
-        narrativeAlignment = 0.2; // Baseline
-      } else if (behavior === "DOMINANT") {
-        tonalStability = 0.4;
-        novelty = 0.5;
-        narrativeAlignment = 1.0; // High tension driver
-      } else {
-        // Chromatic / Borrowed
-        tonalStability = 0.1;
-        novelty = 1.0;
-        narrativeAlignment = 0.8;
-      }
+      const tonalStability = behavior === "DIATONIC" ? (isTonic ? 1.0 : 0.8) : behavior === "DOMINANT" ? 0.4 : 0.1;
+      const novelty = behavior === "DIATONIC" ? 0.1 : behavior === "DOMINANT" ? 0.5 : 1.0;
+      const narrativeAlignment = behavior === "DIATONIC" ? 0.2 : behavior === "DOMINANT" ? 1.0 : 0.8;
 
       validOptions.push({
         chord: finalChord,

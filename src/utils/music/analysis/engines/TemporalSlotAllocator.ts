@@ -13,7 +13,7 @@ export class TemporalSlotAllocator {
   ): HarmonicSlot[] {
     if (form.regions.length === 0) return [];
 
-    let finalSlots: HarmonicSlot[] = [];
+    const finalSlots: HarmonicSlot[] = [];
 
     for (const region of form.regions) {
       // Split the region into slots (e.g. 1 per quarter note)

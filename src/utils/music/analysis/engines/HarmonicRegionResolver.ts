@@ -19,9 +19,9 @@ export class HarmonicRegionResolver {
     const TICKS_PER_QUARTER = 480;
     const TICKS_PER_MEASURE = 1920;
 
-    let regions: HarmonicRegion[] = [];
+    const regions: HarmonicRegion[] = [];
     let currentFunctionIdx = 0;
-    let skeleton = seed.skeleton.functions;
+    const skeleton = seed.skeleton.functions;
 
     let currentState = { ...initialState };
 
@@ -49,7 +49,7 @@ export class HarmonicRegionResolver {
       const activeAnchor = anchors.find(a => t >= (a.startTick ?? 0) && t < (a.endTick ?? 0)) || anchors[0];
 
       // Calculate Melody Perturbation
-      let melodyPerturbation = activeAnchor.pitch.includes("#") || activeAnchor.pitch.includes("b") ? 0.3 : 0.1;
+      const melodyPerturbation = activeAnchor.pitch.includes("#") || activeAnchor.pitch.includes("b") ? 0.3 : 0.1;
 
       const localPerturbation = bassPerturbation + melodyPerturbation;
 
@@ -115,7 +115,7 @@ export class HarmonicRegionResolver {
     // If the loop finished without realizing all skeleton functions, we force them at the end.
     if (currentFunctionIdx < skeleton.length - 1) {
       // Compress the last region to fit the remaining functions
-      let remainingFunctions = skeleton.slice(currentFunctionIdx + 1);
+      const remainingFunctions = skeleton.slice(currentFunctionIdx + 1);
       const lastRegion = regions.pop()!;
       
       const durationPerRemaining = (lastRegion.endTick - lastRegion.startTick) / (remainingFunctions.length + 1);
