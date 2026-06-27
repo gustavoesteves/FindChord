@@ -1,6 +1,4 @@
 import { Note as TonalNote } from "tonal";
-import { getPitchClass } from "./pitch";
-import { getNoteAt, getOctave } from "./notes";
 
 export function noteToMidi(noteName: string): number {
   const note = TonalNote.get(noteName);
@@ -18,12 +16,4 @@ export function noteToMidi(noteName: string): number {
   };
   const chroma = pcMap[pcStr] ?? 0;
   return chroma + (octVal + 1) * 12;
-}
-
-export function getAbsolutePitch(fret: number | null, baseNote: string): number | null {
-  if (fret === null) return null;
-  const noteName = getNoteAt(baseNote, fret);
-  const pc = getPitchClass(noteName);
-  const oct = getOctave(noteName);
-  return oct * 12 + pc;
 }

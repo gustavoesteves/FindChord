@@ -1,8 +1,8 @@
 import { Chord, Note } from "tonal";
 
-export type StrategyFunctionId = "T" | "PD" | "D" | "OTHER";
+type StrategyFunctionId = "T" | "PD" | "D" | "OTHER";
 
-export type ApparentChordType =
+type ApparentChordType =
   | "SUS"
   | "DIMINISHED"
   | "MINOR_SIXTH"
@@ -21,7 +21,7 @@ export interface ApparentFunctionAnalysis {
   shouldCountAsFunctionalEscape: boolean;
 }
 
-export interface ApparentFunctionContext {
+interface ApparentFunctionContext {
   center: string;
   previousChord?: string;
   nextChord?: string;

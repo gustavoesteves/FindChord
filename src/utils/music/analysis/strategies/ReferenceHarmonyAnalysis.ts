@@ -1,7 +1,7 @@
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
 import { analyzeStructuralBassGrammar } from "./StructuralBassGrammar";
 
-export type HarmonicProperty =
+type HarmonicProperty =
   | "SLASH_CHORD_RELATION"
   | "SIGNIFICANT_SLASH_CHORD_DENSITY"
   | "UPPER_STRUCTURE_OVER_BASS"
@@ -12,7 +12,7 @@ export type HarmonicProperty =
   | "PLANAR_CHORD_MOTION"
   | "LOW_DIRECT_CADENTIAL_DEPENDENCE";
 
-export interface ReferenceHarmonyAnalysis {
+interface ReferenceHarmonyAnalysis {
   hasExistingHarmony: boolean;
   bassTrajectory: string[];
   slashChordProfile: {

@@ -2,7 +2,7 @@ import { Chord, Note } from "tonal";
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
 import { detectIiVFunctionalCells } from "./IiVFunctionalGrammar";
 
-export interface SlashChordRelation {
+interface SlashChordRelation {
   chord: string;
   measure: number;
   upperRoot: string;
@@ -10,7 +10,7 @@ export interface SlashChordRelation {
   relation: "TRIVIAL_INVERSION" | "INDEPENDENT_BASS";
 }
 
-export type BassMotionKind =
+type BassMotionKind =
   | "REPEATED"
   | "STEP_ASC"
   | "STEP_DESC"
@@ -18,7 +18,7 @@ export type BassMotionKind =
   | "CHROMATIC_DESC"
   | "STRUCTURAL_LEAP";
 
-export interface BassMotionEvent {
+interface BassMotionEvent {
   from: string;
   to: string;
   semitones: number;
@@ -26,7 +26,7 @@ export interface BassMotionEvent {
   kind: BassMotionKind;
 }
 
-export interface HarmonicPlaneSegment {
+interface HarmonicPlaneSegment {
   startMeasure: number;
   endMeasure: number;
   chords: string[];
@@ -34,7 +34,7 @@ export interface HarmonicPlaneSegment {
   independentBassCount: number;
 }
 
-export interface StructuralBassGrammarReport {
+interface StructuralBassGrammarReport {
   chordCount: number;
   slashChordCount: number;
   slashChordDensity: number;

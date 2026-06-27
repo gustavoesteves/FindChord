@@ -163,6 +163,10 @@ Responsável por renderizar o domínio ativo e expor a navegação de volta para
 
 Responsável pelo rodapé global da aplicação.
 
+`src/domains/suite/components/StandardLayout.tsx`
+
+Responsável pelo layout compartilhado das superfícies Escrever e Harmonizar. A F27 moveu essa peça para a suíte e eliminou o último arquivo remanescente em `src/components`.
+
 ## Componentes Legados Removidos
 
 A F27 removeu componentes que não pertenciam mais às telas atuais Escrever/Harmonizar:
@@ -189,6 +193,7 @@ A F27 removeu componentes que não pertenciam mais às telas atuais Escrever/Har
 - `src/assets/hero.png`
 - `src/assets/react.svg`
 - `src/assets/vite.svg`
+- `src/components/ui/StandardLayout.tsx` movido para `src/domains/suite/components/StandardLayout.tsx`
 - scripts experimentais fora da régua `npm run test:curated`
 - pacote legado de timeline/export/realização: `harmonyEngine`, `midi`, `musicxml`, `realization`, `runtime` e modelos exclusivos desse fluxo
 
@@ -212,7 +217,9 @@ O núcleo preservado em `utils/music` agora se concentra em:
 - GravityField/HSMK e dependências diretas usadas nas propostas visíveis;
 - ponte MuseScore ativa: conexão, sincronização de partitura e envio de acorde.
 
-`src/components` ficou restrito a infraestrutura compartilhada entre domínios. Neste momento, o único componente remanescente ali é `src/components/ui/StandardLayout.tsx`.
+`src/components` não possui mais arquivos de produto. As superfícies visíveis estão concentradas em `src/domains`.
+
+Essa fronteira é protegida por `scripts/suite-boundary.spec.ts`: a suíte curada falha se `src/components` voltar a existir ou se algum arquivo `src` importar da antiga camada genérica de componentes.
 
 ## Contratos Musicais Desacoplados
 
@@ -259,6 +266,10 @@ A superfície de estado e de proposta também foi reduzida:
 - `HarmonicSeed` deixou de expor id/tipo/cadência e campos de baixo que não eram lidos pelo resolver;
 - `NarrativeState` não guarda mais dados de evento sem leitura posterior, nem pressão de resolução não usada na pontuação;
 - `useChordStore` não armazena mais `selectedVoicing`; carregar um voicing agora apenas atualiza o braço e recalcula acordes.
+- helpers de estratégia, tipos locais do Writer e contratos internos do Harmonizar foram internalizados para reduzir imports possíveis fora dos domínios;
+- o HSMK mantém apenas o contrato de função harmônica ainda usado pelo teste temporal;
+- helpers sem consumidores em MIDI/enarmonia foram removidos ou internalizados;
+- `qualityHelpers.ts` e `HarmonicWorld.ts` foram removidos por não terem consumidor no app nem na suíte curada.
 
 ## Próximas Fases
 

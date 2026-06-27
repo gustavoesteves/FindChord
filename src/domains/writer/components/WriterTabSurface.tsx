@@ -4,8 +4,8 @@ import { TranslationLayer } from "./TranslationLayer";
 import { VirtualFretboard } from "./VirtualFretboard";
 import { VoicingSearchLayer } from "./VoicingSearchLayer";
 import ScaleOverlayPanel from "./ScaleOverlayPanel";
-import { StandardLayout } from "../../../components/ui/StandardLayout";
-import type { TabConfig } from "../../../components/ui/StandardLayout";
+import { StandardLayout } from "../../suite/components/StandardLayout";
+import type { TabConfig } from "../../suite/components/StandardLayout";
 
 type WriterTab = "input" | "translation" | "voicings" | "scales";
 

@@ -13,7 +13,7 @@ interface StandardLayoutProps<T extends string> {
   activeTab?: T;
   onTabChange?: (id: T) => void;
   children: ReactNode;
-  headerContent?: ReactNode; // Optional top bar content
+  headerContent?: ReactNode;
 }
 
 export function StandardLayout<T extends string>({

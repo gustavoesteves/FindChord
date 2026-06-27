@@ -1,11 +1,10 @@
 import {
   analyzeApparentFunction,
-  type ApparentFunctionAnalysis,
-  type StrategyFunctionId
+  type ApparentFunctionAnalysis
 } from "./ApparentFunctionAnalysis";
-import { classifyFunction, noteCoveredByChord } from "./HarmonicStrategyValidator";
+import { classifyFunction, noteCoveredByChord, type StrategyFunctionId } from "./HarmonicStrategyValidator";
 
-export interface FunctionPreservingSubstitutionInput {
+interface FunctionPreservingSubstitutionInput {
   center: string;
   originalChord: string;
   substituteChord: string;

@@ -4,7 +4,7 @@ import { Note } from "tonal";
 
 // Mock das "Âncoras Funcionais" no subespaço de Atração Harmônica [0-11].
 // Em um sistema real, isso seria aprendido. Aqui, definimos pólos fixos para a topologia abstrata.
-export interface FunctionalBasin {
+interface FunctionalBasin {
   functionId: string;
   anchor: Float32Array;
   radius: number;
@@ -178,7 +178,7 @@ function norm(a: Float32Array, length = a.length): number {
   return Math.sqrt(dot(a, a, length));
 }
 
-export function projectTangential(
+function projectTangential(
   push: Float32Array,
   xFunc: Float32Array,
   anchor: Float32Array

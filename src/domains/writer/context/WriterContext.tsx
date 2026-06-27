@@ -5,7 +5,7 @@ import { getPitchClass } from "../../../utils/music/core/pitch";
 import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
 
-export interface DetectedChord {
+interface DetectedChord {
   notes: string[];
   drawnNotes: string[];
   bass: string;
@@ -18,7 +18,7 @@ export interface DetectedChord {
   quality: string;
 }
 
-export interface WriterState {
+interface WriterState {
   activeInstrument: string;
   tuningPreset: string;
   tuning: string[];
@@ -30,7 +30,7 @@ export interface WriterState {
   notationStyle: "International" | "Brazilian" | "Academic";
 }
 
-export interface WriterActions {
+interface WriterActions {
   setInstrument: (name: string) => void;
   setTuning: (presetName: string, notes: string[]) => void;
   updateCustomStringTuning: (stringIdx: number, newNote: string) => void;

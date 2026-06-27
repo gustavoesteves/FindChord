@@ -7,7 +7,7 @@ import type { FretPosition } from "../models/FretPosition";
 import { parseChord } from "../theory/chordParser";
 
 // Mapeia a distância em semitônios para a função harmônica correspondente
-export function getHarmonicRole(interval: number, quality: string): HarmonicRole {
+function getHarmonicRole(interval: number, quality: string): HarmonicRole {
   if (interval === 0) return "root";
   if (interval === 3 || interval === 4) return "third";
   
@@ -31,7 +31,7 @@ export function getHarmonicRole(interval: number, quality: string): HarmonicRole
   return "none";
 }
 
-export function getVoiceRoleInfo(interval: number, quality: string): VoiceRoleInfo {
+function getVoiceRoleInfo(interval: number, quality: string): VoiceRoleInfo {
   const role = getHarmonicRole(interval, quality);
   if (role === "root" || role === "none") return { role };
 

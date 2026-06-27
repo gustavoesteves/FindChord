@@ -12,7 +12,7 @@ export interface FormalSection {
   endChordIndex?: number;
 }
 
-export interface AnalysisIndexes {
+interface AnalysisIndexes {
   formalSections: FormalSection[];
 }
 

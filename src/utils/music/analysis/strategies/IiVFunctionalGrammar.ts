@@ -1,15 +1,15 @@
 import { Chord, Note } from "tonal";
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
 
-export type IiVPatternKind = "MAJOR_II_V_I" | "MINOR_IIØ_V_I";
+type IiVPatternKind = "MAJOR_II_V_I" | "MINOR_IIØ_V_I";
 
-export interface LocalTonalRegion {
+interface LocalTonalRegion {
   tonic: string;
   mode: "major" | "minor";
   scope: "cadential-cell";
 }
 
-export interface IiVFunctionalCell {
+interface IiVFunctionalCell {
   kind: IiVPatternKind;
   region: LocalTonalRegion;
   startMeasure: number;

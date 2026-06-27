@@ -18,8 +18,8 @@ export default defineConfig({
       "scripts/reference-harmony-analysis.spec.ts",
       "scripts/score-ingestion-modes.spec.ts",
       "scripts/structural-bass-grammar.spec.ts",
+      "scripts/suite-boundary.spec.ts",
       "scripts/temporal-memory.spec.ts"
     ]
   }
 });
-

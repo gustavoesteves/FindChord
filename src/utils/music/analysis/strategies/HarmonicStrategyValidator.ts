@@ -75,7 +75,7 @@ const romanByDegree: Record<number, string> = {
   11: "vii"
 };
 
-export const STRATEGY_EXPECTATIONS: Record<HarmonicStrategyId, HarmonicStrategyExpectation> = {
+const STRATEGY_EXPECTATIONS: Record<HarmonicStrategyId, HarmonicStrategyExpectation> = {
   I_IV_V: {
     strategy: "I_IV_V",
     backbone: ["T", "PD", "D", "T"],
@@ -123,7 +123,7 @@ export function normalizeChordRoot(chord: string): string {
   return Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, "");
 }
 
-export function rootToRoman(root: string, center: string): string {
+function rootToRoman(root: string, center: string): string {
   const chroma = Note.chroma(root);
   const centerChroma = Note.chroma(center);
   if (chroma === undefined || centerChroma === undefined) return "?";
@@ -140,7 +140,7 @@ export function classifyFunction(chord: string, center: string): StrategyFunctio
   return "OTHER";
 }
 
-export function secondaryDominantTarget(chord: string, center: string): string | null {
+function secondaryDominantTarget(chord: string, center: string): string | null {
   const symbol = chord.split("/")[0];
   const chordData = Chord.get(symbol);
   const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
@@ -158,13 +158,13 @@ export function secondaryDominantTarget(chord: string, center: string): string |
   return targetRoman;
 }
 
-export function isPassingDiminishedChord(chord: string): boolean {
+function isPassingDiminishedChord(chord: string): boolean {
   const symbol = chord.split("/")[0];
   const chordData = Chord.get(symbol);
   return chordData.type === "diminished";
 }
 
-export function diminishedPassingTarget(chord: string, nextChord: string | undefined, center: string): string | null {
+function diminishedPassingTarget(chord: string, nextChord: string | undefined, center: string): string | null {
   if (!nextChord || !isPassingDiminishedChord(chord)) return null;
 
   const root = normalizeChordRoot(chord);
@@ -186,7 +186,7 @@ function chordMatchesRoman(chord: string, center: string, roman: string): boolea
   return rootToRoman(normalizeChordRoot(chord), center) === roman;
 }
 
-export function compressBackbone(functions: StrategyFunctionId[]): StrategyFunctionId[] {
+function compressBackbone(functions: StrategyFunctionId[]): StrategyFunctionId[] {
   const structuralFunctions = functions.filter(fn => fn !== "OTHER");
   return structuralFunctions.filter((fn, index) => fn !== structuralFunctions[index - 1]);
 }
@@ -224,7 +224,7 @@ export function noteCoveredByChord(note: string, chord: string): boolean {
   return pc !== "" && chordNotes.includes(pc);
 }
 
-export function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
+function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
   if (candidate.melody.length === 0) return 0;
 
   if (candidate.measures.length > 4) {
@@ -244,7 +244,7 @@ export function calculateMelodyCoverage(candidate: HarmonizationCandidate): numb
   return covered / candidate.melody.length;
 }
 
-export function detectExpansions(candidate: HarmonizationCandidate): HarmonicExpansionIntent[] {
+function detectExpansions(candidate: HarmonizationCandidate): HarmonicExpansionIntent[] {
   const flat = candidate.measures.flatMap(measure => measure.chords);
   const functions = flat.map(chord => secondaryDominantTarget(chord, candidate.center) || isPassingDiminishedChord(chord)
     ? "OTHER"
@@ -276,13 +276,13 @@ export function detectExpansions(candidate: HarmonizationCandidate): HarmonicExp
   return Array.from(expansions);
 }
 
-export function countSecondaryDominantExcursions(candidate: HarmonizationCandidate): number {
+function countSecondaryDominantExcursions(candidate: HarmonizationCandidate): number {
   return candidate.measures
     .flatMap(measure => measure.chords)
     .filter(chord => secondaryDominantTarget(chord, candidate.center) !== null).length;
 }
 
-export function countUnresolvedSecondaryDominants(candidate: HarmonizationCandidate): number {
+function countUnresolvedSecondaryDominants(candidate: HarmonizationCandidate): number {
   const flat = candidate.measures.flatMap(measure => measure.chords);
   let unresolved = 0;
 
@@ -296,13 +296,13 @@ export function countUnresolvedSecondaryDominants(candidate: HarmonizationCandid
   return unresolved;
 }
 
-export function countDiminishedPassingExcursions(candidate: HarmonizationCandidate): number {
+function countDiminishedPassingExcursions(candidate: HarmonizationCandidate): number {
   return candidate.measures
     .flatMap(measure => measure.chords)
     .filter(isPassingDiminishedChord).length;
 }
 
-export function countUnresolvedDiminishedPassings(candidate: HarmonizationCandidate): number {
+function countUnresolvedDiminishedPassings(candidate: HarmonizationCandidate): number {
   const flat = candidate.measures.flatMap(measure => measure.chords);
   let unresolved = 0;
 
@@ -321,7 +321,7 @@ export function countUnresolvedDiminishedPassings(candidate: HarmonizationCandid
   return unresolved;
 }
 
-export function countInvalidChromaticEscapes(candidate: HarmonizationCandidate): number {
+function countInvalidChromaticEscapes(candidate: HarmonizationCandidate): number {
   const flat = candidate.measures.flatMap(measure => measure.chords);
   return flat.reduce((count, chord, index) => {
     const isChromaticEvent = classifyFunction(chord, candidate.center) === "OTHER" || isPassingDiminishedChord(chord);
@@ -338,7 +338,7 @@ export function countInvalidChromaticEscapes(candidate: HarmonizationCandidate):
   }, 0);
 }
 
-export function bassMotionProfile(candidate: HarmonizationCandidate): HarmicBassMotion {
+function bassMotionProfile(candidate: HarmonizationCandidate): HarmonicBassMotion {
   const basses = candidate.measures.flatMap(measure => measure.chords).map(chord => {
     const explicitBass = chord.split("/")[1];
     return Note.chroma(explicitBass || normalizeChordRoot(chord));
@@ -359,7 +359,7 @@ export function bassMotionProfile(candidate: HarmonizationCandidate): HarmicBass
   return "STATIC";
 }
 
-type HarmicBassMotion = HarmonicStrategyReport["bassMotionProfile"];
+type HarmonicBassMotion = HarmonicStrategyReport["bassMotionProfile"];
 
 export function analyzeHarmonicStrategy(candidate: HarmonizationCandidate): HarmonicStrategyReport {
   const flat = candidate.measures.flatMap(measure => measure.chords);

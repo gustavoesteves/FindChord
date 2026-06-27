@@ -7,7 +7,7 @@ import {
 } from "./FunctionPreservingSubstitution";
 import { classifyFunction, normalizeChordRoot } from "./HarmonicStrategyValidator";
 
-export interface ControlledSubstitutionProposal {
+interface ControlledSubstitutionProposal {
   originalChord: string;
   substituteChord: string;
   measure: number;

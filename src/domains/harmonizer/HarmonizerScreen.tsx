@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useScoreSessionStore } from "../../store/useScoreSessionStore";
-import { StandardLayout } from "../../components/ui/StandardLayout";
+import { StandardLayout } from "../suite/components/StandardLayout";
 import HarmonizerHeader from "./components/HarmonizerHeader";
 import MelodicAnchorLimitNotice from "./components/MelodicAnchorLimitNotice";
 import HarmonizerProposalList from "./components/HarmonizerProposalList";

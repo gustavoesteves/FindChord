@@ -5,7 +5,7 @@ import type { ChordQuality } from "../constants/chordRegistry";
 import { CHORD_REGISTRY } from "../constants/chordRegistry";
 import { parseChord } from "./chordParser";
 
-export function correctChordSpelling(chordName: string, root: string): string {
+function correctChordSpelling(chordName: string, root: string): string {
   if (PREFERRED_SPELLINGS[root]) {
     const newRoot = PREFERRED_SPELLINGS[root];
     return chordName.replace(root, newRoot);

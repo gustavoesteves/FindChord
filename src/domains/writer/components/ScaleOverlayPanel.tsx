@@ -101,7 +101,7 @@ const SCALE_DESCRIPTIONS: Record<string, { desc: string; mood: string; tip: stri
   }
 };
 
-export interface SuggestedLick {
+interface SuggestedLick {
   name: string;
   school: "Bebop" | "Chord-Scale" | "Linear" | "Modal";
   theoryDesc: string;

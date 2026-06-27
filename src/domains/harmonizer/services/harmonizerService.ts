@@ -20,13 +20,13 @@ interface SectionRange {
   endTick?: number;
 }
 
-export function chordBass(chord: string): string {
+function chordBass(chord: string): string {
   const slashBass = chord.split("/")[1];
   if (slashBass) return slashBass;
   return chord.match(/^[A-G](?:#|b)?/)?.[0] || chord;
 }
 
-export function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {
+function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {
   const measuresMap = new Map<number, string[]>();
   for (const harmony of harmonies) {
     const chords = measuresMap.get(harmony.measure) || [];

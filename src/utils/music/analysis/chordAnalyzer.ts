@@ -46,7 +46,7 @@ function getQualityExoticPenalty(quality: ChordQuality): number {
   return penalties[quality] !== undefined ? penalties[quality] : 3;
 }
 
-export function getLowestNote(positions: FretPosition[]): FretPosition | null {
+function getLowestNote(positions: FretPosition[]): FretPosition | null {
   if (positions.length === 0) return null;
   return [...positions].reduce((lowest, current) => {
     const currentFreq = current.octave * 12 + current.pitchClass;

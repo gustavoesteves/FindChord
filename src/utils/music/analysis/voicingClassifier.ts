@@ -9,7 +9,7 @@ import type { FretPosition } from "../models/FretPosition";
 import { parseChord } from "../theory/chordParser";
 
 // Classifica a inversão harmônica baseando-se no papel harmônico do baixo acústico
-export function classifyInversion(bassPC: number, rootPC: number, quality: string): "root" | "first" | "second" | "third" | "fourth" {
+function classifyInversion(bassPC: number, rootPC: number, quality: string): "root" | "first" | "second" | "third" | "fourth" {
   const diff = (bassPC - rootPC + 12) % 12;
   
   if (diff === 0) return "root";

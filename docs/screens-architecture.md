@@ -48,6 +48,10 @@ Renderiza o domínio ativo e conecta a navegação do Harmonizar de volta para E
 
 Renderiza o rodapé global da aplicação.
 
+`src/domains/suite/components/StandardLayout.tsx`
+
+Renderiza o layout compartilhado usado pelas superfícies **Escrever** e **Harmonizar**. A aplicação não mantém mais componentes de produto em `src/components`.
+
 ## Escrever
 
 `src/domains/writer/WriterScreen.tsx`
@@ -130,12 +134,12 @@ App
   ↓
 domains/*
   ↓
-components/*
-  ↓
 utils/music/*
 ```
 
-Novos fluxos de produto devem entrar pelos domínios. Componentes em `src/components` devem permanecer limitados a infraestrutura compartilhada entre domínios.
+Novos fluxos de produto devem entrar pelos domínios. A pasta `src/components` foi eliminada da superfície atual; componentes compartilhados da suíte vivem em `src/domains/suite/components`.
+
+Essa regra é validada por `scripts/suite-boundary.spec.ts`, executado em `npm run test:curated`.
 
 ## Contratos Musicais
 
