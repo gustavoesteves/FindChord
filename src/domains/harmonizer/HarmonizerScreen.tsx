@@ -10,6 +10,7 @@ import { useActiveSection } from "./hooks/useActiveSection";
 import { useHarmonizerProposals } from "./hooks/useHarmonizerProposals";
 import { useApplyProposalToWriter } from "./hooks/useApplyProposalToWriter";
 import type { FormalSection } from "../../store/useScoreSessionStore";
+import type { ReharmonizationBoldnessMode } from "../../utils/music/analysis/models/ReharmonizationProposal";
 
 interface HarmonizerScreenProps {
   onNavigateToWriter?: () => void;
@@ -22,12 +23,20 @@ export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScree
   const { canSync, isSyncing, syncScore } = useScoreSync();
   const applyProposalToWriter = useApplyProposalToWriter(onNavigateToWriter);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [boldnessMode, setBoldnessMode] = useState<ReharmonizationBoldnessMode>("balanced");
 
   const sections = indexes?.formalSections || EMPTY_SECTIONS;
   const { activeSection, selectedSectionId, setSelectedSectionId } = useActiveSection(sections);
-  const { displayedProposals, melodyAnchorsData, phraseContext } = useHarmonizerProposals({
+  const {
+    displayedProposals,
+    melodyAnchorsData,
+    phraseContext,
+    rejectedExperimentalCount,
+    omittedStrategyDiagnostics
+  } = useHarmonizerProposals({
     scoreSnapshot,
-    activeSection
+    activeSection,
+    boldnessMode
   });
 
   return (
@@ -53,7 +62,11 @@ export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScree
         <HarmonizerProposalList
           proposals={displayedProposals}
           hasMelodicAnchors={melodyAnchorsData.anchors.length > 0}
+          rejectedExperimentalCount={rejectedExperimentalCount}
+          omittedStrategyDiagnostics={omittedStrategyDiagnostics}
           isExpanded={isExpanded}
+          boldnessMode={boldnessMode}
+          onBoldnessModeChange={setBoldnessMode}
           onToggleExpanded={() => setIsExpanded(!isExpanded)}
           onApplyProposal={applyProposalToWriter}
         />

@@ -5,6 +5,12 @@ import {
   validateFunctionPreservingSubstitution,
   type FunctionPreservingSubstitutionValidation
 } from "./FunctionPreservingSubstitution";
+import {
+  functionalSubstitutionsFor,
+  type FunctionalSubstitutionCandidate,
+  type FunctionalSubstitutionIdiom
+} from "./FunctionalSubstitutionCatalog";
+import { inferFunctionalSubstitutionIdiom } from "./FunctionalSubstitutionIdiomInference";
 import { classifyFunction, normalizeChordRoot } from "./HarmonicStrategyValidator";
 
 interface ControlledSubstitutionProposal {
@@ -12,39 +18,14 @@ interface ControlledSubstitutionProposal {
   substituteChord: string;
   measure: number;
   preservedFunction: "T" | "PD" | "D";
+  substitution: FunctionalSubstitutionCandidate;
   melodyPitches: string[];
   validation: FunctionPreservingSubstitutionValidation;
+  idiom: FunctionalSubstitutionIdiom;
   explanation: string[];
 }
 
-const SUBSTITUTION_CANDIDATES: Record<"T" | "PD" | "D", string[]> = {
-  T: [],
-  PD: ["#IVm7(b5)"],
-  D: [],
-};
-
-function rootForSharpIvHalfDiminished(center: string): string {
-  const sharpIvByCenter: Record<string, string> = {
-    C: "F#",
-    G: "C#",
-    D: "G#",
-    A: "D#",
-    E: "A#",
-    B: "E#",
-    F: "B",
-    Bb: "E",
-    Eb: "A",
-    Ab: "D",
-    Db: "G",
-    Gb: "C"
-  };
-  return sharpIvByCenter[center] || "F#";
-}
-
-function materializeCandidate(template: string, center: string): string {
-  if (template === "#IVm7(b5)") return `${rootForSharpIvHalfDiminished(center)}m7(b5)`;
-  return template;
-}
+export type FunctionalSubstitutionIdiomRequest = FunctionalSubstitutionIdiom | "auto";
 
 function uniquePitchesForMeasure(anchors: MelodicAnchor[], measure: number): string[] {
   return Array.from(new Set(anchors
@@ -63,16 +44,29 @@ function preservesStructuralBass(originalChord: string, substituteChord: string)
   return originalBass === substituteBass;
 }
 
+function describeFunction(fn: "T" | "PD" | "D"): string {
+  if (fn === "T") return "repouso";
+  if (fn === "PD") return "preparação";
+  return "tensão dominante";
+}
+
+function musicalEvidence(evidence: string[], preservedFunction: "T" | "PD" | "D"): string[] {
+  return evidence.filter(item => item !== `preserva função ${preservedFunction}`);
+}
+
 export function generateControlledSubstitutionProposals(
   harmonies: ScoreHarmonyEvent[],
   anchors: MelodicAnchor[],
   center: string,
-  maxSubstitutions = 1
+  maxSubstitutions = 1,
+  idiom: FunctionalSubstitutionIdiomRequest = "auto"
 ): ControlledSubstitutionProposal[] {
   const reference = analyzeReferenceHarmony(harmonies);
   if (!reference.hasExistingHarmony) return [];
 
   const ordered = [...harmonies].sort((a, b) => a.tickStart - b.tickStart);
+  const inferred = inferFunctionalSubstitutionIdiom(ordered.map(harmony => harmony.harmony), center);
+  const effectiveIdiom = idiom === "auto" ? inferred.idiom : idiom;
   const proposals: ControlledSubstitutionProposal[] = [];
 
   for (let i = 0; i < ordered.length; i++) {
@@ -83,13 +77,15 @@ export function generateControlledSubstitutionProposals(
     const originalFunction = classifyFunction(harmony.harmony, center);
     if (originalFunction !== "T" && originalFunction !== "PD" && originalFunction !== "D") continue;
 
-    const candidates = SUBSTITUTION_CANDIDATES[originalFunction]
-      .map(template => materializeCandidate(template, center));
-    for (const substituteChord of candidates) {
+    const melodyPitches = uniquePitchesForMeasure(anchors, harmony.measure);
+    if (melodyPitches.length === 0) continue;
+
+    const candidates = functionalSubstitutionsFor(originalFunction, center, effectiveIdiom);
+    for (const substitution of candidates) {
+      const substituteChord = substitution.chord;
       if (normalizeChordRoot(substituteChord) === normalizeChordRoot(harmony.harmony)) continue;
       if (!preservesStructuralBass(harmony.harmony, substituteChord)) continue;
 
-      const melodyPitches = uniquePitchesForMeasure(anchors, harmony.measure);
       const validation = validateFunctionPreservingSubstitution({
         center,
         originalChord: harmony.harmony,
@@ -97,7 +93,8 @@ export function generateControlledSubstitutionProposals(
         previousChord: ordered[i - 1]?.harmony,
         nextChord: ordered[i + 1]?.harmony,
         melodyPitches,
-        expectedBackboneFunction: originalFunction
+        expectedBackboneFunction: originalFunction,
+        classificationMode: effectiveIdiom === "minor-functional" ? "minor-functional" : "major-functional"
       });
 
       if (!validation.accepted) continue;
@@ -107,13 +104,16 @@ export function generateControlledSubstitutionProposals(
         substituteChord,
         measure: harmony.measure,
         preservedFunction: originalFunction,
+        substitution,
         melodyPitches,
         validation,
+        idiom: effectiveIdiom,
         explanation: [
           `Substitui ${harmony.harmony} por ${substituteChord}`,
-          `Preserva função ${originalFunction}`,
+          `Preserva a função de ${describeFunction(originalFunction)}`,
           "Mantém compatibilidade com a melodia",
-          ...validation.evidence
+          substitution.explanation,
+          ...musicalEvidence(validation.evidence, originalFunction)
         ]
       });
       break;

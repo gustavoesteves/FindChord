@@ -3,10 +3,37 @@ export interface ReharmonizationMeasure {
   chords: string[];
 }
 
+export type ReharmonizationProposalKind =
+  | "reference"
+  | "validated-harmonization"
+  | "controlled-reharmonization"
+  | "experimental-exploration";
+
+export type ReharmonizationRouteProfile = "conservative" | "moderate" | "chromatic" | "radical";
+export type ReharmonizationPresentationRole = "primary" | "alternative" | "comparative" | "adventurous";
+export type ReharmonizationBoldnessMode = "simple" | "balanced" | "exploratory";
+export type ReharmonizationHarmonicIdiom =
+  | "major-functional"
+  | "minor-functional"
+  | "modal"
+  | "blues";
+export type ReharmonizationHarmonicBoundary =
+  | "minor-functional-cadential"
+  | "modal-center";
+
 export interface ReharmonizationProposal {
   id: string;
+  kind: ReharmonizationProposalKind;
   name: string;
   measures: ReharmonizationMeasure[];
   explanation: string[];
   bassLine: string[];
+  voiceLeadingScore?: number;
+  voiceLeadingEvidence?: string[];
+  routeDistanceCost?: number;
+  routeProfile?: ReharmonizationRouteProfile;
+  routeDistanceEvidence?: string[];
+  presentationRole?: ReharmonizationPresentationRole;
+  harmonicIdiom?: ReharmonizationHarmonicIdiom;
+  harmonicBoundary?: ReharmonizationHarmonicBoundary;
 }

@@ -4,6 +4,7 @@ import type { ScoreSnapshot } from "../utils/music/analysis/models/ScoreSnapshot
 export interface FormalSection {
   id: string;
   label: string;
+  source: "score" | "inferred-phrase-window";
   startMeasure: number;
   endMeasure: number;
   startTick?: number;
@@ -65,6 +66,7 @@ function inferFormalSections(snapshot: ScoreSnapshot): FormalSection[] {
   const explicitSections = normalizedSections.map(section => ({
     id: section.id,
     label: section.label,
+    source: "score" as const,
     startMeasure: section.startMeasure,
     endMeasure: section.endMeasure,
     startTick: section.startTick ?? getMeasureStartTick(section.startMeasure),
@@ -94,6 +96,7 @@ function inferFormalSections(snapshot: ScoreSnapshot): FormalSection[] {
     sections.push({
       id: `auto_sec_${partIndex}`,
       label: `Parte ${labels[(partIndex - 1) % labels.length]}`,
+      source: "inferred-phrase-window",
       startMeasure: currentMeasure,
       endMeasure,
       startTick: getMeasureStartTick(currentMeasure),

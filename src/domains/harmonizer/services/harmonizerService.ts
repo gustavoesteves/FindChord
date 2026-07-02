@@ -94,9 +94,14 @@ export function buildExistingHarmonyProposal(
 
   return {
     id: "existing-harmony-reference",
+    kind: "reference",
     name: "Referência — Harmonia da partitura",
     measures: harmonyEventsToMeasures(sectionHarmonies),
     explanation: referenceAnalysis.explanation,
+    harmonicIdiom: referenceAnalysis.idiom?.idiom,
+    harmonicBoundary: referenceAnalysis.minorModalBoundary?.boundary === "undetermined"
+      ? undefined
+      : referenceAnalysis.minorModalBoundary?.boundary,
     bassLine: referenceAnalysis.bassTrajectory.length > 0
       ? referenceAnalysis.bassTrajectory
       : sectionHarmonies.map(harmony => chordBass(harmony.harmony))
@@ -124,6 +129,7 @@ export function buildControlledReharmonizationProposals(
 
     return {
       id: `controlled-substitution-${index}`,
+      kind: "controlled-reharmonization",
       name: "Rearmonização controlada — substituição funcional",
       measures: harmonyEventsToMeasures(substitutedEvents),
       explanation: controlled.explanation,

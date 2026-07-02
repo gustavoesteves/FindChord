@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 function loadBrightSizeLife() {
-  return parseMusicXML(fs.readFileSync("./docs/Bright Size Life.musicxml", "utf8"));
+  return parseMusicXML(fs.readFileSync("./docs/musics/Bright Size Life.musicxml", "utf8"));
 }
 
 describe("Bright Size Life diagnostic", () => {

@@ -13,11 +13,12 @@ export default function HarmonizerSectionSelector({
   onSelectSection
 }: HarmonizerSectionSelectorProps) {
   if (sections.length === 0) return null;
+  const heading = sections.every(section => section.source === "inferred-phrase-window") ? "Frases" : "Seções";
 
   return (
     <div className="flex flex-col gap-3">
       <span className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-        <Music2 className="w-4 h-4" /> Seções
+        <Music2 className="w-4 h-4" /> {heading}
       </span>
       <div className="flex flex-wrap gap-2">
         {sections.map(section => (

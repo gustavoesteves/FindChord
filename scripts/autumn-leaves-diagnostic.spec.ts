@@ -14,8 +14,8 @@ function pitchClassFromNote(note: any): string {
 }
 
 describe("Autumn Leaves diagnostic", () => {
-  it("exposes the gap between global-tonal patterns and local ii-V functional grammar", () => {
-    const snapshot = parseMusicXML(fs.readFileSync("./docs/autum leaves.musicxml", "utf8"));
+  it("detects reference ii-V cells and surfaces local ii-V proposals inside the section", () => {
+    const snapshot = parseMusicXML(fs.readFileSync("./docs/musics/autum leaves.musicxml", "utf8"));
     const sectionA = snapshot.sections.find((section: any) => section.label === "A");
     expect(sectionA).toBeTruthy();
 
@@ -62,9 +62,17 @@ describe("Autumn Leaves diagnostic", () => {
         chords: ["F#m7(b5)", "B7(b13)", "Em6"]
       })
     ]));
-    expect(proposals.length).toBeGreaterThan(0);
+    const generatedLocalIiVCells = proposals
+      .filter(proposal => proposal.name === "Estratégia — Gramática funcional ii-V")
+      .map(proposal => proposal.measures.flatMap(measure => measure.chords));
+
     expect(["E", "G"]).toContain(phraseContext.selectedCenter.tonic);
     expect(phraseContext.selectedCenter.mode).toBe("minor");
-    expect(proposals[0]?.measures.slice(0, 3).flatMap(measure => measure.chords)).not.toEqual(["Am7", "D7", "Gmaj7"]);
+    expect(generatedLocalIiVCells).toEqual(expect.arrayContaining([
+      ["Am7", "D7", "Gmaj7"]
+    ]));
+    expect(generatedLocalIiVCells).not.toEqual(expect.arrayContaining([
+      ["Bm7", "E7", "Amaj7"]
+    ]));
   });
 });

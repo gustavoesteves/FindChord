@@ -92,6 +92,37 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(report.backbone).not.toEqual(["T", "PD", "D", "T"]);
   });
 
+  it("rejects long-form proposals with a weakly covered melodic segment", () => {
+    const longMelody: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "E" },
+      { measureIndex: 1, pitch: "D" },
+      { measureIndex: 1, pitch: "F" },
+      { measureIndex: 1, pitch: "A" },
+      { measureIndex: 2, pitch: "A" },
+      { measureIndex: 3, pitch: "G" },
+      { measureIndex: 4, pitch: "C" },
+      { measureIndex: 5, pitch: "C" }
+    ];
+    const candidate: HarmonizationCandidate = {
+      strategy: "I_IV_V",
+      center: "F",
+      melody: longMelody,
+      measures: [
+        { measureIndex: 1, chords: ["Emaj7"] },
+        { measureIndex: 2, chords: ["F"] },
+        { measureIndex: 3, chords: ["C"] },
+        { measureIndex: 4, chords: ["F"] },
+        { measureIndex: 5, chords: ["F"] }
+      ]
+    };
+
+    const validation = validateHarmonicStrategy(candidate);
+
+    expect(validation.accepted).toBe(false);
+    expect(validation.report.weakestMeasureMelodyCoverage).toBeLessThan(0.5);
+    expect(validation.failures).toContain("melody-segment-coverage");
+  });
+
   it("does not count supported apparent-function substitutions as functional escapes", () => {
     const candidate: HarmonizationCandidate = {
       strategy: "EXPANSAO_FUNCIONAL_DIATONICA",

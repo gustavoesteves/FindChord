@@ -9,11 +9,11 @@ const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 function findPalhacoPath(): string {
-  const fileName = fs.readdirSync("./docs").find(name => (
+  const fileName = fs.readdirSync("./docs/musics").find(name => (
     name.normalize("NFD").includes("palhac") && name.endsWith(".musicxml")
   ));
   if (!fileName) throw new Error("palhaco MusicXML fixture not found");
-  return `./docs/${fileName}`;
+  return `./docs/musics/${fileName}`;
 }
 
 function pitchClassFromNote(note: any): string {

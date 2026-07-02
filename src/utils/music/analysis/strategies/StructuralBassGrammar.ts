@@ -1,5 +1,6 @@
-import { Chord, Note } from "tonal";
+import { Note } from "tonal";
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
+import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
 import { detectIiVFunctionalCells } from "./IiVFunctionalGrammar";
 
 interface SlashChordRelation {
@@ -58,9 +59,7 @@ function chordSymbol(chord: string): string {
 }
 
 function normalizeChordRoot(chord: string): string {
-  const symbol = chordSymbol(chord);
-  const data = Chord.get(symbol);
-  return normalizePitch(data.tonic || Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, ""));
+  return normalizePitch(chordRoot(chordSymbol(chord)) || "");
 }
 
 function explicitBass(chord: string): string | null {
@@ -73,7 +72,7 @@ function bassForChord(chord: string): string {
 }
 
 function upperChordPitchClasses(chord: string): string[] {
-  return Chord.get(chordSymbol(chord)).notes.map(note => normalizePitch(note)).filter(Boolean);
+  return chordPitchClasses(chordSymbol(chord), false).map(note => normalizePitch(note)).filter(Boolean);
 }
 
 function bassSemitoneStep(a: string, b: string): number | null {

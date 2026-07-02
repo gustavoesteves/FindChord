@@ -41,7 +41,7 @@ describe("F26.10c Controlled Substitution Proposals", () => {
     }));
     expect(proposals[0].validation.accepted).toBe(true);
     expect(proposals[0].explanation).toEqual(expect.arrayContaining([
-      "Preserva função PD",
+      "Preserva a função de preparação",
       "Mantém compatibilidade com a melodia"
     ]));
   });
@@ -78,6 +78,88 @@ describe("F26.10c Controlled Substitution Proposals", () => {
 
   it("returns no proposals when there is no existing harmony layer", () => {
     const proposals = generateControlledSubstitutionProposals([], anchorsByMeasure({ 2: ["A", "C"] }), "C");
+
+    expect(proposals).toHaveLength(0);
+  });
+
+  it("uses the substitution table for tonic relatives", () => {
+    const proposals = generateControlledSubstitutionProposals(
+      harmonies(["G7", "Cmaj7", "Fmaj7", "G7", "Cmaj7"]),
+      anchorsByMeasure({ 2: ["A", "C"] }),
+      "C"
+    );
+
+    expect(proposals[0]).toEqual(expect.objectContaining({
+      originalChord: "Cmaj7",
+      substituteChord: "Am",
+      preservedFunction: "T"
+    }));
+    expect(proposals[0].substitution).toEqual(expect.objectContaining({
+      id: "TONIC_RELATIVE_MINOR",
+      template: "vi"
+    }));
+  });
+
+  it("uses the substitution table for resolved dominant SubV7", () => {
+    const proposals = generateControlledSubstitutionProposals(
+      harmonies(["Cmaj7", "Fmaj7", "G7", "Cmaj7"]),
+      anchorsByMeasure({ 3: ["F", "Ab"] }),
+      "C"
+    );
+
+    expect(proposals[0]).toEqual(expect.objectContaining({
+      originalChord: "G7",
+      substituteChord: "Db7",
+      preservedFunction: "D"
+    }));
+    expect(proposals[0].explanation).toEqual(expect.arrayContaining([
+      "SubV7 preserva impulso dominante com baixo cromatico",
+      "SubV7 resolve cromaticamente no centro tonal"
+    ]));
+  });
+
+  it("can use the minor-functional catalog when explicitly requested", () => {
+    const proposals = generateControlledSubstitutionProposals(
+      harmonies(["E7", "Am", "Dm", "E7", "Am"]),
+      anchorsByMeasure({ 2: ["C", "E"] }),
+      "A",
+      1,
+      "minor-functional"
+    );
+
+    expect(proposals[0]).toEqual(expect.objectContaining({
+      originalChord: "Am",
+      substituteChord: "C",
+      preservedFunction: "T"
+    }));
+    expect(proposals[0].substitution).toEqual(expect.objectContaining({
+      id: "MINOR_TONIC_RELATIVE_MAJOR",
+      template: "bIII",
+      idiom: "minor-functional"
+    }));
+  });
+
+  it("infers minor-functional substitutions when the phrase strongly implies minor", () => {
+    const proposals = generateControlledSubstitutionProposals(
+      harmonies(["E7", "Am", "Dm", "E7", "Am"]),
+      anchorsByMeasure({ 2: ["C", "E"] }),
+      "A"
+    );
+
+    expect(proposals[0]).toEqual(expect.objectContaining({
+      originalChord: "Am",
+      substituteChord: "C",
+      preservedFunction: "T",
+      idiom: "minor-functional"
+    }));
+  });
+
+  it("does not force major-functional substitutions over a detected blues idiom", () => {
+    const proposals = generateControlledSubstitutionProposals(
+      harmonies(["C7", "F7", "C7", "G7", "F7", "C7"]),
+      anchorsByMeasure({ 2: ["A", "C"] }),
+      "C"
+    );
 
     expect(proposals).toHaveLength(0);
   });

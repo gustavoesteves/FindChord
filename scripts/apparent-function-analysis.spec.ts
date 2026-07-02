@@ -28,6 +28,21 @@ describe("F26.10a Apparent Function Analysis", () => {
     }));
   });
 
+  it("classifies sus aliases through the chord symbol resolver", () => {
+    const predominantSus = analyzeApparentFunction("G7sus", {
+      center: "C",
+      previousChord: "Dm7",
+      nextChord: "G7alt"
+    });
+
+    expect(predominantSus).toEqual(expect.objectContaining({
+      apparentType: "SUS",
+      apparentFunction: "PD",
+      impliedFunction: "PD",
+      shouldCountAsFunctionalEscape: false
+    }));
+  });
+
   it("classifies diminished chords as dominant-like, chromatic, or unresolved by resolution", () => {
     const dominantDim = analyzeApparentFunction("Bdim", {
       center: "C",
@@ -59,6 +74,19 @@ describe("F26.10a Apparent Function Analysis", () => {
       apparentType: "DIMINISHED",
       apparentFunction: "AMBIGUOUS",
       shouldCountAsFunctionalEscape: true
+    }));
+  });
+
+  it("classifies diminished aliases through the chord symbol resolver", () => {
+    const dominantDim = analyzeApparentFunction("B°", {
+      center: "C",
+      previousChord: "Dm7",
+      nextChord: "C7M"
+    });
+
+    expect(dominantDim).toEqual(expect.objectContaining({
+      apparentType: "DIMINISHED",
+      shouldCountAsFunctionalEscape: false
     }));
   });
 
@@ -98,6 +126,20 @@ describe("F26.10a Apparent Function Analysis", () => {
       apparentFunction: "PD",
       impliedFunction: "PD",
       impliedTarget: "Fmaj7",
+      shouldCountAsFunctionalEscape: false
+    }));
+  });
+
+  it("treats #IV half-diminished aliases as predominance-preserving", () => {
+    const sharpIv = analyzeApparentFunction("F#ø", {
+      center: "C",
+      previousChord: "C7M",
+      nextChord: "F7M"
+    });
+
+    expect(sharpIv).toEqual(expect.objectContaining({
+      apparentType: "SHARP_IV_M7B5",
+      apparentFunction: "PD",
       shouldCountAsFunctionalEscape: false
     }));
   });

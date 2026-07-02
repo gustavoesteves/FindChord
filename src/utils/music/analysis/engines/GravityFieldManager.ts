@@ -1,6 +1,8 @@
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { PhraseContext } from "./PhraseAnalysisEngine";
 import type { ReharmonizationProposal, ReharmonizationMeasure } from "../models/ReharmonizationProposal";
+import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
+import { Note } from "tonal";
 import { ChordRealizationEngine } from "./ChordRealizationEngine";
 import { BassTrajectoryModel } from "./archetypes/BassTrajectoryModel";
 import { TemporalSlotAllocator } from "./TemporalSlotAllocator";
@@ -10,6 +12,13 @@ import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
 import { ContrapuntalGravityField } from "./fields/ContrapuntalGravityField";
 import { StrategyGuidedHarmonizer } from "../strategies/StrategyGuidedHarmonizer";
+import { noteCoveredByChord } from "../strategies/HarmonicStrategyValidator";
+
+export interface GravityProposalGenerationResult {
+  proposals: ReharmonizationProposal[];
+  rejectedExperimentalCount: number;
+  omittedStrategyDiagnostics: HarmonicDiagnostic[];
+}
 
 export class GravityFieldManager {
   private static fields: GravityField[] = [
@@ -22,9 +31,16 @@ export class GravityFieldManager {
     anchors: MelodicAnchor[], 
     phraseContext: PhraseContext
   ): ReharmonizationProposal[] {
-    
+    return this.generateProposalsWithDiagnostics(anchors, phraseContext).proposals;
+  }
+
+  public static generateProposalsWithDiagnostics(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): GravityProposalGenerationResult {
     const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     let pIdx = 1;
+    let rejectedExperimentalCount = 0;
 
     for (const field of this.fields) {
       
@@ -79,8 +95,14 @@ export class GravityFieldManager {
               .sort((a, b) => a[0] - b[0])
               .map(([measureIndex, chords]) => ({ measureIndex, chords }));
 
+            if (!this.passesMelodicCompatibilityGate(measures, anchors)) {
+              rejectedExperimentalCount++;
+              continue;
+            }
+
             allProposals.push({
               id: `prop_${pIdx}`,
+              kind: "experimental-exploration",
               name: `Estratégia — ${field.name}`,
               measures,
               explanation: seed.explanation, 
@@ -99,6 +121,194 @@ export class GravityFieldManager {
       }
     }
 
-    return allProposals;
+    return {
+      proposals: allProposals,
+      rejectedExperimentalCount,
+      omittedStrategyDiagnostics: this.omittedStrategyDiagnostics(anchors, phraseContext, allProposals)
+    };
+  }
+
+  private static omittedStrategyDiagnostics(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext,
+    proposals: ReharmonizationProposal[]
+  ): HarmonicDiagnostic[] {
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const diagnostics: HarmonicDiagnostic[] = [];
+
+    if (phraseContext.selectedCenter.mode === "minor") {
+      const hasMinorFunctionalProposal = proposals.some(proposal => proposal.harmonicIdiom === "minor-functional");
+      const hasModalProposal = proposals.some(proposal => proposal.harmonicIdiom === "modal");
+      const hasModalVocabulary = this.hasModalMelodicVocabulary(anchors, center);
+      const hasFunctionalDirection = this.hasFunctionalMinorMelodicDirection(anchors, center);
+
+      if (hasModalVocabulary && !hasFunctionalDirection && !hasMinorFunctionalProposal) {
+        diagnostics.push(diagnostic(
+          "minor-functional-omitted-no-leading-tone",
+          "generation",
+          "omission",
+          "Menor funcional omitido: a melodia não traz sensível nem sexta maior para sustentar cadência dominante."
+        ));
+      }
+
+      if (hasFunctionalDirection && !hasModalProposal) {
+        diagnostics.push(diagnostic(
+          "modal-center-omitted-functional-direction",
+          "generation",
+          "omission",
+          "Centro modal omitido: a melodia traz direção cadencial menor por sensível ou sexta maior."
+        ));
+      }
+    }
+
+    return [
+      ...diagnostics,
+      ...this.omittedBluesDiagnostics(anchors, phraseContext, proposals, center),
+      ...this.omittedLocalIiVDiagnostics(anchors, phraseContext, proposals, center),
+      ...this.omittedSubV7Diagnostics(anchors, phraseContext, proposals, center)
+    ];
+  }
+
+  private static omittedBluesDiagnostics(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext,
+    proposals: ReharmonizationProposal[],
+    center: string
+  ): HarmonicDiagnostic[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+    if (proposals.some(proposal => proposal.harmonicIdiom === "blues")) return [];
+
+    const flatThird = Note.pitchClass(Note.transpose(`${center}4`, "3m"));
+    const flatSeventh = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+    const hasFlatThird = !!flatThird && notes.has(flatThird);
+    const hasFlatSeventh = !!flatSeventh && notes.has(flatSeventh);
+
+    if (hasFlatThird !== hasFlatSeventh) {
+      return [diagnostic(
+        "blues-omitted-partial-color",
+        "generation",
+        "omission",
+        "Blues funcional omitido: a melodia sugere cor blues parcial, mas não sustenta b3 e b7 como estrutura."
+      )];
+    }
+
+    return [];
+  }
+
+  private static omittedLocalIiVDiagnostics(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext,
+    proposals: ReharmonizationProposal[],
+    center: string
+  ): HarmonicDiagnostic[] {
+    const localTonic = Note.pitchClass(phraseContext.cadentialTarget.targetPitch);
+    const hasLocalIiVProposal = proposals.some(proposal => proposal.name === "Estratégia — Gramática funcional ii-V");
+    if (!localTonic || localTonic === center || hasLocalIiVProposal) return [];
+
+    const measureCount = new Set(anchors.map(anchor => anchor.measureIndex)).size;
+    if (measureCount < 3 || phraseContext.cadentialTarget.confidence < 0.5) return [];
+
+    return [diagnostic(
+      `local-iiv-omitted-${localTonic.toLowerCase()}`,
+      "generation",
+      "omission",
+      `ii-V local omitido: a chegada em ${localTonic} não teve cobertura melódica suficiente para uma cadência local.`
+    )];
+  }
+
+  private static omittedSubV7Diagnostics(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext,
+    proposals: ReharmonizationProposal[],
+    center: string
+  ): HarmonicDiagnostic[] {
+    const hasSubV7Proposal = proposals.some(proposal => proposal.name === "Estratégia — SubV7 cadencial");
+    if (hasSubV7Proposal || !this.hasAuthenticCadentialShape(anchors, center)) return [];
+
+    const attempt = StrategyGuidedHarmonizer.tryStrategy("SUBV7_CADENCIAL", anchors, phraseContext);
+    if (attempt.validation.failures.includes("melody-coverage")) {
+      return [diagnostic(
+        "subv7-omitted-melody-coverage",
+        "generation",
+        "omission",
+        "SubV7 omitido: o substituto cromático não cobre as notas estruturais da melodia nesse fechamento."
+      )];
+    }
+
+    return [];
+  }
+
+  private static hasAuthenticCadentialShape(anchors: MelodicAnchor[], center: string): boolean {
+    const measureCount = new Set(anchors.map(anchor => anchor.measureIndex)).size;
+    const finalPitch = Note.pitchClass(anchors[anchors.length - 1]?.pitch);
+    return measureCount >= 4 && finalPitch === center;
+  }
+
+  private static hasModalMelodicVocabulary(anchors: MelodicAnchor[], center: string): boolean {
+    const notes = anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean);
+    const centerCount = notes.filter(note => note === center).length;
+    const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    const flatSix = Note.pitchClass(Note.transpose(`${center}4`, "6m"));
+    const hasModalColor = (!!flatSeven && notes.includes(flatSeven)) || (!!flatSix && notes.includes(flatSix));
+    return centerCount >= 2 && hasModalColor;
+  }
+
+  private static hasFunctionalMinorMelodicDirection(anchors: MelodicAnchor[], center: string): boolean {
+    const notes = anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean);
+    const leadingTone = Note.pitchClass(Note.transpose(`${center}4`, "7M"));
+    const raisedSixth = Note.pitchClass(Note.transpose(`${center}4`, "6M"));
+    return (!!leadingTone && notes.includes(leadingTone)) || (!!raisedSixth && notes.includes(raisedSixth));
+  }
+
+  private static passesMelodicCompatibilityGate(
+    measures: ReharmonizationMeasure[],
+    anchors: MelodicAnchor[]
+  ): boolean {
+    if (measures.length === 0 || anchors.length === 0) return false;
+
+    const sortedMeasures = [...measures].sort((a, b) => a.measureIndex - b.measureIndex);
+    const sortedAnchors = [...anchors].sort((a, b) => a.measureIndex - b.measureIndex);
+    const firstSegmentAnchors = this.anchorsForCompressedMeasure(sortedMeasures[0], sortedMeasures[1], sortedAnchors);
+
+    const overallCoverage = this.coverageForCompressedMeasures(sortedMeasures, sortedAnchors);
+    const firstSegmentCoverage = this.coverageForAnchors(firstSegmentAnchors, sortedMeasures[0].chords);
+
+    return overallCoverage >= 0.65 && firstSegmentCoverage !== null && firstSegmentCoverage >= 0.5;
+  }
+
+  private static coverageForCompressedMeasures(
+    measures: ReharmonizationMeasure[],
+    anchors: MelodicAnchor[]
+  ): number {
+    const segmentCoverages = measures.map((measure, index) => {
+      const segmentAnchors = this.anchorsForCompressedMeasure(measure, measures[index + 1], anchors);
+      return this.coverageForAnchors(segmentAnchors, measure.chords);
+    }).filter(coverage => coverage !== null);
+
+    if (segmentCoverages.length === 0) return 0;
+    return segmentCoverages.reduce((sum, coverage) => sum + coverage, 0) / segmentCoverages.length;
+  }
+
+  private static anchorsForCompressedMeasure(
+    measure: ReharmonizationMeasure,
+    nextMeasure: ReharmonizationMeasure | undefined,
+    anchors: MelodicAnchor[]
+  ): MelodicAnchor[] {
+    return anchors.filter(anchor => (
+      anchor.measureIndex >= measure.measureIndex &&
+      (!nextMeasure || anchor.measureIndex < nextMeasure.measureIndex)
+    ));
+  }
+
+  private static coverageForAnchors(
+    anchors: MelodicAnchor[],
+    chords: string[]
+  ): number | null {
+    if (anchors.length === 0) return null;
+    const covered = anchors.filter(anchor => chords.some(chord => noteCoveredByChord(anchor.pitch, chord))).length;
+    return covered / anchors.length;
   }
 }

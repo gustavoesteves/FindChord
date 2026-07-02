@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 function loadDepoisDeMuitoDiscutir() {
-  return parseMusicXML(fs.readFileSync("./docs/depois de muito discutir.musicxml", "utf8"));
+  return parseMusicXML(fs.readFileSync("./docs/musics/depois de muito discutir.musicxml", "utf8"));
 }
 
 function anchorsForSection(snapshot: any, label: string): MelodicAnchor[] {
@@ -72,5 +72,17 @@ describe("Depois de Muito Discutir diagnostic", () => {
 
     expect(phraseContext.selectedCenter.tonic).toBe("F");
     expect(firstTonalChord).not.toBe("Emaj7");
+  });
+
+  it("does not surface gravity-field proposals whose opening chord misses the melodic territory", () => {
+    const snapshot = loadDepoisDeMuitoDiscutir();
+    const anchors = anchorsForSection(snapshot, "A1").slice(0, 32);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const proposals = generation.proposals;
+    const firstChords = proposals.map((proposal) => proposal.measures[0]?.chords[0]).filter(Boolean);
+
+    expect(generation.rejectedExperimentalCount).toBeGreaterThan(0);
+    expect(firstChords).not.toContain("Emaj7");
   });
 });

@@ -2,7 +2,13 @@ import {
   analyzeApparentFunction,
   type ApparentFunctionAnalysis
 } from "./ApparentFunctionAnalysis";
-import { classifyFunction, noteCoveredByChord, type StrategyFunctionId } from "./HarmonicStrategyValidator";
+import { Note } from "tonal";
+import {
+  classifyFunctionInMode,
+  noteCoveredByChord,
+  type FunctionalClassificationMode,
+  type StrategyFunctionId
+} from "./HarmonicStrategyValidator";
 
 interface FunctionPreservingSubstitutionInput {
   center: string;
@@ -12,6 +18,7 @@ interface FunctionPreservingSubstitutionInput {
   nextChord?: string;
   melodyPitches?: string[];
   expectedBackboneFunction?: StrategyFunctionId;
+  classificationMode?: FunctionalClassificationMode;
 }
 
 export interface FunctionPreservingSubstitutionValidation {
@@ -25,9 +32,14 @@ export interface FunctionPreservingSubstitutionValidation {
   evidence: string[];
 }
 
-function effectiveFunction(chord: string, center: string, apparent?: ApparentFunctionAnalysis | null): StrategyFunctionId | "APPARENT" {
+function effectiveFunction(
+  chord: string,
+  center: string,
+  mode: FunctionalClassificationMode,
+  apparent?: ApparentFunctionAnalysis | null
+): StrategyFunctionId | "APPARENT" {
   if (apparent && !apparent.shouldCountAsFunctionalEscape && apparent.impliedFunction) return "APPARENT";
-  return classifyFunction(chord, center);
+  return classifyFunctionInMode(chord, center, mode);
 }
 
 function melodyCoverage(chord: string, melodyPitches: string[] = []): number {
@@ -39,6 +51,21 @@ function melodyCoverage(chord: string, melodyPitches: string[] = []): number {
   return covered / melodyPitches.length;
 }
 
+function isResolvedSubV7(substituteChord: string, nextChord: string | undefined, center: string): boolean {
+  if (!nextChord) return false;
+
+  const substituteRoot = substituteChord.match(/^[A-G](?:#|b)?/)?.[0];
+  const nextRoot = nextChord.match(/^[A-G](?:#|b)?/)?.[0];
+  if (!substituteRoot || !nextRoot) return false;
+
+  const substituteChroma = Note.chroma(substituteRoot);
+  const nextChroma = Note.chroma(nextRoot);
+  const centerChroma = Note.chroma(center);
+  if (substituteChroma === undefined || nextChroma === undefined || centerChroma === undefined) return false;
+
+  return nextChroma === centerChroma && (substituteChroma - nextChroma + 12) % 12 === 1 && /7/.test(substituteChord);
+}
+
 export function validateFunctionPreservingSubstitution(
   input: FunctionPreservingSubstitutionInput
 ): FunctionPreservingSubstitutionValidation {
@@ -47,10 +74,13 @@ export function validateFunctionPreservingSubstitution(
     previousChord: input.previousChord,
     nextChord: input.nextChord
   });
-  const originalFunction = input.expectedBackboneFunction || classifyFunction(input.originalChord, input.center);
-  const substituteFunction = effectiveFunction(input.substituteChord, input.center, apparentFunction);
+  const classificationMode = input.classificationMode || "major-functional";
+  const originalFunction = input.expectedBackboneFunction || classifyFunctionInMode(input.originalChord, input.center, classificationMode);
+  const substituteFunction = isResolvedSubV7(input.substituteChord, input.nextChord, input.center)
+    ? "APPARENT"
+    : effectiveFunction(input.substituteChord, input.center, classificationMode, apparentFunction);
   const impliedFunction = substituteFunction === "APPARENT"
-    ? apparentFunction?.impliedFunction
+    ? apparentFunction?.impliedFunction || (isResolvedSubV7(input.substituteChord, input.nextChord, input.center) ? "D" : undefined)
     : substituteFunction;
   const coverage = melodyCoverage(input.substituteChord, input.melodyPitches);
   const failures: string[] = [];
@@ -64,6 +94,9 @@ export function validateFunctionPreservingSubstitution(
 
   if (apparentFunction && !apparentFunction.shouldCountAsFunctionalEscape) {
     evidence.push(...apparentFunction.evidence);
+  }
+  if (isResolvedSubV7(input.substituteChord, input.nextChord, input.center)) {
+    evidence.push("SubV7 resolve cromaticamente no centro tonal");
   }
   if (coverage === 1) evidence.push("substituto cobre as notas melódicas exigidas");
   if (impliedFunction === originalFunction && originalFunction !== "OTHER") {

@@ -1,4 +1,5 @@
-import { Chord, Note } from "tonal";
+import { Note } from "tonal";
+import { chordRoot, resolveChordSymbol, type ChordQuality } from "../../theory/ChordSymbolResolver";
 
 type StrategyFunctionId = "T" | "PD" | "D" | "OTHER";
 
@@ -31,13 +32,12 @@ function chordSymbol(chord: string): string {
   return chord.split("/")[0];
 }
 
-function chordQuality(chord: string): string {
-  return Chord.tokenize(chordSymbol(chord))[1] || "";
+function chordQuality(chord: string): ChordQuality {
+  return resolveChordSymbol(chordSymbol(chord)).quality;
 }
 
 function normalizeChordRoot(chord: string): string {
-  const symbol = chordSymbol(chord);
-  return Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, "");
+  return chordRoot(chordSymbol(chord)) || "";
 }
 
 function rootToRoman(root: string, center: string): string {
@@ -80,20 +80,31 @@ function romanFunction(roman: string): StrategyFunctionId | "CHROMATIC" {
 }
 
 function isSus(chord: string): boolean {
-  return /sus/i.test(chordQuality(chord)) || /sus/i.test(chord);
+  return ["sus2", "sus4", "7sus4", "9sus4", "13sus4"].includes(chordQuality(chord));
 }
 
 function isDominantChord(chord: string): boolean {
-  const symbol = chordSymbol(chord);
-  const data = Chord.get(symbol);
-  const quality = chordQuality(symbol);
-  return data.type.toLowerCase().includes("dominant")
-    || /^7/.test(quality)
-    || /(?:^|[^a-z])7(?:\(|$)/i.test(symbol);
+  return [
+    "7",
+    "9",
+    "11",
+    "13",
+    "7sus4",
+    "9sus4",
+    "13sus4",
+    "7alt",
+    "7_sharp5",
+    "7_b5",
+    "7_b9",
+    "7_sharp9",
+    "7_sharp11",
+    "7_b13",
+    "7_sharp9_b13"
+  ].includes(chordQuality(chord));
 }
 
 function isMinorSixth(chord: string): boolean {
-  return /m6/i.test(chordQuality(chord)) || /m6/i.test(chord);
+  return ["m6", "m6_9"].includes(chordQuality(chord));
 }
 
 function isImFlat6(chord: string, center: string): boolean {
@@ -107,12 +118,11 @@ function isSharpIvHalfDiminished(chord: string, center: string): boolean {
   const rootChroma = Note.chroma(root);
   if (centerChroma === undefined || rootChroma === undefined) return false;
   const degree = (rootChroma - centerChroma + 12) % 12;
-  return degree === 6 && /m7\(?b5\)?|ø/i.test(chord);
+  return degree === 6 && chordQuality(chord) === "m7b5";
 }
 
 function isDiminished(chord: string): boolean {
-  const type = Chord.get(chordSymbol(chord)).type.toLowerCase();
-  return type === "diminished" || /dim|°/i.test(chord);
+  return ["dim", "dim7"].includes(chordQuality(chord));
 }
 
 function resolvedBySemitone(chord: string, nextChord?: string): "UP" | "DOWN" | null {

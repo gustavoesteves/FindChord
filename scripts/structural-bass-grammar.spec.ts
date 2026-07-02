@@ -58,4 +58,14 @@ describe("F26.9 Structural Bass and Slash-Chord Analysis", () => {
       expect.objectContaining({ chord: "A7/E", relation: "TRIVIAL_INVERSION" })
     ]));
   });
+
+  it("uses the chord symbol resolver when deciding slash chord inversions", () => {
+    const report = analyzeStructuralBassGrammar(harmonies(["C7M/E", "Cø/Eb", "F/G"]));
+
+    expect(report.relations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ chord: "C7M/E", relation: "TRIVIAL_INVERSION" }),
+      expect.objectContaining({ chord: "Cø/Eb", relation: "TRIVIAL_INVERSION" }),
+      expect.objectContaining({ chord: "F/G", relation: "INDEPENDENT_BASS" })
+    ]));
+  });
 });

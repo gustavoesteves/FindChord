@@ -1,5 +1,6 @@
-import { Chord, Note } from "tonal";
+import { Note } from "tonal";
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
+import { chordRoot, resolveChordSymbol, type ChordQuality } from "../../theory/ChordSymbolResolver";
 
 type IiVPatternKind = "MAJOR_II_V_I" | "MINOR_IIØ_V_I";
 
@@ -18,40 +19,47 @@ interface IiVFunctionalCell {
 }
 
 function normalizeChordRoot(chord: string): string {
-  const [symbol] = chord.split("/");
-  const data = Chord.get(symbol);
-  return Note.pitchClass(data.tonic || Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, ""));
+  return Note.pitchClass(chordRoot(chord) || "") || "";
 }
 
-function chordType(chord: string): string {
-  return Chord.get(chord.split("/")[0]).type.toLowerCase();
+function chordQuality(chord: string): ChordQuality {
+  return resolveChordSymbol(chord).quality;
 }
 
 function isMinorSeventh(chord: string): boolean {
-  const type = chordType(chord);
-  return type.includes("minor seventh") || /m7(?!\(?b5)/i.test(chord);
+  return ["m7", "m9", "m11"].includes(chordQuality(chord));
 }
 
 function isDominant(chord: string): boolean {
-  const type = chordType(chord);
-  const [, quality] = Chord.tokenize(chord.split("/")[0]);
-  return type.includes("dominant") || /^7(\(|$)/i.test(quality) || /(^|[^a-z])7/i.test(chord);
+  return [
+    "7",
+    "9",
+    "11",
+    "13",
+    "7sus4",
+    "9sus4",
+    "13sus4",
+    "7alt",
+    "7_sharp5",
+    "7_b5",
+    "7_b9",
+    "7_sharp9",
+    "7_sharp11",
+    "7_b13",
+    "7_sharp9_b13"
+  ].includes(chordQuality(chord));
 }
 
 function isMajorTonic(chord: string): boolean {
-  const type = chordType(chord);
-  return type.includes("major") || type === "major" || /maj|6/i.test(chord) || Chord.get(chord.split("/")[0]).quality === "Major";
+  return ["maj", "maj7", "6", "6_9", "add9", "maj7_sharp11"].includes(chordQuality(chord));
 }
 
 function isMinorTonic(chord: string): boolean {
-  const type = chordType(chord);
-  return type.includes("minor") || /m(6|7)?/i.test(chord);
+  return ["m", "m6", "m6_9", "m7", "m9", "m11", "mMaj7"].includes(chordQuality(chord));
 }
 
 function isHalfDiminished(chord: string): boolean {
-  const type = chordType(chord);
-  const [, quality] = Chord.tokenize(chord.split("/")[0]);
-  return type.includes("half-diminished") || /m7\(?b5\)?|ø/i.test(quality) || /m7\(?b5\)?|ø/i.test(chord);
+  return chordQuality(chord) === "m7b5";
 }
 
 function intervalSemitones(from: string, to: string): number | null {

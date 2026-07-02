@@ -1,21 +1,27 @@
 import { Chord, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ReharmonizationMeasure } from "../models/ReharmonizationProposal";
+import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
 import { analyzeApparentFunction } from "./ApparentFunctionAnalysis";
 
 export type HarmonicStrategyId =
   | "I_IV_V"
   | "EXPANSAO_FUNCIONAL_DIATONICA"
   | "DOMINANTES_SECUNDARIAS"
-  | "DIMINUTO_PASSAGEM";
+  | "DIMINUTO_PASSAGEM"
+  | "SUBV7_CADENCIAL"
+  | "II_SUBV7_CADENCIAL";
 export type StrategyFunctionId = "T" | "PD" | "D" | "OTHER";
+export type FunctionalClassificationMode = "major-functional" | "minor-functional";
 export type HarmonicExpansionIntent =
   | "PROLONG_VIA_SECONDARY"
   | "SUSTAIN"
   | "PREPARE_NEXT_REGION"
   | "CADENTIAL_RESOLUTION"
   | "SECONDARY_DOMINANT_RESOLUTION"
-  | "DIMINISHED_PASSING_RESOLUTION";
+  | "DIMINISHED_PASSING_RESOLUTION"
+  | "TRITONE_SUBSTITUTION_RESOLUTION"
+  | "II_SUBV7_PREPARATION";
 
 export interface HarmonicStrategyExpectation {
   strategy: HarmonicStrategyId;
@@ -25,6 +31,8 @@ export interface HarmonicStrategyExpectation {
   functionalEscapes: number;
   unresolvedSecondaryDominants?: number;
   unresolvedDiminishedPassings?: number;
+  unresolvedSubV7s?: number;
+  unresolvedIiSubV7s?: number;
   invalidChromaticEscapes?: number;
   minChordCount: number;
   maxChordCount: number;
@@ -42,11 +50,16 @@ export interface HarmonicStrategyReport {
   backbone: StrategyFunctionId[];
   expansions: HarmonicExpansionIntent[];
   melodyCoverage: number;
+  weakestMeasureMelodyCoverage: number;
   functionalEscapes: number;
   secondaryDominantExcursions: number;
   unresolvedSecondaryDominants: number;
   diminishedPassingExcursions: number;
   unresolvedDiminishedPassings: number;
+  subV7Excursions: number;
+  unresolvedSubV7s: number;
+  iiSubV7Preparations: number;
+  unresolvedIiSubV7s: number;
   invalidChromaticEscapes: number;
   chordCount: number;
   bassMotionProfile: "DESCENDING" | "ASCENDING" | "MIXED" | "STATIC";
@@ -115,12 +128,35 @@ const STRATEGY_EXPECTATIONS: Record<HarmonicStrategyId, HarmonicStrategyExpectat
     invalidChromaticEscapes: 0,
     minChordCount: 6,
     maxChordCount: 10
+  },
+  SUBV7_CADENCIAL: {
+    strategy: "SUBV7_CADENCIAL",
+    backbone: ["T", "PD", "D", "T"],
+    requiredExpansions: ["TRITONE_SUBSTITUTION_RESOLUTION", "CADENTIAL_RESOLUTION"],
+    melodyCoverage: 0.85,
+    functionalEscapes: 0,
+    unresolvedSubV7s: 0,
+    invalidChromaticEscapes: 0,
+    minChordCount: 4,
+    maxChordCount: 5
+  },
+  II_SUBV7_CADENCIAL: {
+    strategy: "II_SUBV7_CADENCIAL",
+    backbone: ["T", "PD", "D", "T"],
+    requiredExpansions: ["II_SUBV7_PREPARATION", "TRITONE_SUBSTITUTION_RESOLUTION", "CADENTIAL_RESOLUTION"],
+    melodyCoverage: 0.85,
+    functionalEscapes: 0,
+    unresolvedSubV7s: 0,
+    unresolvedIiSubV7s: 0,
+    invalidChromaticEscapes: 0,
+    minChordCount: 5,
+    maxChordCount: 6
   }
 };
 
 export function normalizeChordRoot(chord: string): string {
   const [symbol] = chord.split("/");
-  return Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, "");
+  return chordRoot(symbol) || Chord.tokenize(symbol)[0] || symbol.replace(/[^A-G#b]/g, "");
 }
 
 function rootToRoman(root: string, center: string): string {
@@ -133,11 +169,33 @@ function rootToRoman(root: string, center: string): string {
 }
 
 export function classifyFunction(chord: string, center: string): StrategyFunctionId {
+  return classifyFunctionInMode(chord, center, "major-functional");
+}
+
+export function classifyFunctionInMode(
+  chord: string,
+  center: string,
+  mode: FunctionalClassificationMode
+): StrategyFunctionId {
   const roman = rootToRoman(normalizeChordRoot(chord), center);
-  if (functionMap.T.includes(roman)) return "T";
-  if (functionMap.PD.includes(roman)) return "PD";
-  if (functionMap.D.includes(roman)) return "D";
+  if (mode === "minor-functional") {
+    const degree = chromaticDegree(normalizeChordRoot(chord), center);
+    if (degree === 0 || degree === 3) return "T";
+    if (degree === 2 || degree === 5) return "PD";
+    if (degree === 7 || degree === 11) return "D";
+  } else {
+    if (functionMap.T.includes(roman)) return "T";
+    if (functionMap.PD.includes(roman)) return "PD";
+    if (functionMap.D.includes(roman)) return "D";
+  }
   return "OTHER";
+}
+
+function chromaticDegree(root: string, center: string): number | null {
+  const chroma = Note.chroma(root);
+  const centerChroma = Note.chroma(center);
+  if (chroma === undefined || centerChroma === undefined) return null;
+  return (chroma - centerChroma + 12) % 12;
 }
 
 function secondaryDominantTarget(chord: string, center: string): string | null {
@@ -182,6 +240,72 @@ function diminishedPassingTarget(chord: string, nextChord: string | undefined, c
   return targetRoman;
 }
 
+function tritoneSubstitutionTarget(chord: string, nextChord: string | undefined, center: string): string | null {
+  if (!nextChord) return null;
+
+  const symbol = chord.split("/")[0];
+  const chordData = Chord.get(symbol);
+  if (!/7|dom/i.test(chordData.type) && !symbol.includes("7")) return null;
+
+  const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
+  const rootChroma = Note.chroma(root);
+  const targetRoot = normalizeChordRoot(nextChord);
+  const targetChroma = Note.chroma(targetRoot);
+  if (rootChroma === undefined || targetChroma === undefined) return null;
+
+  const resolvesDownBySemitone = (rootChroma - targetChroma + 12) % 12 === 1;
+  if (!resolvesDownBySemitone) return null;
+
+  const targetRoman = rootToRoman(targetRoot, center);
+  if (!["I", "ii", "IV", "V", "vi"].includes(targetRoman)) return null;
+
+  return targetRoman;
+}
+
+function isPotentialSubV7(chord: string, center: string): boolean {
+  const symbol = chord.split("/")[0];
+  const chordData = Chord.get(symbol);
+  if (!/7|dom/i.test(chordData.type) && !symbol.includes("7")) return false;
+
+  const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
+  const centerChroma = Note.chroma(center);
+  const rootChroma = Note.chroma(root);
+  if (centerChroma === undefined || rootChroma === undefined) return false;
+
+  return (rootChroma - centerChroma + 12) % 12 === 1;
+}
+
+function iiSubV7PreparationTarget(chord: string, nextChord: string | undefined, followingChord: string | undefined, center: string): string | null {
+  if (!nextChord || !followingChord) return null;
+  const subVTarget = tritoneSubstitutionTarget(nextChord, followingChord, center);
+  if (!subVTarget) return null;
+
+  const chordData = Chord.get(chord.split("/")[0]);
+  const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
+  const nextRoot = normalizeChordRoot(nextChord);
+  const rootChroma = Note.chroma(root);
+  const nextRootChroma = Note.chroma(nextRoot);
+  if (rootChroma === undefined || nextRootChroma === undefined) return null;
+
+  const preparesSubVByFifth = (rootChroma - nextRootChroma + 12) % 12 === 7;
+  const isMinorPreparation = /m/.test(chordData.symbol) || /minor/i.test(chordData.type);
+  if (!preparesSubVByFifth || !isMinorPreparation) return null;
+
+  return subVTarget;
+}
+
+function isPotentialIiSubV7Preparation(chord: string, center: string): boolean {
+  const chordData = Chord.get(chord.split("/")[0]);
+  const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
+  const centerChroma = Note.chroma(center);
+  const rootChroma = Note.chroma(root);
+  if (centerChroma === undefined || rootChroma === undefined) return false;
+
+  const isFlatSixPreparation = (rootChroma - centerChroma + 12) % 12 === 8;
+  const isMinorPreparation = /m/.test(chordData.symbol) || /minor/i.test(chordData.type);
+  return isFlatSixPreparation && isMinorPreparation;
+}
+
 function chordMatchesRoman(chord: string, center: string, roman: string): boolean {
   return rootToRoman(normalizeChordRoot(chord), center) === roman;
 }
@@ -218,9 +342,7 @@ function backboneMatchesExpectation(actual: StrategyFunctionId[], expected: Stra
 
 export function noteCoveredByChord(note: string, chord: string): boolean {
   const pc = Note.pitchClass(note);
-  const [symbol, explicitBass] = chord.split("/");
-  const chordNotes = Chord.get(symbol).notes.map((n: string) => Note.pitchClass(n));
-  if (explicitBass) chordNotes.push(Note.pitchClass(explicitBass));
+  const chordNotes = chordPitchClasses(chord);
   return pc !== "" && chordNotes.includes(pc);
 }
 
@@ -244,9 +366,31 @@ function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
   return covered / candidate.melody.length;
 }
 
+function measureMelodyCoverages(candidate: HarmonizationCandidate): number[] {
+  return candidate.measures.flatMap(measure => {
+    const measureMelody = candidate.melody.filter(anchor => anchor.measureIndex === measure.measureIndex);
+    if (measureMelody.length === 0) return [];
+
+    const covered = measureMelody.filter(anchor => (
+      measure.chords.some(chord => noteCoveredByChord(anchor.pitch, chord))
+    )).length;
+
+    return [covered / measureMelody.length];
+  });
+}
+
+function weakestMeasureMelodyCoverage(candidate: HarmonizationCandidate): number {
+  const coverages = measureMelodyCoverages(candidate);
+  if (coverages.length === 0) return 0;
+  return Math.min(...coverages);
+}
+
 function detectExpansions(candidate: HarmonizationCandidate): HarmonicExpansionIntent[] {
   const flat = candidate.measures.flatMap(measure => measure.chords);
-  const functions = flat.map(chord => secondaryDominantTarget(chord, candidate.center) || isPassingDiminishedChord(chord)
+  const functions = flat.map((chord, index) => secondaryDominantTarget(chord, candidate.center)
+    || isPassingDiminishedChord(chord)
+    || iiSubV7PreparationTarget(chord, flat[index + 1], flat[index + 2], candidate.center)
+    || tritoneSubstitutionTarget(chord, flat[index + 1], candidate.center)
     ? "OTHER"
     : classifyFunction(chord, candidate.center));
   const expansions = new Set<HarmonicExpansionIntent>();
@@ -270,6 +414,13 @@ function detectExpansions(candidate: HarmonizationCandidate): HarmonicExpansionI
     }
     if (diminishedPassingTarget(flat[i - 1], flat[i], candidate.center)) {
       expansions.add("DIMINISHED_PASSING_RESOLUTION");
+    }
+    if (tritoneSubstitutionTarget(flat[i - 1], flat[i], candidate.center)) {
+      expansions.add("TRITONE_SUBSTITUTION_RESOLUTION");
+      expansions.add("CADENTIAL_RESOLUTION");
+    }
+    if (iiSubV7PreparationTarget(flat[i - 1], flat[i], flat[i + 1], candidate.center)) {
+      expansions.add("II_SUBV7_PREPARATION");
     }
   }
 
@@ -321,6 +472,37 @@ function countUnresolvedDiminishedPassings(candidate: HarmonizationCandidate): n
   return unresolved;
 }
 
+function countSubV7Excursions(candidate: HarmonizationCandidate): number {
+  const flat = candidate.measures.flatMap(measure => measure.chords);
+  return flat.filter((chord, index) => (
+    isPotentialSubV7(chord, candidate.center)
+    || tritoneSubstitutionTarget(chord, flat[index + 1], candidate.center) !== null
+  )).length;
+}
+
+function countUnresolvedSubV7s(candidate: HarmonizationCandidate): number {
+  const flat = candidate.measures.flatMap(measure => measure.chords);
+  return flat.filter((chord, index) => (
+    isPotentialSubV7(chord, candidate.center)
+    && tritoneSubstitutionTarget(chord, flat[index + 1], candidate.center) === null
+  )).length;
+}
+
+function countIiSubV7Preparations(candidate: HarmonizationCandidate): number {
+  const flat = candidate.measures.flatMap(measure => measure.chords);
+  return flat.filter((chord, index) => (
+    iiSubV7PreparationTarget(chord, flat[index + 1], flat[index + 2], candidate.center) !== null
+  )).length;
+}
+
+function countUnresolvedIiSubV7s(candidate: HarmonizationCandidate): number {
+  const flat = candidate.measures.flatMap(measure => measure.chords);
+  return flat.filter((chord, index) => (
+    isPotentialIiSubV7Preparation(chord, candidate.center)
+    && iiSubV7PreparationTarget(chord, flat[index + 1], flat[index + 2], candidate.center) === null
+  )).length;
+}
+
 function countInvalidChromaticEscapes(candidate: HarmonizationCandidate): number {
   const flat = candidate.measures.flatMap(measure => measure.chords);
   return flat.reduce((count, chord, index) => {
@@ -328,6 +510,8 @@ function countInvalidChromaticEscapes(candidate: HarmonizationCandidate): number
     if (!isChromaticEvent) return count;
     if (secondaryDominantTarget(chord, candidate.center) !== null) return count;
     if (diminishedPassingTarget(chord, flat[index + 1], candidate.center) !== null) return count;
+    if (iiSubV7PreparationTarget(chord, flat[index + 1], flat[index + 2], candidate.center) !== null) return count;
+    if (tritoneSubstitutionTarget(chord, flat[index + 1], candidate.center) !== null) return count;
     const apparentFunction = analyzeApparentFunction(chord, {
       center: candidate.center,
       previousChord: flat[index - 1],
@@ -363,11 +547,19 @@ type HarmonicBassMotion = HarmonicStrategyReport["bassMotionProfile"];
 
 export function analyzeHarmonicStrategy(candidate: HarmonizationCandidate): HarmonicStrategyReport {
   const flat = candidate.measures.flatMap(measure => measure.chords);
-  const functions = flat.map(chord => secondaryDominantTarget(chord, candidate.center) || isPassingDiminishedChord(chord) ? "OTHER" : classifyFunction(chord, candidate.center));
+  const functions = flat.map((chord, index) => tritoneSubstitutionTarget(chord, flat[index + 1], candidate.center)
+    ? "D"
+    : iiSubV7PreparationTarget(chord, flat[index + 1], flat[index + 2], candidate.center)
+      ? "PD"
+    : secondaryDominantTarget(chord, candidate.center) || isPassingDiminishedChord(chord) ? "OTHER" : classifyFunction(chord, candidate.center));
   const secondaryDominantExcursions = countSecondaryDominantExcursions(candidate);
   const unresolvedSecondaryDominants = countUnresolvedSecondaryDominants(candidate);
   const diminishedPassingExcursions = countDiminishedPassingExcursions(candidate);
   const unresolvedDiminishedPassings = countUnresolvedDiminishedPassings(candidate);
+  const subV7Excursions = countSubV7Excursions(candidate);
+  const unresolvedSubV7s = countUnresolvedSubV7s(candidate);
+  const iiSubV7Preparations = countIiSubV7Preparations(candidate);
+  const unresolvedIiSubV7s = countUnresolvedIiSubV7s(candidate);
   const invalidChromaticEscapes = countInvalidChromaticEscapes(candidate);
 
   return {
@@ -375,11 +567,16 @@ export function analyzeHarmonicStrategy(candidate: HarmonizationCandidate): Harm
     backbone: compressBackbone(functions),
     expansions: detectExpansions(candidate),
     melodyCoverage: calculateMelodyCoverage(candidate),
+    weakestMeasureMelodyCoverage: weakestMeasureMelodyCoverage(candidate),
     functionalEscapes: invalidChromaticEscapes,
     secondaryDominantExcursions,
     unresolvedSecondaryDominants,
     diminishedPassingExcursions,
     unresolvedDiminishedPassings,
+    subV7Excursions,
+    unresolvedSubV7s,
+    iiSubV7Preparations,
+    unresolvedIiSubV7s,
     invalidChromaticEscapes,
     chordCount: flat.length,
     bassMotionProfile: bassMotionProfile(candidate)
@@ -401,9 +598,12 @@ export function validateHarmonicStrategy(
   if (report.strategy !== expected.strategy) failures.push("strategy-mismatch");
   if (!backboneMatchesExpectation(report.backbone, expected.backbone, candidate.measures.length)) failures.push("backbone-integrity");
   if (report.melodyCoverage < expected.melodyCoverage) failures.push("melody-coverage");
+  if (isLongMelody && report.weakestMeasureMelodyCoverage < 0.3) failures.push("melody-segment-coverage");
   if (report.functionalEscapes !== expected.functionalEscapes) failures.push("functional-escape");
   if (expected.unresolvedSecondaryDominants !== undefined && report.unresolvedSecondaryDominants !== expected.unresolvedSecondaryDominants) failures.push("unresolved-secondary-dominant");
   if (expected.unresolvedDiminishedPassings !== undefined && report.unresolvedDiminishedPassings !== expected.unresolvedDiminishedPassings) failures.push("unresolved-diminished-passing");
+  if (expected.unresolvedSubV7s !== undefined && report.unresolvedSubV7s !== expected.unresolvedSubV7s) failures.push("unresolved-subv7");
+  if (expected.unresolvedIiSubV7s !== undefined && report.unresolvedIiSubV7s !== expected.unresolvedIiSubV7s) failures.push("unresolved-ii-subv7");
   if (expected.invalidChromaticEscapes !== undefined && report.invalidChromaticEscapes !== expected.invalidChromaticEscapes) failures.push("invalid-chromatic-escape");
   if (report.chordCount < minChordCount || report.chordCount > maxChordCount) failures.push("density-range");
 

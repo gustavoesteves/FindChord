@@ -28,6 +28,27 @@ const melodyAndHarmonySnapshot: ScoreSnapshot = {
   ]
 };
 
+const sixteenMeasureMelodySnapshot: ScoreSnapshot = {
+  ...melodyOnlySnapshot,
+  timestamp: 3,
+  notes: Array.from({ length: 16 }, (_, index) => ({
+    id: `n${index + 1}`,
+    step: index % 2 === 0 ? "C" : "F",
+    alter: 0,
+    octave: 4,
+    voice: 1,
+    staff: 1,
+    measure: index + 1,
+    tickStart: index * 1920,
+    tickEnd: index * 1920 + 960,
+    durationTicks: 960
+  })),
+  metadata: {
+    measures: 16,
+    keySignature: "C"
+  }
+};
+
 describe("Score ingestion modes", () => {
   beforeEach(() => {
     useScoreSessionStore.getState().clearSession();
@@ -42,9 +63,30 @@ describe("Score ingestion modes", () => {
     expect(state.indexes?.formalSections.length).toBeGreaterThan(0);
     expect(state.indexes?.formalSections[0]).toMatchObject({
       label: "Parte A",
+      source: "inferred-phrase-window",
       startMeasure: 1,
       endMeasure: 4
     });
+  });
+
+  it("splits melody-only scores without explicit sections into inferred 8-measure phrase windows", () => {
+    useScoreSessionStore.getState().loadScore(sixteenMeasureMelodySnapshot);
+    const state = useScoreSessionStore.getState();
+
+    expect(state.indexes?.formalSections).toEqual([
+      expect.objectContaining({
+        label: "Parte A",
+        source: "inferred-phrase-window",
+        startMeasure: 1,
+        endMeasure: 8
+      }),
+      expect.objectContaining({
+        label: "Parte B",
+        source: "inferred-phrase-window",
+        startMeasure: 9,
+        endMeasure: 16
+      })
+    ]);
   });
 
   it("loads a score with melody and injected chords without deriving extra regions", () => {
