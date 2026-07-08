@@ -12,7 +12,10 @@ import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
 import { ContrapuntalGravityField } from "./fields/ContrapuntalGravityField";
 import { StrategyGuidedHarmonizer } from "../strategies/StrategyGuidedHarmonizer";
-import { noteCoveredByChord } from "../strategies/HarmonicStrategyValidator";
+import {
+  melodicCoverageEntriesByAnchor,
+  weightedMelodicCoverage
+} from "../strategies/MelodicCoverage";
 
 export interface GravityProposalGenerationResult {
   proposals: ReharmonizationProposal[];
@@ -124,8 +127,75 @@ export class GravityFieldManager {
     return {
       proposals: allProposals,
       rejectedExperimentalCount,
-      omittedStrategyDiagnostics: this.omittedStrategyDiagnostics(anchors, phraseContext, allProposals)
+      omittedStrategyDiagnostics: [
+        ...this.omittedStrategyDiagnostics(anchors, phraseContext, allProposals),
+        ...this.melodicCompatibilityDiagnostics(anchors, allProposals)
+      ]
     };
+  }
+
+  private static melodicCompatibilityDiagnostics(
+    anchors: MelodicAnchor[],
+    proposals: ReharmonizationProposal[]
+  ): HarmonicDiagnostic[] {
+    const primaryProposal = proposals.find(proposal => proposal.kind !== "reference");
+    if (!primaryProposal) return [];
+
+    const entries = melodicCoverageEntriesByAnchor(anchors, anchor => {
+      const measure = primaryProposal.measures.find(item => item.measureIndex === anchor.measureIndex);
+      return measure?.chords ?? [];
+    });
+
+    const hasSuspensionResolution = entries.some(entry => entry.behavior === "suspension-resolution");
+    const hasChromaticApproach = entries.some(entry => entry.behavior === "chromatic-approach");
+    const hasStepwisePassing = entries.some(entry => entry.behavior === "stepwise-passing");
+    const hasUnresolvedStructuralAnchor = entries.some(entry => (
+      entry.behavior === "unresolved" && entry.role === "structural" && entry.weight >= 2.5
+    ));
+
+    const diagnostics: HarmonicDiagnostic[] = [];
+
+    if (hasUnresolvedStructuralAnchor) {
+      diagnostics.push(diagnostic(
+        "melodic-coverage-unresolved-structural-anchor",
+        "generation",
+        "compatibility",
+        "Apoio melódico descoberto: uma nota estrutural da melodia ficou sem sustentação harmônica clara.",
+        ["simple", "balanced", "exploratory"]
+      ));
+    }
+
+    if (hasSuspensionResolution) {
+      diagnostics.push(diagnostic(
+        "melodic-coverage-suspension-resolution",
+        "generation",
+        "compatibility",
+        "Suspensão resolvida: a melodia cria tensão momentânea e resolve por grau conjunto em nota sustentada.",
+        ["balanced", "exploratory"]
+      ));
+    }
+
+    if (hasChromaticApproach) {
+      diagnostics.push(diagnostic(
+        "melodic-coverage-chromatic-approach",
+        "generation",
+        "compatibility",
+        "Aproximação cromática aceita: a nota fora do acorde conduz por semitom a uma nota sustentada.",
+        ["exploratory"]
+      ));
+    }
+
+    if (hasStepwisePassing) {
+      diagnostics.push(diagnostic(
+        "melodic-coverage-stepwise-passing",
+        "generation",
+        "compatibility",
+        "Passagem por grau conjunto aceita: a melodia atravessa notas vizinhas sustentadas pela harmonia.",
+        ["exploratory"]
+      ));
+    }
+
+    return diagnostics;
   }
 
   private static omittedStrategyDiagnostics(
@@ -191,7 +261,8 @@ export class GravityFieldManager {
         "blues-omitted-partial-color",
         "generation",
         "omission",
-        "Blues funcional omitido: a melodia sugere cor blues parcial, mas não sustenta b3 e b7 como estrutura."
+        "Blues funcional omitido: a melodia sugere cor blues parcial, mas não sustenta b3 e b7 como estrutura.",
+        ["balanced", "exploratory"]
       )];
     }
 
@@ -215,7 +286,8 @@ export class GravityFieldManager {
       `local-iiv-omitted-${localTonic.toLowerCase()}`,
       "generation",
       "omission",
-      `ii-V local omitido: a chegada em ${localTonic} não teve cobertura melódica suficiente para uma cadência local.`
+      `ii-V local omitido: a chegada em ${localTonic} não teve cobertura melódica suficiente para uma cadência local.`,
+      ["balanced", "exploratory"]
     )];
   }
 
@@ -234,7 +306,8 @@ export class GravityFieldManager {
         "subv7-omitted-melody-coverage",
         "generation",
         "omission",
-        "SubV7 omitido: o substituto cromático não cobre as notas estruturais da melodia nesse fechamento."
+        "SubV7 omitido: o substituto cromático não cobre as notas estruturais da melodia nesse fechamento.",
+        ["exploratory"]
       )];
     }
 
@@ -307,8 +380,6 @@ export class GravityFieldManager {
     anchors: MelodicAnchor[],
     chords: string[]
   ): number | null {
-    if (anchors.length === 0) return null;
-    const covered = anchors.filter(anchor => chords.some(chord => noteCoveredByChord(anchor.pitch, chord))).length;
-    return covered / anchors.length;
+    return weightedMelodicCoverage(anchors, chords, { markFinal: false });
   }
 }

@@ -20,6 +20,8 @@ const CANONICAL_CHORD_FORMAT = {
   "suspended-fourth": "sus4"
 };
 
+const VALID_DEGREE_VALUES = new Set(["1", "2", "3", "4", "5", "6", "7", "9", "11", "13"]);
+
 // Map degree alterations to strings
 function alterToStr(alter) {
   if (alter === "1") return "#";
@@ -65,6 +67,7 @@ function parseRawHarmony(block) {
     const typeMatch = dBlock.match(/<degree-type[^>]*>([^<]+)<\/degree-type>/);
     
     if (valMatch) {
+      if (!VALID_DEGREE_VALUES.has(valMatch[1])) return null;
       degrees.push({
         value: valMatch[1],
         alter: altMatch ? altMatch[1] : "0",

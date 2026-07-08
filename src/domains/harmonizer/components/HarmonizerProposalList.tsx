@@ -3,6 +3,7 @@ import type { ReharmonizationBoldnessMode } from "../../../utils/music/analysis/
 import {
   groupDiagnosticsBySource,
   type HarmonicDiagnostic,
+  type HarmonicDiagnosticCategory,
   type HarmonicDiagnosticSource
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
 import HarmonizationProposalCard from "./HarmonizationProposalCard";
@@ -29,6 +30,11 @@ const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
   reference: "Referência",
   presentation: "Apresentação"
+};
+const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
+  omission: "Omissão",
+  comparison: "Comparação",
+  compatibility: "Compatibilidade"
 };
 
 function rejectedExperimentalMessage(count: number): string {
@@ -95,7 +101,12 @@ export default function HarmonizerProposalList({
                   {DIAGNOSTIC_SOURCE_LABELS[group.source]}
                 </span>
                 {group.diagnostics.map((diagnostic, index) => (
-                  <span key={`${diagnostic.id}-${index}`}>{diagnostic.message}</span>
+                  <span key={`${diagnostic.id}-${index}`} className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-sky-200/70">
+                      {DIAGNOSTIC_CATEGORY_LABELS[diagnostic.category]}
+                    </span>
+                    <span>{diagnostic.message}</span>
+                  </span>
                 ))}
               </div>
             ))}

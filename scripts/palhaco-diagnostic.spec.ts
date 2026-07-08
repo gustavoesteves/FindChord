@@ -51,7 +51,8 @@ describe("Palhaco diagnostic", () => {
 
     expect(anchors.length).toBeGreaterThan(0);
     expect(phraseContext.selectedCenter).toMatchObject({ tonic: "Ab", mode: "major" });
-    expect(attempt.validation.report.melodyCoverage).toBeGreaterThanOrEqual(0.85);
+    expect(attempt.validation.accepted).toBe(true);
+    expect(attempt.validation.report.melodyCoverage).toBeGreaterThan(0.72);
     expect(attempt.candidate.measures.length).toBeLessThanOrEqual(8);
     expect(chords[0]).toBe("Ab");
     expect(chords).toContain("Db");

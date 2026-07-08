@@ -1,6 +1,6 @@
 # Quadro Teórico do Sistema de Harmonização
 
-Última atualização: 2026-07-02
+Última atualização: 2026-07-04
 
 Este documento descreve o modelo teórico-operacional do Harmonizar. Ele complementa `docs/theory/estado_teorico_harmonizacao.md`: o outro documento explica de onde vêm as ideias; este organiza como essas ideias devem decidir dentro do sistema.
 
@@ -68,7 +68,8 @@ Estado atual:
 
 - já usamos âncoras melódicas;
 - já existe cobertura melódica por acorde/proposta;
-- ainda falta classificar melhor nota estrutural, nota ornamental, aproximação cromática, suspensão e tensão expressiva.
+- já existe classificação inicial de apoio estrutural, nota de passagem e ornamento;
+- ainda falta classificar melhor aproximação cromática, suspensão e tensão expressiva.
 
 Regra de ouro:
 
@@ -234,6 +235,10 @@ Estado atual:
 
 - F28 adicionou uma régua de ranking por condução;
 - o card já pode mostrar score e evidências;
+- F37 adicionou diagnosticos locais de suporte ou atrito de conducao;
+- F37.1 adicionou sugestoes conservadoras de inversao simples no baixo;
+- F37.2 adicionou perfil proprio da linha de baixo;
+- F37.3 passou a usar perfil de baixo como ajuste fino de ranking;
 - ainda não há realização completa de vozes internas, nem voicings físicos por instrumento.
 
 Fronteira:
@@ -454,53 +459,53 @@ Essas perguntas devem guiar os próximos sprints.
 
 ### F28.1 — Frase e região
 
-- Especificação: `docs/f28-1-phrase-region-windowing.md`.
+- Especificação: `docs/sprints/f28-1-phrase-region-windowing.md`.
 - Melhorar divisão de frases dentro de seções.
 - Diferenciar parte A, parte B, pergunta/resposta e região cadencial.
 - Evitar que uma seção longa seja tratada como bloco homogêneo.
 
 ### F29 — SubV7 e ii-subV7
 
-- Pré-requisito implementado: `docs/f28-2-functional-region-planner.md`.
-- Pré-requisito implementado: `docs/f28-3-melodic-region-evidence.md`.
-- Pré-requisito implementado: `docs/f28-4-cadential-closure-reading.md`.
-- Primeira fatia implementada: `docs/f29-cadential-subv7.md`.
-- Segunda fatia implementada: `docs/f29-1-ii-subv7-cadential.md`.
-- Terceira fatia implementada: `docs/f29-2-subv7-voice-leading-ranking.md`.
+- Pré-requisito implementado: `docs/sprints/f28-2-functional-region-planner.md`.
+- Pré-requisito implementado: `docs/sprints/f28-3-melodic-region-evidence.md`.
+- Pré-requisito implementado: `docs/sprints/f28-4-cadential-closure-reading.md`.
+- Primeira fatia implementada: `docs/sprints/f29-cadential-subv7.md`.
+- Segunda fatia implementada: `docs/sprints/f29-1-ii-subv7-cadential.md`.
+- Terceira fatia implementada: `docs/sprints/f29-2-subv7-voice-leading-ranking.md`.
 - Implementar substituição tritonal como dominante funcional.
 - Usar condução de vozes para premiar resolução cromática.
 - Explicar o que foi preservado e alterado.
 
 ### F30 — Tabela de substituições por função
 
-- Primeira fatia implementada: `docs/f30-functional-substitution-table.md`.
-- Segunda fatia implementada: `docs/f30-1-substitution-idioms.md`.
-- Terceira fatia implementada: `docs/f30-2-minor-functional-activation.md`.
-- Quarta fatia implementada: `docs/f30-3-substitution-idiom-inference.md`.
+- Primeira fatia implementada: `docs/sprints/f30-functional-substitution-table.md`.
+- Segunda fatia implementada: `docs/sprints/f30-1-substitution-idioms.md`.
+- Terceira fatia implementada: `docs/sprints/f30-2-minor-functional-activation.md`.
+- Quarta fatia implementada: `docs/sprints/f30-3-substitution-idiom-inference.md`.
 - Sistematizar substitutos de T, PD e D.
 - Incluir função aparente: sus, dim, m6, #IVm7(b5).
 - Separar maior e menor.
 
 ### F31 — Distância e rotas
 
-- Primeira fatia implementada: `docs/f31-harmonic-route-distance.md`.
-- Segunda fatia implementada: `docs/f31-1-route-aware-proposal-ranking.md`.
-- Terceira fatia implementada: `docs/f31-2-route-profile-classification.md`.
-- Quarta fatia implementada: `docs/f31-3-profile-aware-proposal-presentation.md`.
-- Quinta fatia implementada: `docs/f31-4-boldness-mode.md`.
-- Sexta fatia implementada: `docs/f31-5-local-iiv-window-proposals.md`.
+- Primeira fatia implementada: `docs/sprints/f31-harmonic-route-distance.md`.
+- Segunda fatia implementada: `docs/sprints/f31-1-route-aware-proposal-ranking.md`.
+- Terceira fatia implementada: `docs/sprints/f31-2-route-profile-classification.md`.
+- Quarta fatia implementada: `docs/sprints/f31-3-profile-aware-proposal-presentation.md`.
+- Quinta fatia implementada: `docs/sprints/f31-4-boldness-mode.md`.
+- Sexta fatia implementada: `docs/sprints/f31-5-local-iiv-window-proposals.md`.
 - Classificar propostas em conservadora, moderada, cromática e radical.
 - Medir distância do original e distância da proposta anterior.
 - Preparar rotas harmônicas por região.
 
 ### F32 — Modal, blues e menor profundo
 
-- Primeira fatia implementada: `docs/f32-harmonic-idiom-classifier.md`.
-- Segunda fatia implementada: `docs/f32-1-idiom-aware-presentation-guard.md`.
-- Terceira fatia implementada: `docs/f32-2-minimal-blues-functional-strategy.md`.
-- Quarta fatia implementada: `docs/f32-3-minimal-modal-center-strategy.md`.
-- Quinta fatia implementada: `docs/f32-4-minor-field-color-classifier.md`.
-- Sexta fatia implementada: `docs/f32-5-minor-functional-strategy.md`.
+- Primeira fatia implementada: `docs/sprints/f32-harmonic-idiom-classifier.md`.
+- Segunda fatia implementada: `docs/sprints/f32-1-idiom-aware-presentation-guard.md`.
+- Terceira fatia implementada: `docs/sprints/f32-2-minimal-blues-functional-strategy.md`.
+- Quarta fatia implementada: `docs/sprints/f32-3-minimal-modal-center-strategy.md`.
+- Quinta fatia implementada: `docs/sprints/f32-4-minor-field-color-classifier.md`.
+- Sexta fatia implementada: `docs/sprints/f32-5-minor-functional-strategy.md`.
 - Detectar gramáticas não dependentes de V-I.
 - Tratar blues e modal como idiomas próprios.
 - Expandir tonalidade menor para além de "modo menor genérico".
@@ -509,12 +514,12 @@ Essas perguntas devem guiar os próximos sprints.
 
 - Contrato criado: `docs/theory/chord_symbol_dictionary.md`.
 - Fontes criadas: `docs/references/chord_symbol_sources.md`.
-- Primeira fatia implementada: `docs/f33-chord-symbol-resolver.md`.
-- Segunda fatia implementada: `docs/f33-1-chord-resolver-analysis-migration.md`.
-- Terceira fatia implementada: `docs/f33-2-chord-resolver-apparent-voiceleading-migration.md`.
-- Quarta fatia implementada: `docs/f33-3-real-music-chord-compatibility.md`.
-- Quinta fatia implementada: `docs/f33-4-musicxml-semantic-chord-mapping.md`.
-- Sexta fatia implementada: `docs/f33-5-musicxml-harmony-renderer-roundtrip.md`.
+- Primeira fatia implementada: `docs/sprints/f33-chord-symbol-resolver.md`.
+- Segunda fatia implementada: `docs/sprints/f33-1-chord-resolver-analysis-migration.md`.
+- Terceira fatia implementada: `docs/sprints/f33-2-chord-resolver-apparent-voiceleading-migration.md`.
+- Quarta fatia implementada: `docs/sprints/f33-3-real-music-chord-compatibility.md`.
+- Quinta fatia implementada: `docs/sprints/f33-4-musicxml-semantic-chord-mapping.md`.
+- Sexta fatia implementada: `docs/sprints/f33-5-musicxml-harmony-renderer-roundtrip.md`.
 - Criar resolvedor próprio de cifras.
 - Separar forma interna, forma de exibição e perfil de importação.
 - Migrar gradualmente os pontos que dependem diretamente de `Chord.get`.
@@ -524,12 +529,12 @@ Essas perguntas devem guiar os próximos sprints.
 
 ### F34 — Fronteira menor funcional/modal
 
-- Primeira fatia implementada: `docs/f34-minor-functional-modal-boundary.md`.
-- Segunda fatia implementada: `docs/f34-1-reference-minor-modal-boundary.md`.
-- Terceira fatia implementada: `docs/f34-2-minor-modal-presentation-priority.md`.
-- Quarta fatia implementada: `docs/f34-3-comparative-presentation-role.md`.
-- Quinta fatia implementada: `docs/f34-4-omitted-strategy-diagnostics.md`.
-- Sexta fatia implementada: `docs/f34-5-expanded-omitted-strategy-diagnostics.md`.
+- Primeira fatia implementada: `docs/sprints/f34-minor-functional-modal-boundary.md`.
+- Segunda fatia implementada: `docs/sprints/f34-1-reference-minor-modal-boundary.md`.
+- Terceira fatia implementada: `docs/sprints/f34-2-minor-modal-presentation-priority.md`.
+- Quarta fatia implementada: `docs/sprints/f34-3-comparative-presentation-role.md`.
+- Quinta fatia implementada: `docs/sprints/f34-4-omitted-strategy-diagnostics.md`.
+- Sexta fatia implementada: `docs/sprints/f34-5-expanded-omitted-strategy-diagnostics.md`.
 - Separar `i-bVII-bVI` modal de menor funcional cadencial.
 - Evitar que o sistema invente `V7 -> i` quando a melodia nao sugere sensivel ou menor melodico.
 - Evitar que centro modal concorra com menor funcional quando a melodia traz direcao cadencial clara.
@@ -541,13 +546,215 @@ Essas perguntas devem guiar os próximos sprints.
 
 ### F35 — Contrato de diagnosticos harmonicos
 
-- Primeira fatia implementada: `docs/f35-harmonic-diagnostic-contract.md`.
-- Segunda fatia implementada: `docs/f35-1-diagnostic-source-grouping.md`.
+- Primeira fatia implementada: `docs/sprints/f35-harmonic-diagnostic-contract.md`.
+- Segunda fatia implementada: `docs/sprints/f35-1-diagnostic-source-grouping.md`.
+- Terceira fatia implementada: `docs/sprints/f35-2-diagnostic-mode-visibility.md`.
+- Quarta fatia implementada: `docs/sprints/f35-3-diagnostic-category-labels.md`.
+- Quinta fatia implementada: `docs/sprints/f35-4-presentation-diagnostics.md`.
+- Sexta fatia implementada: `docs/sprints/f35-5-causal-presentation-diagnostics.md`.
+- Sétima fatia implementada: `docs/sprints/f35-6-card-level-diagnostics.md`.
 - Substituir listas soltas de texto por `HarmonicDiagnostic`.
 - Separar origem do diagnostico: geracao, referencia e apresentacao.
 - Deduplicar diagnosticos por `id`.
 - Filtrar diagnosticos por modo simples/equilibrado/exploratorio.
 - Agrupar diagnosticos na UI por origem musical.
+- Reduzir ruido no modo simples e reservar diagnosticos cromaticos para o modo exploratorio.
+- Exibir categoria curta por diagnostico: omissao, comparacao ou compatibilidade.
+- Emitir diagnosticos de apresentacao a partir dos papeis `Comparação` e `Exploração`.
+- Diferenciar diagnosticos de apresentacao por causa: referencia modal, menor funcional cadencial ou exploracao.
+- Anexar diagnosticos especificos ao card da proposta quando seu papel de apresentacao exigir explicacao local.
+
+### F36 — Peso melodico estrutural
+
+- Primeira fatia implementada: `docs/sprints/f36-melodic-anchor-classifier.md`.
+- Segunda fatia implementada: `docs/sprints/f36-1-weighted-melodic-coverage.md`.
+- Terceira fatia implementada: `docs/sprints/f36-2-melodic-resolution-coverage.md`.
+- Quarta fatia implementada: `docs/sprints/f36-3-melodic-coverage-diagnostics.md`.
+- Criar um classificador inicial de ancora melodica.
+- Separar `structural`, `passing` e `ornamental`.
+- Usar peso melodico na escolha de acordes, em vez de contagem bruta de notas.
+- Usar peso melodico nos validadores de cobertura.
+- Dar credito parcial a suspensao, aproximacao cromatica e passagem por grau conjunto quando ha resolucao.
+- Explicar a cobertura melodica como diagnostico musical, nao como porcentagem crua.
+- Preservar bonus cadencial apenas quando a classificacao usa a frase inteira.
+- Evitar que uma nota curta ornamental vença um apoio melodico estrutural.
+- Preparar a futura camada de conducao de vozes sem transformar o sistema em um motor contrapontistico completo.
+
+### F37 — Conducao de vozes como diagnostico
+
+- Primeira fatia implementada: `docs/sprints/f37-voice-leading-diagnostics.md`.
+- Segunda fatia implementada: `docs/sprints/f37-1-bass-inversion-suggestions.md`.
+- Terceira fatia implementada: `docs/sprints/f37-2-bass-line-profile.md`.
+- Quarta fatia implementada: `docs/sprints/f37-3-bass-line-ranking-adjustment.md`.
+- Manter conducao como ranking e explicacao, nao como motor autonomo.
+- Emitir diagnostico local quando a proposta preserva notas comuns ou resolve tendencias.
+- Emitir diagnostico local quando a proposta tem tendencia sem resolucao clara ou salto interno relevante.
+- Reutilizar o contrato `HarmonicDiagnostic` com `category: compatibility`.
+- Sugerir slash chords simples quando uma nota do proprio acorde suaviza a linha de baixo.
+- Classificar a linha de baixo como caminhante, cromatica, pedal, funcional, saltada ou mista.
+- Usar o perfil de baixo apenas como desempate/refinamento leve no ranking.
+
+### F38 — Prova de fogo com repertorio real
+
+- Fase implementada: `docs/sprints/f38-real-music-fire-audit.md`.
+- Criar uma auditoria executavel sobre todas as partituras em `docs/musics`.
+- Validar o pipeline completo: MusicXML -> ancoras melodicas -> frase -> propostas -> ranking -> apresentacao.
+- Proteger contratos gerais sem exigir uma harmonizacao autoral perfeita para cada obra.
+- Confirmar que cada proposta apresentada tem cifras, baixo, perfil de rota, perfil de baixo, conducao de vozes e papel de apresentacao.
+- Confirmar que diagnosticos globais e locais continuam obedecendo `HarmonicDiagnostic`.
+- Usar repertorio real como criterio minimo de estabilidade antes de novos refinamentos esteticos.
+
+### F39 — Relatorio musical por obra
+
+- Fase implementada: `docs/sprints/f39-real-music-audit-report.md`.
+- Relatorio gerado: `docs/reports/f39-real-music-audit-report.md`.
+- Comando de geracao: `npm run report:real-music`.
+- Extrair a auditoria real para `scripts/real-music-audit.ts`.
+- Registrar por obra: material importado, janela melodica, centro escolhido, proposta primaria, cifras, baixo, perfis e diagnosticos.
+- Separar arquivos harmonizaveis de arquivos apenas com referencia harmonica.
+- Usar o relatorio como instrumento de escuta antes de refinar regras.
+- Preparar a proxima fase: comparar proposta primaria com harmonia de referencia quando ela existir.
+
+### F40 — Comparacao com harmonia de referencia
+
+- Fase implementada: `docs/sprints/f40-reference-harmony-comparison.md`.
+- Criar `ReferenceHarmonyComparator`.
+- Alinhar proposta primaria e cifras importadas por compasso.
+- Comparar funcao aparente e raiz, sem tratar a referencia como gabarito absoluto.
+- Reutilizar `ReferenceHarmonyAnalysis` para idioma, cadencias locais e fronteira menor/modal.
+- Expor no relatorio real uma sintese de alinhamento, parcialidade ou divergencia.
+- Preparar diagnosticos futuros para divergencia aceitavel, centro divergente, cadencia omitida e cromatismo nao sustentado.
+
+### F41 — Causas de divergencia contra a referencia
+
+- Fase implementada: `docs/sprints/f41-reference-divergence-causes.md`.
+- Acrescentar causas classificadas a `ReferenceHarmonyComparator`.
+- Diferenciar funcao preservada com outra raiz de divergencia funcional real.
+- Detectar centro divergente entre proposta e referencia.
+- Detectar cadencia de referencia nao acompanhada funcionalmente.
+- Marcar idioma de referencia relevante quando a referencia nao e major-funcional.
+- Expor as causas no relatorio real sem transformar divergencia em erro automatico.
+
+### F42 — Expansao do corpus real
+
+- Fase implementada: `docs/sprints/f42-expanded-real-music-corpus.md`.
+- Incorporar `Actual proof.musicxml`, `a child is born.musicxml` e `a fine romance.musicxml`.
+- Aumentar o corpus real de 8 para 11 MusicXML.
+- Aumentar o vocabulario real de cifras de 44 para 88 simbolos unicos.
+- Expandir `ChordSymbolResolver` para grafias reais de sus dominante, `#11`, `add9+b7` e formas redundantes vindas de MusicXML.
+- Regenerar `docs/reports/f39-real-music-audit-report.md` com o corpus ampliado.
+- Usar as novas divergencias como fila musical para janelas por secao, leitura de centro e idioma jazz/standard.
+
+### F43 — Selecao de janela comparavel com referencia
+
+- Fase implementada: `docs/sprints/f43-reference-aware-window-selection.md`.
+- Fazer a auditoria preferir janelas harmonizaveis que tambem sobrepoem cifras de referencia.
+- Medir `referenceOverlapCount` por obra.
+- Exibir a sobreposicao no relatorio real.
+- Evitar que musicas com cifras aparecam como `sem referencia comparavel` apenas por escolha ruim de janela.
+- Revelar o proximo problema: centro de referencia ainda precisa ser inferido com mais contexto que o primeiro acorde.
+
+### F44 — Novo lote de repertorio real
+
+- Fase implementada: `docs/sprints/f44-expanded-standards-corpus.md`.
+- Incorporar sete novas musicas reais ao corpus.
+- Aumentar o corpus real de 11 para 18 MusicXML.
+- Aumentar o vocabulario real de cifras de 88 para 135 simbolos unicos.
+- Confirmar que o resolvedor atual absorve o novo lote sem novas regras de cifra.
+- Regenerar `docs/reports/f39-real-music-audit-report.md`.
+- Confirmar que a proxima prioridade musical e inferir melhor o centro da referencia em repertorio jazz/standard.
+
+### F45 — Inferencia de centro da referencia
+
+- Fase implementada: `docs/sprints/f45-reference-center-inference.md`.
+- Inferir centro da referencia por cadencias e repousos, nao pelo primeiro acorde.
+- Usar celulas ii-V-I e iiø-V-i como evidencia forte.
+- Usar acorde final e acordes de repouso como evidencia media.
+- Manter o primeiro acorde apenas como evidencia fraca.
+- Exibir centro, modo e confianca da referencia no relatorio real.
+- Reduzir falsos alertas de centro divergente em standards.
+
+### F46 — Centro global e centro local da referencia
+
+- Fase implementada: `docs/sprints/f46-local-global-reference-centers.md`.
+- Separar centro global da referencia e centro local da janela comparada.
+- Usar a harmonia completa para centro global.
+- Usar apenas compassos sobrepostos entre proposta e referencia para centro local.
+- Preferir o centro local como centro ativo da comparacao quando houver evidencia.
+- Exibir centro local e global no relatorio quando eles divergirem.
+- Preparar diagnosticos mais ricos para diferenciar divergencia global, divergencia local e tonicizacao acompanhada.
+
+### F47 — Diagnosticos refinados de centro local/global
+
+- Fase implementada: `docs/sprints/f47-refined-center-divergence-diagnostics.md`.
+- Refinar `centro divergente` em causas separadas para centro local e centro global.
+- Diferenciar proposta que ignora a tonicizacao local de proposta que ignora o centro global da obra.
+- Marcar quando a proposta acompanha o centro local, mas diverge do global.
+- Marcar quando a proposta acompanha o centro global, mas ignora o centro local.
+- Manter `center-mismatch` como fallback para comparacoes sem centro local/global explicito.
+- Expor as novas causas no relatorio real com linguagem musical.
+- Tornar standards e trechos tonicizantes mais legiveis na auditoria sem transformar a referencia em gabarito absoluto.
+
+### F48 — Centro de frase assistido por referencia
+
+- Fase implementada: `docs/sprints/f48-reference-aware-phrase-center.md`.
+- Criar `applyReferenceCenterToPhraseContext`.
+- Manter `PhraseAnalysisEngine` como leitura melodica principal.
+- Promover centro de referencia apenas quando a confianca for media ou forte.
+- Ignorar centro de referencia fraco para nao sequestrar a leitura melodica.
+- Usar cifras sobrepostas a cada janela na auditoria real.
+- Usar cifras da secao ativa no produto antes da geracao de propostas.
+- Fazer propostas nascerem do centro local quando a referencia real sustenta essa leitura.
+
+### F49 — Rastreabilidade do centro assistido por referencia
+
+- Fase implementada: `docs/sprints/f49-reference-center-traceability.md`.
+- Adicionar `selectedCenterSource` ao `PhraseContext`.
+- Preservar evidencias de centro quando a referencia promove o centro da frase.
+- Exibir origem e evidencia do centro no relatorio real.
+- Emitir diagnostico de referencia no produto quando o centro da frase foi ajustado pela harmonia da secao.
+- Manter essa explicacao fora do modo simples para nao poluir a experiencia inicial.
+
+### F50 — Linguagem musical para evidencia de centro
+
+- Fase implementada: `docs/sprints/f50-reference-center-evidence-language.md`.
+- Formatar `selectedCenterEvidence` em linguagem de musico.
+- Trocar evidencias internas como `ii-V-I local aponta G maior` por `cadência ii-V-I confirma G maior`.
+- Trocar repousos inferidos por frases como `repousos recorrentes sustentam Eb maior`.
+- Incluir a primeira evidencia musical no diagnostico de centro assistido pela referencia.
+- Regenerar o relatorio real com evidencias mais legiveis.
+
+### F51 — Evidencias de centro como frases completas
+
+- Fase implementada: `docs/sprints/f51-reference-center-evidence-sentences.md`.
+- Criar `formatReferenceCenterEvidenceSentence`.
+- Capitalizar e pontuar evidencias de centro na superficie final.
+- Exibir evidencias do relatorio como frases independentes.
+- Incluir evidencia pontuada no diagnostico de centro assistido pela referencia.
+
+### F52 — Evidencia de centro nas explicacoes da proposta
+
+- Fase implementada: `docs/sprints/f52-reference-center-proposal-explanations.md`.
+- Anexar evidencia de centro assistido diretamente a explicacao da proposta.
+- Cobrir `generateAcceptedProposals` e `tryStrategy`.
+- Evitar duplicacao quando a proposta passa por mais de um caminho.
+- Manter a decisao harmonica intacta e alterar apenas explicabilidade.
+
+### F53 — Evidencias da proposta no relatorio real
+
+- Fase implementada: `docs/sprints/f53-proposal-evidence-audit-report.md`.
+- Exibir ate quatro evidencias da proposta primaria no relatorio real.
+- Auditar o "por que funciona" fora da UI.
+- Evitar anexar evidencia de centro de frase quando a proposta declara cadencia local para outro alvo.
+- Separar centro de frase e alvo cadencial local para evitar explicacoes contraditorias.
+
+### F54 — Alvo cadencial da proposta no relatorio real
+
+- Fase implementada: `docs/sprints/f54-proposal-cadential-target-report.md`.
+- Exibir alvo cadencial da proposta primaria quando ele puder ser inferido.
+- Separar explicitamente centro da frase e alvo cadencial local.
+- Tornar legiveis casos em que a janela esta em um centro, mas a proposta toniciza outro alvo.
+- Preparar um futuro campo estruturado de `cadentialTarget` na proposta.
 
 ---
 

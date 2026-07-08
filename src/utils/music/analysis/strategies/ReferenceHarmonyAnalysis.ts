@@ -30,8 +30,16 @@ interface MinorModalBoundaryEvidence {
   evidence: string[];
 }
 
+interface ReferenceTonalCenterInference {
+  tonic: string;
+  mode: "major" | "minor";
+  confidence: "weak" | "medium" | "strong";
+  evidence: string[];
+}
+
 interface ReferenceHarmonyAnalysis {
   hasExistingHarmony: boolean;
+  referenceCenter: ReferenceTonalCenterInference | null;
   idiom: HarmonicIdiomClassification | null;
   minorModalBoundary: MinorModalBoundaryEvidence | null;
   bassTrajectory: string[];
@@ -87,6 +95,81 @@ function isDominantQuality(quality: ChordQuality): boolean {
     "7_b13",
     "7_sharp9_b13"
   ].includes(quality);
+}
+
+function isMajorQuality(quality: ChordQuality): boolean {
+  return ["maj", "maj7", "6", "6_9", "add9", "maj7_sharp11"].includes(quality);
+}
+
+function normalizeRoot(chord: string): string | null {
+  const root = chordRoot(chord);
+  return root ? Note.pitchClass(root) || root : null;
+}
+
+function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceTonalCenterInference | null {
+  if (harmonies.length === 0) return null;
+
+  const ordered = [...harmonies].sort((a, b) => a.tickStart - b.tickStart);
+  const iiVCells = detectIiVFunctionalCells(ordered);
+  const scores = new Map<string, { tonic: string; mode: "major" | "minor"; score: number; evidence: string[] }>();
+
+  const addScore = (tonic: string | null, mode: "major" | "minor", score: number, evidence: string) => {
+    if (!tonic) return;
+    const normalized = Note.pitchClass(tonic) || tonic;
+    const key = `${normalized}:${mode}`;
+    const current = scores.get(key) || { tonic: normalized, mode, score: 0, evidence: [] };
+    current.score += score;
+    if (!current.evidence.includes(evidence)) current.evidence.push(evidence);
+    scores.set(key, current);
+  };
+
+  for (const cell of iiVCells) {
+    addScore(
+      cell.region.tonic,
+      cell.region.mode,
+      4,
+      cell.region.mode === "minor"
+        ? `iiø-V-i local aponta ${cell.region.tonic} menor`
+        : `ii-V-I local aponta ${cell.region.tonic} maior`
+    );
+  }
+
+  for (const harmony of ordered) {
+    const resolved = resolveChordSymbol(harmony.harmony);
+    const root = normalizeRoot(harmony.harmony);
+    if (isMajorQuality(resolved.quality)) addScore(root, "major", 1.2, `repouso maior recorrente em ${root}`);
+    if (isMinorQuality(resolved.quality)) addScore(root, "minor", 1.2, `repouso menor recorrente em ${root}`);
+  }
+
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const firstResolved = resolveChordSymbol(first.harmony);
+  const lastResolved = resolveChordSymbol(last.harmony);
+  const firstRoot = normalizeRoot(first.harmony);
+  const lastRoot = normalizeRoot(last.harmony);
+
+  if (isMajorQuality(lastResolved.quality)) addScore(lastRoot, "major", 2, `acorde final sugere repouso em ${lastRoot}`);
+  if (isMinorQuality(lastResolved.quality)) addScore(lastRoot, "minor", 2, `acorde final sugere repouso em ${lastRoot}`);
+  if (isMajorQuality(firstResolved.quality)) addScore(firstRoot, "major", 0.4, `primeiro acorde sugere ${firstRoot} maior`);
+  if (isMinorQuality(firstResolved.quality)) addScore(firstRoot, "minor", 0.4, `primeiro acorde sugere ${firstRoot} menor`);
+
+  const best = Array.from(scores.values()).sort((a, b) => b.score - a.score)[0];
+  if (best) {
+    return {
+      tonic: best.tonic,
+      mode: best.mode,
+      confidence: best.score >= 4 ? "strong" : best.score >= 2 ? "medium" : "weak",
+      evidence: best.evidence.slice(0, 3)
+    };
+  }
+
+  const fallback = firstRoot || chordRoot(first.harmony) || first.harmony;
+  return {
+    tonic: fallback,
+    mode: "major",
+    confidence: "weak",
+    evidence: ["centro aproximado pelo primeiro acorde por falta de cadência clara"]
+  };
 }
 
 function analyzeMinorModalBoundary(chords: string[], center: string): MinorModalBoundaryEvidence | null {
@@ -164,6 +247,7 @@ export function analyzeReferenceHarmony(harmonies: ScoreHarmonyEvent[]): Referen
   if (harmonies.length === 0) {
     return {
       hasExistingHarmony: false,
+      referenceCenter: null,
       idiom: null,
       minorModalBoundary: null,
       bassTrajectory: [],
@@ -180,9 +264,10 @@ export function analyzeReferenceHarmony(harmonies: ScoreHarmonyEvent[]): Referen
 
   const bassGrammar = analyzeStructuralBassGrammar(harmonies);
   const harmonyChords = harmonies.map(harmony => harmony.harmony);
-  const referenceCenter = bassGrammar.bassLine[0] || chordRoot(harmonies[0].harmony) || harmonies[0].harmony;
-  const idiom = classifyHarmonicIdiom(harmonyChords, referenceCenter);
-  const minorModalBoundary = analyzeMinorModalBoundary(harmonyChords, referenceCenter);
+  const referenceCenter = inferReferenceHarmonyCenter(harmonies);
+  const referenceCenterTonic = referenceCenter?.tonic || bassGrammar.bassLine[0] || chordRoot(harmonies[0].harmony) || harmonies[0].harmony;
+  const idiom = classifyHarmonicIdiom(harmonyChords, referenceCenterTonic);
+  const minorModalBoundary = analyzeMinorModalBoundary(harmonyChords, referenceCenterTonic);
   const iiVCells = detectIiVFunctionalCells(harmonies);
   const localCadences = iiVCells.map(cell => (
     cell.region.mode === "minor"
@@ -226,11 +311,15 @@ export function analyzeReferenceHarmony(harmonies: ScoreHarmonyEvent[]): Referen
     minorModalBoundary?.boundary === "modal-center"
       ? "Fronteira menor/modal: referência favorece centro modal sem sensível"
       : null,
+    referenceCenter
+      ? `Centro de referência inferido: ${referenceCenter.tonic} ${referenceCenter.mode}`
+      : null,
     "Ponto de comparação para as alternativas de rearmonização"
   ].filter((item): item is string => item !== null);
 
   return {
     hasExistingHarmony: true,
+    referenceCenter,
     idiom,
     minorModalBoundary,
     bassTrajectory: bassGrammar.bassLine,

@@ -68,8 +68,14 @@ scripts/omitted-strategy-diagnostics.spec.ts
 
 ## Proxima fatia
 
-F35.2 pode filtrar mais finamente por modo:
+F35.2 filtrou mais finamente por modo:
 
 1. modo simples mostra menos diagnosticos especulativos;
 2. modo exploratorio revela diagnosticos de risco;
 3. modo equilibrado permanece como comportamento padrao.
+
+Ver:
+
+```text
+docs/f35-2-diagnostic-mode-visibility.md
+```

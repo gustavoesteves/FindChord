@@ -144,6 +144,14 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     expect(ranked[0].id).toBe("smooth-ii-v-i");
     expect(ranked[0].voiceLeadingScore).toBeGreaterThan(ranked[1].voiceLeadingScore || 0);
     expect(ranked[0].explanation.some(item => item.startsWith("Condução de vozes:"))).toBe(true);
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-smooth-ii-v-i-voice-leading-support",
+        source: "generation",
+        category: "compatibility",
+        message: "Condução de vozes favorável: a progressão preserva notas comuns ou resolve tendências importantes."
+      })
+    ]));
   });
 
   it("keeps harsher motion as an accepted but lower-ranked proposal", () => {
@@ -155,6 +163,14 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     expect(ranked.map(item => item.id)).toContain("harsher");
     expect(ranked[ranked.length - 1].id).toBe("harsher");
     expect(ranked[ranked.length - 1].voiceLeadingEvidence?.length).toBeGreaterThan(0);
+    expect(ranked[ranked.length - 1].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-harsher-voice-leading-friction",
+        source: "generation",
+        category: "compatibility",
+        message: "Condução de vozes áspera: há tendência sem resolução clara ou salto interno relevante."
+      })
+    ]));
   });
 
   it("annotates accepted proposals with route distance evidence", () => {
@@ -168,6 +184,95 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     expect(ranked[0].explanation).toEqual(expect.arrayContaining([
       expect.stringMatching(/^Rota harmônica:/)
     ]));
+  });
+
+  it("suggests simple bass inversions when they smooth the bass line", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("cadence", ["C", "G7", "C"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].measures.map(measure => measure.chords[0])).toEqual(["C", "G7/B", "C"]);
+    expect(ranked[0].bassLine).toEqual(["C", "B", "C"]);
+    expect(ranked[0].explanation).toContain("Condução de vozes: usa inversão simples para suavizar o baixo");
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-cadence-bass-inversion-continuity",
+        source: "generation",
+        category: "compatibility",
+        message: "Inversão de baixo sugerida: uma nota do próprio acorde suaviza a ligação entre acordes."
+      })
+    ]));
+  });
+
+  it("annotates walking bass-line profile on ranked proposals", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("walking-bass", ["C", "G7/B", "Am7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].bassLineProfile).toBe("stepwise");
+    expect(ranked[0].bassLineEvidence).toContain("Linha de baixo: predomina movimento por grau conjunto");
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-walking-bass-bass-line-continuity",
+        source: "generation",
+        category: "compatibility",
+        message: "Linha de baixo caminhante: o baixo conecta acordes por grau conjunto."
+      })
+    ]));
+  });
+
+  it("annotates chromatic bass-line profile", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("chromatic-bass", ["C", "G7/B", "Bbmaj7", "A7"])
+    ], phraseContext, [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "B", duration: 960 },
+      { measureIndex: 3, pitch: "Bb", duration: 960 },
+      { measureIndex: 4, pitch: "A", duration: 960 }
+    ]);
+
+    expect(ranked[0].bassLineProfile).toBe("chromatic");
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-chromatic-bass-bass-line-continuity",
+        message: "Linha de baixo cromática: o baixo aproxima acordes por semitom com boa continuidade."
+      })
+    ]));
+  });
+
+  it("warns when bass-line profile is dominated by leaps", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("leaping-bass", ["Cmaj7", "F#7", "Bbmaj7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].bassLineProfile).toBe("leaping");
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-leaping-bass-bass-line-leaping",
+        message: "Linha de baixo saltada: há saltos estruturais que reduzem a continuidade da progressão."
+      })
+    ]));
+  });
+
+  it("uses bass-line profile only as a fine ranking adjustment", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("leaping-bass", ["Cmaj7", "F#7", "Bbmaj7"]),
+      proposal("walking-bass", ["C", "G7/B", "Am7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].id).toBe("walking-bass");
+    expect(ranked[0].bassLineRankBonus).toBeGreaterThan(0);
+    expect(ranked[1].bassLineRankBonus).toBeLessThan(0);
+  });
+
+  it("does not let bass profile override clearly stronger voice leading", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("strong-voice-leading", ["Dm7", "G7", "Cmaj7"]),
+      proposal("smooth-bass-but-weaker-harmony", ["C", "G7/B", "Am7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].id).toBe("strong-voice-leading");
+    expect(ranked[0].voiceLeadingScore || 0).toBeGreaterThan(ranked[1].voiceLeadingScore || 0);
   });
 
   it("compares original dominant, SubV7, and ii-SubV7 cadences by voice leading", () => {

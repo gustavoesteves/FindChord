@@ -16,6 +16,11 @@ export interface HarmonicDiagnosticGroup {
   diagnostics: HarmonicDiagnostic[];
 }
 
+export interface HarmonicDiagnosticCategoryGroup {
+  category: HarmonicDiagnosticCategory;
+  diagnostics: HarmonicDiagnostic[];
+}
+
 export function diagnostic(
   id: string,
   source: HarmonicDiagnosticSource,
@@ -55,6 +60,16 @@ export function groupDiagnosticsBySource(diagnostics: HarmonicDiagnostic[]): Har
     .map(source => ({
       source,
       diagnostics: diagnostics.filter(item => item.source === source)
+    }))
+    .filter(group => group.diagnostics.length > 0);
+}
+
+export function groupDiagnosticsByCategory(diagnostics: HarmonicDiagnostic[]): HarmonicDiagnosticCategoryGroup[] {
+  const categoryOrder: HarmonicDiagnosticCategory[] = ["omission", "comparison", "compatibility"];
+  return categoryOrder
+    .map(category => ({
+      category,
+      diagnostics: diagnostics.filter(item => item.category === category)
     }))
     .filter(group => group.diagnostics.length > 0);
 }

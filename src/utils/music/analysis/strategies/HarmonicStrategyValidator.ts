@@ -1,8 +1,13 @@
 import { Chord, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ReharmonizationMeasure } from "../models/ReharmonizationProposal";
-import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
+import { chordRoot } from "../../theory/ChordSymbolResolver";
 import { analyzeApparentFunction } from "./ApparentFunctionAnalysis";
+import {
+  noteCoveredByChordSymbol,
+  weightedMelodicCoverageByAnchor,
+  weightedMelodicCoverage
+} from "./MelodicCoverage";
 
 export type HarmonicStrategyId =
   | "I_IV_V"
@@ -153,6 +158,8 @@ const STRATEGY_EXPECTATIONS: Record<HarmonicStrategyId, HarmonicStrategyExpectat
     maxChordCount: 6
   }
 };
+
+const LONG_FORM_WEIGHTED_MELODY_COVERAGE = 0.7;
 
 export function normalizeChordRoot(chord: string): string {
   const [symbol] = chord.split("/");
@@ -341,41 +348,42 @@ function backboneMatchesExpectation(actual: StrategyFunctionId[], expected: Stra
 }
 
 export function noteCoveredByChord(note: string, chord: string): boolean {
-  const pc = Note.pitchClass(note);
-  const chordNotes = chordPitchClasses(chord);
-  return pc !== "" && chordNotes.includes(pc);
+  return noteCoveredByChordSymbol(note, chord);
 }
 
 function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
   if (candidate.melody.length === 0) return 0;
 
   if (candidate.measures.length > 4) {
-    const coveredMeasures = candidate.measures.filter(measure => {
+    const measureCoverages = candidate.measures.map(measure => {
       const measureMelody = candidate.melody.filter(anchor => anchor.measureIndex === measure.measureIndex);
-      return measureMelody.some(anchor => measure.chords.some(chord => noteCoveredByChord(anchor.pitch, chord)));
-    }).length;
+      return weightedMelodyCoverage(measureMelody, measure.chords);
+    }).filter((coverage): coverage is number => coverage !== null);
 
-    return coveredMeasures / candidate.measures.length;
+    if (measureCoverages.length === 0) return 0;
+    return measureCoverages.reduce((sum, coverage) => sum + coverage, 0) / measureCoverages.length;
   }
 
-  let covered = 0;
-  for (const anchor of candidate.melody) {
+  const weightedCoverage = weightedMelodicCoverageForCandidate(candidate);
+  return weightedCoverage ?? 0;
+}
+
+function weightedMelodyCoverage(anchors: MelodicAnchor[], chords: string[]): number | null {
+  return weightedMelodicCoverage(anchors, chords, { markFinal: false });
+}
+
+function weightedMelodicCoverageForCandidate(candidate: HarmonizationCandidate): number | null {
+  return weightedMelodicCoverageByAnchor(candidate.melody, anchor => {
     const measure = candidate.measures.find(item => item.measureIndex === anchor.measureIndex);
-    if (measure?.chords.some(chord => noteCoveredByChord(anchor.pitch, chord))) covered++;
-  }
-  return covered / candidate.melody.length;
+    return measure?.chords ?? [];
+  });
 }
 
 function measureMelodyCoverages(candidate: HarmonizationCandidate): number[] {
   return candidate.measures.flatMap(measure => {
     const measureMelody = candidate.melody.filter(anchor => anchor.measureIndex === measure.measureIndex);
-    if (measureMelody.length === 0) return [];
-
-    const covered = measureMelody.filter(anchor => (
-      measure.chords.some(chord => noteCoveredByChord(anchor.pitch, chord))
-    )).length;
-
-    return [covered / measureMelody.length];
+    const coverage = weightedMelodyCoverage(measureMelody, measure.chords);
+    return coverage === null ? [] : [coverage];
   });
 }
 
@@ -597,7 +605,11 @@ export function validateHarmonicStrategy(
 
   if (report.strategy !== expected.strategy) failures.push("strategy-mismatch");
   if (!backboneMatchesExpectation(report.backbone, expected.backbone, candidate.measures.length)) failures.push("backbone-integrity");
-  if (report.melodyCoverage < expected.melodyCoverage) failures.push("melody-coverage");
+  const melodyCoverageThreshold = isLongMelody
+    ? Math.min(expected.melodyCoverage, LONG_FORM_WEIGHTED_MELODY_COVERAGE)
+    : expected.melodyCoverage;
+
+  if (report.melodyCoverage < melodyCoverageThreshold) failures.push("melody-coverage");
   if (isLongMelody && report.weakestMeasureMelodyCoverage < 0.3) failures.push("melody-segment-coverage");
   if (report.functionalEscapes !== expected.functionalEscapes) failures.push("functional-escape");
   if (expected.unresolvedSecondaryDominants !== undefined && report.unresolvedSecondaryDominants !== expected.unresolvedSecondaryDominants) failures.push("unresolved-secondary-dominant");

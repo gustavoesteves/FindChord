@@ -26,6 +26,8 @@ export interface CadentialTarget {
 export interface PhraseContext {
   tonalCenterCandidates: TonalCenterCandidate[];
   selectedCenter: TonalCenterCandidate;
+  selectedCenterSource?: "melody" | "reference";
+  selectedCenterEvidence?: string[];
   cadentialTarget: CadentialTarget;
 }
 
@@ -54,6 +56,7 @@ export class PhraseAnalysisEngine {
       const defaultCenter: TonalCenterCandidate = { tonic: "C", mode: "major", confidence: 0.1 };
       return {
         selectedCenter: defaultCenter,
+        selectedCenterSource: "melody",
         tonalCenterCandidates: [defaultCenter],
         cadentialTarget: { targetPitch: "C", cadenceType: "UNKNOWN", confidence: 0.1 }
       };
@@ -70,6 +73,7 @@ export class PhraseAnalysisEngine {
     return {
       tonalCenterCandidates: candidates,
       selectedCenter: candidates[0],
+      selectedCenterSource: "melody",
       cadentialTarget
     };
   }

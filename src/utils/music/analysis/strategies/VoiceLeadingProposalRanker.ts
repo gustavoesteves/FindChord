@@ -1,6 +1,7 @@
 import type { PhraseContext } from "../engines/PhraseAnalysisEngine";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ReharmonizationProposal } from "../models/ReharmonizationProposal";
+import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
 import {
   evaluateVoiceLeadingTransition,
   type VoiceLeadingTransitionReport
@@ -10,6 +11,8 @@ import {
   type HarmonicRouteDistanceReport
 } from "./HarmonicRouteDistance";
 import type { FunctionalClassificationMode } from "./HarmonicStrategyValidator";
+import { suggestBassInversionsForVoiceLeading } from "./BassInversionSuggester";
+import { annotateBassLineProfile } from "./BassLineProfile";
 
 function flattenedChords(proposal: ReharmonizationProposal): string[] {
   return proposal.measures.flatMap(measure => measure.chords);
@@ -45,12 +48,13 @@ function evaluateProposalVoiceLeading(
   proposal: ReharmonizationProposal,
   phraseContext: PhraseContext,
   anchors: MelodicAnchor[]
-): Pick<ReharmonizationProposal, "voiceLeadingScore" | "voiceLeadingEvidence"> {
+): Pick<ReharmonizationProposal, "voiceLeadingScore" | "voiceLeadingEvidence"> & { transitionReports: VoiceLeadingTransitionReport[] } {
   const chords = flattenedChords(proposal);
   if (chords.length < 2) {
     return {
       voiceLeadingScore: 0,
-      voiceLeadingEvidence: []
+      voiceLeadingEvidence: [],
+      transitionReports: []
     };
   }
 
@@ -72,8 +76,42 @@ function evaluateProposalVoiceLeading(
 
   return {
     voiceLeadingScore: normalized,
-    voiceLeadingEvidence: evidenceSummary(reports)
+    voiceLeadingEvidence: evidenceSummary(reports),
+    transitionReports: reports
   };
+}
+
+function voiceLeadingDiagnosticFor(
+  proposal: ReharmonizationProposal,
+  score: number,
+  reports: VoiceLeadingTransitionReport[]
+): HarmonicDiagnostic | undefined {
+  const unresolved = reports.reduce((sum, report) => sum + report.unresolvedTendencyCount, 0);
+  const leaps = reports.reduce((sum, report) => sum + report.excessiveLeapCount, 0);
+  const guideToneResolutions = reports.reduce((sum, report) => sum + report.guideToneResolutionCount, 0);
+  const commonTones = reports.reduce((sum, report) => sum + report.commonToneCount, 0);
+
+  if (unresolved > 0 || leaps >= 3) {
+    return diagnostic(
+      `proposal-${proposal.id}-voice-leading-friction`,
+      "generation",
+      "compatibility",
+      "Condução de vozes áspera: há tendência sem resolução clara ou salto interno relevante.",
+      ["balanced", "exploratory"]
+    );
+  }
+
+  if (score >= 3 && (guideToneResolutions > 0 || commonTones >= 2)) {
+    return diagnostic(
+      `proposal-${proposal.id}-voice-leading-support`,
+      "generation",
+      "compatibility",
+      "Condução de vozes favorável: a progressão preserva notas comuns ou resolve tendências importantes.",
+      ["simple", "balanced", "exploratory"]
+    );
+  }
+
+  return undefined;
 }
 
 function classificationModeForPhrase(phraseContext: PhraseContext): FunctionalClassificationMode {
@@ -101,7 +139,8 @@ function evaluateProposalRouteDistance(
 function routeAwareRankScore(proposal: ReharmonizationProposal): number {
   const voiceScore = proposal.voiceLeadingScore ?? 0;
   const routeCost = proposal.routeDistanceCost ?? 0;
-  return Number((voiceScore - routeCost * 0.05).toFixed(3));
+  const bassBonus = proposal.bassLineRankBonus ?? 0;
+  return Number((voiceScore - routeCost * 0.05 + bassBonus).toFixed(3));
 }
 
 export function annotateProposalVoiceLeading(
@@ -109,20 +148,32 @@ export function annotateProposalVoiceLeading(
   phraseContext: PhraseContext,
   anchors: MelodicAnchor[]
 ): ReharmonizationProposal {
-  const voiceLeading = evaluateProposalVoiceLeading(proposal, phraseContext, anchors);
-  const routeDistance = evaluateProposalRouteDistance(proposal, phraseContext);
+  const withBassInversions = suggestBassInversionsForVoiceLeading(proposal);
+  const withBassProfile = annotateBassLineProfile(withBassInversions);
+  const voiceLeading = evaluateProposalVoiceLeading(withBassProfile, phraseContext, anchors);
+  const routeDistance = evaluateProposalRouteDistance(withBassProfile, phraseContext);
+  const { transitionReports, ...voiceLeadingFields } = voiceLeading;
+  const voiceLeadingDiagnostic = voiceLeadingDiagnosticFor(
+    proposal,
+    voiceLeadingFields.voiceLeadingScore ?? 0,
+    transitionReports
+  );
   const evidence = [
-    ...(voiceLeading.voiceLeadingEvidence || []),
+    ...(voiceLeadingFields.voiceLeadingEvidence || []),
     ...(routeDistance.routeDistanceEvidence || [])
   ];
 
   return {
     ...proposal,
-    ...voiceLeading,
+    ...withBassProfile,
+    ...voiceLeadingFields,
     ...routeDistance,
+    diagnostics: voiceLeadingDiagnostic && !withBassProfile.diagnostics?.some(item => item.id === voiceLeadingDiagnostic.id)
+      ? [...(withBassProfile.diagnostics || []), voiceLeadingDiagnostic]
+      : withBassProfile.diagnostics,
     explanation: evidence.length > 0
-      ? [...proposal.explanation, ...evidence]
-      : proposal.explanation
+      ? [...withBassProfile.explanation, ...evidence]
+      : withBassProfile.explanation
   };
 }
 

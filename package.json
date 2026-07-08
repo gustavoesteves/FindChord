@@ -7,6 +7,7 @@
     "dev": "node scripts/dev-server.cjs",
     "build": "tsc -b && vite build",
     "test:curated": "vitest run --config vitest.curated.config.ts",
+    "report:real-music": "jiti scripts/generate-real-music-audit-report.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

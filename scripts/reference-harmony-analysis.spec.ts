@@ -50,11 +50,32 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
   it("summarizes local ii-V cadences found in the existing harmony layer", () => {
     const analysis = analyzeReferenceHarmony(harmonies(["Am7", "D7", "Gmaj7", "F#m7(b5)", "B7(b13)", "Em6"]));
 
+    expect(analysis.referenceCenter?.confidence).toBe("strong");
     expect(analysis.localCadences).toEqual(expect.arrayContaining([
       "ii-V-I local em G maior",
       "iiø-V-i local em E menor"
     ]));
     expect(analysis.explanation).toContain("Contém ii-V-I local em G maior; iiø-V-i local em E menor");
+  });
+
+  it("infers reference center from a ii-V-I instead of the first chord", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["Dm7", "G7", "Cmaj7"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major",
+      confidence: "strong"
+    }));
+  });
+
+  it("infers minor reference center from iiø-V-i", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["Bm7(b5)", "E7(b13)", "Am6"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      mode: "minor",
+      confidence: "strong"
+    }));
   });
 
   it("reports blues as an existing harmonic idiom instead of dominant errors", () => {

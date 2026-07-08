@@ -185,6 +185,12 @@ function qualityFromSuffix(
   if (/^(6|maj6|M6)$/.test(suffix)) return { quality: "6", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
 
   if (/^(7alt|alt|7\(alt\))$/i.test(suffix)) return { quality: "7alt", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^sus4?\(7,9,11,13\)$/i.test(suffix)) return { quality: "13sus4", tensions: ["9", "11", "13"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^sus4?\(7,9\)$/i.test(suffix)) return { quality: "9sus4", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^sus4?\(7\)$/i.test(suffix)) return { quality: "7sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^7sus4\(b7\)$/i.test(suffix)) return { quality: "7sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^9sus4\(b7,9\)$/i.test(suffix)) return { quality: "9sus4", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^13sus4\(b7,9,13\)$/i.test(suffix)) return { quality: "13sus4", tensions: ["9", "13"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(sus|sus4)$/.test(suffix)) return { quality: "sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(sus2)$/.test(suffix)) return { quality: "sus2", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(7sus|7sus4)$/.test(suffix)) return { quality: "7sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
@@ -192,6 +198,8 @@ function qualityFromSuffix(
   if (/^(13sus|13sus4)$/.test(suffix)) return { quality: "13sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
 
   if (/^(add9|\(add9\))$/.test(suffix)) return { quality: "add9", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^\(add9\)\(b7\)$/i.test(suffix)) return { quality: "9", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^\(#11\)$/i.test(suffix)) return { quality: "maj7_sharp11", tensions: ["#11"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(5)$/.test(suffix)) return { quality: "5", tensions: [], confidence: "exact", warnings, aliasesMatched };
   if (/^(aug|\+|\(#5\))$/.test(suffix)) return { quality: "aug", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
 

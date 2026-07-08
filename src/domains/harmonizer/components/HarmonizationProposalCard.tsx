@@ -6,6 +6,9 @@ import type {
   ReharmonizationPresentationRole,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
+import type {
+  HarmonicDiagnosticCategory
+} from "../../../utils/music/analysis/models/HarmonicDiagnostic";
 
 interface HarmonizationProposalCardProps {
   proposal: ReharmonizationProposal;
@@ -36,6 +39,11 @@ const PRESENTATION_ROLE_LABELS: Record<ReharmonizationPresentationRole, string> 
   alternative: "Alternativa",
   comparative: "Comparação",
   adventurous: "Exploração"
+};
+const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
+  omission: "Omissão",
+  comparison: "Comparação",
+  compatibility: "Compatibilidade"
 };
 
 export default function HarmonizationProposalCard({ proposal, onApply }: HarmonizationProposalCardProps) {
@@ -120,7 +128,7 @@ export default function HarmonizationProposalCard({ proposal, onApply }: Harmoni
               })}
             </div>
 
-            {proposal.explanation.length > 0 && (
+            {(proposal.explanation.length > 0 || (proposal.diagnostics && proposal.diagnostics.length > 0)) && (
               <div className="mt-3 pt-3 border-t border-zinc-800/50">
                 <button
                   type="button"
@@ -133,10 +141,18 @@ export default function HarmonizationProposalCard({ proposal, onApply }: Harmoni
                 </button>
 
                 {isAnalysisOpen && (
-                  <div className="mt-3 flex flex-col gap-1">
+                  <div className="mt-3 flex flex-col gap-2">
                     {proposal.explanation.map((motive, index) => (
                       <div key={`${motive}-${index}`} className="flex items-center gap-2 text-xs text-indigo-300/80">
                         <span className="text-indigo-400">✓</span> {motive}
+                      </div>
+                    ))}
+                    {proposal.diagnostics?.map((diagnostic, index) => (
+                      <div key={`${diagnostic.id}-${index}`} className="flex flex-wrap items-baseline gap-2 text-xs text-sky-300/80">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-sky-300/70">
+                          {DIAGNOSTIC_CATEGORY_LABELS[diagnostic.category]}
+                        </span>
+                        <span>{diagnostic.message}</span>
                       </div>
                     ))}
                   </div>

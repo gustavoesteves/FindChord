@@ -35,6 +35,11 @@ describe("F33 Chord Symbol Resolver", () => {
     ["C7sus", "C7sus4", "C7sus4"],
     ["C7sus4", "C7sus4", "C7sus4"],
     ["C9sus", "C9sus4", "C9sus4"],
+    ["Csus4(7)", "C7sus4", "C7sus4"],
+    ["Csus4(7,9)", "C9sus4", "C9sus4"],
+    ["Csus4(7,9,11,13)", "C13sus4", "C13sus4"],
+    ["C(add9)(b7)", "C9", "C9"],
+    ["C(#11)", "Cmaj7(#11)", "C7M(#11)"],
     ["C/E", "C/E", "C/E"],
     ["Dm7/G", "Dm7/G", "Dm7/G"],
     ["N.C.", "N.C.", "N.C."]

@@ -123,6 +123,62 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(validation.failures).toContain("melody-segment-coverage");
   });
 
+  it("treats an uncovered structural anchor as weak coverage even when an ornament fits the chord", () => {
+    const melody: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "F", duration: 1920 },
+      { measureIndex: 1, pitch: "E", duration: 120 },
+      { measureIndex: 2, pitch: "F", duration: 1920 },
+      { measureIndex: 3, pitch: "G", duration: 1920 },
+      { measureIndex: 4, pitch: "C", duration: 1920 },
+      { measureIndex: 5, pitch: "C", duration: 1920 }
+    ];
+    const candidate: HarmonizationCandidate = {
+      strategy: "I_IV_V",
+      center: "C",
+      melody,
+      measures: [
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["F"] },
+        { measureIndex: 3, chords: ["G"] },
+        { measureIndex: 4, chords: ["C"] },
+        { measureIndex: 5, chords: ["C"] }
+      ]
+    };
+
+    const validation = validateHarmonicStrategy(candidate);
+
+    expect(validation.report.weakestMeasureMelodyCoverage).toBeLessThan(0.3);
+    expect(validation.failures).toContain("melody-segment-coverage");
+  });
+
+  it("accepts a structural suspension when it resolves into the supporting chord", () => {
+    const melody: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "F", duration: 960 },
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 1920 },
+      { measureIndex: 3, pitch: "G", duration: 1920 },
+      { measureIndex: 4, pitch: "C", duration: 1920 },
+      { measureIndex: 5, pitch: "C", duration: 1920 }
+    ];
+    const candidate: HarmonizationCandidate = {
+      strategy: "I_IV_V",
+      center: "C",
+      melody,
+      measures: [
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["F"] },
+        { measureIndex: 3, chords: ["G"] },
+        { measureIndex: 4, chords: ["C"] },
+        { measureIndex: 5, chords: ["C"] }
+      ]
+    };
+
+    const validation = validateHarmonicStrategy(candidate);
+
+    expect(validation.accepted).toBe(true);
+    expect(validation.report.weakestMeasureMelodyCoverage).toBeGreaterThan(0.8);
+  });
+
   it("does not count supported apparent-function substitutions as functional escapes", () => {
     const candidate: HarmonizationCandidate = {
       strategy: "EXPANSAO_FUNCIONAL_DIATONICA",

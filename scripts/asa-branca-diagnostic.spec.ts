@@ -38,7 +38,7 @@ describe("Asa Branca diagnostic", () => {
     expect(snapshot.harmonies.length).toBe(0);
     expect(phraseContext.selectedCenter.tonic).toBe("C");
     expect(basic?.accepted).toBe(true);
-    expect(basic?.report.melodyCoverage).toBe(1);
+    expect(basic?.report.melodyCoverage).toBeGreaterThan(0.84);
     expect(secondaryDominants?.accepted).toBe(false);
     expect(secondaryDominants?.failures).toEqual(expect.arrayContaining(["melody-segment-coverage"]));
     expect(secondaryDominants?.report.chordCount).toBeLessThan(24);
@@ -81,6 +81,7 @@ describe("Asa Branca diagnostic", () => {
     const chordsByMeasure = new Map(attempt.candidate.measures.map(measure => [measure.measureIndex, measure.chords[0]]));
 
     expect(attempt.validation.accepted).toBe(true);
+    expect(attempt.validation.report.melodyCoverage).toBeGreaterThan(0.75);
     expect(chordsByMeasure.get(12)).toBe("F");
     expect(chordsByMeasure.get(13)).toBe("F");
     expect(chordsByMeasure.get(15)).toContain("G7");

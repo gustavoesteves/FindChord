@@ -5,17 +5,25 @@ import type { ScoreSnapshot } from "../../../utils/music/analysis/models/ScoreSn
 import type { ReharmonizationBoldnessMode } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import {
   diagnostic,
-  diagnosticsForMode
+  diagnosticsForMode,
+  type HarmonicDiagnostic
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
 import type { FormalSection } from "../../../store/useScoreSessionStore";
 import { rankReharmonizationProposalsByVoiceLeading } from "../../../utils/music/analysis/strategies/VoiceLeadingProposalRanker";
-import { annotateProposalPresentationRoles } from "../../../utils/music/analysis/strategies/ProposalPresentationPlanner";
+import {
+  annotateProposalPresentationRoles,
+  presentationDiagnosticsForProposals
+} from "../../../utils/music/analysis/strategies/ProposalPresentationPlanner";
 import {
   buildControlledReharmonizationProposals,
   buildExistingHarmonyProposal,
   selectMelodicAnchors,
   selectSectionHarmonies
 } from "../services/harmonizerService";
+import {
+  applyReferenceCenterToPhraseContext,
+  formatReferenceCenterEvidenceSentence
+} from "../../../utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 
 interface UseHarmonizerProposalsParams {
   scoreSnapshot: ScoreSnapshot | null;
@@ -33,6 +41,11 @@ export function useHarmonizerProposals({
     [scoreSnapshot, activeSection]
   );
 
+  const sectionHarmonies = useMemo(
+    () => selectSectionHarmonies(scoreSnapshot?.harmonies, activeSection),
+    [scoreSnapshot, activeSection]
+  );
+
   const { proposals, phraseContext, rejectedExperimentalCount, omittedStrategyDiagnostics } = useMemo(() => {
     if (melodyAnchorsData.anchors.length === 0) {
       return {
@@ -43,9 +56,12 @@ export function useHarmonizerProposals({
       };
     }
 
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
-      melodyAnchorsData.anchors,
-      scoreSnapshot?.metadata?.keySignature
+    const phraseContext = applyReferenceCenterToPhraseContext(
+      PhraseAnalysisEngine.analyzePhrase(
+        melodyAnchorsData.anchors,
+        scoreSnapshot?.metadata?.keySignature
+      ),
+      sectionHarmonies
     );
 
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(melodyAnchorsData.anchors, phraseContext);
@@ -56,12 +72,7 @@ export function useHarmonizerProposals({
       rejectedExperimentalCount: generation.rejectedExperimentalCount,
       omittedStrategyDiagnostics: generation.omittedStrategyDiagnostics
     };
-  }, [melodyAnchorsData.anchors, scoreSnapshot?.metadata?.keySignature]);
-
-  const sectionHarmonies = useMemo(
-    () => selectSectionHarmonies(scoreSnapshot?.harmonies, activeSection),
-    [scoreSnapshot, activeSection]
-  );
+  }, [melodyAnchorsData.anchors, scoreSnapshot?.metadata?.keySignature, sectionHarmonies]);
 
   const existingHarmonyProposal = useMemo(
     () => buildExistingHarmonyProposal(sectionHarmonies),
@@ -97,31 +108,49 @@ export function useHarmonizerProposals({
   ]);
 
   const referenceDiagnostics = useMemo(() => {
+    const diagnostics: HarmonicDiagnostic[] = [];
+    if (phraseContext?.selectedCenterSource === "reference") {
+      const evidence = phraseContext.selectedCenterEvidence?.[0]
+        ? ` ${formatReferenceCenterEvidenceSentence(phraseContext.selectedCenterEvidence[0])}`
+        : "";
+      diagnostics.push(diagnostic(
+        "reference-assisted-phrase-center",
+        "reference",
+        "comparison",
+        `Centro da frase ajustado pela harmonia da seção: ${phraseContext.selectedCenter.tonic} ${phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}.${evidence}`,
+        ["balanced", "exploratory"]
+      ));
+    }
     if (existingHarmonyProposal?.harmonicBoundary === "modal-center") {
-      return [diagnostic(
+      diagnostics.push(diagnostic(
         "reference-modal-center-avoids-dominant-cadence",
         "reference",
         "omission",
         "Cadência dominante evitada: a referência favorece centro modal claro.",
         ["simple", "balanced"]
-      )];
+      ));
     }
     if (existingHarmonyProposal?.harmonicBoundary === "minor-functional-cadential") {
-      return [diagnostic(
+      diagnostics.push(diagnostic(
         "reference-minor-functional-subordinates-modal",
         "reference",
         "omission",
         "Centro modal subordinado: a referência confirma menor funcional por cadência.",
         ["simple", "balanced"]
-      )];
+      ));
     }
-    return [];
-  }, [existingHarmonyProposal]);
+    return diagnostics;
+  }, [existingHarmonyProposal, phraseContext]);
+
+  const presentationDiagnostics = useMemo(
+    () => presentationDiagnosticsForProposals(displayedProposals),
+    [displayedProposals]
+  );
 
   const visibleDiagnostics = useMemo(() => diagnosticsForMode(
-    [...omittedStrategyDiagnostics, ...referenceDiagnostics],
+    [...omittedStrategyDiagnostics, ...referenceDiagnostics, ...presentationDiagnostics],
     boldnessMode
-  ), [omittedStrategyDiagnostics, referenceDiagnostics, boldnessMode]);
+  ), [omittedStrategyDiagnostics, referenceDiagnostics, presentationDiagnostics, boldnessMode]);
 
   return {
     displayedProposals,

@@ -5,6 +5,7 @@ import type { MelodicAnchor } from "../src/utils/music/analysis/models/Projectio
 import {
   diagnostic,
   diagnosticsForMode,
+  groupDiagnosticsByCategory,
   groupDiagnosticsBySource
 } from "../src/utils/music/analysis/models/HarmonicDiagnostic";
 
@@ -41,6 +42,23 @@ describe("F34.5 Omitted Strategy Diagnostics", () => {
     ]);
   });
 
+  it("groups diagnostics by category in stable display order", () => {
+    const items = [
+      diagnostic("compat", "generation", "compatibility", "Compatibilidade"),
+      diagnostic("compare", "presentation", "comparison", "Comparacao"),
+      diagnostic("omit", "reference", "omission", "Omissao")
+    ];
+
+    expect(groupDiagnosticsByCategory(items).map(group => [
+      group.category,
+      group.diagnostics.map(item => item.message)
+    ])).toEqual([
+      ["omission", ["Omissao"]],
+      ["comparison", ["Comparacao"]],
+      ["compatibility", ["Compatibilidade"]]
+    ]);
+  });
+
   it("explains partial blues color without surfacing a blues strategy", () => {
     const anchors: MelodicAnchor[] = [
       { measureIndex: 1, pitch: "C", duration: 960 },
@@ -60,9 +78,16 @@ describe("F34.5 Omitted Strategy Diagnostics", () => {
       expect.objectContaining({
         id: "blues-omitted-partial-color",
         source: "generation",
-        category: "omission"
+        category: "omission",
+        visibleIn: ["balanced", "exploratory"]
       })
     ]));
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "simple").map(item => item.id)).not.toContain(
+      "blues-omitted-partial-color"
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "balanced").map(item => item.id)).toContain(
+      "blues-omitted-partial-color"
+    );
   });
 
   it("does not add a blues omission diagnostic to ordinary major-functional melody", () => {
@@ -78,6 +103,54 @@ describe("F34.5 Omitted Strategy Diagnostics", () => {
 
     expect(diagnosticMessages(generation)).not.toContain(
       "Blues funcional omitido: a melodia sugere cor blues parcial, mas não sustenta b3 e b7 como estrutura."
+    );
+  });
+
+  it("explains resolved melodic suspension as compatibility evidence", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "F", duration: 960 },
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 1920 },
+      { measureIndex: 3, pitch: "G", duration: 1920 },
+      { measureIndex: 4, pitch: "C", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
+
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+
+    expect(diagnosticMessages(generation)).toContain(
+      "Suspensão resolvida: a melodia cria tensão momentânea e resolve por grau conjunto em nota sustentada."
+    );
+    expect(generation.omittedStrategyDiagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "melodic-coverage-suspension-resolution",
+        source: "generation",
+        category: "compatibility",
+        visibleIn: ["balanced", "exploratory"]
+      })
+    ]));
+  });
+
+  it("keeps chromatic approach diagnostics exploratory", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "Db", duration: 240 },
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 1920 },
+      { measureIndex: 3, pitch: "G", duration: 1920 },
+      { measureIndex: 4, pitch: "C", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
+
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+
+    expect(diagnosticMessages(generation)).toContain(
+      "Aproximação cromática aceita: a nota fora do acorde conduz por semitom a uma nota sustentada."
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "balanced").map(item => item.id)).not.toContain(
+      "melodic-coverage-chromatic-approach"
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "exploratory").map(item => item.id)).toContain(
+      "melodic-coverage-chromatic-approach"
     );
   });
 
@@ -99,6 +172,12 @@ describe("F34.5 Omitted Strategy Diagnostics", () => {
     expect(diagnosticMessages(generation)).toContain(
       "ii-V local omitido: a chegada em G não teve cobertura melódica suficiente para uma cadência local."
     );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "simple").map(item => item.id)).not.toContain(
+      "local-iiv-omitted-g"
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "balanced").map(item => item.id)).toContain(
+      "local-iiv-omitted-g"
+    );
   });
 
   it("explains SubV7 omission when the chromatic substitute misses melodic coverage", () => {
@@ -115,6 +194,12 @@ describe("F34.5 Omitted Strategy Diagnostics", () => {
     expect(generation.proposals.some(proposal => proposal.name === "Estratégia — SubV7 cadencial")).toBe(false);
     expect(diagnosticMessages(generation)).toContain(
       "SubV7 omitido: o substituto cromático não cobre as notas estruturais da melodia nesse fechamento."
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "balanced").map(item => item.id)).not.toContain(
+      "subv7-omitted-melody-coverage"
+    );
+    expect(diagnosticsForMode(generation.omittedStrategyDiagnostics, "exploratory").map(item => item.id)).toContain(
+      "subv7-omitted-melody-coverage"
     );
   });
 });

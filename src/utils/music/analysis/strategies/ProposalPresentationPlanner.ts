@@ -5,6 +5,7 @@ import type {
   ReharmonizationPresentationRole,
   ReharmonizationProposal
 } from "../models/ReharmonizationProposal";
+import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
 
 function isReference(proposal: ReharmonizationProposal): boolean {
   return proposal.kind === "reference";
@@ -76,14 +77,18 @@ function canBePrimary(proposal: ReharmonizationProposal, mode: ReharmonizationBo
 function withPresentationRole(
   proposal: ReharmonizationProposal,
   presentationRole: ReharmonizationPresentationRole,
-  explanation?: string
+  explanation?: string,
+  proposalDiagnostic?: HarmonicDiagnostic
 ): ReharmonizationProposal {
   return {
     ...proposal,
     presentationRole,
     explanation: explanation && !proposal.explanation.includes(explanation)
       ? [...proposal.explanation, explanation]
-      : proposal.explanation
+      : proposal.explanation,
+    diagnostics: proposalDiagnostic && !proposal.diagnostics?.some(item => item.id === proposalDiagnostic.id)
+      ? [...(proposal.diagnostics || []), proposalDiagnostic]
+      : proposal.diagnostics
   };
 }
 
@@ -115,6 +120,41 @@ function referenceBoundaryExplanationFor(
   return undefined;
 }
 
+function proposalDiagnosticFor(
+  proposal: ReharmonizationProposal,
+  role: ReharmonizationPresentationRole,
+  boundary: ReharmonizationHarmonicBoundary | undefined
+): HarmonicDiagnostic | undefined {
+  if (role === "comparative" && boundary === "modal-center") {
+    return diagnostic(
+      `proposal-${proposal.id}-comparative-modal-reference`,
+      "presentation",
+      "comparison",
+      "Esta proposta ficou como comparação porque a referência favorece centro modal claro."
+    );
+  }
+
+  if (role === "comparative" && boundary === "minor-functional-cadential") {
+    return diagnostic(
+      `proposal-${proposal.id}-comparative-minor-functional-reference`,
+      "presentation",
+      "comparison",
+      "Esta proposta ficou como comparação porque a referência confirma menor funcional por cadência."
+    );
+  }
+
+  if (role === "adventurous") {
+    return diagnostic(
+      `proposal-${proposal.id}-adventurous-route`,
+      "presentation",
+      "comparison",
+      "Esta proposta foi mantida como exploração por afastamento harmônico."
+    );
+  }
+
+  return undefined;
+}
+
 export function annotateProposalPresentationRoles(
   proposals: ReharmonizationProposal[],
   mode: ReharmonizationBoldnessMode = "balanced"
@@ -143,11 +183,13 @@ export function annotateProposalPresentationRoles(
       };
     }
 
+    const role = nonPrimaryRole(proposal, hasReferenceBoundaryExplanation);
     return {
       proposal: withPresentationRole(
         proposal,
-        nonPrimaryRole(proposal, hasReferenceBoundaryExplanation),
-        referenceBoundaryExplanationFor(proposal, boundary)
+        role,
+        referenceBoundaryExplanationFor(proposal, boundary),
+        proposalDiagnosticFor(proposal, role, boundary)
       ),
       originalIndex
     };
@@ -157,4 +199,61 @@ export function annotateProposalPresentationRoles(
     if (aPriority !== bPriority) return aPriority - bPriority;
     return a.originalIndex - b.originalIndex;
   }).map(item => item.proposal);
+}
+
+export function presentationDiagnosticsForProposals(
+  proposals: ReharmonizationProposal[]
+): HarmonicDiagnostic[] {
+  const comparativeCount = proposals.filter(proposal => proposal.presentationRole === "comparative").length;
+  const adventurousCount = proposals.filter(proposal => proposal.presentationRole === "adventurous").length;
+  const boundary = referenceBoundary(proposals);
+  const diagnostics: HarmonicDiagnostic[] = [];
+
+  if (comparativeCount > 0) {
+    if (boundary === "modal-center") {
+      diagnostics.push(diagnostic(
+        "presentation-comparative-modal-reference",
+        "presentation",
+        "comparison",
+        comparativeCount === 1
+          ? "1 proposta ficou como comparação porque a referência favorece centro modal claro."
+          : `${comparativeCount} propostas ficaram como comparação porque a referência favorece centro modal claro.`,
+        ["simple", "balanced"]
+      ));
+    } else if (boundary === "minor-functional-cadential") {
+      diagnostics.push(diagnostic(
+        "presentation-comparative-minor-functional-reference",
+        "presentation",
+        "comparison",
+        comparativeCount === 1
+          ? "1 proposta ficou como comparação porque a referência confirma menor funcional por cadência."
+          : `${comparativeCount} propostas ficaram como comparação porque a referência confirma menor funcional por cadência.`,
+        ["simple", "balanced"]
+      ));
+    } else {
+      diagnostics.push(diagnostic(
+        "presentation-comparative-proposals",
+        "presentation",
+        "comparison",
+        comparativeCount === 1
+          ? "1 proposta ficou como comparação por depender da referência harmônica."
+          : `${comparativeCount} propostas ficaram como comparação por dependerem da referência harmônica.`,
+        ["simple", "balanced"]
+      ));
+    }
+  }
+
+  if (adventurousCount > 0) {
+    diagnostics.push(diagnostic(
+      "presentation-adventurous-proposals",
+      "presentation",
+      "comparison",
+      adventurousCount === 1
+        ? "1 exploração foi mantida como afastamento harmônico."
+        : `${adventurousCount} explorações foram mantidas como afastamento harmônico.`,
+      ["exploratory"]
+    ));
+  }
+
+  return diagnostics;
 }

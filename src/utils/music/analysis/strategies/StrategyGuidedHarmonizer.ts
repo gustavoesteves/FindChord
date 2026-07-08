@@ -5,6 +5,11 @@ import type { ReharmonizationMeasure, ReharmonizationProposal } from "../models/
 import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
 import { FunctionalRegionPlanner, type MeasureFunctionalRegion } from "./FunctionalRegionPlanner";
 import {
+  classifyMelodicAnchors,
+  melodicAnchorWeight,
+  pitchProminence
+} from "./MelodicAnchorClassifier";
+import {
   noteCoveredByChord,
   validateHarmonicStrategy,
   type HarmonicStrategyId,
@@ -12,6 +17,7 @@ import {
   type HarmonizationCandidate,
   type StrategyFunctionId
 } from "./HarmonicStrategyValidator";
+import { formatReferenceCenterEvidenceSentence } from "./ReferenceAwarePhraseContext";
 
 interface StrategyAttempt {
   candidate: HarmonizationCandidate;
@@ -100,7 +106,7 @@ export class StrategyGuidedHarmonizer {
       ...this.buildBluesProposals(anchors, phraseContext),
       ...this.buildModalProposals(anchors, phraseContext),
       ...this.buildMinorFunctionalProposals(anchors, phraseContext)
-    ];
+    ].map(proposal => this.attachReferenceAssistedExplanation(proposal, phraseContext));
   }
 
   public static tryStrategy(
@@ -119,10 +125,13 @@ export class StrategyGuidedHarmonizer {
     };
 
     const validation = validateHarmonicStrategy(candidate);
+    const proposal = validation.accepted
+      ? this.attachReferenceAssistedExplanation(this.toProposal(candidate, validation), phraseContext)
+      : null;
     return {
       candidate,
       validation,
-      proposal: validation.accepted ? this.toProposal(candidate, validation) : null
+      proposal
     };
   }
 
@@ -376,7 +385,7 @@ export class StrategyGuidedHarmonizer {
     for (const roman of candidates) {
       const chord = this.chordFromRoman(center, roman);
       const coverage = anchors.reduce((sum, anchor) => (
-        noteCoveredByChord(anchor.pitch, chord) ? sum + Math.max(1, anchor.duration || 1) : sum
+        noteCoveredByChord(anchor.pitch, chord) ? sum + melodicAnchorWeight(anchor, anchors, { markFinal: false }) : sum
       ), 0);
       const score = coverage + positionBias[roman];
       if (score > bestScore) {
@@ -391,14 +400,7 @@ export class StrategyGuidedHarmonizer {
   private static hasProminentPitch(anchors: MelodicAnchor[], pitchClass: string): boolean {
     if (!pitchClass || anchors.length === 0) return false;
 
-    const totalDuration = anchors.reduce((sum, anchor) => sum + Math.max(1, anchor.duration || 1), 0);
-    const pitchDuration = anchors.reduce((sum, anchor) => (
-      Note.pitchClass(anchor.pitch) === pitchClass
-        ? sum + Math.max(1, anchor.duration || 1)
-        : sum
-    ), 0);
-
-    return pitchDuration / totalDuration >= 0.3;
+    return pitchProminence(anchors, pitchClass) >= 0.3;
   }
 
   private static applyIdiomaticFunctionalPatterns(
@@ -524,7 +526,9 @@ export class StrategyGuidedHarmonizer {
     let bestScore = -Infinity;
 
     for (const chord of candidates) {
-      const score = anchors.filter(anchor => noteCoveredByChord(anchor.pitch, chord)).length;
+      const score = anchors.reduce((sum, anchor) => (
+        noteCoveredByChord(anchor.pitch, chord) ? sum + melodicAnchorWeight(anchor, anchors, { markFinal: false }) : sum
+      ), 0);
       if (score > bestScore) {
         best = chord;
         bestScore = score;
@@ -721,11 +725,15 @@ export class StrategyGuidedHarmonizer {
     if (anchors.length === 0) return chords[0];
     let best = chords[0];
     let bestScore = -Infinity;
+    const classified = classifyMelodicAnchors(anchors, { markFinal: false });
     for (const chord of chords) {
       const root = Note.pitchClass(this.rootOfChord(chord) || chord);
-      const score = anchors.reduce((sum, anchor) => (
-        noteCoveredByChord(anchor.pitch, chord) ? sum + Math.max(1, anchor.duration || 1) : sum
-      ), 0) + (anchors.some(anchor => Note.pitchClass(anchor.pitch) === root) ? 0.5 : 0);
+      const structuralRootBonus = classified.some(anchor => (
+        anchor.role === "structural" && Note.pitchClass(anchor.pitch) === root
+      )) ? 0.6 : 0;
+      const score = classified.reduce((sum, anchor) => (
+        noteCoveredByChord(anchor.pitch, chord) ? sum + anchor.weight : sum
+      ), 0) + structuralRootBonus;
       if (score > bestScore) {
         best = chord;
         bestScore = score;
@@ -833,11 +841,15 @@ export class StrategyGuidedHarmonizer {
 
     let best = chords[0];
     let bestScore = -Infinity;
+    const classified = classifyMelodicAnchors(anchors, { markFinal: false });
     for (const chord of chords) {
       const root = Note.pitchClass(this.rootOfChord(chord) || chord);
-      const score = anchors.reduce((sum, anchor) => (
-        noteCoveredByChord(anchor.pitch, chord) ? sum + Math.max(1, anchor.duration || 1) : sum
-      ), 0) + (anchors.some(anchor => Note.pitchClass(anchor.pitch) === root) ? 0.4 : 0);
+      const structuralRootBonus = classified.some(anchor => (
+        anchor.role === "structural" && Note.pitchClass(anchor.pitch) === root
+      )) ? 0.5 : 0;
+      const score = classified.reduce((sum, anchor) => (
+        noteCoveredByChord(anchor.pitch, chord) ? sum + anchor.weight : sum
+      ), 0) + structuralRootBonus;
       if (score > bestScore) {
         best = chord;
         bestScore = score;
@@ -962,6 +974,39 @@ export class StrategyGuidedHarmonizer {
       return measureAnchors.length === 0 || measureAnchors.some(anchor => (
         measure.chords.some(chord => noteCoveredByChord(anchor.pitch, chord))
       ));
+    });
+  }
+
+  private static attachReferenceAssistedExplanation(
+    proposal: ReharmonizationProposal,
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal {
+    if (phraseContext.selectedCenterSource !== "reference" || !phraseContext.selectedCenterEvidence?.[0]) {
+      return proposal;
+    }
+    if (this.hasDifferentLocalCadenceTarget(proposal, phraseContext)) return proposal;
+
+    const evidence = formatReferenceCenterEvidenceSentence(phraseContext.selectedCenterEvidence[0]);
+    const explanation = `Centro da frase: ${evidence}`;
+    if (proposal.explanation.includes(explanation)) return proposal;
+
+    return {
+      ...proposal,
+      explanation: [...proposal.explanation, explanation]
+    };
+  }
+
+  private static hasDifferentLocalCadenceTarget(
+    proposal: ReharmonizationProposal,
+    phraseContext: PhraseContext
+  ): boolean {
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return false;
+
+    return proposal.explanation.some(explanation => {
+      const localCadence = explanation.match(/(?:cria uma cadência local para|reconhece célula ii-V local em) ([A-G](?:#|b)?)/);
+      const localTarget = localCadence ? Note.pitchClass(localCadence[1]) : null;
+      return !!localTarget && localTarget !== center;
     });
   }
 

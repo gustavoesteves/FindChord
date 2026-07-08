@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
+import {
+  annotateProposalPresentationRoles,
+  presentationDiagnosticsForProposals
+} from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 
 function proposal(
@@ -131,6 +134,22 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned[1].explanation).toContain(
       "Comparação: a referência sugere centro modal sem sensível cadencial"
     );
+    expect(planned[1].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-minor-functional-comparative-modal-reference",
+        source: "presentation",
+        category: "comparison",
+        message: "Esta proposta ficou como comparação porque a referência favorece centro modal claro."
+      })
+    ]));
+    expect(presentationDiagnosticsForProposals(planned)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "presentation-comparative-modal-reference",
+        source: "presentation",
+        category: "comparison",
+        message: "2 propostas ficaram como comparação porque a referência favorece centro modal claro."
+      })
+    ]));
   });
 
   it("promotes minor-functional proposals when the reference confirms a minor cadence", () => {
@@ -148,6 +167,22 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned[2].explanation).toContain(
       "Comparação: a referência confirma menor funcional por cadência"
     );
+    expect(planned[2].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-modal-color-comparative-minor-functional-reference",
+        source: "presentation",
+        category: "comparison",
+        message: "Esta proposta ficou como comparação porque a referência confirma menor funcional por cadência."
+      })
+    ]));
+    expect(presentationDiagnosticsForProposals(planned)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "presentation-comparative-minor-functional-reference",
+        source: "presentation",
+        category: "comparison",
+        message: "1 proposta ficou como comparação porque a referência confirma menor funcional por cadência."
+      })
+    ]));
   });
 
   it("keeps radical proposals adventurous even when a boundary explanation is present", () => {
@@ -163,5 +198,21 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned[1].explanation).toContain(
       "Exploração mantida como comparação: a referência confirma menor funcional por cadência"
     );
+    expect(planned[1].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-outside-adventurous-route",
+        source: "presentation",
+        category: "comparison",
+        message: "Esta proposta foi mantida como exploração por afastamento harmônico."
+      })
+    ]));
+    expect(presentationDiagnosticsForProposals(planned)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "presentation-adventurous-proposals",
+        source: "presentation",
+        category: "comparison",
+        message: "1 exploração foi mantida como afastamento harmônico."
+      })
+    ]));
   });
 });

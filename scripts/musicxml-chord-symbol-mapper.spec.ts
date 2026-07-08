@@ -95,6 +95,22 @@ describe("F33.4 MusicXML Chord Symbol Mapper", () => {
     expect(xml).toContain("<degree-type>add</degree-type>");
   });
 
+  it("rejects malformed MusicXML degree values instead of inventing a chord symbol", () => {
+    const malformed = `
+      <harmony>
+        <root><root-step>G</root-step></root>
+        <kind>major</kind>
+        <degree>
+          <degree-value>75</degree-value>
+          <degree-alter>1</degree-alter>
+          <degree-type>add</degree-type>
+        </degree>
+      </harmony>
+    `;
+
+    expect(parseXMLHarmonyBlock(malformed)).toBeNull();
+  });
+
   it.each([
     "C",
     "C7M",

@@ -1,3 +1,5 @@
+import type { HarmonicDiagnostic } from "./HarmonicDiagnostic";
+
 export interface ReharmonizationMeasure {
   measureIndex: number;
   chords: string[];
@@ -12,6 +14,13 @@ export type ReharmonizationProposalKind =
 export type ReharmonizationRouteProfile = "conservative" | "moderate" | "chromatic" | "radical";
 export type ReharmonizationPresentationRole = "primary" | "alternative" | "comparative" | "adventurous";
 export type ReharmonizationBoldnessMode = "simple" | "balanced" | "exploratory";
+export type ReharmonizationBassLineProfile =
+  | "stepwise"
+  | "chromatic"
+  | "pedal"
+  | "functional"
+  | "leaping"
+  | "mixed";
 export type ReharmonizationHarmonicIdiom =
   | "major-functional"
   | "minor-functional"
@@ -30,10 +39,14 @@ export interface ReharmonizationProposal {
   bassLine: string[];
   voiceLeadingScore?: number;
   voiceLeadingEvidence?: string[];
+  bassLineProfile?: ReharmonizationBassLineProfile;
+  bassLineEvidence?: string[];
+  bassLineRankBonus?: number;
   routeDistanceCost?: number;
   routeProfile?: ReharmonizationRouteProfile;
   routeDistanceEvidence?: string[];
   presentationRole?: ReharmonizationPresentationRole;
   harmonicIdiom?: ReharmonizationHarmonicIdiom;
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
+  diagnostics?: HarmonicDiagnostic[];
 }
