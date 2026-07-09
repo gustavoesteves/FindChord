@@ -68,6 +68,17 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
     }));
   });
 
+  it("infers reference center from a local V-I resolution inside a dominant chain", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["Eb", "Ebm6", "Ab7", "Bbm7", "D7", "G7", "C7", "F7", "Bb6"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "Bb",
+      mode: "major",
+      confidence: "strong"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("V-I local aponta Bb maior");
+  });
+
   it("infers minor reference center from iiø-V-i", () => {
     const analysis = analyzeReferenceHarmony(harmonies(["Bm7(b5)", "E7(b13)", "Am6"]));
 

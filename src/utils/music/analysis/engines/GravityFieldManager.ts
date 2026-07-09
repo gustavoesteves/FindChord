@@ -138,7 +138,9 @@ export class GravityFieldManager {
     anchors: MelodicAnchor[],
     proposals: ReharmonizationProposal[]
   ): HarmonicDiagnostic[] {
-    const primaryProposal = proposals.find(proposal => proposal.kind !== "reference");
+    const primaryProposal = proposals.find(proposal => (
+      proposal.kind !== "reference" && proposal.name !== "Estratégia — Harmonia fundamental I-IV-V"
+    )) || proposals.find(proposal => proposal.kind !== "reference");
     if (!primaryProposal) return [];
 
     const entries = melodicCoverageEntriesByAnchor(anchors, anchor => {

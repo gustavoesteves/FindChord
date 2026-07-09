@@ -5,7 +5,9 @@ export type ChordDisplayProfile = "br" | "jazz" | "plain" | "ireal";
 export type ChordQuality =
   | "maj"
   | "m"
+  | "madd9"
   | "aug"
+  | "maj_b5"
   | "dim"
   | "5"
   | "sus2"
@@ -16,6 +18,7 @@ export type ChordQuality =
   | "mMaj7"
   | "m9"
   | "m11"
+  | "m13"
   | "6"
   | "m6"
   | "6_9"
@@ -36,11 +39,18 @@ export type ChordQuality =
   | "7_sharp11"
   | "7_b13"
   | "7_sharp9_b13"
+  | "9_b5"
+  | "9_sharp5"
+  | "9_sharp9"
+  | "9_sharp11"
+  | "13_b9"
+  | "13_sharp11"
+  | "13_b9_sharp11"
   | "maj7_sharp11"
   | "add9"
   | "N.C.";
 
-export type ChordTension = "b9" | "9" | "#9" | "11" | "#11" | "b13" | "13";
+export type ChordTension = "b5" | "#5" | "b9" | "9" | "#9" | "11" | "#11" | "b13" | "13";
 export type ChordResolverConfidence = "exact" | "profile" | "ambiguous" | "legacy";
 
 export interface ResolvedChordSymbol {
@@ -62,7 +72,9 @@ const QUALITY_INTERVALS: Record<ChordQuality, string[]> = {
   "N.C.": [],
   maj: ["1P", "3M", "5P"],
   m: ["1P", "3m", "5P"],
+  madd9: ["1P", "3m", "5P", "9M"],
   aug: ["1P", "3M", "5A"],
+  maj_b5: ["1P", "3M", "5d"],
   dim: ["1P", "3m", "5d"],
   "5": ["1P", "5P"],
   sus2: ["1P", "2M", "5P"],
@@ -73,6 +85,7 @@ const QUALITY_INTERVALS: Record<ChordQuality, string[]> = {
   mMaj7: ["1P", "3m", "5P", "7M"],
   m9: ["1P", "3m", "5P", "7m", "9M"],
   m11: ["1P", "3m", "5P", "7m", "9M", "11P"],
+  m13: ["1P", "3m", "5P", "7m", "9M", "11P", "13M"],
   "6": ["1P", "3M", "5P", "6M"],
   m6: ["1P", "3m", "5P", "6M"],
   "6_9": ["1P", "3M", "5P", "6M", "9M"],
@@ -93,11 +106,18 @@ const QUALITY_INTERVALS: Record<ChordQuality, string[]> = {
   "7_sharp11": ["1P", "3M", "5P", "7m", "11A"],
   "7_b13": ["1P", "3M", "5P", "7m", "13m"],
   "7_sharp9_b13": ["1P", "3M", "5P", "7m", "9A", "13m"],
+  "9_b5": ["1P", "3M", "5d", "7m", "9M"],
+  "9_sharp5": ["1P", "3M", "5A", "7m", "9M"],
+  "9_sharp9": ["1P", "3M", "5P", "7m", "9A"],
+  "9_sharp11": ["1P", "3M", "5P", "7m", "9M", "11A"],
+  "13_b9": ["1P", "3M", "5P", "7m", "9m", "13M"],
+  "13_sharp11": ["1P", "3M", "5P", "7m", "9M", "11A", "13M"],
+  "13_b9_sharp11": ["1P", "3M", "5P", "7m", "9m", "11A", "13M"],
   maj7_sharp11: ["1P", "3M", "5P", "7M", "11A"],
   add9: ["1P", "3M", "5P", "9M"]
 };
 
-const TENSION_ORDER: ChordTension[] = ["b9", "9", "#9", "11", "#11", "b13", "13"];
+const TENSION_ORDER: ChordTension[] = ["b5", "#5", "b9", "9", "#9", "11", "#11", "b13", "13"];
 
 function normalizeInput(raw: string): string {
   return raw
@@ -132,7 +152,7 @@ function extractTensions(suffix: string): { cleaned: string; tensions: ChordTens
     return "";
   });
 
-  cleaned = cleaned.replace(/(b9|#9|#11|b13|13|11|9)/g, (token: string) => {
+  cleaned = cleaned.replace(/(b5|#5|b9|#9|#11|b13|13|11|9)/g, (token: string) => {
     if (TENSION_ORDER.includes(token as ChordTension)) {
       tensions.add(token as ChordTension);
     }
@@ -174,11 +194,15 @@ function qualityFromSuffix(
     return { quality: "mMaj7", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   }
 
-  if (/^(m6\/9|-6\/9|m69)$/.test(suffix)) return { quality: "m6_9", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m\(add9\)|madd9|-add9|min\(add9\)|mi\(add9\))$/.test(suffix)) return { quality: "madd9", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m6\/9|-6\/9|m69|m6\(9\))$/.test(suffix)) return { quality: "m6_9", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m13|-13|min13|mi13)$/.test(suffix)) return { quality: "m13", tensions: ["9", "11", "13"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m7\(11\)|-7\(11\)|min7\(11\)|mi7\(11\))$/.test(suffix)) return { quality: "m11", tensions: ["11"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m7\(9\)|-7\(9\)|min7\(9\)|mi7\(9\))$/.test(suffix)) return { quality: "m9", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(m11|-11|min11|mi11)$/.test(suffix)) return { quality: "m11", tensions: ["9", "11"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(m9|-9|min9|mi9)$/.test(suffix)) return { quality: "m9", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
-  if (/^(m6|-6|min6|mi6)$/.test(suffix)) return { quality: "m6", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
-  if (/^(m7|-7|min7|mi7)$/.test(suffix)) return { quality: "m7", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m6|m\(6\)|-6|min6|mi6)$/.test(suffix)) return { quality: "m6", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^(m7|m\(7\)|-7|min7|mi7)$/.test(suffix)) return { quality: "m7", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(m|-|min|mi)$/.test(suffix)) return { quality: "m", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
 
   if (/^(6\/9|69|6add9)$/.test(suffix)) return { quality: "6_9", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
@@ -186,7 +210,9 @@ function qualityFromSuffix(
 
   if (/^(7alt|alt|7\(alt\))$/i.test(suffix)) return { quality: "7alt", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^sus4?\(7,9,11,13\)$/i.test(suffix)) return { quality: "13sus4", tensions: ["9", "11", "13"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^sus4?\(7,13\)$/i.test(suffix)) return { quality: "13sus4", tensions: ["13"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^sus4?\(7,9\)$/i.test(suffix)) return { quality: "9sus4", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^sus4?\(7,b9\)$/i.test(suffix) || /^sus4?\(b9,7\)$/i.test(suffix)) return { quality: "7sus4", tensions: ["b9"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^sus4?\(7\)$/i.test(suffix)) return { quality: "7sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^7sus4\(b7\)$/i.test(suffix)) return { quality: "7sus4", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^9sus4\(b7,9\)$/i.test(suffix)) return { quality: "9sus4", tensions: ["9"], confidence: "profile", warnings, aliasesMatched: [original] };
@@ -202,8 +228,9 @@ function qualityFromSuffix(
   if (/^\(#11\)$/i.test(suffix)) return { quality: "maj7_sharp11", tensions: ["#11"], confidence: "profile", warnings, aliasesMatched: [original] };
   if (/^(5)$/.test(suffix)) return { quality: "5", tensions: [], confidence: "exact", warnings, aliasesMatched };
   if (/^(aug|\+|\(#5\))$/.test(suffix)) return { quality: "aug", tensions: [], confidence: "profile", warnings, aliasesMatched: [original] };
+  if (/^\(b5\)$/.test(suffix)) return { quality: "maj_b5", tensions: ["b5"], confidence: "profile", warnings, aliasesMatched: [original] };
 
-  if (/^(7\+|\+7|7aug|7#5|7\(#5\))$/.test(suffix)) {
+  if (/^(7\+|\+7|7aug|aug7|7#5|7\(#5\))$/.test(suffix)) {
     if (suffix === "7+" && profile === "br") {
       warnings.push("Cifra 7+ e ambigua; em perfil br foi tratada como 7M legado.");
       return { quality: "maj7", tensions: [], confidence: "legacy", warnings, aliasesMatched: [original] };
@@ -218,7 +245,7 @@ function qualityFromSuffix(
     }
   }
 
-  const dominantBase = lower.startsWith("7") || ["9", "11", "13"].includes(lower);
+  const dominantBase = /^(7|9|11|13)/.test(lower);
   if (dominantBase) {
     const baseQuality: ChordQuality = lower.startsWith("13")
       ? "13"
@@ -228,6 +255,27 @@ function qualityFromSuffix(
           ? "9"
           : "7";
     const { tensions } = extractTensions(suffix.replace(/^(7|9|11|13)/, ""));
+    if (baseQuality === "13" && tensions.includes("b9") && tensions.includes("#11")) {
+      return { quality: "13_b9_sharp11", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "13" && tensions.includes("b9")) {
+      return { quality: "13_b9", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "13" && tensions.includes("#11")) {
+      return { quality: "13_sharp11", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "9" && tensions.includes("#11")) {
+      return { quality: "9_sharp11", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "9" && tensions.includes("#5")) {
+      return { quality: "9_sharp5", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "9" && tensions.includes("b5")) {
+      return { quality: "9_b5", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
+    if (baseQuality === "9" && tensions.includes("#9")) {
+      return { quality: "9_sharp9", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
+    }
     if (tensions.includes("#9") && tensions.includes("b13")) {
       return { quality: "7_sharp9_b13", tensions, confidence: "profile", warnings, aliasesMatched: [original] };
     }
@@ -255,7 +303,9 @@ function suffixForQuality(quality: ChordQuality): string {
     "N.C.": "",
     maj: "",
     m: "m",
+    madd9: "m(add9)",
     aug: "aug",
+    maj_b5: "(b5)",
     dim: "dim",
     "5": "5",
     sus2: "sus2",
@@ -266,6 +316,7 @@ function suffixForQuality(quality: ChordQuality): string {
     mMaj7: "m(maj7)",
     m9: "m9",
     m11: "m11",
+    m13: "m13",
     "6": "6",
     m6: "m6",
     "6_9": "6/9",
@@ -286,6 +337,13 @@ function suffixForQuality(quality: ChordQuality): string {
     "7_sharp11": "7(#11)",
     "7_b13": "7(b13)",
     "7_sharp9_b13": "7(#9,b13)",
+    "9_b5": "9(b5)",
+    "9_sharp5": "9(#5)",
+    "9_sharp9": "9(#9)",
+    "9_sharp11": "9(#11)",
+    "13_b9": "13(b9)",
+    "13_sharp11": "13(#11)",
+    "13_b9_sharp11": "13(b9,#11)",
     maj7_sharp11: "maj7(#11)",
     add9: "add9"
   };

@@ -8,11 +8,11 @@ import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnosti
 import { chordRoot } from "../../theory/ChordSymbolResolver";
 
 function chordSymbol(chord: string): string {
-  return chord.split("/")[0];
+  return chord.replace(/\/[A-G](?:#|b)?$/, "");
 }
 
 function bassForChord(chord: string): string {
-  const slashBass = chord.split("/")[1];
+  const slashBass = chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
   if (slashBass) return Note.pitchClass(slashBass) || slashBass;
   const symbol = chordSymbol(chord);
   return chordRoot(symbol) || symbol.match(/^[A-G](?:#|b)?/)?.[0] || symbol;

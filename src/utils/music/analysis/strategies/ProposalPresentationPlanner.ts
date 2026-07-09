@@ -2,16 +2,34 @@ import type {
   ReharmonizationBoldnessMode,
   ReharmonizationHarmonicBoundary,
   ReharmonizationHarmonicIdiom,
+  ReharmonizationPresentationLayer,
   ReharmonizationPresentationRole,
   ReharmonizationProposal
 } from "../models/ReharmonizationProposal";
 import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
+import type { PhraseContext } from "../engines/PhraseAnalysisEngine";
+import { Note } from "tonal";
+
+export interface PresentationLayerGroup {
+  layer: ReharmonizationPresentationLayer;
+  proposals: ReharmonizationProposal[];
+}
+
+const PRESENTATION_LAYER_ORDER: ReharmonizationPresentationLayer[] = [
+  "basic",
+  "reference-aware",
+  "reharmonization"
+];
 
 function isReference(proposal: ReharmonizationProposal): boolean {
   return proposal.kind === "reference";
 }
 
 function isAdventurous(proposal: ReharmonizationProposal): boolean {
+  if (proposal.id.startsWith("strategy_reference_center_")) return false;
+  if (isNonTonalReferenceIdiom(proposal.harmonicIdiom) && (proposal.apparentFunctionReferenceBonus || 0) > 0) {
+    return false;
+  }
   return proposal.routeProfile === "radical";
 }
 
@@ -69,20 +87,71 @@ function arrangeByBoldness(
   return [...references, ...musical];
 }
 
-function canBePrimary(proposal: ReharmonizationProposal, mode: ReharmonizationBoldnessMode): boolean {
+function samePitchClass(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false;
+  const aPc = Note.pitchClass(a);
+  const bPc = Note.pitchClass(b);
+  return !!aPc && !!bPc && aPc === bPc;
+}
+
+function hasStrongReferenceCenter(phraseContext: PhraseContext | undefined): boolean {
+  return phraseContext?.selectedCenterSource === "reference"
+    && (phraseContext.selectedCenter.confidence >= 0.7 || (phraseContext.selectedCenterEvidence?.length || 0) > 0);
+}
+
+function canBePrimary(
+  proposal: ReharmonizationProposal,
+  mode: ReharmonizationBoldnessMode,
+  phraseContext?: PhraseContext
+): boolean {
   if (mode === "exploratory") return true;
+  if (
+    mode === "balanced"
+    && hasStrongReferenceCenter(phraseContext)
+    && proposal.cadentialTarget
+    && !samePitchClass(proposal.cadentialTarget, phraseContext?.selectedCenter.tonic)
+  ) {
+    return false;
+  }
   return !isAdventurous(proposal);
+}
+
+function presentationLayerFor(
+  proposal: ReharmonizationProposal
+): ReharmonizationPresentationLayer {
+  if (isReference(proposal)) return "reference-aware";
+  if (
+    proposal.kind === "controlled-reharmonization"
+    || proposal.kind === "experimental-exploration"
+  ) {
+    return "reharmonization";
+  }
+  if (
+    proposal.id.startsWith("strategy_reference_center_")
+    || proposal.name === "Estratégia — Centro de referência"
+  ) {
+    return "reference-aware";
+  }
+  if ((proposal.apparentFunctionReferenceBonus || 0) > 0) {
+    return "reharmonization";
+  }
+  if (proposal.routeProfile === "chromatic" || proposal.routeProfile === "radical") {
+    return "reharmonization";
+  }
+  return "basic";
 }
 
 function withPresentationRole(
   proposal: ReharmonizationProposal,
   presentationRole: ReharmonizationPresentationRole,
+  presentationLayer: ReharmonizationPresentationLayer,
   explanation?: string,
   proposalDiagnostic?: HarmonicDiagnostic
 ): ReharmonizationProposal {
   return {
     ...proposal,
     presentationRole,
+    presentationLayer,
     explanation: explanation && !proposal.explanation.includes(explanation)
       ? [...proposal.explanation, explanation]
       : proposal.explanation,
@@ -157,7 +226,8 @@ function proposalDiagnosticFor(
 
 export function annotateProposalPresentationRoles(
   proposals: ReharmonizationProposal[],
-  mode: ReharmonizationBoldnessMode = "balanced"
+  mode: ReharmonizationBoldnessMode = "balanced",
+  phraseContext?: PhraseContext
 ): ReharmonizationProposal[] {
   let primaryAssigned = false;
   const boundary = referenceBoundary(proposals);
@@ -168,17 +238,18 @@ export function annotateProposalPresentationRoles(
 
   const arranged = arrangeByBoldness(proposals, mode);
   const preferredPrimaryId = !shouldPreserveReferenceAsAnswer && preferredIdiom
-    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode) && proposal.harmonicIdiom === preferredIdiom)?.id
+    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode, phraseContext) && proposal.harmonicIdiom === preferredIdiom)?.id
     : undefined;
 
   return arranged.map((proposal, originalIndex) => {
-    if (isReference(proposal)) return { proposal, originalIndex };
+    const presentationLayer = presentationLayerFor(proposal);
+    if (isReference(proposal)) return { proposal: { ...proposal, presentationLayer }, originalIndex };
 
     const isPreferredPrimary = preferredPrimaryId ? proposal.id === preferredPrimaryId : !primaryAssigned;
-    if (!shouldPreserveReferenceAsAnswer && isPreferredPrimary && !primaryAssigned && canBePrimary(proposal, mode)) {
+    if (!shouldPreserveReferenceAsAnswer && isPreferredPrimary && !primaryAssigned && canBePrimary(proposal, mode, phraseContext)) {
       primaryAssigned = true;
       return {
-        proposal: withPresentationRole(proposal, "primary"),
+        proposal: withPresentationRole(proposal, "primary", presentationLayer),
         originalIndex
       };
     }
@@ -188,6 +259,7 @@ export function annotateProposalPresentationRoles(
       proposal: withPresentationRole(
         proposal,
         role,
+        presentationLayer,
         referenceBoundaryExplanationFor(proposal, boundary),
         proposalDiagnosticFor(proposal, role, boundary)
       ),
@@ -199,6 +271,17 @@ export function annotateProposalPresentationRoles(
     if (aPriority !== bPriority) return aPriority - bPriority;
     return a.originalIndex - b.originalIndex;
   }).map(item => item.proposal);
+}
+
+export function groupProposalsByPresentationLayer(
+  proposals: ReharmonizationProposal[]
+): PresentationLayerGroup[] {
+  return PRESENTATION_LAYER_ORDER
+    .map(layer => ({
+      layer,
+      proposals: proposals.filter(proposal => (proposal.presentationLayer || "basic") === layer)
+    }))
+    .filter(group => group.proposals.length > 0);
 }
 
 export function presentationDiagnosticsForProposals(

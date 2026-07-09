@@ -120,6 +120,8 @@ export function parseChord(symbol: string): CustomChord {
       "7(13)": "dominant13th",
       "7(b9)": "dominant7b9",
       "7(#9)": "dominant7#9",
+      "7b5": "dominant7b5",
+      "7(b5)": "dominant7b5",
       "7(#11)": "dominant7#11",
       "7(b13)": "dominant7b13",
       "m7(b5)": "halfDiminished",

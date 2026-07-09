@@ -16,14 +16,18 @@ describe("F26.10a Apparent Function Analysis", () => {
 
     expect(predominantSus).toEqual(expect.objectContaining({
       apparentType: "SUS",
+      apparentRole: "SUS_SUBDOMINANT",
       apparentFunction: "PD",
       impliedFunction: "PD",
+      impliedChordSymbols: ["Dm7/G"],
       shouldCountAsFunctionalEscape: false
     }));
     expect(dominantSus).toEqual(expect.objectContaining({
       apparentType: "SUS",
+      apparentRole: "SUS_DOMINANT",
       apparentFunction: "D",
       impliedFunction: "D",
+      impliedChordSymbols: ["G7"],
       shouldCountAsFunctionalEscape: false
     }));
   });
@@ -39,6 +43,24 @@ describe("F26.10a Apparent Function Analysis", () => {
       apparentType: "SUS",
       apparentFunction: "PD",
       impliedFunction: "PD",
+      impliedChordSymbols: ["Dm7/G"],
+      shouldCountAsFunctionalEscape: false
+    }));
+  });
+
+  it("classifies sus(b9) as a minor-context subdominant apparent chord before a dominant", () => {
+    const minorPredominantSus = analyzeApparentFunction("Gsus(b9)", {
+      center: "C",
+      previousChord: "Cm7",
+      nextChord: "G7(b9)"
+    });
+
+    expect(minorPredominantSus).toEqual(expect.objectContaining({
+      apparentType: "SUS",
+      apparentRole: "SUS_SUBDOMINANT_MINOR",
+      apparentFunction: "PD",
+      impliedFunction: "PD",
+      impliedChordSymbols: ["Dm7b5/G"],
       shouldCountAsFunctionalEscape: false
     }));
   });
@@ -62,16 +84,23 @@ describe("F26.10a Apparent Function Analysis", () => {
 
     expect(dominantDim).toEqual(expect.objectContaining({
       apparentType: "DIMINISHED",
+      apparentRole: "DIMINISHED_DOMINANT",
+      apparentFunction: "D",
+      impliedFunction: "D",
+      impliedChordSymbols: ["G7(b9)"],
       shouldCountAsFunctionalEscape: false
     }));
     expect(dominantDim?.evidence).toContain("diminuto resolve meio tom acima");
     expect(chromaticDim).toEqual(expect.objectContaining({
       apparentType: "DIMINISHED",
+      apparentRole: "DIMINISHED_CHROMATIC_DESCENDING",
       apparentFunction: "CHROMATIC",
+      impliedChordSymbols: [],
       shouldCountAsFunctionalEscape: false
     }));
     expect(unresolvedDim).toEqual(expect.objectContaining({
       apparentType: "DIMINISHED",
+      apparentRole: "AMBIGUOUS",
       apparentFunction: "AMBIGUOUS",
       shouldCountAsFunctionalEscape: true
     }));
@@ -86,6 +115,24 @@ describe("F26.10a Apparent Function Analysis", () => {
 
     expect(dominantDim).toEqual(expect.objectContaining({
       apparentType: "DIMINISHED",
+      impliedChordSymbols: ["G7(b9)"],
+      shouldCountAsFunctionalEscape: false
+    }));
+  });
+
+  it("classifies tonic diminished as subdominant apparent when it does not resolve by semitone", () => {
+    const subdominantDim = analyzeApparentFunction("Cdim", {
+      center: "C",
+      previousChord: "Cmaj7",
+      nextChord: "Cmaj7"
+    });
+
+    expect(subdominantDim).toEqual(expect.objectContaining({
+      apparentType: "DIMINISHED",
+      apparentRole: "DIMINISHED_SUBDOMINANT",
+      apparentFunction: "PD",
+      impliedFunction: "PD",
+      impliedChordSymbols: ["F7"],
       shouldCountAsFunctionalEscape: false
     }));
   });
@@ -104,13 +151,34 @@ describe("F26.10a Apparent Function Analysis", () => {
 
     expect(directedMinorSixth).toEqual(expect.objectContaining({
       apparentType: "MINOR_SIXTH",
+      apparentRole: "MINOR_SIXTH_CONTEXTUAL",
       impliedFunction: "D",
+      impliedChordSymbols: ["Bm7b5", "G7"],
       shouldCountAsFunctionalEscape: false
     }));
     expect(unresolvedMinorSixth).toEqual(expect.objectContaining({
       apparentType: "MINOR_SIXTH",
+      apparentRole: "AMBIGUOUS",
       apparentFunction: "AMBIGUOUS",
+      impliedChordSymbols: ["Bm7b5", "G7"],
       shouldCountAsFunctionalEscape: true
+    }));
+  });
+
+  it("classifies Im(b6) as a subdominant apparent color in minor", () => {
+    const imFlatSix = analyzeApparentFunction("Cm(b6)", {
+      center: "C",
+      previousChord: "Cm",
+      nextChord: "G7"
+    });
+
+    expect(imFlatSix).toEqual(expect.objectContaining({
+      apparentType: "IM_FLAT6",
+      apparentRole: "IM_FLAT6_SUBDOMINANT",
+      apparentFunction: "PD",
+      impliedFunction: "PD",
+      impliedChordSymbols: ["Fm7", "Abmaj7"],
+      shouldCountAsFunctionalEscape: false
     }));
   });
 
@@ -123,9 +191,11 @@ describe("F26.10a Apparent Function Analysis", () => {
 
     expect(sharpIv).toEqual(expect.objectContaining({
       apparentType: "SHARP_IV_M7B5",
+      apparentRole: "SHARP_IV_PREDOMINANT",
       apparentFunction: "PD",
       impliedFunction: "PD",
       impliedTarget: "Fmaj7",
+      impliedChordSymbols: ["Fmaj7"],
       shouldCountAsFunctionalEscape: false
     }));
   });

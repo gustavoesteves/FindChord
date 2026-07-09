@@ -22,6 +22,7 @@ function getQualityExoticPenalty(quality: ChordQuality): number {
     dominant7th: 2,
     major7th: 2,
     minor7th: 2,
+    dominant7b5: 4,
     halfDiminished: 3,
     diminished7th: 3,
     minorMajor7th: 4,
@@ -176,7 +177,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
 
       // G2. BÔNUS DE CASAMENTO DE FÓRMULA (Métrica de Preferência Canônica com Omissões Opcionais Inteligentes)
       let essentialOmissionsCount = 0;
-      const isFifthAltered = quality === "halfDiminished" || quality === "diminished7th" || quality === "augmented";
+      const isFifthAltered = quality === "dominant7b5" || quality === "halfDiminished" || quality === "diminished7th" || quality === "augmented";
       
       omissions.forEach(om => {
         const isFifth = om === "5" || om === "b5" || om === "#5" || om.includes("5");
@@ -209,6 +210,10 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       const complexityPenalty = getQualityExoticPenalty(quality);
       score -= complexityPenalty;
 
+      if (quality === "halfDiminished" && omissions.includes("b3")) {
+        score -= 25;
+      }
+
       // Ignorar ruídos absolutos
       if (score < -10) return;
 
@@ -220,12 +225,15 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       const formulaNotes = def.semitones.map(s => {
         return simplifyNote(TonalNote.transpose(chordRoot, TonalInterval.fromSemitones(s))).replace(/\d/, "");
       });
+      const soundingNotes = uniqueNoteNames.map(note => (
+        formulaNotes.find(formulaNote => getPitchClass(formulaNote) === getPitchClass(note)) || note
+      ));
 
       candidates.push({
         root: chordRoot,
         quality: quality,
         intervals: def.semitones.map(s => getFriendlyInterval(getIntervalSymbol(s))),
-        notes: formulaNotes,
+        notes: soundingNotes,
         drawnNotes: uniqueNoteNames,
         omissions,
         additions,

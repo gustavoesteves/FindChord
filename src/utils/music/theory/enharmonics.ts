@@ -1,4 +1,3 @@
-import { Note as TonalNote, Interval as TonalInterval } from "tonal";
 import { PREFERRED_SPELLINGS, getPitchClass, simplifyNote } from "../core/pitch";
 import type { ChordCandidate } from "../models/ChordCandidate";
 import type { ChordQuality } from "../constants/chordRegistry";
@@ -36,17 +35,11 @@ export function formatChordName(
 
   let finalName = `${root}${qualityString}`;
 
+  void omissions;
   const additionLabels = additions
     .map(addition => describeAddedTone(root, addition))
     .filter((label): label is string => Boolean(label));
-  const explicitOmissions = omissions
-    .filter(omission => (
-      omission === "1" ||
-      omission === "3" ||
-      omission === "b3"
-    ))
-    .map(omission => `no${omission}`);
-  const qualifiers = [...explicitOmissions, ...additionLabels];
+  const qualifiers = [...additionLabels];
 
   if (qualifiers.length > 0) {
     finalName = `${finalName}(${Array.from(new Set(qualifiers)).join(" ")})`;
@@ -82,6 +75,31 @@ function describeAddedTone(root: string, addition: string): string | null {
   };
 
   return labels[offset] ?? null;
+}
+
+function spellPitchClassLikeRoot(note: string, root: string): string {
+  const pc = getPitchClass(note);
+  if (pc < 0) return note;
+
+  if (root.includes("#")) {
+    const sharps: Record<number, string> = {
+      1: "C#",
+      3: "D#",
+      6: "F#",
+      8: "G#",
+      10: "A#"
+    };
+    return sharps[pc] || simplifyNote(note).replace(/\d/, "");
+  }
+
+  const flats: Record<number, string> = {
+    1: "Db",
+    3: "Eb",
+    6: "Gb",
+    8: "Ab",
+    10: "Bb"
+  };
+  return flats[pc] || simplifyNote(note).replace(/\d/, "");
 }
 
 /**
@@ -126,10 +144,7 @@ export function enarmonizeChordCandidate(
       }
     }
 
-    const def = CHORD_REGISTRY[c.quality];
-    const newNotes = def.semitones.map(s => {
-      return simplifyNote(TonalNote.transpose(newRoot, TonalInterval.fromSemitones(s))).replace(/\d/, "");
-    });
+    const newNotes = c.notes.map(note => spellPitchClassLikeRoot(note, newRoot));
 
     return {
       ...c,

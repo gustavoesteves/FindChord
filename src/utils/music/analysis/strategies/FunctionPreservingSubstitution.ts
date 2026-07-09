@@ -94,6 +94,9 @@ export function validateFunctionPreservingSubstitution(
 
   if (apparentFunction && !apparentFunction.shouldCountAsFunctionalEscape) {
     evidence.push(...apparentFunction.evidence);
+    if (apparentFunction.impliedChordSymbols.length > 0) {
+      evidence.push(`acorde aparente implica ${apparentFunction.impliedChordSymbols.join(" ou ")}`);
+    }
   }
   if (isResolvedSubV7(input.substituteChord, input.nextChord, input.center)) {
     evidence.push("SubV7 resolve cromaticamente no centro tonal");

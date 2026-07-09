@@ -100,13 +100,16 @@ export class ChordRealizationEngine {
       
       const chordNotes = Chord.get(baseChord).notes.map((n: string) => Note.pitchClass(n));
       const bassPC = Note.pitchClass(bass);
+      const normalizedBass = bassPC ? Note.simplify(bassPC) : bassPC;
+      const bassChroma = normalizedBass ? Note.chroma(normalizedBass) : undefined;
+      const chordRootChroma = chordNotes[0] ? Note.chroma(chordNotes[0]) : undefined;
+      const bassBelongsToChord = chordNotes.some(note => Note.chroma(note || "") === bassChroma);
       
       let finalChord = baseChord;
-      const voiceLeadingScore = chordNotes[0] === bassPC ? 1.0 : chordNotes.includes(bassPC) ? 0.6 : -0.5;
-      if (chordNotes[0] !== bassPC && chordNotes.includes(bassPC)) {
-        finalChord = `${baseChord}/${bassPC}`;
-      } else if (chordNotes[0] !== bassPC) {
-        finalChord = `${baseChord}/${bassPC}`;
+      const bassIsRoot = bassChroma !== undefined && chordRootChroma !== undefined && bassChroma === chordRootChroma;
+      const voiceLeadingScore = bassIsRoot ? 1.0 : bassBelongsToChord ? 0.6 : -0.5;
+      if (!bassIsRoot && normalizedBass) {
+        finalChord = `${baseChord}/${normalizedBass}`;
       }
 
       // Functional mapping

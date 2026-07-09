@@ -16,6 +16,16 @@ function positionsFor(notes: string[]): FretPosition[] {
   }));
 }
 
+function positionsForVoicing(notes: Array<{ noteName: string; octave: number }>): FretPosition[] {
+  return notes.map(({ noteName, octave }, index) => ({
+    stringIndex: index,
+    fret: index + 1,
+    noteName: `${noteName}${octave}`,
+    pitchClass: getPitchClass(noteName),
+    octave
+  }));
+}
+
 function pitchClassSet(notes: string[]): string {
   return [...new Set(notes.map(getPitchClass))].sort((a, b) => a - b).join("-");
 }
@@ -87,5 +97,23 @@ describe("Fretboard chord detection", () => {
     expect(voicings.length).toBeGreaterThan(0);
     expect(mislabeled).toHaveLength(0);
     expect(visibleInternalOmissions).toHaveLength(0);
+  });
+
+  it("does not invent the minor third for Bb E Ab shell voicings", () => {
+    const candidates = analyzeChords(positionsForVoicing([
+      { noteName: "Bb", octave: 2 },
+      { noteName: "E", octave: 3 },
+      { noteName: "Ab", octave: 3 }
+    ]));
+    const best = candidates[0];
+
+    expect(best?.notationInternational).toBe("Bb7b5");
+    expect(best?.quality).toBe("dominant7b5");
+    expect(best?.omissions).toContain("3");
+    expect(best?.notes).toEqual(["Bb", "E", "Ab"]);
+    expect(best?.notes).not.toContain("Db");
+    expect(best?.notationInternational).not.toBe("Bbm7b5(nob3)");
+    expect(best?.notationInternational).not.toContain("no");
+    expect(best?.notationInternational).not.toContain("m7b5");
   });
 });

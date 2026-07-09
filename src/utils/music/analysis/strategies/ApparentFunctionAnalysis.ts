@@ -11,12 +11,26 @@ type ApparentChordType =
   | "SHARP_IV_M7B5"
   | "FUNCTIONAL_SUBSTITUTION";
 
+export type ApparentFunctionRole =
+  | "SUS_DOMINANT"
+  | "SUS_SUBDOMINANT"
+  | "SUS_SUBDOMINANT_MINOR"
+  | "DIMINISHED_DOMINANT"
+  | "DIMINISHED_SUBDOMINANT"
+  | "DIMINISHED_CHROMATIC_DESCENDING"
+  | "MINOR_SIXTH_CONTEXTUAL"
+  | "IM_FLAT6_SUBDOMINANT"
+  | "SHARP_IV_PREDOMINANT"
+  | "AMBIGUOUS";
+
 export interface ApparentFunctionAnalysis {
   writtenChord: string;
   apparentType: ApparentChordType;
+  apparentRole: ApparentFunctionRole;
   apparentFunction: StrategyFunctionId | "AMBIGUOUS" | "CHROMATIC";
   impliedFunction?: StrategyFunctionId;
   impliedTarget?: string;
+  impliedChordSymbols: string[];
   confidence: number;
   evidence: string[];
   shouldCountAsFunctionalEscape: boolean;
@@ -72,15 +86,60 @@ function rootAFourthAbove(root: string): string | null {
   return Note.names().find(note => Note.chroma(note) === target) || null;
 }
 
-function romanFunction(roman: string): StrategyFunctionId | "CHROMATIC" {
-  if (["I", "iii", "vi"].includes(roman)) return "T";
-  if (["ii", "IV"].includes(roman)) return "PD";
-  if (["V", "vii"].includes(roman)) return "D";
-  return "CHROMATIC";
+function pitchAt(root: string, semitones: number): string | null {
+  const chroma = Note.chroma(root);
+  if (chroma === undefined) return null;
+  const target = (chroma + semitones + 12) % 12;
+  return Note.names().find(note => Note.chroma(note) === target) || null;
+}
+
+function flatPitchAt(root: string, semitones: number): string | null {
+  const chroma = Note.chroma(root);
+  if (chroma === undefined) return null;
+  const target = (chroma + semitones + 12) % 12;
+  const flatNames = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+  return flatNames[target] || null;
+}
+
+function dominantRootForTarget(target: string | undefined): string | null {
+  return target ? pitchAt(target, 7) : null;
+}
+
+function minorSeventhOverBass(root: string, bass: string): string | null {
+  const minorRoot = pitchAt(root, 7);
+  return minorRoot ? `${minorRoot}m7/${bass}` : null;
+}
+
+function halfDiminishedOverBass(root: string, bass: string): string | null {
+  const halfDiminishedRoot = pitchAt(root, 7);
+  return halfDiminishedRoot ? `${halfDiminishedRoot}m7b5/${bass}` : null;
+}
+
+function minorSixthImpliedChords(root: string): string[] {
+  const halfDiminishedRoot = pitchAt(root, 9);
+  const dominantRoot = pitchAt(root, 5);
+  return [
+    halfDiminishedRoot ? `${halfDiminishedRoot}m7b5` : null,
+    dominantRoot ? `${dominantRoot}7` : null
+  ].filter((symbol): symbol is string => symbol !== null);
+}
+
+function imFlatSixImpliedChords(center: string): string[] {
+  const subdominantRoot = pitchAt(center, 5);
+  const flatSixRoot = flatPitchAt(center, 8);
+  return [
+    subdominantRoot ? `${subdominantRoot}m7` : null,
+    flatSixRoot ? `${flatSixRoot}maj7` : null
+  ].filter((symbol): symbol is string => symbol !== null);
 }
 
 function isSus(chord: string): boolean {
-  return ["sus2", "sus4", "7sus4", "9sus4", "13sus4"].includes(chordQuality(chord));
+  return ["sus2", "sus4", "7sus4", "9sus4", "13sus4"].includes(chordQuality(chord))
+    || /sus(?:2|4)?(?:\(b9\)|b9)/i.test(chordSymbol(chord));
+}
+
+function hasFlatNine(chord: string): boolean {
+  return resolveChordSymbol(chordSymbol(chord)).tensions.includes("b9") || /\(?(b9)\)?/i.test(chordSymbol(chord));
 }
 
 function isDominantChord(chord: string): boolean {
@@ -136,12 +195,6 @@ function resolvedBySemitone(chord: string, nextChord?: string): "UP" | "DOWN" | 
   return null;
 }
 
-function targetFunctionFromNext(nextChord: string | undefined, center: string): StrategyFunctionId | undefined {
-  if (!nextChord) return undefined;
-  const fn = romanFunction(rootToRoman(normalizeChordRoot(nextChord), center));
-  return fn === "CHROMATIC" ? undefined : fn;
-}
-
 function analyzeSus(chord: string, ctx: ApparentFunctionContext): ApparentFunctionAnalysis | null {
   if (!isSus(chord)) return null;
 
@@ -152,12 +205,17 @@ function analyzeSus(chord: string, ctx: ApparentFunctionContext): ApparentFuncti
   const precedesDominant = ctx.nextChord ? isDominantChord(ctx.nextChord) : false;
 
   if (precedesDominant) {
+    const implied = hasFlatNine(chord)
+      ? halfDiminishedOverBass(root, root)
+      : minorSeventhOverBass(root, root);
     return {
       writtenChord: chord,
       apparentType: "SUS",
+      apparentRole: hasFlatNine(chord) ? "SUS_SUBDOMINANT_MINOR" : "SUS_SUBDOMINANT",
       apparentFunction: "PD",
       impliedFunction: "PD",
       impliedTarget: ctx.nextChord,
+      impliedChordSymbols: implied ? [implied] : [],
       confidence: 0.82,
       evidence: ["sus antecede acorde dominante", previousRoot ? `contexto anterior: ${previousRoot}` : "função inferida pelo próximo acorde"],
       shouldCountAsFunctionalEscape: false
@@ -168,9 +226,11 @@ function analyzeSus(chord: string, ctx: ApparentFunctionContext): ApparentFuncti
     return {
       writtenChord: chord,
       apparentType: "SUS",
+      apparentRole: "SUS_DOMINANT",
       apparentFunction: "D",
       impliedFunction: "D",
       impliedTarget: ctx.nextChord,
+      impliedChordSymbols: [`${root}7`],
       confidence: 0.78,
       evidence: ["sus resolve por quarta ascendente como dominante suspenso"],
       shouldCountAsFunctionalEscape: false
@@ -180,7 +240,9 @@ function analyzeSus(chord: string, ctx: ApparentFunctionContext): ApparentFuncti
   return {
     writtenChord: chord,
     apparentType: "SUS",
+    apparentRole: "AMBIGUOUS",
     apparentFunction: "AMBIGUOUS",
+    impliedChordSymbols: [],
     confidence: 0.45,
     evidence: ["sus sem resolução contextual suficiente"],
     shouldCountAsFunctionalEscape: true
@@ -192,13 +254,15 @@ function analyzeDiminished(chord: string, ctx: ApparentFunctionContext): Apparen
 
   const resolution = resolvedBySemitone(chord, ctx.nextChord);
   if (resolution === "UP") {
-    const impliedFunction = targetFunctionFromNext(ctx.nextChord, ctx.center);
+    const dominantRoot = dominantRootForTarget(ctx.nextChord ? normalizeChordRoot(ctx.nextChord) : undefined);
     return {
       writtenChord: chord,
       apparentType: "DIMINISHED",
-      apparentFunction: impliedFunction || "D",
-      impliedFunction,
+      apparentRole: "DIMINISHED_DOMINANT",
+      apparentFunction: "D",
+      impliedFunction: "D",
       impliedTarget: ctx.nextChord,
+      impliedChordSymbols: dominantRoot ? [`${dominantRoot}7(b9)`] : [],
       confidence: 0.84,
       evidence: ["diminuto resolve meio tom acima", "função dominante aparente"],
       shouldCountAsFunctionalEscape: false
@@ -209,10 +273,28 @@ function analyzeDiminished(chord: string, ctx: ApparentFunctionContext): Apparen
     return {
       writtenChord: chord,
       apparentType: "DIMINISHED",
+      apparentRole: "DIMINISHED_CHROMATIC_DESCENDING",
       apparentFunction: "CHROMATIC",
       impliedTarget: ctx.nextChord,
+      impliedChordSymbols: [],
       confidence: 0.7,
       evidence: ["diminuto conduz cromaticamente meio tom abaixo"],
+      shouldCountAsFunctionalEscape: false
+    };
+  }
+
+  if (rootToRoman(normalizeChordRoot(chord), ctx.center) === "I") {
+    const subdominantRoot = rootAFourthAbove(ctx.center);
+    return {
+      writtenChord: chord,
+      apparentType: "DIMINISHED",
+      apparentRole: "DIMINISHED_SUBDOMINANT",
+      apparentFunction: "PD",
+      impliedFunction: "PD",
+      impliedTarget: ctx.nextChord,
+      impliedChordSymbols: subdominantRoot ? [`${subdominantRoot}7`] : [],
+      confidence: 0.74,
+      evidence: ["Idim sugere IV7 com função subdominante aparente"],
       shouldCountAsFunctionalEscape: false
     };
   }
@@ -220,16 +302,34 @@ function analyzeDiminished(chord: string, ctx: ApparentFunctionContext): Apparen
   return {
     writtenChord: chord,
     apparentType: "DIMINISHED",
+    apparentRole: "AMBIGUOUS",
     apparentFunction: "AMBIGUOUS",
+    impliedChordSymbols: [],
     confidence: 0.4,
     evidence: ["diminuto sem resolução contextual clara"],
     shouldCountAsFunctionalEscape: true
   };
 }
 
+function analyzeImFlatSix(chord: string, ctx: ApparentFunctionContext): ApparentFunctionAnalysis | null {
+  if (!isImFlat6(chord, ctx.center)) return null;
+
+  return {
+    writtenChord: chord,
+    apparentType: "IM_FLAT6",
+    apparentRole: "IM_FLAT6_SUBDOMINANT",
+    apparentFunction: "PD",
+    impliedFunction: "PD",
+    impliedTarget: ctx.nextChord,
+    impliedChordSymbols: imFlatSixImpliedChords(ctx.center),
+    confidence: 0.72,
+    evidence: ["Im(b6) sugere região subdominante menor"],
+    shouldCountAsFunctionalEscape: false
+  };
+}
+
 function analyzeMinorSixth(chord: string, ctx: ApparentFunctionContext): ApparentFunctionAnalysis | null {
   if (!isMinorSixth(chord)) return null;
-
   const root = normalizeChordRoot(chord);
   const dominantRoot = rootAFourthAbove(root);
   const nextRoot = ctx.nextChord ? normalizeChordRoot(ctx.nextChord) : undefined;
@@ -237,10 +337,12 @@ function analyzeMinorSixth(chord: string, ctx: ApparentFunctionContext): Apparen
 
   return {
     writtenChord: chord,
-    apparentType: isImFlat6(chord, ctx.center) ? "IM_FLAT6" : "MINOR_SIXTH",
+    apparentType: "MINOR_SIXTH",
+    apparentRole: pointsToNext ? "MINOR_SIXTH_CONTEXTUAL" : "AMBIGUOUS",
     apparentFunction: pointsToNext ? "D" : "AMBIGUOUS",
     impliedFunction: pointsToNext ? "D" : undefined,
     impliedTarget: pointsToNext ? ctx.nextChord : undefined,
+    impliedChordSymbols: minorSixthImpliedChords(root),
     confidence: pointsToNext ? 0.76 : 0.48,
     evidence: pointsToNext
       ? ["m6 sugere estrutura implícita com direção dominante"]
@@ -258,9 +360,11 @@ function analyzeSharpIv(chord: string, ctx: ApparentFunctionContext): ApparentFu
   return {
     writtenChord: chord,
     apparentType: "SHARP_IV_M7B5",
+    apparentRole: "SHARP_IV_PREDOMINANT",
     apparentFunction: "PD",
     impliedFunction: "PD",
     impliedTarget: pointsToSubdominant ? ctx.nextChord : undefined,
+    impliedChordSymbols: rootAFourthAbove(ctx.center) ? [`${rootAFourthAbove(ctx.center)}maj7`] : [],
     confidence: pointsToSubdominant ? 0.86 : 0.68,
     evidence: pointsToSubdominant
       ? ["#IVm7(b5) antecipa/intensifica a região subdominante"]
@@ -276,5 +380,6 @@ export function analyzeApparentFunction(
   return analyzeSharpIv(writtenChord, ctx)
     || analyzeSus(writtenChord, ctx)
     || analyzeDiminished(writtenChord, ctx)
+    || analyzeImFlatSix(writtenChord, ctx)
     || analyzeMinorSixth(writtenChord, ctx);
 }

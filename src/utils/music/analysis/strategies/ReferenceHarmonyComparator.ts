@@ -1,6 +1,7 @@
 import { Note } from "tonal";
 import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
 import type { ReharmonizationProposal } from "../models/ReharmonizationProposal";
+import { analyzeApparentFunction, type ApparentFunctionAnalysis, type ApparentFunctionRole } from "./ApparentFunctionAnalysis";
 import { analyzeReferenceHarmony } from "./ReferenceHarmonyAnalysis";
 import {
   classifyFunctionInMode,
@@ -24,6 +25,7 @@ export type ReferenceComparisonCause =
   | "global-center-aligned-local-mismatch"
   | "reference-cadence-not-matched"
   | "reference-idiom-context"
+  | "apparent-function-preserved"
   | "root-drift";
 
 export interface ReferenceHarmonyComparisonPoint {
@@ -34,6 +36,10 @@ export interface ReferenceHarmonyComparisonPoint {
   referenceFunction: StrategyFunctionId;
   rootRelation: "same-root" | "different-root";
   functionRelation: "same-function" | "different-function";
+  proposalApparentRole?: ApparentFunctionRole;
+  referenceApparentRole?: ApparentFunctionRole;
+  proposalImpliedChordSymbols: string[];
+  referenceImpliedChordSymbols: string[];
 }
 
 export interface ReferenceHarmonyComparison {
@@ -59,8 +65,14 @@ export interface ReferenceHarmonyComparison {
   points: ReferenceHarmonyComparisonPoint[];
 }
 
-function proposalChordsByMeasure(proposal: ReharmonizationProposal): Map<number, string> {
-  return new Map(proposal.measures.map(measure => [measure.measureIndex, measure.chords[0]]));
+interface OrderedComparisonChord {
+  measureIndex: number;
+  chordIndex: number;
+  chord: string;
+}
+
+function proposalChordsByMeasure(proposal: ReharmonizationProposal): Map<number, string[]> {
+  return new Map(proposal.measures.map(measure => [measure.measureIndex, measure.chords]));
 }
 
 function referenceChordsByMeasure(harmonies: ScoreHarmonyEvent[]): Map<number, string> {
@@ -80,14 +92,120 @@ function sameRoot(a: string, b: string): boolean {
   return normalizedRoot(a) === normalizedRoot(b);
 }
 
+function explicitBass(chord: string): string | undefined {
+  const bass = chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
+  return bass ? Note.pitchClass(bass) || bass : undefined;
+}
+
+function sameRootOrBass(a: string, b: string): boolean {
+  if (sameRoot(a, b)) return true;
+  const aBass = explicitBass(a);
+  const bBass = explicitBass(b);
+  const aRoot = normalizedRoot(a);
+  const bRoot = normalizedRoot(b);
+  return aBass === bRoot || bBass === aRoot || (!!aBass && !!bBass && aBass === bBass);
+}
+
+function bassMatchesRoot(chord: string, referenceChord: string): boolean {
+  return explicitBass(chord) === normalizedRoot(referenceChord);
+}
+
+function isConcreteFunction(fn: string): fn is StrategyFunctionId {
+  return fn === "T" || fn === "PD" || fn === "D" || fn === "OTHER";
+}
+
+function comparisonFunction(
+  chord: string,
+  center: string,
+  mode: FunctionalClassificationMode,
+  context: { previousChord?: string; nextChord?: string },
+  apparent: ApparentFunctionAnalysis | null = analyzeApparentFunction(chord, { center, ...context })
+): StrategyFunctionId {
+  const basicFunction = classifyFunctionInMode(chord, center, mode);
+
+  if (
+    apparent
+    && !apparent.shouldCountAsFunctionalEscape
+    && isConcreteFunction(apparent.apparentFunction)
+    && apparent.apparentFunction !== "OTHER"
+    && (
+      basicFunction === "OTHER"
+      || apparent.apparentType === "SUS"
+      || apparent.apparentType === "DIMINISHED"
+      || apparent.apparentType === "SHARP_IV_M7B5"
+    )
+  ) {
+    return apparent.apparentFunction;
+  }
+
+  return basicFunction;
+}
+
+function comparisonFunctionWithReferenceBass(
+  chord: string,
+  referenceChord: string,
+  center: string,
+  mode: FunctionalClassificationMode,
+  referenceFunction: StrategyFunctionId,
+  context: { previousChord?: string; nextChord?: string },
+  apparent: ApparentFunctionAnalysis | null
+): StrategyFunctionId {
+  const baseFunction = comparisonFunction(chord, center, mode, context, apparent);
+  const bass = explicitBass(chord);
+  if (baseFunction === referenceFunction || !bass || !bassMatchesRoot(chord, referenceChord)) {
+    return baseFunction;
+  }
+
+  const bassFunction = classifyFunctionInMode(bass, center, mode);
+  return bassFunction === referenceFunction ? bassFunction : baseFunction;
+}
+
+function orderedProposalChords(chordsByMeasure: Map<number, string[]>): OrderedComparisonChord[] {
+  return [...chordsByMeasure.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .flatMap(([measureIndex, chords]) => (
+      chords.map((chord, chordIndex) => ({
+        measureIndex,
+        chordIndex,
+        chord
+      }))
+    ));
+}
+
+function orderedReferenceChords(chordsByMeasure: Map<number, string>): OrderedComparisonChord[] {
+  return [...chordsByMeasure.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([measureIndex, chord]) => ({ measureIndex, chordIndex: 0, chord }));
+}
+
+function chordContext(
+  chords: OrderedComparisonChord[],
+  target: Pick<OrderedComparisonChord, "measureIndex" | "chordIndex">
+): { previousChord?: string; nextChord?: string } {
+  const index = chords.findIndex(chord => (
+    chord.measureIndex === target.measureIndex
+    && chord.chordIndex === target.chordIndex
+  ));
+  return {
+    previousChord: index > 0 ? chords[index - 1].chord : undefined,
+    nextChord: index >= 0 && index < chords.length - 1 ? chords[index + 1].chord : undefined
+  };
+}
+
 function classificationModeForReference(
   referenceBoundary: ReturnType<typeof analyzeReferenceHarmony>["minorModalBoundary"]
 ): FunctionalClassificationMode {
   return referenceBoundary?.boundary === "minor-functional-cadential" ? "minor-functional" : "major-functional";
 }
 
-function statusFor(functionAgreement: number, comparedMeasures: number): ReferenceComparisonStatus {
+function statusFor(
+  functionAgreement: number,
+  comparedMeasures: number,
+  rootAgreement = 0,
+  referenceIdiom?: string
+): ReferenceComparisonStatus {
   if (comparedMeasures === 0) return "no-reference";
+  if (referenceIdiom && referenceIdiom !== "major-functional" && rootAgreement >= 0.75) return "aligned";
   if (functionAgreement >= 0.75) return "aligned";
   if (functionAgreement >= 0.4) return "partially-aligned";
   return "divergent";
@@ -100,6 +218,70 @@ function ratio(count: number, total: number): number {
 function samePitchClass(a: string | undefined, b: string | undefined): boolean {
   if (!a || !b) return false;
   return Note.pitchClass(a) === Note.pitchClass(b);
+}
+
+function comparisonPointScore(point: ReferenceHarmonyComparisonPoint): number {
+  const rootScore = point.rootRelation === "same-root" ? 4 : 0;
+  const functionScore = point.functionRelation === "same-function" ? 3 : 0;
+  const apparentScore = point.proposalImpliedChordSymbols.length > 0 || point.referenceImpliedChordSymbols.length > 0 ? 1 : 0;
+  return rootScore + functionScore + apparentScore;
+}
+
+function buildComparisonPoint(input: {
+  measureIndex: number;
+  proposalChord: string;
+  referenceChord: string;
+  proposalContext: { previousChord?: string; nextChord?: string };
+  referenceContext: { previousChord?: string; nextChord?: string };
+  center: string;
+  referenceCenter: string;
+  mode: FunctionalClassificationMode;
+}): ReferenceHarmonyComparisonPoint {
+  const proposalApparent = analyzeApparentFunction(input.proposalChord, {
+    center: input.center,
+    ...input.proposalContext
+  });
+  const referenceApparent = analyzeApparentFunction(input.referenceChord, {
+    center: input.referenceCenter,
+    ...input.referenceContext
+  });
+
+  const referenceFunction = comparisonFunction(
+    input.referenceChord,
+    input.referenceCenter,
+    input.mode,
+    input.referenceContext,
+    referenceApparent
+  );
+  const proposalFunction = comparisonFunctionWithReferenceBass(
+    input.proposalChord,
+    input.referenceChord,
+    input.center,
+    input.mode,
+    referenceFunction,
+    input.proposalContext,
+    proposalApparent
+  );
+  const rootRelation = sameRootOrBass(input.proposalChord, input.referenceChord) ? "same-root" : "different-root";
+  const functionRelation = proposalFunction === referenceFunction ? "same-function" : "different-function";
+
+  return {
+    measureIndex: input.measureIndex,
+    proposalChord: input.proposalChord,
+    referenceChord: input.referenceChord,
+    proposalFunction,
+    referenceFunction,
+    rootRelation,
+    functionRelation,
+    proposalApparentRole: proposalApparent?.shouldCountAsFunctionalEscape ? undefined : proposalApparent?.apparentRole,
+    referenceApparentRole: referenceApparent?.shouldCountAsFunctionalEscape ? undefined : referenceApparent?.apparentRole,
+    proposalImpliedChordSymbols: proposalApparent && !proposalApparent.shouldCountAsFunctionalEscape
+      ? proposalApparent.impliedChordSymbols
+      : [],
+    referenceImpliedChordSymbols: referenceApparent && !referenceApparent.shouldCountAsFunctionalEscape
+      ? referenceApparent.impliedChordSymbols
+      : []
+  };
 }
 
 function comparisonCauses(input: {
@@ -121,8 +303,16 @@ function comparisonCauses(input: {
     point.functionRelation === "same-function"
     && point.rootRelation === "different-root"
   )).length;
+  const apparentFunctionPreservedCount = input.points.filter(point => (
+    point.functionRelation === "same-function"
+    && (
+      point.proposalImpliedChordSymbols.length > 0
+      || point.referenceImpliedChordSymbols.length > 0
+    )
+  )).length;
 
   if (sameFunctionDifferentRootCount > 0) causes.add("function-preserved-root-changed");
+  if (apparentFunctionPreservedCount > 0) causes.add("apparent-function-preserved");
   const matchesLocal = samePitchClass(input.proposalCenter, input.localReferenceCenter);
   const matchesGlobal = samePitchClass(input.proposalCenter, input.globalReferenceCenter);
   const hasLocal = !!input.localReferenceCenter;
@@ -152,6 +342,7 @@ function evidenceFor(input: {
   referenceIdiom?: string;
   localCadences: string[];
   hasMinorFunctionalBoundary: boolean;
+  points: ReferenceHarmonyComparisonPoint[];
 }): string[] {
   if (input.status === "no-reference") {
     return ["Sem cifras de referência suficientes para comparação direta."];
@@ -162,7 +353,9 @@ function evidenceFor(input: {
     `${input.matchingRootCount}/${input.comparedMeasures} compassos mantêm a mesma raiz da referência.`
   ];
 
-  if (input.status === "aligned") {
+  if (input.status === "aligned" && input.referenceIdiom && input.referenceIdiom !== "major-functional") {
+    evidence.push("A proposta converge com a harmonia de referência dentro do idioma indicado.");
+  } else if (input.status === "aligned") {
     evidence.push("A proposta converge funcionalmente com a harmonia de referência.");
   } else if (input.status === "partially-aligned") {
     evidence.push("A proposta preserva parte da função, mas se afasta da referência em pontos importantes.");
@@ -184,6 +377,28 @@ function evidenceFor(input: {
 
   if (input.causes.includes("function-preserved-root-changed")) {
     evidence.push("Há troca de raiz preservando função aparente; pode ser substituição ou simplificação aceitável.");
+  }
+
+  if (input.causes.includes("apparent-function-preserved")) {
+    const apparentDetails = input.points
+      .filter(point => (
+        point.functionRelation === "same-function"
+        && (
+          point.proposalImpliedChordSymbols.length > 0
+          || point.referenceImpliedChordSymbols.length > 0
+        )
+      ))
+      .slice(0, 2)
+      .map(point => {
+        const proposal = point.proposalImpliedChordSymbols.length > 0
+          ? `${point.proposalChord} implica ${point.proposalImpliedChordSymbols.join(" ou ")}`
+          : null;
+        const reference = point.referenceImpliedChordSymbols.length > 0
+          ? `${point.referenceChord} implica ${point.referenceImpliedChordSymbols.join(" ou ")}`
+          : null;
+        return [proposal, reference].filter(Boolean).join("; ");
+      });
+    evidence.push(`Função aparente reconhecida na comparação: ${apparentDetails.join("; ")}.`);
   }
 
   if (input.causes.includes("center-mismatch")) {
@@ -238,14 +453,19 @@ export function compareProposalToReferenceHarmony(
 
   const proposalByMeasure = proposalChordsByMeasure(proposal);
   const referenceByMeasure = referenceChordsByMeasure(referenceHarmonies);
+  const orderedProposal = orderedProposalChords(proposalByMeasure);
+  const orderedReference = orderedReferenceChords(referenceByMeasure);
   const overlappingReferenceHarmonies = referenceHarmonies.filter(harmony => (
     proposalByMeasure.has(harmony.measure)
     && referenceByMeasure.get(harmony.measure) === harmony.harmony
   ));
+  const spanReferenceHarmonies = referenceHarmoniesInProposalSpan(referenceHarmonies, proposalByMeasure);
   const referenceAnalysis = analyzeReferenceHarmony(referenceHarmonies);
-  const localReferenceAnalysis = overlappingReferenceHarmonies.length > 0
-    ? analyzeReferenceHarmony(overlappingReferenceHarmonies)
-    : referenceAnalysis;
+  const localReferenceAnalysis = spanReferenceHarmonies.length > 0
+    ? analyzeReferenceHarmony(spanReferenceHarmonies)
+    : overlappingReferenceHarmonies.length > 0
+      ? analyzeReferenceHarmony(overlappingReferenceHarmonies)
+      : referenceAnalysis;
   const referenceCenter = localReferenceAnalysis.referenceCenter?.tonic
     || referenceAnalysis.referenceCenter?.tonic
     || center;
@@ -254,23 +474,24 @@ export function compareProposalToReferenceHarmony(
   );
   const points: ReferenceHarmonyComparisonPoint[] = [];
 
-  for (const [measureIndex, proposalChord] of proposalByMeasure.entries()) {
+  for (const [measureIndex, proposalChords] of proposalByMeasure.entries()) {
     const referenceChord = referenceByMeasure.get(measureIndex);
     if (!referenceChord) continue;
-
-    const proposalFunction = classifyFunctionInMode(proposalChord, center, mode);
-    const referenceFunction = classifyFunctionInMode(referenceChord, referenceCenter, mode);
-    const rootRelation = sameRoot(proposalChord, referenceChord) ? "same-root" : "different-root";
-    const functionRelation = proposalFunction === referenceFunction ? "same-function" : "different-function";
-    points.push({
-      measureIndex,
-      proposalChord,
-      referenceChord,
-      proposalFunction,
-      referenceFunction,
-      rootRelation,
-      functionRelation
-    });
+    const referenceContext = chordContext(orderedReference, { measureIndex, chordIndex: 0 });
+    const candidatePoints = proposalChords.map((proposalChord, chordIndex) => (
+      buildComparisonPoint({
+        measureIndex,
+        proposalChord,
+        referenceChord,
+        proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex }),
+        referenceContext,
+        center,
+        referenceCenter,
+        mode
+      })
+    ));
+    const bestPoint = candidatePoints.sort((a, b) => comparisonPointScore(b) - comparisonPointScore(a))[0];
+    if (bestPoint) points.push(bestPoint);
   }
 
   const comparedMeasures = points.length;
@@ -278,8 +499,8 @@ export function compareProposalToReferenceHarmony(
   const matchingRootCount = points.filter(point => point.rootRelation === "same-root").length;
   const functionAgreement = ratio(matchingFunctionCount, comparedMeasures);
   const rootAgreement = ratio(matchingRootCount, comparedMeasures);
-  const status = statusFor(functionAgreement, comparedMeasures);
   const referenceIdiom = localReferenceAnalysis.idiom?.idiom || referenceAnalysis.idiom?.idiom;
+  const status = statusFor(functionAgreement, comparedMeasures, rootAgreement, referenceIdiom);
   const causes = comparisonCauses({
     status,
     functionAgreement,
@@ -323,8 +544,21 @@ export function compareProposalToReferenceHarmony(
       hasMinorFunctionalBoundary: (
         localReferenceAnalysis.minorModalBoundary?.boundary === "minor-functional-cadential"
         || referenceAnalysis.minorModalBoundary?.boundary === "minor-functional-cadential"
-      )
+      ),
+      points
     }),
     points
   };
+}
+
+function referenceHarmoniesInProposalSpan(
+  referenceHarmonies: ScoreHarmonyEvent[],
+  proposalByMeasure: Map<number, string[]>
+): ScoreHarmonyEvent[] {
+  const proposalMeasures = Array.from(proposalByMeasure.keys());
+  if (proposalMeasures.length === 0) return [];
+
+  const firstMeasure = Math.min(...proposalMeasures);
+  const lastMeasure = Math.max(...proposalMeasures);
+  return referenceHarmonies.filter(harmony => harmony.measure >= firstMeasure && harmony.measure <= lastMeasure);
 }

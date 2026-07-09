@@ -21,7 +21,7 @@ interface SectionRange {
 }
 
 function chordBass(chord: string): string {
-  const slashBass = chord.split("/")[1];
+  const slashBass = chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
   if (slashBass) return slashBass;
   return chord.match(/^[A-G](?:#|b)?/)?.[0] || chord;
 }

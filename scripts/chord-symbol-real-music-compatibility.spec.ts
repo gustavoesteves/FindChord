@@ -49,7 +49,7 @@ describe("F33.3 Real Music Chord Symbol Compatibility", () => {
   });
 
   it("documents the current unique real-music chord vocabulary size", () => {
-    expect(realMusicChordUsages()).toHaveLength(162);
+    expect(realMusicChordUsages()).toHaveLength(148);
   });
 
   it("maps every real-music chord symbol to a semantic MusicXML harmony shape", () => {

@@ -67,6 +67,20 @@ describe("F32 Harmonic Idiom Classifier", () => {
     ]));
   });
 
+  it("classifies dominant sus and bVII vamps as blues/modal dominant language", () => {
+    const classification = classifyHarmonicIdiom(["C13sus4", "C13", "Bb13sus4", "Bb13", "C13"], "C");
+
+    expect(classification).toEqual(expect.objectContaining({
+      idiom: "blues",
+      confidence: "medium"
+    }));
+    expect(classification.evidence).toEqual(expect.arrayContaining([
+      "I7 aparece como estabilidade local",
+      "bVII7 funciona como resposta dominante/modal",
+      "dominantes sus recorrentes sugerem vamp dominante"
+    ]));
+  });
+
   it("classifies modal loops by center recurrence, modal color and absent dominant cadence", () => {
     const classification = classifyHarmonicIdiom(["Dm", "C", "Bb", "C", "Dm"], "D");
 

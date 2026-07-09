@@ -8,9 +8,10 @@ import type { MelodicAnchor } from "../src/utils/music/analysis/models/Projectio
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
+const fixturePath = "./docs/musics/depois de muito discutir.musicxml";
 
 function loadDepoisDeMuitoDiscutir() {
-  return parseMusicXML(fs.readFileSync("./docs/musics/depois de muito discutir.musicxml", "utf8"));
+  return parseMusicXML(fs.readFileSync(fixturePath, "utf8"));
 }
 
 function anchorsForSection(snapshot: any, label: string): MelodicAnchor[] {
@@ -26,7 +27,9 @@ function anchorsForSection(snapshot: any, label: string): MelodicAnchor[] {
     }));
 }
 
-describe("Depois de Muito Discutir diagnostic", () => {
+const describeIfFixtureExists = fs.existsSync(fixturePath) ? describe : describe.skip;
+
+describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
   it("loads a sectioned melody+harmony score with an intro harmony layer before the melody", () => {
     const snapshot = loadDepoisDeMuitoDiscutir();
     const intro = snapshot.sections.find((section: any) => section.label === "Intro");

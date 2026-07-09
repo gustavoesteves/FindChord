@@ -18,6 +18,17 @@ function proposalAt(startMeasure: number, chords: string[]): ReharmonizationProp
   };
 }
 
+function proposalMeasures(measures: Array<{ measureIndex: number; chords: string[] }>): ReharmonizationProposal {
+  return {
+    id: "proposal",
+    kind: "validated-harmonization",
+    name: "Teste",
+    measures,
+    explanation: [],
+    bassLine: measures.flatMap(measure => measure.chords.map(chord => chord.split("/")[1] || chord.replace(/[^A-G#b].*$/, "")))
+  };
+}
+
 function harmonies(chords: string[]): ScoreHarmonyEvent[] {
   return chords.map((harmony, index) => ({
     measure: index + 1,
@@ -54,6 +65,23 @@ describe("F40 Reference Harmony Comparator", () => {
     expect(comparison.status).toBe("aligned");
     expect(comparison.causes).toContain("function-preserved-root-changed");
     expect(comparison.evidence).toContain("Há troca de raiz preservando função aparente; pode ser substituição ou simplificação aceitável.");
+  });
+
+  it("explains apparent-function substitutions when they preserve the reference function", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposal(["Cmaj7", "F#m7(b5)", "G7", "Cmaj7"]),
+      harmonies(["Cmaj7", "Fmaj7", "G7", "Cmaj7"]),
+      "C"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.causes).toContain("apparent-function-preserved");
+    expect(comparison.points[1]).toEqual(expect.objectContaining({
+      proposalApparentRole: "SHARP_IV_PREDOMINANT",
+      proposalImpliedChordSymbols: ["Fmaj7"],
+      functionRelation: "same-function"
+    }));
+    expect(comparison.evidence).toContain("Função aparente reconhecida na comparação: F#m7(b5) implica Fmaj7.");
   });
 
   it("keeps creative divergence visible without treating the reference as an absolute answer", () => {
@@ -111,6 +139,91 @@ describe("F40 Reference Harmony Comparator", () => {
     expect(comparison.causes).not.toContain("local-center-mismatch");
     expect(comparison.causes).toContain("local-center-aligned-global-mismatch");
     expect(comparison.functionAgreement).toBe(1);
+  });
+
+  it("infers the local reference center from the proposal span when proposal chords are sparse", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposalMeasures([
+        { measureIndex: 1, chords: ["Bbmaj7"] },
+        { measureIndex: 3, chords: ["Ebmaj7"] },
+        { measureIndex: 5, chords: ["F7"] },
+        { measureIndex: 7, chords: ["Bb6"] }
+      ]),
+      harmonies(["Bbmaj7", "Cm7", "F7", "Bb6", "Ebmaj7", "F7", "Bb6", "Cmaj7"]),
+      "Bb"
+    );
+
+    expect(comparison.localReferenceCenter).toBe("Bb");
+    expect(comparison.localReferenceCenterConfidence).toBe("strong");
+    expect(comparison.referenceCenter).toBe("Bb");
+    expect(comparison.causes).not.toContain("local-center-mismatch");
+  });
+
+  it("counts slash-bass pedal spellings as root-aligned when the bass preserves the reference root", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposal(["Bm7", "F#m7/B", "F#m7/E", "F#7", "Bm7"]),
+      harmonies(["Bm7", "Bm7", "Em7", "F#7", "Bm7"]),
+      "B"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.rootAgreement).toBe(1);
+    expect(comparison.causes).not.toContain("root-drift");
+  });
+
+  it("compares the best intra-measure proposal chord against the reference chord", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposalMeasures([
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["G7sus4", "G7"] },
+        { measureIndex: 3, chords: ["C"] }
+      ]),
+      harmonies(["C", "G7", "C"]),
+      "C"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.functionAgreement).toBe(1);
+    expect(comparison.rootAgreement).toBe(1);
+    expect(comparison.points[1]).toEqual(expect.objectContaining({
+      measureIndex: 2,
+      proposalChord: "G7",
+      referenceChord: "G7",
+      functionRelation: "same-function",
+      rootRelation: "same-root"
+    }));
+  });
+
+  it("does not mark a same-measure contextual m6 as divergent when the dominant is also present", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposalMeasures([
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["Dm6", "G7"] },
+        { measureIndex: 3, chords: ["C"] }
+      ]),
+      harmonies(["C", "G7", "C"]),
+      "C"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.points[1]).toEqual(expect.objectContaining({
+      measureIndex: 2,
+      proposalChord: "G7",
+      referenceChord: "G7",
+      functionRelation: "same-function"
+    }));
+  });
+
+  it("does not let a minor-sixth color override an already clear tonic function", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposal(["Dm", "Dm6", "Dm6/A", "Dm"]),
+      harmonies(["Dm", "Dm", "Dm/A", "Dm"]),
+      "D"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.functionAgreement).toBe(1);
+    expect(comparison.rootAgreement).toBe(1);
   });
 
   it("marks when the proposal follows the global center but misses the local tonicization", () => {

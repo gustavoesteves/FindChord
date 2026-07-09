@@ -13,6 +13,7 @@ export type ReharmonizationProposalKind =
 
 export type ReharmonizationRouteProfile = "conservative" | "moderate" | "chromatic" | "radical";
 export type ReharmonizationPresentationRole = "primary" | "alternative" | "comparative" | "adventurous";
+export type ReharmonizationPresentationLayer = "basic" | "reference-aware" | "reharmonization";
 export type ReharmonizationBoldnessMode = "simple" | "balanced" | "exploratory";
 export type ReharmonizationBassLineProfile =
   | "stepwise"
@@ -39,6 +40,7 @@ export interface ReharmonizationProposal {
   bassLine: string[];
   voiceLeadingScore?: number;
   voiceLeadingEvidence?: string[];
+  apparentFunctionReferenceBonus?: number;
   bassLineProfile?: ReharmonizationBassLineProfile;
   bassLineEvidence?: string[];
   bassLineRankBonus?: number;
@@ -46,7 +48,9 @@ export interface ReharmonizationProposal {
   routeProfile?: ReharmonizationRouteProfile;
   routeDistanceEvidence?: string[];
   presentationRole?: ReharmonizationPresentationRole;
+  presentationLayer?: ReharmonizationPresentationLayer;
   harmonicIdiom?: ReharmonizationHarmonicIdiom;
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
+  cadentialTarget?: string;
   diagnostics?: HarmonicDiagnostic[];
 }

@@ -17,6 +17,7 @@ export type ChordQuality =
   | "major7th"
   | "minor7th"
   | "minorMajor7th"
+  | "dominant7b5"
   | "halfDiminished"
   | "diminished7th"
   | "dominant7sus4"
@@ -132,6 +133,12 @@ export const CHORD_REGISTRY: Record<ChordQuality, ChordDefinition> = {
     semitones: [0, 3, 7, 11],
     intervals: ["1P", "3m", "5P", "7M"],
     notation: { international: "minorMajor7", brazilian: "m(7M)", academic: "-Δ7" }
+  },
+  dominant7b5: {
+    quality: "dominant7b5",
+    semitones: [0, 4, 6, 10],
+    intervals: ["1P", "3M", "5d", "7m"],
+    notation: { international: "7b5", brazilian: "7(b5)", academic: "7♭5" }
   },
   halfDiminished: {
     quality: "halfDiminished",

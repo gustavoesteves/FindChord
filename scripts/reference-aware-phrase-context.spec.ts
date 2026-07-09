@@ -62,6 +62,8 @@ describe("F48 reference-aware phrase context", () => {
 
   it("formats reference-center evidence as musician-facing language", () => {
     expect(formatReferenceCenterEvidence("ii-V-I local aponta G maior")).toBe("cadência ii-V-I confirma G maior");
+    expect(formatReferenceCenterEvidence("V-I local aponta Bb maior")).toBe("cadência V-I confirma Bb maior");
+    expect(formatReferenceCenterEvidence("V-i local aponta A menor")).toBe("cadência V-i confirma A menor");
     expect(formatReferenceCenterEvidence("repouso menor recorrente em D")).toBe("repousos recorrentes sustentam D menor");
     expect(formatReferenceCenterEvidence("acorde final sugere repouso em Eb")).toBe("acorde final repousa em Eb");
     expect(formatReferenceCenterEvidence("primeiro acorde sugere Bb maior")).toBe("primeiro acorde apresenta Bb maior");

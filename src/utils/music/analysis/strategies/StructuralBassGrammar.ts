@@ -55,7 +55,7 @@ function normalizePitch(note: string): string {
 }
 
 function chordSymbol(chord: string): string {
-  return chord.split("/")[0];
+  return chord.replace(/\/[A-G](?:#|b)?$/, "");
 }
 
 function normalizeChordRoot(chord: string): string {
@@ -63,7 +63,7 @@ function normalizeChordRoot(chord: string): string {
 }
 
 function explicitBass(chord: string): string | null {
-  const bass = chord.split("/")[1];
+  const bass = chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
   return bass ? normalizePitch(bass) : null;
 }
 

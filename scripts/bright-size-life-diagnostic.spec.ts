@@ -3,6 +3,11 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { detectIiVFunctionalCells } from "../src/utils/music/analysis/strategies/IiVFunctionalGrammar";
 import { analyzeStructuralBassGrammar } from "../src/utils/music/analysis/strategies/StructuralBassGrammar";
+import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
+import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
+import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
+import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
+import { firstMelodicWindow, toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -72,5 +77,37 @@ describe("Bright Size Life diagnostic", () => {
       expect.objectContaining({ chord: "G/A", relation: "INDEPENDENT_BASS" }),
       expect.objectContaining({ chord: "G/B", relation: "TRIVIAL_INVERSION" })
     ]));
+  });
+
+  it("generates a primary melody-only harmonization while ignoring the existing chord layer", () => {
+    const snapshot = loadBrightSizeLife();
+    const anchors = toAnchors(firstMelodicWindow(snapshot.notes));
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, anchors);
+    const presented = annotateProposalPresentationRoles(ranked, "balanced", phraseContext);
+    const primary = presented.find(proposal => proposal.presentationRole === "primary");
+    const fundamental = presented.find(proposal => proposal.name === "Estratégia — Harmonia fundamental I-IV-V");
+
+    expect(snapshot.harmonies.length).toBeGreaterThan(0);
+    expect(fundamental).toBeTruthy();
+    expect(fundamental?.presentationRole).toBe("alternative");
+    expect(fundamental?.measures.flatMap(measure => measure.chords).every(chord => (
+      ["D", "G", "A"].includes(chord.replace(/\/[A-G](?:#|b)?$/, ""))
+    ))).toBe(true);
+    expect(fundamental?.explanation).toEqual(expect.arrayContaining([
+      "usa somente tônica, subdominante e dominante como primeira leitura da melodia",
+      "base pedagógica: I-IV-V cobre parcialmente a melodia, mas pede uma camada diatônica depois"
+    ]));
+    expect(primary).toBeTruthy();
+    expect(primary?.name).toBe("Estratégia — Melodia primeiro");
+    expect(primary?.measures.map(measure => measure.measureIndex)).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(primary?.measures.flatMap(measure => measure.chords)).toEqual(expect.arrayContaining([
+      "D6/9",
+      "G6",
+      "D"
+    ]));
+    expect(primary?.bassLine).not.toContain("9");
+    expect(primary?.bassLine[0]).toBe("D");
   });
 });

@@ -53,7 +53,6 @@ describe("F38 real music fire audit", () => {
       "Air mail special.musicxml",
       "Airegin.musicxml",
       "Bright Size Life.musicxml",
-      "Esse caminhar.musicxml",
       "a child is born.musicxml",
       "a fine romance.musicxml",
       "affirmation.musicxml",
@@ -65,10 +64,7 @@ describe("F38 real music fire audit", () => {
       "afternoon in Paris.musicxml",
       "asa branca.musicxml",
       "autum leaves.musicxml",
-      "depois de muito discutir.musicxml",
-      "exemplo.musicxml",
-      "palhaço.musicxml",
-      "teste2.musicxml"
+      "exemplo.musicxml"
     ]);
   });
 
@@ -90,7 +86,7 @@ describe("F38 real music fire audit", () => {
 
     const { phraseContext, generation, anchors: harmonizedAnchors } = harmonizable!;
     const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, harmonizedAnchors);
-    const presented = annotateProposalPresentationRoles(ranked, "balanced");
+    const presented = annotateProposalPresentationRoles(ranked, "balanced", phraseContext);
 
     expect(phraseContext.selectedCenter.tonic).toBeTruthy();
     expect(generation.proposals.length).toBeGreaterThan(0);

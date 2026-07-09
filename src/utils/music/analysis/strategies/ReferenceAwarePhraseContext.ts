@@ -32,6 +32,12 @@ export function formatReferenceCenterEvidence(evidence: string): string {
   const iiVMajor = evidence.match(/^ii-V-I local aponta (.+) maior$/);
   if (iiVMajor) return `cadência ii-V-I confirma ${iiVMajor[1]} maior`;
 
+  const localDominantMajor = evidence.match(/^V-I local aponta (.+) maior$/);
+  if (localDominantMajor) return `cadência V-I confirma ${localDominantMajor[1]} maior`;
+
+  const localDominantMinor = evidence.match(/^V-i local aponta (.+) menor$/);
+  if (localDominantMinor) return `cadência V-i confirma ${localDominantMinor[1]} menor`;
+
   const recurringMajor = evidence.match(/^repouso maior recorrente em (.+)$/);
   if (recurringMajor) return `repousos recorrentes sustentam ${recurringMajor[1]} maior`;
 

@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   annotateProposalPresentationRoles,
+  groupProposalsByPresentationLayer,
   presentationDiagnosticsForProposals
 } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
+import type { PhraseContext } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 
 function proposal(
   id: string,
   routeProfile: ReharmonizationProposal["routeProfile"],
   kind: ReharmonizationProposal["kind"] = "validated-harmonization",
   harmonicIdiom?: ReharmonizationProposal["harmonicIdiom"],
-  harmonicBoundary?: ReharmonizationProposal["harmonicBoundary"]
+  harmonicBoundary?: ReharmonizationProposal["harmonicBoundary"],
+  cadentialTarget?: string
 ): ReharmonizationProposal {
   return {
     id,
@@ -21,7 +24,18 @@ function proposal(
     bassLine: ["C"],
     routeProfile,
     harmonicIdiom,
-    harmonicBoundary
+    harmonicBoundary,
+    cadentialTarget
+  };
+}
+
+function referencePhraseContext(center: string): PhraseContext {
+  return {
+    selectedCenter: { tonic: center, mode: "major", confidence: 0.82 },
+    selectedCenterSource: "reference",
+    selectedCenterEvidence: [`repousos recorrentes sustentam ${center} maior`],
+    tonalCenterCandidates: [{ tonic: center, mode: "major", confidence: 0.82 }],
+    cadentialTarget: { targetPitch: center, cadenceType: "AUTHENTIC", confidence: 0.8 }
   };
 }
 
@@ -37,6 +51,11 @@ describe("F31.3 Proposal Presentation Planner", () => {
       ["reference", undefined],
       ["stable", "primary"],
       ["color", "alternative"]
+    ]);
+    expect(planned.map(item => [item.id, item.presentationLayer])).toEqual([
+      ["reference", "reference-aware"],
+      ["stable", "basic"],
+      ["color", "reharmonization"]
     ]);
   });
 
@@ -81,6 +100,67 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned[0].presentationRole).toBe("primary");
   });
 
+  it("does not promote a local cadential target over a strong tonal reference center in balanced mode", () => {
+    const planned = annotateProposalPresentationRoles([
+      proposal("local-iiv", "conservative", "validated-harmonization", "major-functional", undefined, "C"),
+      proposal("centered", "moderate", "validated-harmonization", "major-functional", undefined, "Eb")
+    ], "balanced", referencePhraseContext("Eb"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["centered", "primary"],
+      ["local-iiv", "alternative"]
+    ]);
+  });
+
+  it("allows a reference-centered proposal to become primary even when route cost is high", () => {
+    const centered = proposal("strategy_reference_center_e", "radical", "validated-harmonization", "minor-functional", undefined, "E");
+    const planned = annotateProposalPresentationRoles([
+      centered,
+      proposal("local-iiv", "moderate", "validated-harmonization", "major-functional", undefined, "A")
+    ], "balanced", referencePhraseContext("E"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["strategy_reference_center_e", "primary"],
+      ["local-iiv", "alternative"]
+    ]);
+    expect(planned.map(item => [item.id, item.presentationLayer])).toEqual([
+      ["strategy_reference_center_e", "reference-aware"],
+      ["local-iiv", "basic"]
+    ]);
+  });
+
+  it("keeps explicit reference-centered proposals in the reference-aware layer even with comparison bonuses", () => {
+    const centered = {
+      ...proposal("strategy_reference_center_bb", "conservative", "validated-harmonization", "major-functional", undefined, "Bb"),
+      name: "Estratégia — Centro de referência",
+      apparentFunctionReferenceBonus: 0.2
+    };
+    const planned = annotateProposalPresentationRoles([
+      centered,
+      proposal("chromatic-color", "chromatic", "controlled-reharmonization")
+    ], "balanced", referencePhraseContext("Bb"));
+
+    expect(planned.map(item => [item.id, item.presentationLayer])).toEqual([
+      ["strategy_reference_center_bb", "reference-aware"],
+      ["chromatic-color", "reharmonization"]
+    ]);
+  });
+
+  it("groups planned proposals by musical presentation layer", () => {
+    const planned = annotateProposalPresentationRoles([
+      proposal("basic-answer", "conservative"),
+      proposal("strategy_reference_center_bb", "moderate", "validated-harmonization", "major-functional", undefined, "Bb"),
+      proposal("color-answer", "chromatic", "controlled-reharmonization")
+    ], "balanced", referencePhraseContext("Bb"));
+    const groups = groupProposalsByPresentationLayer(planned);
+
+    expect(groups.map(group => [group.layer, group.proposals.map(item => item.id)])).toEqual([
+      ["basic", ["basic-answer"]],
+      ["reference-aware", ["strategy_reference_center_bb"]],
+      ["reharmonization", ["color-answer"]]
+    ]);
+  });
+
   it("prioritizes chromatic and radical proposals in exploratory mode", () => {
     const planned = annotateProposalPresentationRoles([
       proposal("stable", "conservative"),
@@ -91,6 +171,11 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned.map(item => item.id)).toEqual(["color", "outside", "stable"]);
     expect(planned[0].presentationRole).toBe("primary");
     expect(planned[1].presentationRole).toBe("adventurous");
+    expect(planned.map(item => [item.id, item.presentationLayer])).toEqual([
+      ["color", "reharmonization"],
+      ["outside", "reharmonization"],
+      ["stable", "basic"]
+    ]);
   });
 
   it("does not promote tonal alternatives as primary over a modal reference in balanced mode", () => {

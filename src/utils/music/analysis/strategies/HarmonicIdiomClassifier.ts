@@ -129,13 +129,21 @@ function inferBlues(chords: string[], center: string): string[] {
   const dominantOnFourth = chords.some(chord => (
     chromaticDistance(rootOf(chord), center) === 5 && isDominantSeventh(chord)
   ));
+  const dominantOnFlatSeven = chords.some(chord => (
+    chromaticDistance(rootOf(chord), center) === 10 && isDominantSeventh(chord)
+  ));
   const recurringTonicDominant = chords.filter(chord => (
     chromaticDistance(rootOf(chord), center) === 0 && isDominantSeventh(chord)
+  )).length >= 2;
+  const recurringSusDominant = chords.filter(chord => (
+    isDominantSeventh(chord) && resolveChordSymbol(chord).quality.includes("sus4")
   )).length >= 2;
 
   if (dominantOnTonic) evidence.push("I7 aparece como estabilidade local");
   if (dominantOnFourth) evidence.push("IV7 aparece como estabilidade local");
+  if (dominantOnFlatSeven) evidence.push("bVII7 funciona como resposta dominante/modal");
   if (recurringTonicDominant) evidence.push("dominante de tônica é recorrente, não apenas preparação");
+  if (recurringSusDominant) evidence.push("dominantes sus recorrentes sugerem vamp dominante");
   return evidence;
 }
 

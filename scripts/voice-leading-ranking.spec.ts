@@ -4,6 +4,7 @@ import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/a
 import type { PhraseContext } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
+import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
 
 const phraseContext: PhraseContext = {
   selectedCenter: { tonic: "C", mode: "major", confidence: 0.9 },
@@ -29,6 +30,17 @@ function proposal(id: string, chords: string[]): ReharmonizationProposal {
     explanation: [],
     bassLine: chords.map(chord => chord.match(/^[A-G](?:#|b)?/)?.[0] || chord)
   };
+}
+
+function harmonies(chords: string[]): ScoreHarmonyEvent[] {
+  return chords.map((harmony, index) => ({
+    measure: index + 1,
+    beat: 1,
+    harmony,
+    tickStart: index * 1920,
+    tickEnd: (index + 1) * 1920,
+    durationTicks: 1920
+  }));
 }
 
 describe("F28 Voice Leading Transition Evaluation", () => {
@@ -186,6 +198,38 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     ]));
   });
 
+  it("annotates resolved apparent-function chords without using them as decorative escapes", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("apparent-predominant", ["Cmaj7", "F#m7(b5)", "G7", "Cmaj7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].explanation).toContain("Função aparente: F#m7(b5) implica Fmaj7");
+    expect(ranked[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-apparent-predominant-apparent-function-support",
+        source: "generation",
+        category: "compatibility",
+        message: "Função aparente resolvida: a cifra sugere uma estrutura funcional implícita no contexto."
+      })
+    ]));
+  });
+
+  it("adds only a small reference-confirmed bonus for apparent functions", () => {
+    const withoutReference = rankReharmonizationProposalsByVoiceLeading([
+      proposal("apparent-predominant", ["Cmaj7", "F#m7(b5)", "G7", "Cmaj7"])
+    ], phraseContext, anchors);
+    const withReference = rankReharmonizationProposalsByVoiceLeading([
+      proposal("apparent-predominant", ["Cmaj7", "F#m7(b5)", "G7", "Cmaj7"])
+    ], phraseContext, anchors, {
+      referenceHarmonies: harmonies(["Cmaj7", "Fmaj7", "G7", "Cmaj7"])
+    });
+
+    expect(withoutReference[0].apparentFunctionReferenceBonus).toBe(0);
+    expect(withReference[0].apparentFunctionReferenceBonus).toBe(0.5);
+    expect(withReference[0].explanation).toContain("Referência: preserva função no mesmo contexto");
+    expect(withReference[0].explanation).toContain("Referência: confirma função aparente no mesmo contexto");
+  });
+
   it("suggests simple bass inversions when they smooth the bass line", () => {
     const ranked = rankReharmonizationProposalsByVoiceLeading([
       proposal("cadence", ["C", "G7", "C"])
@@ -202,6 +246,20 @@ describe("F28 Voice Leading Proposal Ranking", () => {
         message: "Inversão de baixo sugerida: uma nota do próprio acorde suaviza a ligação entre acordes."
       })
     ]));
+  });
+
+  it("does not turn color tones into automatic slash-bass inversions", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("minor-sixth-color", ["Dm6", "Bbmaj7", "Dm6", "Dm6"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].measures.map(measure => measure.chords[0])).toEqual([
+      "Dm6",
+      "Bbmaj7",
+      "Dm6/A",
+      "Dm6"
+    ]);
+    expect(ranked[0].measures.map(measure => measure.chords[0])).not.toContain("Dm6/B");
   });
 
   it("annotates walking bass-line profile on ranked proposals", () => {

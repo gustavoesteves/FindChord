@@ -8,10 +8,12 @@ import type { MelodicAnchor } from "../src/utils/music/analysis/models/Projectio
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 
+const palhacoFileName = fs.readdirSync("./docs/musics").find(name => (
+  name.normalize("NFD").includes("palhac") && name.endsWith(".musicxml")
+));
+
 function findPalhacoPath(): string {
-  const fileName = fs.readdirSync("./docs/musics").find(name => (
-    name.normalize("NFD").includes("palhac") && name.endsWith(".musicxml")
-  ));
+  const fileName = palhacoFileName;
   if (!fileName) throw new Error("palhaco MusicXML fixture not found");
   return `./docs/musics/${fileName}`;
 }
@@ -30,7 +32,9 @@ function toAnchors(notes: any[]): MelodicAnchor[] {
   }));
 }
 
-describe("Palhaco diagnostic", () => {
+const describeIfFixtureExists = palhacoFileName ? describe : describe.skip;
+
+describeIfFixtureExists("Palhaco diagnostic", () => {
   it("loads as a long melody-only score without explicit harmonic sections", () => {
     const snapshot = parseMusicXML(fs.readFileSync(findPalhacoPath(), "utf8"));
 

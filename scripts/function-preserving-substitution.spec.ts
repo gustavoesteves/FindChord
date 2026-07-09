@@ -20,6 +20,7 @@ describe("F26.10b Function-Preserving Substitution Validation", () => {
     expect(validation.apparentFunction?.apparentType).toBe("SHARP_IV_M7B5");
     expect(validation.failures).toHaveLength(0);
     expect(validation.evidence).toEqual(expect.arrayContaining([
+      "acorde aparente implica Fmaj7",
       "preserva função PD",
       "substituto cobre as notas melódicas exigidas"
     ]));

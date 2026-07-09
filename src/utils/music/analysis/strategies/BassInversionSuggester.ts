@@ -1,14 +1,14 @@
 import { Note } from "tonal";
 import type { ReharmonizationMeasure, ReharmonizationProposal } from "../models/ReharmonizationProposal";
-import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
+import { chordPitchClasses, chordRoot, resolveChordSymbol } from "../../theory/ChordSymbolResolver";
 import { diagnostic } from "../models/HarmonicDiagnostic";
 
 function chordSymbol(chord: string): string {
-  return chord.split("/")[0];
+  return chord.replace(/\/[A-G](?:#|b)?$/, "");
 }
 
 function explicitBass(chord: string): string | undefined {
-  return chord.split("/")[1];
+  return chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
 }
 
 function rootOfChord(chord: string): string {
@@ -31,6 +31,24 @@ function chromaticDistance(from: string, to: string): number | null {
   return Math.min(ascending, descending);
 }
 
+function structuralBassCandidates(chord: string): string[] {
+  const symbol = chordSymbol(chord);
+  const resolved = resolveChordSymbol(symbol);
+  if (!resolved.root) return [];
+
+  const root = Note.pitchClass(resolved.root);
+  const allowedOffsets = new Set([3, 4, 6, 7, 8, 10, 11]);
+  return chordPitchClasses(symbol, false)
+    .map(note => Note.pitchClass(note))
+    .filter((note): note is string => {
+      if (!note || note === root) return false;
+      const noteChroma = Note.chroma(note);
+      const rootChroma = Note.chroma(root || "");
+      if (noteChroma === undefined || rootChroma === undefined) return false;
+      return allowedOffsets.has((noteChroma - rootChroma + 12) % 12);
+    });
+}
+
 function bestInversionForContinuity(chord: string, previousBass: string): string {
   if (explicitBass(chord)) return chord;
 
@@ -41,9 +59,7 @@ function bestInversionForContinuity(chord: string, previousBass: string): string
   const currentDistance = chromaticDistance(previous, root);
   if (currentDistance === null || currentDistance <= 2) return chord;
 
-  const candidates = chordPitchClasses(chord, false)
-    .map(note => Note.pitchClass(note))
-    .filter((note): note is string => !!note && note !== root);
+  const candidates = structuralBassCandidates(chord);
 
   const best = candidates
     .map(candidate => ({

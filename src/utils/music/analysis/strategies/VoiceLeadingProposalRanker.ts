@@ -1,6 +1,7 @@
 import type { PhraseContext } from "../engines/PhraseAnalysisEngine";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ReharmonizationProposal } from "../models/ReharmonizationProposal";
+import type { ScoreHarmonyEvent } from "../models/ScoreSnapshot";
 import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
 import {
   evaluateVoiceLeadingTransition,
@@ -11,8 +12,14 @@ import {
   type HarmonicRouteDistanceReport
 } from "./HarmonicRouteDistance";
 import type { FunctionalClassificationMode } from "./HarmonicStrategyValidator";
+import { analyzeApparentFunction } from "./ApparentFunctionAnalysis";
 import { suggestBassInversionsForVoiceLeading } from "./BassInversionSuggester";
 import { annotateBassLineProfile } from "./BassLineProfile";
+import { compareProposalToReferenceHarmony } from "./ReferenceHarmonyComparator";
+
+interface VoiceLeadingRankingOptions {
+  referenceHarmonies?: ScoreHarmonyEvent[];
+}
 
 function flattenedChords(proposal: ReharmonizationProposal): string[] {
   return proposal.measures.flatMap(measure => measure.chords);
@@ -34,6 +41,24 @@ function evidenceSummary(reports: VoiceLeadingTransitionReport[]): string[] {
 
 function routeEvidenceSummary(report: HarmonicRouteDistanceReport): string[] {
   return report.evidence.slice(0, 2).map(item => `Rota harmônica: ${item}`);
+}
+
+function apparentFunctionEvidence(
+  proposal: ReharmonizationProposal,
+  phraseContext: PhraseContext
+): string[] {
+  const chords = flattenedChords(proposal);
+  return chords.flatMap((chord, index) => {
+    const apparent = analyzeApparentFunction(chord, {
+      center: phraseContext.selectedCenter.tonic,
+      previousChord: chords[index - 1],
+      nextChord: chords[index + 1]
+    });
+    if (!apparent || apparent.shouldCountAsFunctionalEscape || apparent.impliedChordSymbols.length === 0) {
+      return [];
+    }
+    return [`Função aparente: ${chord} implica ${apparent.impliedChordSymbols.join(" ou ")}`];
+  });
 }
 
 function evidencePriority(evidence: string): number {
@@ -114,6 +139,20 @@ function voiceLeadingDiagnosticFor(
   return undefined;
 }
 
+function apparentFunctionDiagnosticFor(
+  proposal: ReharmonizationProposal,
+  evidence: string[]
+): HarmonicDiagnostic | undefined {
+  if (evidence.length === 0) return undefined;
+  return diagnostic(
+    `proposal-${proposal.id}-apparent-function-support`,
+    "generation",
+    "compatibility",
+    "Função aparente resolvida: a cifra sugere uma estrutura funcional implícita no contexto.",
+    ["balanced", "exploratory"]
+  );
+}
+
 function classificationModeForPhrase(phraseContext: PhraseContext): FunctionalClassificationMode {
   return phraseContext.selectedCenter.mode === "minor" ? "minor-functional" : "major-functional";
 }
@@ -140,27 +179,79 @@ function routeAwareRankScore(proposal: ReharmonizationProposal): number {
   const voiceScore = proposal.voiceLeadingScore ?? 0;
   const routeCost = proposal.routeDistanceCost ?? 0;
   const bassBonus = proposal.bassLineRankBonus ?? 0;
-  return Number((voiceScore - routeCost * 0.05 + bassBonus).toFixed(3));
+  const apparentReferenceBonus = proposal.apparentFunctionReferenceBonus ?? 0;
+  return Number((voiceScore - routeCost * 0.05 + bassBonus + apparentReferenceBonus).toFixed(3));
+}
+
+function apparentFunctionReferenceBonus(
+  proposal: ReharmonizationProposal,
+  phraseContext: PhraseContext,
+  referenceHarmonies: ScoreHarmonyEvent[] | undefined
+): Pick<ReharmonizationProposal, "apparentFunctionReferenceBonus"> & { evidence: string[] } {
+  if (!referenceHarmonies || referenceHarmonies.length === 0) {
+    return { apparentFunctionReferenceBonus: 0, evidence: [] };
+  }
+
+  const comparison = compareProposalToReferenceHarmony(
+    proposal,
+    referenceHarmonies,
+    phraseContext.selectedCenter.tonic
+  );
+  const idiomMatchesReference = !!proposal.harmonicIdiom
+    && proposal.harmonicIdiom === comparison.referenceIdiom
+    && proposal.harmonicIdiom !== "major-functional";
+  if (comparison.status === "aligned") {
+    const apparentBonus = comparison.causes.includes("apparent-function-preserved") ? 0.15 : 0;
+    const idiomBonus = idiomMatchesReference ? 0.35 : 0;
+    return {
+      apparentFunctionReferenceBonus: 0.35 + apparentBonus + idiomBonus,
+      evidence: [
+        "Referência: preserva função no mesmo contexto",
+        ...(idiomBonus > 0 ? ["Referência: confirma o mesmo idioma harmônico"] : []),
+        ...(apparentBonus > 0 ? ["Referência: confirma função aparente no mesmo contexto"] : [])
+      ]
+    };
+  }
+
+  if (idiomMatchesReference && comparison.rootAgreement >= 0.4) {
+    return {
+      apparentFunctionReferenceBonus: comparison.rootAgreement >= 0.5 ? 1.1 : 0.75,
+      evidence: ["Referência: confirma o mesmo idioma harmônico"]
+    };
+  }
+
+  return { apparentFunctionReferenceBonus: 0, evidence: [] };
 }
 
 export function annotateProposalVoiceLeading(
   proposal: ReharmonizationProposal,
   phraseContext: PhraseContext,
-  anchors: MelodicAnchor[]
+  anchors: MelodicAnchor[],
+  options: VoiceLeadingRankingOptions = {}
 ): ReharmonizationProposal {
   const withBassInversions = suggestBassInversionsForVoiceLeading(proposal);
   const withBassProfile = annotateBassLineProfile(withBassInversions);
   const voiceLeading = evaluateProposalVoiceLeading(withBassProfile, phraseContext, anchors);
   const routeDistance = evaluateProposalRouteDistance(withBassProfile, phraseContext);
   const { transitionReports, ...voiceLeadingFields } = voiceLeading;
+  const apparentEvidence = apparentFunctionEvidence(withBassProfile, phraseContext);
+  const referenceBonus = apparentFunctionReferenceBonus(withBassProfile, phraseContext, options.referenceHarmonies);
   const voiceLeadingDiagnostic = voiceLeadingDiagnosticFor(
     proposal,
     voiceLeadingFields.voiceLeadingScore ?? 0,
     transitionReports
   );
+  const apparentFunctionDiagnostic = apparentFunctionDiagnosticFor(proposal, apparentEvidence);
   const evidence = [
     ...(voiceLeadingFields.voiceLeadingEvidence || []),
-    ...(routeDistance.routeDistanceEvidence || [])
+    ...(routeDistance.routeDistanceEvidence || []),
+    ...apparentEvidence.slice(0, 2),
+    ...referenceBonus.evidence
+  ];
+  const diagnostics = [
+    ...(withBassProfile.diagnostics || []),
+    ...(voiceLeadingDiagnostic ? [voiceLeadingDiagnostic] : []),
+    ...(apparentFunctionDiagnostic ? [apparentFunctionDiagnostic] : [])
   ];
 
   return {
@@ -168,9 +259,10 @@ export function annotateProposalVoiceLeading(
     ...withBassProfile,
     ...voiceLeadingFields,
     ...routeDistance,
-    diagnostics: voiceLeadingDiagnostic && !withBassProfile.diagnostics?.some(item => item.id === voiceLeadingDiagnostic.id)
-      ? [...(withBassProfile.diagnostics || []), voiceLeadingDiagnostic]
-      : withBassProfile.diagnostics,
+    apparentFunctionReferenceBonus: referenceBonus.apparentFunctionReferenceBonus,
+    diagnostics: diagnostics.length > 0
+      ? diagnostics.filter((item, index, items) => items.findIndex(other => other.id === item.id) === index)
+      : undefined,
     explanation: evidence.length > 0
       ? [...withBassProfile.explanation, ...evidence]
       : withBassProfile.explanation
@@ -180,11 +272,12 @@ export function annotateProposalVoiceLeading(
 export function rankReharmonizationProposalsByVoiceLeading(
   proposals: ReharmonizationProposal[],
   phraseContext: PhraseContext,
-  anchors: MelodicAnchor[]
+  anchors: MelodicAnchor[],
+  options: VoiceLeadingRankingOptions = {}
 ): ReharmonizationProposal[] {
   return proposals
     .map((proposal, originalIndex) => ({
-      proposal: annotateProposalVoiceLeading(proposal, phraseContext, anchors),
+      proposal: annotateProposalVoiceLeading(proposal, phraseContext, anchors, options),
       originalIndex
     }))
     .sort((a, b) => {

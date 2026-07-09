@@ -18,6 +18,8 @@ import {
   type StrategyFunctionId
 } from "./HarmonicStrategyValidator";
 import { formatReferenceCenterEvidenceSentence } from "./ReferenceAwarePhraseContext";
+import { functionalSubstitutionsFor } from "./FunctionalSubstitutionCatalog";
+import { validateFunctionPreservingSubstitution } from "./FunctionPreservingSubstitution";
 
 interface StrategyAttempt {
   candidate: HarmonizationCandidate;
@@ -33,6 +35,13 @@ interface MeasureStructuralProfile {
   hasPassingMotion: boolean;
   shouldExpand: boolean;
   shouldIntensify: boolean;
+}
+
+interface FlatMeasureChord {
+  measureIndex: number;
+  measurePosition: number;
+  chordIndex: number;
+  chord: string;
 }
 
 const DIATONIC_ROMAN_INTERVALS: Record<string, string> = {
@@ -95,14 +104,30 @@ export class StrategyGuidedHarmonizer {
       "SUBV7_CADENCIAL",
       "II_SUBV7_CADENCIAL"
     ];
-    const strategyProposals = strategies
-      .map(strategy => this.tryStrategy(strategy, anchors, phraseContext))
+    const strategyAttempts = strategies
+      .map(strategy => this.tryStrategy(strategy, anchors, phraseContext));
+    const strategyProposals = strategyAttempts
       .filter((attempt): attempt is StrategyAttempt & { proposal: ReharmonizationProposal } => attempt.proposal !== null)
       .map(attempt => attempt.proposal);
+    const hasStrictBasicHarmony = strategyAttempts.some(attempt => (
+      attempt.candidate.strategy === "I_IV_V" && attempt.validation.accepted
+    ));
+    const fundamentalProposals = hasStrictBasicHarmony
+      ? []
+      : this.buildFundamentalHarmonyProposals(anchors, phraseContext);
+    const melodyFirstProposals = strategyProposals.length === 0
+      ? this.buildMelodyFirstDiatonicProposals(anchors, phraseContext)
+      : [];
 
     return [
+      ...this.buildReferenceCenteredProposals(anchors, phraseContext),
+      ...fundamentalProposals,
       ...strategyProposals,
+      ...melodyFirstProposals,
+      ...this.buildApparentFunctionProposals(anchors, phraseContext),
+      ...this.buildModalBorrowingProposals(anchors, phraseContext),
       ...this.buildLocalIiVProposals(anchors, phraseContext),
+      ...this.buildDominantVampProposals(anchors, phraseContext),
       ...this.buildBluesProposals(anchors, phraseContext),
       ...this.buildModalProposals(anchors, phraseContext),
       ...this.buildMinorFunctionalProposals(anchors, phraseContext)
@@ -153,6 +178,478 @@ export class StrategyGuidedHarmonizer {
             : this.buildDiatonicExpansionMeasures(anchors, center);
 
     return this.applyIdiomaticFunctionalPatterns(measures, anchors, center);
+  }
+
+  private static buildReferenceCenteredProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (!this.hasStrongReferenceCenter(phraseContext)) return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 2) return [];
+
+    const measures = measureIndexes.map((measureIndex, index) => {
+      const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndex);
+      const isFinal = index === measureIndexes.length - 1;
+      const isCadentialPreparation = index === measureIndexes.length - 2;
+      const palette = this.referencePaletteForMeasure(
+        center,
+        phraseContext.selectedCenter.mode,
+        measureAnchors,
+        isCadentialPreparation
+      );
+      return {
+        measureIndex,
+        chords: [isFinal ? this.referenceTonicChord(center, phraseContext.selectedCenter.mode, measureAnchors) : this.bestReferenceCenteredChord(palette, measureAnchors, anchors)]
+      };
+    });
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.25) return [];
+
+    return [{
+      id: `strategy_reference_center_${center.toLowerCase()}`,
+      kind: "validated-harmonization",
+      name: "Estratégia — Centro de referência",
+      measures,
+      explanation: [
+        `preserva o centro indicado pela referência em ${center}`,
+        "prioriza acordes próximos ao campo funcional antes de explorar cadências locais",
+        "acompanha a melodia com harmonia estável e baixa densidade"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.rootOfChord(chord) || chord)),
+      harmonicIdiom: phraseContext.selectedCenter.mode === "minor" ? "minor-functional" : "major-functional",
+      cadentialTarget: center
+    }];
+  }
+
+  private static buildApparentFunctionProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center || phraseContext.selectedCenter.mode !== "major") return [];
+
+    return [
+      this.buildSharpIvApparentFunctionProposal(anchors, center),
+      this.buildPredominantSusApparentFunctionProposal(anchors, center),
+      this.buildLeadingToneDiminishedApparentFunctionProposal(anchors, center),
+      this.buildMinorSixthApparentFunctionProposal(anchors, center)
+    ].filter((proposal): proposal is ReharmonizationProposal => proposal !== null);
+  }
+
+  private static buildSharpIvApparentFunctionProposal(
+    anchors: MelodicAnchor[],
+    center: string
+  ): ReharmonizationProposal | null {
+    const baseMeasures = this.buildMeasuresForStrategy("EXPANSAO_FUNCIONAL_DIATONICA", anchors, center);
+    const baseValidation = validateHarmonicStrategy({
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center,
+      measures: baseMeasures,
+      melody: anchors
+    });
+    if (!baseValidation.accepted) return null;
+
+    const sharpIv = functionalSubstitutionsFor("PD", center, "major-functional")
+      .find(substitution => substitution.id === "PREDOMINANT_SHARP_IV_HALF_DIMINISHED");
+    if (!sharpIv) return null;
+
+    const flatChords = this.flattenMeasureChords(baseMeasures);
+
+    for (let index = 0; index < flatChords.length; index++) {
+      const point = flatChords[index];
+      const root = this.rootOfChord(point.chord);
+      if (this.romanForChordRoot(root, center) !== "IV") continue;
+
+      const melodyPitches = this.pitchClassesForMeasure(anchors, point.measureIndex);
+      if (melodyPitches.length === 0) continue;
+
+      const validation = validateFunctionPreservingSubstitution({
+        center,
+        originalChord: point.chord,
+        substituteChord: sharpIv.chord,
+        previousChord: flatChords[index - 1]?.chord,
+        nextChord: flatChords[index + 1]?.chord,
+        melodyPitches,
+        expectedBackboneFunction: "PD",
+        classificationMode: "major-functional"
+      });
+      if (!validation.accepted) continue;
+
+      const measures = baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+      measures[point.measurePosition].chords[point.chordIndex] = sharpIv.chord;
+
+      return {
+        id: `strategy_apparent_sharp_iv_${point.measureIndex}_${center.toLowerCase()}`,
+        kind: "controlled-reharmonization",
+        name: "Estratégia — Função aparente",
+        measures,
+        explanation: [
+          `substitui ${point.chord} por ${sharpIv.chord}`,
+          sharpIv.explanation,
+          "preserva a preparação subdominante com compatibilidade melódica",
+          ...validation.evidence
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+        cadentialTarget: center,
+        harmonicIdiom: "major-functional"
+      };
+    }
+
+    return null;
+  }
+
+  private static buildPredominantSusApparentFunctionProposal(
+    anchors: MelodicAnchor[],
+    center: string
+  ): ReharmonizationProposal | null {
+    const baseMeasures = this.buildMeasuresForStrategy("EXPANSAO_FUNCIONAL_DIATONICA", anchors, center);
+    const baseValidation = validateHarmonicStrategy({
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center,
+      measures: baseMeasures,
+      melody: anchors
+    });
+    if (!baseValidation.accepted) return null;
+
+    const flatChords = this.flattenMeasureChords(baseMeasures);
+    const dominantRoot = this.rootOfChord(this.chordFromRoman(center, "V"));
+    const predominantRoot = this.rootOfChord(this.chordFromRoman(center, "ii"));
+    const substituteChord = `${dominantRoot}7sus4`;
+    const impliedPredominant = `${predominantRoot}m7/${dominantRoot}`;
+
+    for (let index = 0; index < flatChords.length; index++) {
+      const point = flatChords[index];
+      const root = this.rootOfChord(point.chord);
+      const isDominantSeventh = this.romanForChordRoot(root, center) === "V" && /7/.test(point.chord);
+      if (!isDominantSeventh) continue;
+
+      const recentPredominant = [flatChords[index - 1], flatChords[index - 2]]
+        .filter((candidate): candidate is FlatMeasureChord => Boolean(candidate))
+        .some(candidate => ["ii", "IV"].includes(this.romanForChordRoot(this.rootOfChord(candidate.chord), center)));
+      if (!recentPredominant) continue;
+
+      const melodyPitches = this.pitchClassesForMeasure(anchors, point.measureIndex);
+      if (melodyPitches.length === 0) continue;
+
+      const validation = validateFunctionPreservingSubstitution({
+        center,
+        originalChord: impliedPredominant,
+        substituteChord,
+        previousChord: flatChords[index - 1]?.chord,
+        nextChord: point.chord,
+        melodyPitches,
+        expectedBackboneFunction: "PD",
+        classificationMode: "major-functional"
+      });
+      if (!validation.accepted) continue;
+
+      const measures = baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+      measures[point.measurePosition].chords.splice(point.chordIndex, 0, substituteChord);
+
+      return {
+        id: `strategy_apparent_sus_predominant_${point.measureIndex}_${center.toLowerCase()}`,
+        kind: "controlled-reharmonization",
+        name: "Estratégia — Função aparente",
+        measures,
+        explanation: [
+          `insere ${substituteChord} antes de ${point.chord}`,
+          "trata o sus como preparação aparente da dominante",
+          "preserva a preparação subdominante com compatibilidade melódica",
+          ...validation.evidence
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+        cadentialTarget: center,
+        harmonicIdiom: "major-functional"
+      };
+    }
+
+    return null;
+  }
+
+  private static buildLeadingToneDiminishedApparentFunctionProposal(
+    anchors: MelodicAnchor[],
+    center: string
+  ): ReharmonizationProposal | null {
+    const baseMeasures = this.buildMeasuresForStrategy("EXPANSAO_FUNCIONAL_DIATONICA", anchors, center);
+    const baseValidation = validateHarmonicStrategy({
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center,
+      measures: baseMeasures,
+      melody: anchors
+    });
+    if (!baseValidation.accepted) return null;
+
+    const flatChords = this.flattenMeasureChords(baseMeasures);
+    const leadingToneRoot = Note.pitchClass(Note.transpose(`${center}4`, "7M"));
+    if (!leadingToneRoot) return null;
+
+    const substituteChord = `${leadingToneRoot}dim`;
+
+    for (let index = 0; index < flatChords.length; index++) {
+      const point = flatChords[index];
+      const nextPoint = flatChords[index + 1];
+      const root = this.rootOfChord(point.chord);
+      const nextRoot = nextPoint ? this.rootOfChord(nextPoint.chord) : "";
+      const isDominantSeventh = this.romanForChordRoot(root, center) === "V" && /7/.test(point.chord);
+      const resolvesToTonic = nextPoint && this.romanForChordRoot(nextRoot, center) === "I";
+      if (!isDominantSeventh || !resolvesToTonic) continue;
+
+      const melodyPitches = this.pitchClassesForMeasure(anchors, point.measureIndex);
+      if (melodyPitches.length === 0) continue;
+
+      const validation = validateFunctionPreservingSubstitution({
+        center,
+        originalChord: `${root}7(b9)`,
+        substituteChord,
+        previousChord: flatChords[index - 1]?.chord,
+        nextChord: nextPoint.chord,
+        melodyPitches,
+        expectedBackboneFunction: "D",
+        classificationMode: "major-functional"
+      });
+      if (!validation.accepted) continue;
+
+      const measures = baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+      measures[point.measurePosition].chords[point.chordIndex] = substituteChord;
+
+      return {
+        id: `strategy_apparent_leading_dim_${point.measureIndex}_${center.toLowerCase()}`,
+        kind: "controlled-reharmonization",
+        name: "Estratégia — Função aparente",
+        measures,
+        explanation: [
+          `substitui ${point.chord} por ${substituteChord}`,
+          "trata o diminuto de sensível como dominante aparente",
+          "preserva a tensão cadencial com compatibilidade melódica",
+          ...validation.evidence
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+        cadentialTarget: center,
+        harmonicIdiom: "major-functional"
+      };
+    }
+
+    return null;
+  }
+
+  private static buildMinorSixthApparentFunctionProposal(
+    anchors: MelodicAnchor[],
+    center: string
+  ): ReharmonizationProposal | null {
+    const baseMeasures = this.buildMeasuresForStrategy("EXPANSAO_FUNCIONAL_DIATONICA", anchors, center);
+    const baseValidation = validateHarmonicStrategy({
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center,
+      measures: baseMeasures,
+      melody: anchors
+    });
+    if (!baseValidation.accepted) return null;
+
+    const flatChords = this.flattenMeasureChords(baseMeasures);
+    const predominantRoot = this.rootOfChord(this.chordFromRoman(center, "ii"));
+    const substituteChord = `${predominantRoot}m6`;
+
+    for (let index = 0; index < flatChords.length; index++) {
+      const point = flatChords[index];
+      const root = this.rootOfChord(point.chord);
+      const isDominantSeventh = this.romanForChordRoot(root, center) === "V" && /7/.test(point.chord);
+      if (!isDominantSeventh) continue;
+
+      const melodyPitches = this.pitchClassesForMeasure(anchors, point.measureIndex);
+      if (melodyPitches.length === 0) continue;
+
+      const validation = validateFunctionPreservingSubstitution({
+        center,
+        originalChord: point.chord,
+        substituteChord,
+        previousChord: flatChords[index - 1]?.chord,
+        nextChord: point.chord,
+        melodyPitches,
+        expectedBackboneFunction: "D",
+        classificationMode: "major-functional"
+      });
+      if (!validation.accepted) continue;
+
+      const measures = baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+      measures[point.measurePosition].chords.splice(point.chordIndex, 0, substituteChord);
+
+      return {
+        id: `strategy_apparent_minor_sixth_${point.measureIndex}_${center.toLowerCase()}`,
+        kind: "controlled-reharmonization",
+        name: "Estratégia — Função aparente",
+        measures,
+        explanation: [
+          `insere ${substituteChord} antes de ${point.chord}`,
+          "trata o m6 como estrutura dominante aparente",
+          "preserva a tensão cadencial com compatibilidade melódica",
+          ...validation.evidence
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+        cadentialTarget: center,
+        harmonicIdiom: "major-functional"
+      };
+    }
+
+    return null;
+  }
+
+  private static buildModalBorrowingProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center || phraseContext.selectedCenter.mode !== "major") return [];
+
+    const flatSix = Note.pitchClass(Note.transpose(`${center}4`, "6m"));
+    if (!flatSix || !anchors.some(anchor => Note.pitchClass(anchor.pitch) === flatSix)) return [];
+
+    const baseMeasures = this.buildMeasuresForStrategy("EXPANSAO_FUNCIONAL_DIATONICA", anchors, center);
+    const borrowedSubdominant = `${this.chordFromRoman(center, "IV")}m`;
+    const flatChords = this.flattenMeasureChords(baseMeasures);
+
+    for (const point of flatChords) {
+      if (this.romanForChordRoot(this.rootOfChord(point.chord), center) !== "IV") continue;
+
+      const melodyPitches = this.pitchClassesForMeasure(anchors, point.measureIndex);
+      if (!melodyPitches.includes(flatSix)) continue;
+      if (!melodyPitches.every(pitch => noteCoveredByChord(pitch, borrowedSubdominant))) continue;
+
+      const measures = baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+      measures[point.measurePosition].chords[point.chordIndex] = borrowedSubdominant;
+
+      const validation = validateHarmonicStrategy({
+        strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+        center,
+        measures,
+        melody: anchors
+      });
+      if (!validation.accepted) continue;
+
+      return [{
+        id: `strategy_modal_borrowing_ivm_${point.measureIndex}_${center.toLowerCase()}`,
+        kind: "controlled-reharmonization",
+        name: "Estratégia — Empréstimo modal",
+        measures,
+        explanation: [
+          `substitui ${point.chord} por ${borrowedSubdominant}`,
+          "usa iv menor como cor do modo paralelo",
+          "preserva a função subdominante com mistura modal controlada",
+          "a melodia traz b6 como assinatura do empréstimo modal"
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+        cadentialTarget: center,
+        harmonicIdiom: "major-functional"
+      }];
+    }
+
+    return [];
+  }
+
+  private static buildFundamentalHarmonyProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (this.hasStrongReferenceCenter(phraseContext)) return [];
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 2) return [];
+
+    const measures = this.buildPrimaryTriadMeasures(anchors, center);
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.45) return [];
+
+    const explanation = [
+      `Percurso funcional elementar: ${this.fundamentalFunctionPath(measures, center)}`,
+      ...this.explainFunctionalRegions(anchors, center),
+      "usa somente tônica, subdominante e dominante como primeira leitura da melodia",
+      "mantém a harmonia fundamental separada das alternativas diatônicas e cromáticas",
+      coverage >= 0.72
+        ? "a melodia aceita bem a leitura fundamental I-IV-V"
+        : "base pedagógica: I-IV-V cobre parcialmente a melodia, mas pede uma camada diatônica depois"
+    ];
+
+    return [{
+      id: `strategy_fundamental_i_iv_v_${center.toLowerCase()}`,
+      kind: "validated-harmonization",
+      name: "Estratégia — Harmonia fundamental I-IV-V",
+      measures,
+      explanation,
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: center,
+      harmonicIdiom: "major-functional"
+    }];
+  }
+
+  private static buildMelodyFirstDiatonicProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (this.hasStrongReferenceCenter(phraseContext)) return [];
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 4) return [];
+
+    const palette = this.melodyFirstDiatonicPalette(center);
+    const measures = measureIndexes.map((measureIndex, index) => {
+      const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndex);
+      const isFinal = index === measureIndexes.length - 1;
+      return {
+        measureIndex,
+        chords: [isFinal ? this.chordFromRoman(center, "I") : this.bestMelodyFirstChord(palette, measureAnchors, anchors)]
+      };
+    });
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.58) return [];
+
+    return [{
+      id: `strategy_melody_first_diatonic_${center.toLowerCase()}`,
+      kind: "validated-harmonization",
+      name: "Estratégia — Melodia primeiro",
+      measures,
+      explanation: [
+        "prioriza acordes diatônicos que sustentam as notas estruturais da melodia",
+        "mantém baixa densidade harmônica enquanto não há cifra de referência",
+        "evita forçar cadência local quando a frase pede sustentação por cor"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: center,
+      harmonicIdiom: "major-functional"
+    }];
+  }
+
+  private static hasStrongReferenceCenter(phraseContext: PhraseContext): boolean {
+    return phraseContext.selectedCenterSource === "reference"
+      && (phraseContext.selectedCenter.confidence >= 0.7 || (phraseContext.selectedCenterEvidence?.length || 0) > 0);
   }
 
   private static buildPrimaryTriadMeasures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {
@@ -312,6 +809,17 @@ export class StrategyGuidedHarmonizer {
     return Array.from(new Set(anchors.map(anchor => anchor.measureIndex))).sort((a, b) => a - b);
   }
 
+  private static flattenMeasureChords(measures: ReharmonizationMeasure[]): FlatMeasureChord[] {
+    return measures.flatMap((measure, measurePosition) => (
+      measure.chords.map((chord, chordIndex) => ({
+        measureIndex: measure.measureIndex,
+        measurePosition,
+        chordIndex,
+        chord
+      }))
+    ));
+  }
+
   private static classifyMeasureProfiles(anchors: MelodicAnchor[], measureIndexes: number[]): MeasureStructuralProfile[] {
     const regions = FunctionalRegionPlanner.planFromAnchors(anchors);
     return measureIndexes.map((measureIndex, idx) => {
@@ -348,10 +856,33 @@ export class StrategyGuidedHarmonizer {
     return false;
   }
 
+  private static pitchClassesForMeasure(anchors: MelodicAnchor[], measureIndex: number): string[] {
+    return Array.from(new Set(
+      anchors
+        .filter(anchor => anchor.measureIndex === measureIndex)
+        .map(anchor => Note.pitchClass(anchor.pitch))
+        .filter((pitch): pitch is string => Boolean(pitch))
+    ));
+  }
+
   private static primaryRomanForFunction(fn: StrategyFunctionId): string {
     if (fn === "PD") return "IV";
     if (fn === "D") return "V";
     return "I";
+  }
+
+  private static fundamentalFunctionPath(measures: ReharmonizationMeasure[], center: string): string {
+    const functions = measures
+      .map(measure => this.romanForChordRoot(this.rootOfChord(measure.chords[0]), center))
+      .map(roman => {
+        if (roman === "IV") return "preparação";
+        if (roman === "V") return "tensão";
+        return "repouso";
+      });
+
+    return functions.map((fn, index) => (
+      index > 0 && fn === functions[index - 1] ? "" : fn
+    )).filter(Boolean).join(" -> ");
   }
 
   private static bestPrimaryRomanForMeasure(
@@ -460,6 +991,157 @@ export class StrategyGuidedHarmonizer {
     return `${root}${ROMAN_QUALITY[roman] || ""}`;
   }
 
+  private static referenceTonicChord(center: string, mode: "major" | "minor", anchors: MelodicAnchor[] = []): string {
+    if (mode === "major") return center;
+
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+    const sixth = Note.pitchClass(Note.transpose(`${center}4`, "6M"));
+    const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    if (sixth && notes.has(sixth)) return `${center}m6`;
+    if (flatSeven && notes.has(flatSeven)) return `${center}m7`;
+    return `${center}m`;
+  }
+
+  private static referencePaletteForMeasure(
+    center: string,
+    mode: "major" | "minor",
+    anchors: MelodicAnchor[],
+    isCadentialPreparation: boolean
+  ): string[] {
+    return mode === "minor"
+      ? this.referenceMinorPalette(center, anchors, isCadentialPreparation)
+      : this.referenceMajorPalette(center);
+  }
+
+  private static referenceMajorPalette(center: string): string[] {
+    return [
+      this.chordFromRoman(center, "I"),
+      this.chordFromRoman(center, "IV"),
+      `${this.chordFromRoman(center, "V")}7`,
+      `${this.chordFromRoman(center, "ii")}7`,
+      `${this.chordFromRoman(center, "vi")}7`,
+      this.chordFromRoman(center, "iii")
+    ];
+  }
+
+  private static melodyFirstDiatonicPalette(center: string): string[] {
+    const tonic = this.chordFromRoman(center, "I");
+    const subdominant = this.chordFromRoman(center, "IV");
+    return [
+      `${tonic}6/9`,
+      this.chordFromRoman(center, "I"),
+      `${subdominant}6`,
+      `${subdominant}maj7`,
+      `${this.chordFromRoman(center, "ii")}7`,
+      `${this.chordFromRoman(center, "iii")}7`,
+      `${this.chordFromRoman(center, "vi")}7`,
+      `${this.chordFromRoman(center, "V")}7sus4`,
+      `${this.chordFromRoman(center, "V")}7`,
+      this.chordFromRoman(center, "vii")
+    ];
+  }
+
+  private static bestMelodyFirstChord(
+    palette: string[],
+    measureAnchors: MelodicAnchor[],
+    phraseAnchors: MelodicAnchor[]
+  ): string {
+    if (measureAnchors.length === 0) return palette[0];
+
+    const classified = classifyMelodicAnchors(measureAnchors, { markFinal: false });
+    let best = palette[0];
+    let bestScore = -Infinity;
+
+    for (const chord of palette) {
+      const root = Note.pitchClass(this.rootOfChord(chord) || chord);
+      const coverageScore = measureAnchors.reduce((sum, anchor) => (
+        noteCoveredByChord(anchor.pitch, chord)
+          ? sum + melodicAnchorWeight(anchor, phraseAnchors, { markFinal: false })
+          : sum
+      ), 0);
+      const structuralRootBonus = classified.some(anchor => (
+        anchor.role === "structural" && Note.pitchClass(anchor.pitch) === root
+      )) ? 0.35 : 0;
+      const compactColorPenalty = /m7b5|7sus4/.test(chord) ? 0.1 : 0;
+      const score = coverageScore + structuralRootBonus - compactColorPenalty;
+      if (score > bestScore) {
+        best = chord;
+        bestScore = score;
+      }
+    }
+
+    return best;
+  }
+
+  private static referenceMinorPalette(
+    center: string,
+    anchors: MelodicAnchor[],
+    isCadentialPreparation: boolean
+  ): string[] {
+    const fourth = Note.pitchClass(Note.transpose(`${center}4`, "4P"));
+    const fifth = Note.pitchClass(Note.transpose(`${center}4`, "5P"));
+    const flatSix = Note.pitchClass(Note.transpose(`${center}4`, "6m"));
+    const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    const second = Note.pitchClass(Note.transpose(`${center}4`, "2M"));
+    const tonic = this.referenceTonicChord(center, "minor", anchors);
+    const dominant = fifth ? `${fifth}7` : `${center}m`;
+
+    const stable = [
+      tonic,
+      fourth ? `${fourth}m7` : `${center}m`,
+      flatSix ? `${flatSix}maj7` : `${center}m`,
+      flatSeven ? `${flatSeven}7` : `${center}m`,
+      second ? `${second}m7b5` : `${center}m`
+    ];
+
+    return isCadentialPreparation
+      ? [tonic, dominant, ...stable.filter(chord => chord !== tonic)]
+      : [...stable, dominant];
+  }
+
+  private static bestReferenceCenteredChord(
+    palette: string[],
+    measureAnchors: MelodicAnchor[],
+    phraseAnchors: MelodicAnchor[]
+  ): string {
+    let best = palette[0];
+    let bestScore = -Infinity;
+
+    for (const chord of palette) {
+      const coverageScore = measureAnchors.reduce((sum, anchor) => (
+        noteCoveredByChord(anchor.pitch, chord)
+          ? sum + melodicAnchorWeight(anchor, phraseAnchors, { markFinal: false })
+          : sum
+      ), 0);
+      const stabilityBonus = chord === palette[0] ? 0.25 : 0;
+      const score = coverageScore + stabilityBonus;
+      if (score > bestScore) {
+        best = chord;
+        bestScore = score;
+      }
+    }
+
+    return best;
+  }
+
+  private static coverageForReferenceCenteredMeasures(
+    measures: ReharmonizationMeasure[],
+    anchors: MelodicAnchor[]
+  ): number {
+    const weightedTotal = anchors.reduce((sum, anchor) => (
+      sum + melodicAnchorWeight(anchor, anchors, { markFinal: false })
+    ), 0);
+    if (weightedTotal === 0) return 0;
+
+    const weightedCovered = anchors.reduce((sum, anchor) => {
+      const measure = measures.find(item => item.measureIndex === anchor.measureIndex);
+      const covered = measure?.chords.some(chord => noteCoveredByChord(anchor.pitch, chord));
+      return covered ? sum + melodicAnchorWeight(anchor, anchors, { markFinal: false }) : sum;
+    }, 0);
+
+    return weightedCovered / weightedTotal;
+  }
+
   private static secondaryDominantForTarget(targetChord: string, center: string): string | null {
     const targetRoot = this.rootOfChord(targetChord);
     if (!targetRoot) return null;
@@ -497,7 +1179,7 @@ export class StrategyGuidedHarmonizer {
   }
 
   private static bassOrRootOfChord(chord: string): string {
-    const bass = chord.split("/")[1];
+    const bass = chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
     return bass ? Note.pitchClass(bass) || bass : this.rootOfChord(chord);
   }
 
@@ -542,9 +1224,18 @@ export class StrategyGuidedHarmonizer {
     const bass = bassPitch ? Note.pitchClass(bassPitch) : "";
     if (!bass) return chord;
 
+    const normalizedBass = Note.simplify(bass);
+    const root = Note.pitchClass(this.rootOfChord(chord));
+    const bassChroma = Note.chroma(normalizedBass);
+    const rootChroma = root ? Note.chroma(root) : undefined;
+    if (bassChroma !== undefined && rootChroma !== undefined && bassChroma === rootChroma) {
+      return chord;
+    }
+
     const chordNotes = chordPitchClasses(chord, false);
-    if (chordNotes.includes(bass) && bass !== Note.pitchClass(this.rootOfChord(chord))) {
-      return `${chord}/${bass}`;
+    const bassBelongsToChord = chordNotes.some(note => Note.chroma(note) === bassChroma);
+    if (bassBelongsToChord) {
+      return `${chord}/${normalizedBass}`;
     }
 
     return chord;
@@ -577,6 +1268,7 @@ export class StrategyGuidedHarmonizer {
 
     const measureIndexes = this.getMeasureIndexes(anchors);
     if (measureIndexes.length < 3 || phraseContext.cadentialTarget.confidence < 0.5) return null;
+    if (phraseContext.cadentialTarget.cadenceType === "HALF") return null;
 
     const localMode = this.inferLocalIiVMode(globalTonic, localTonic);
     const chords = this.localIiVChords(localTonic, localMode);
@@ -600,7 +1292,8 @@ export class StrategyGuidedHarmonizer {
           : "usa preparação predominante antes da dominante local",
         "preserva a chegada melódica como ponto de resolução"
       ],
-      bassLine: chords.map(chord => this.rootOfChord(chord) || chord)
+      bassLine: chords.map(chord => this.rootOfChord(chord) || chord),
+      cadentialTarget: localTonic
     };
   }
 
@@ -636,6 +1329,88 @@ export class StrategyGuidedHarmonizer {
       bassLine: measures.flatMap(measure => measure.chords.map(chord => this.rootOfChord(chord) || chord)),
       harmonicIdiom: "blues"
     }];
+  }
+
+  private static buildDominantVampProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+    if (["HALF", "DECEPTIVE"].includes(phraseContext.cadentialTarget.cadenceType)) return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center || !this.hasDominantVampVocabulary(anchors, center)) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 4) return [];
+
+    const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    if (!flatSeven) return [];
+
+    const measures = measureIndexes.map(measureIndex => {
+      const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndex);
+      const root = this.prefersFlatSevenDominantResponse(measureAnchors, center, flatSeven)
+        ? flatSeven
+        : center;
+      return {
+        measureIndex,
+        chords: this.dominantVampChordsForMeasure(root, measureAnchors)
+      };
+    });
+
+    if (!this.bluesProposalCoversMelody(measures, anchors)) return [];
+
+    return [{
+      id: `strategy_dominant_vamp_${center.toLowerCase()}`,
+      kind: "validated-harmonization",
+      name: "Estratégia — Vamp dominante",
+      measures,
+      explanation: [
+        "trata I13/I13sus como repouso dominante idiomático",
+        "usa bVII13 como resposta de vamp dominante",
+        "preserva quarta suspensa e sétima menor como cores estruturais"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.rootOfChord(chord) || chord)),
+      harmonicIdiom: "blues"
+    }];
+  }
+
+  private static hasDominantVampVocabulary(anchors: MelodicAnchor[], center: string): boolean {
+    const flatThird = Note.pitchClass(Note.transpose(`${center}4`, "3m"));
+    const fourth = Note.pitchClass(Note.transpose(`${center}4`, "4P"));
+    const flatSeventh = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+    return !!flatSeventh
+      && notes.has(flatSeventh)
+      && (!!flatThird && notes.has(flatThird) || !!fourth && notes.has(fourth));
+  }
+
+  private static prefersFlatSevenDominantResponse(
+    anchors: MelodicAnchor[],
+    center: string,
+    flatSeven: string
+  ): boolean {
+    const centerProminence = pitchProminence(anchors, center);
+    const flatSevenProminence = pitchProminence(anchors, flatSeven);
+    const flatThird = Note.pitchClass(Note.transpose(`${center}4`, "3m"));
+    const fourthOfFlatSeven = Note.pitchClass(Note.transpose(`${flatSeven}4`, "4P"));
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+
+    return flatSevenProminence > 0
+      || centerProminence === 0 && !!flatThird && notes.has(flatThird)
+      || centerProminence === 0 && !!fourthOfFlatSeven && notes.has(fourthOfFlatSeven);
+  }
+
+  private static dominantVampChordsForMeasure(root: string, anchors: MelodicAnchor[]): string[] {
+    const third = Note.pitchClass(Note.transpose(`${root}4`, "3M"));
+    const fourth = Note.pitchClass(Note.transpose(`${root}4`, "4P"));
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+    const hasThird = !!third && notes.has(third);
+    const hasSuspension = !!fourth && notes.has(fourth);
+
+    if (hasSuspension && hasThird) return [`${root}13sus4`, `${root}13`];
+    if (hasSuspension) return [`${root}13sus4`];
+    return [`${root}13`];
   }
 
   private static hasBluesMelodicVocabulary(anchors: MelodicAnchor[], center: string): boolean {
@@ -937,7 +1712,8 @@ export class StrategyGuidedHarmonizer {
             : "usa preparação predominante antes da dominante local",
           "preserva a chegada melódica como ponto de resolução"
         ],
-        bassLine: chords.map(chord => this.rootOfChord(chord) || chord)
+        bassLine: chords.map(chord => this.rootOfChord(chord) || chord),
+        cadentialTarget: localTonic
       };
     }
 
@@ -1042,7 +1818,8 @@ export class StrategyGuidedHarmonizer {
           validation.report.diminishedPassingExcursions > 0
         )
       ],
-      bassLine: candidate.measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord))
+      bassLine: candidate.measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: candidate.center
     };
   }
 

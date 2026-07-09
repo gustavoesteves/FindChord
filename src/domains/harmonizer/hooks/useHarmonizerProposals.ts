@@ -89,7 +89,8 @@ export function useHarmonizerProposals({
       ? rankReharmonizationProposalsByVoiceLeading(
         [...controlledReharmonizationProposals, ...proposals],
         phraseContext,
-        melodyAnchorsData.anchors
+        melodyAnchorsData.anchors,
+        { referenceHarmonies: sectionHarmonies }
       )
       : [...controlledReharmonizationProposals, ...proposals];
 
@@ -97,13 +98,14 @@ export function useHarmonizerProposals({
       ? [existingHarmonyProposal, ...alternatives]
       : alternatives;
 
-    return annotateProposalPresentationRoles(withReference, boldnessMode);
+    return annotateProposalPresentationRoles(withReference, boldnessMode, phraseContext || undefined);
   }, [
     existingHarmonyProposal,
     controlledReharmonizationProposals,
     proposals,
     phraseContext,
     melodyAnchorsData.anchors,
+    sectionHarmonies,
     boldnessMode
   ]);
 

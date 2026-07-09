@@ -134,6 +134,26 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
     );
   }
 
+  for (let index = 0; index < ordered.length - 1; index += 1) {
+    const current = ordered[index];
+    const next = ordered[index + 1];
+    const currentResolved = resolveChordSymbol(current.harmony);
+    const nextResolved = resolveChordSymbol(next.harmony);
+    const currentRoot = normalizeRoot(current.harmony);
+    const nextRoot = normalizeRoot(next.harmony);
+    const isDominantResolution = isDominantQuality(currentResolved.quality)
+      && currentRoot
+      && nextRoot
+      && chromaticDistance(currentRoot, nextRoot) === 7;
+
+    if (isDominantResolution && isMajorQuality(nextResolved.quality)) {
+      addScore(nextRoot, "major", 3, `V-I local aponta ${nextRoot} maior`);
+    }
+    if (isDominantResolution && isMinorQuality(nextResolved.quality)) {
+      addScore(nextRoot, "minor", 3, `V-i local aponta ${nextRoot} menor`);
+    }
+  }
+
   for (const harmony of ordered) {
     const resolved = resolveChordSymbol(harmony.harmony);
     const root = normalizeRoot(harmony.harmony);

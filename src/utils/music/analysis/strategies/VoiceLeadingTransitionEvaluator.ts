@@ -27,11 +27,11 @@ interface ChordToneSet {
 }
 
 function chordSymbol(chord: string): string {
-  return chord.split("/")[0];
+  return chord.replace(/\/[A-G](?:#|b)?$/, "");
 }
 
 function bassSymbol(chord: string): string | undefined {
-  return chord.split("/")[1];
+  return chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
 }
 
 function normalizeRoot(chord: string): string {

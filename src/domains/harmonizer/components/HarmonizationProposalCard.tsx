@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import type {
   ReharmonizationProposal,
   ReharmonizationProposalKind,
+  ReharmonizationPresentationLayer,
   ReharmonizationPresentationRole,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
@@ -40,6 +41,11 @@ const PRESENTATION_ROLE_LABELS: Record<ReharmonizationPresentationRole, string> 
   comparative: "Comparação",
   adventurous: "Exploração"
 };
+const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string> = {
+  basic: "Harmonia básica",
+  "reference-aware": "Centro de referência",
+  reharmonization: "Rearmonização"
+};
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   omission: "Omissão",
   comparison: "Comparação",
@@ -59,7 +65,12 @@ export default function HarmonizationProposalCard({ proposal, onApply }: Harmoni
             </span>
             <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{proposal.name}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {proposal.presentationLayer && (
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-200 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded">
+                {PRESENTATION_LAYER_LABELS[proposal.presentationLayer]}
+              </span>
+            )}
             {proposal.presentationRole && (
               <span className="text-[10px] font-black uppercase tracking-widest text-sky-200 bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded">
                 {PRESENTATION_ROLE_LABELS[proposal.presentationRole]}
