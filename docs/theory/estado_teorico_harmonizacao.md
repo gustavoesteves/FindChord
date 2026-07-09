@@ -53,6 +53,8 @@ Aplicação no Find Chord:
 - As estratégias são validadas por backbone funcional, não apenas por lista de cifras.
 - Cadências e resoluções locais pesam mais do que a identidade estática do acorde.
 
+`Harmonia`, de Arnold Schoenberg, agora funciona como fonte local desta camada. Seu papel no projeto não é impor um conservatório de regras, mas reforçar a leitura de sucessão, equilíbrio, dissonância, modo menor e modulação como relações estruturais.
+
 ### 2.2 Harmonia popular brasileira e funcional aplicada
 
 Esta camada vem principalmente da leitura dos volumes de Érica Masson. Ela é particularmente útil porque traduz a teoria funcional para a prática de música popular, com foco em cifra, campo harmônico, dominantes secundários, SubV7, cadências ii-V, empréstimos e funções aparentes.
@@ -96,7 +98,21 @@ Aplicação no Find Chord:
 - O próximo salto não é simplesmente "adicionar mais acordes", mas classificar o grau de afastamento: conservador, moderado, cromático, modulante ou estruturalmente ambivalente.
 - Almada funciona como corpus pequeno, mas muito bom, para testes de regressão musical.
 
-### 2.4 Jazz moderno, improvisação e condução linear
+### 2.4 Harmonia jazz funcional em Berklee
+
+`The Berklee Book of Jazz Harmony` entra como segunda lente teórica forte.
+
+O livro reforça uma organização por função, tensão, expectativa e resolução. Isso confirma nosso caminho: o motor não deve harmonizar por etiqueta de gênero, mas por coerência melódica, funcional e cadencial.
+
+Uso no sistema:
+
+- graduar dominantes por nível de tensão;
+- separar dominante diatônica, dominante secundária, SubV e dominante alterada;
+- tratar modal interchange como cor funcional quando a função é preservada;
+- validar diminutos pela simetria e pela resolução;
+- deixar voicings como camada posterior de realização.
+
+### 2.5 Jazz moderno, improvisação e condução linear
 
 O documento histórico sobre jazz apontava quatro escolas que continuam úteis:
 
@@ -112,7 +128,7 @@ Aplicação no Find Chord:
 - Ligon sustenta a prioridade da melodia e da condução horizontal.
 - Russell e a escola modal apontam para uma futura análise que não dependa sempre de V-I.
 
-### 2.5 Contraponto aplicado e condução de vozes
+### 2.6 Contraponto aplicado e condução de vozes
 
 Esta camada não deve ser entendida como contraponto estrito de espécies, nem como obrigação de criar uma segunda melodia contrapontística contra um cantus firmus. Para o Find Chord, a utilidade está em outro lugar: avaliar se uma progressão funcionalmente válida também se move bem entre acordes.
 

@@ -35,6 +35,7 @@ function structuralBassCandidates(chord: string): string[] {
   const symbol = chordSymbol(chord);
   const resolved = resolveChordSymbol(symbol);
   if (!resolved.root) return [];
+  if (resolved.quality === "dim7") return [];
 
   const root = Note.pitchClass(resolved.root);
   const allowedOffsets = new Set([3, 4, 6, 7, 8, 10, 11]);

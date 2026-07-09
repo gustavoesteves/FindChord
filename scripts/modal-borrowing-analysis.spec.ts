@@ -55,6 +55,14 @@ describe("Modal borrowing analysis", () => {
     })).toBeNull();
   });
 
+  it("does not treat bVI7 as a plain parallel-minor borrowing", () => {
+    expect(analyzeModalBorrowingColor("Ab7", {
+      center: "C",
+      mode: "major",
+      idiom: "major-functional"
+    })).toBeNull();
+  });
+
   it("collects only bVI and bVII colors from a progression", () => {
     const analyses = analyzeModalBorrowingColors(["C", "Ab", "F", "Bb", "G7"], {
       center: "C",

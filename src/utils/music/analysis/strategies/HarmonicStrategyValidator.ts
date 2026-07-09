@@ -1,13 +1,14 @@
 import { Chord, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ReharmonizationMeasure } from "../models/ReharmonizationProposal";
-import { chordRoot } from "../../theory/ChordSymbolResolver";
+import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
 import { analyzeApparentFunction } from "./ApparentFunctionAnalysis";
 import {
   noteCoveredByChordSymbol,
   weightedMelodicCoverageByAnchor,
   weightedMelodicCoverage
 } from "./MelodicCoverage";
+import { analyzeModalBorrowingColor } from "./ModalBorrowingAnalysis";
 
 export type HarmonicStrategyId =
   | "I_IV_V"
@@ -194,6 +195,12 @@ export function classifyFunctionInMode(
     if (functionMap.T.includes(roman)) return "T";
     if (functionMap.PD.includes(roman)) return "PD";
     if (functionMap.D.includes(roman)) return "D";
+    const modalBorrowing = analyzeModalBorrowingColor(chord, {
+      center,
+      mode: "major",
+      idiom: "major-functional"
+    });
+    if (modalBorrowing) return modalBorrowing.impliedFunction;
   }
   return "OTHER";
 }
@@ -212,7 +219,7 @@ function secondaryDominantTarget(chord: string, center: string): string | null {
   const rootChroma = Note.chroma(root);
   const centerChroma = Note.chroma(center);
   if (rootChroma === undefined || centerChroma === undefined) return null;
-  if (!/7|dom/i.test(chordData.type) && !symbol.includes("7")) return null;
+  if (!isDominantLikeSymbol(symbol, chordData.type)) return null;
 
   const targetChroma = (rootChroma + 5) % 12;
   const targetDegree = (targetChroma - centerChroma + 12) % 12;
@@ -223,22 +230,30 @@ function secondaryDominantTarget(chord: string, center: string): string | null {
   return targetRoman;
 }
 
+function isDominantLikeSymbol(symbol: string, chordType: string): boolean {
+  if (/dom|dominant/i.test(chordType)) return true;
+  return /^[A-G](?:#|b)?(?:7|9|11|13|alt|\+7|7\+|7#5|7b5|7b9|7#9|7b13|\(.*7.*\))/i.test(symbol)
+    && !/^[A-G](?:#|b)?(?:m|mi|min|-|maj|ma|M|Δ|\^)/.test(symbol);
+}
+
 function isPassingDiminishedChord(chord: string): boolean {
   const symbol = chord.split("/")[0];
   const chordData = Chord.get(symbol);
-  return chordData.type === "diminished";
+  return chordData.type === "diminished" || chordData.type === "diminished seventh";
 }
 
 function diminishedPassingTarget(chord: string, nextChord: string | undefined, center: string): string | null {
   if (!nextChord || !isPassingDiminishedChord(chord)) return null;
 
-  const root = normalizeChordRoot(chord);
   const targetRoot = normalizeChordRoot(nextChord);
-  const rootChroma = Note.chroma(root);
   const targetChroma = Note.chroma(targetRoot);
-  if (rootChroma === undefined || targetChroma === undefined) return null;
+  if (targetChroma === undefined) return null;
 
-  const resolvesUpBySemitone = (targetChroma - rootChroma + 12) % 12 === 1;
+  const chordTones = chordPitchClasses(chord);
+  const resolvesUpBySemitone = chordTones.some(tone => {
+    const toneChroma = Note.chroma(tone);
+    return toneChroma !== undefined && (targetChroma - toneChroma + 12) % 12 === 1;
+  });
   if (!resolvesUpBySemitone) return null;
 
   const targetRoman = rootToRoman(targetRoot, center);
@@ -252,7 +267,7 @@ function tritoneSubstitutionTarget(chord: string, nextChord: string | undefined,
 
   const symbol = chord.split("/")[0];
   const chordData = Chord.get(symbol);
-  if (!/7|dom/i.test(chordData.type) && !symbol.includes("7")) return null;
+  if (!isDominantLikeSymbol(symbol, chordData.type)) return null;
 
   const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
   const rootChroma = Note.chroma(root);
@@ -272,7 +287,7 @@ function tritoneSubstitutionTarget(chord: string, nextChord: string | undefined,
 function isPotentialSubV7(chord: string, center: string): boolean {
   const symbol = chord.split("/")[0];
   const chordData = Chord.get(symbol);
-  if (!/7|dom/i.test(chordData.type) && !symbol.includes("7")) return false;
+  if (!isDominantLikeSymbol(symbol, chordData.type)) return false;
 
   const root = chordData.tonic ? Note.pitchClass(chordData.tonic) : normalizeChordRoot(chord);
   const centerChroma = Note.chroma(center);
@@ -295,7 +310,7 @@ function iiSubV7PreparationTarget(chord: string, nextChord: string | undefined, 
   if (rootChroma === undefined || nextRootChroma === undefined) return null;
 
   const preparesSubVByFifth = (rootChroma - nextRootChroma + 12) % 12 === 7;
-  const isMinorPreparation = /m/.test(chordData.symbol) || /minor/i.test(chordData.type);
+  const isMinorPreparation = isMinorChordSymbol(chordData.symbol, chordData.type);
   if (!preparesSubVByFifth || !isMinorPreparation) return null;
 
   return subVTarget;
@@ -309,8 +324,13 @@ function isPotentialIiSubV7Preparation(chord: string, center: string): boolean {
   if (centerChroma === undefined || rootChroma === undefined) return false;
 
   const isFlatSixPreparation = (rootChroma - centerChroma + 12) % 12 === 8;
-  const isMinorPreparation = /m/.test(chordData.symbol) || /minor/i.test(chordData.type);
+  const isMinorPreparation = isMinorChordSymbol(chordData.symbol, chordData.type);
   return isFlatSixPreparation && isMinorPreparation;
+}
+
+function isMinorChordSymbol(symbol: string, chordType: string): boolean {
+  if (/diminished/i.test(chordType)) return false;
+  return /minor/i.test(chordType) || /^[A-G](?:#|b)?(?:m|mi|min|-)/.test(symbol);
 }
 
 function chordMatchesRoman(chord: string, center: string, roman: string): boolean {

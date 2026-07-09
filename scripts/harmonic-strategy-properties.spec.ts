@@ -240,6 +240,25 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(validation.report.expansions).toContain("SECONDARY_DOMINANT_RESOLUTION");
   });
 
+  it("does not classify maj7 and m7 diatonic sevenths as secondary dominants", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center: "C",
+      melody: almadaMelody,
+      measures: [
+        { measureIndex: 1, chords: ["Cmaj7", "Am7"] },
+        { measureIndex: 2, chords: ["Dm7", "Dm7/C"] },
+        { measureIndex: 3, chords: ["Bm7b5", "G7"] },
+        { measureIndex: 4, chords: ["Cmaj7"] }
+      ]
+    };
+
+    const report = analyzeHarmonicStrategy(candidate);
+
+    expect(report.secondaryDominantExcursions).toBe(0);
+    expect(report.backbone).toEqual(["T", "PD", "D", "T"]);
+  });
+
   it("rejects unresolved or wrongly resolved secondary dominants", () => {
     const candidate: HarmonizationCandidate = {
       strategy: "DOMINANTES_SECUNDARIAS",
@@ -267,9 +286,9 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
       center: "C",
       melody: almadaMelody,
       measures: [
-        { measureIndex: 1, chords: ["C", "Am"] },
-        { measureIndex: 2, chords: ["Edim", "F", "F/C"] },
-        { measureIndex: 3, chords: ["Bm7b5", "F#dim", "G7"] },
+        { measureIndex: 1, chords: ["C", "G#dim7", "Am"] },
+        { measureIndex: 2, chords: ["Edim7", "F", "F/C"] },
+        { measureIndex: 3, chords: ["Bm7b5", "F#dim7", "G7"] },
         { measureIndex: 4, chords: ["C"] }
       ]
     };
@@ -278,7 +297,7 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
 
     expect(validation.accepted).toBe(true);
     expect(validation.report.backbone).toEqual(["T", "PD", "D", "T"]);
-    expect(validation.report.diminishedPassingExcursions).toBe(2);
+    expect(validation.report.diminishedPassingExcursions).toBe(3);
     expect(validation.report.unresolvedDiminishedPassings).toBe(0);
     expect(validation.report.invalidChromaticEscapes).toBe(0);
     expect(validation.report.functionalEscapes).toBe(0);
@@ -360,5 +379,8 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     expect(attempt.validation.report.chordCount).toBeGreaterThanOrEqual(6);
     expect(attempt.validation.report.chordCount).toBeLessThanOrEqual(10);
     expect(attempt.proposal?.name).toBe("Estratégia — Diminutos de passagem");
+    expect(attempt.proposal?.measures.flatMap(measure => measure.chords)).toEqual(
+      expect.arrayContaining(["G#dim7", "Edim7", "F#dim7"])
+    );
   });
 });

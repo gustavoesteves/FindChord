@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
+import { auditAlmadaExample } from "./audit-almada-example";
 import {
   analyzeHarmonicStrategy,
   validateHarmonicStrategy,
@@ -179,6 +180,43 @@ describe("F29 Cadential SubV7 Strategy", () => {
     expect(attempt.proposal?.explanation).toEqual(expect.arrayContaining([
       "prepara o SubV7 com ii cromático relacionado",
       "encadeia ii cromático diretamente ao SubV7"
+    ]));
+  });
+
+  it("recognizes secondary SubV resolutions for diatonic targets", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "SUBV7_CADENCIAL",
+      center: "C",
+      melody: subv7FriendlyMelody,
+      measures: [
+        { measureIndex: 1, chords: ["C"] },
+        { measureIndex: 2, chords: ["Gb7", "F"] },
+        { measureIndex: 3, chords: ["Ab7", "G7"] },
+        { measureIndex: 4, chords: ["Db7", "C"] }
+      ]
+    };
+
+    const report = analyzeHarmonicStrategy(candidate);
+
+    expect(report.subV7Excursions).toBe(3);
+    expect(report.unresolvedSubV7s).toBe(0);
+    expect(report.invalidChromaticEscapes).toBe(0);
+    expect(report.expansions).toContain("TRITONE_SUBSTITUTION_RESOLUTION");
+  });
+
+  it("generates functional SubV as an Almada-oriented reharmonization alternative", () => {
+    const { generated } = auditAlmadaExample();
+    const primary = generated.find(proposal => proposal.role === "primary");
+    const subv = generated.find(proposal => proposal.name === "Estratégia — SubV funcional");
+    const chords = subv?.chords.join(" / ") || "";
+
+    expect(primary?.name).toBe("Estratégia — Tonal Clássico");
+    expect(subv?.role).toBe("alternative");
+    expect(chords).toContain("Gb7");
+    expect(chords).toContain("Db7");
+    expect(subv?.explanation).toEqual(expect.arrayContaining([
+      expect.stringContaining("prepara graus diatônicos por SubV"),
+      "resolve cada SubV por semitom descendente no acorde-alvo"
     ]));
   });
 });

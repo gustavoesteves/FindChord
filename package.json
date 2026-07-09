@@ -16,6 +16,12 @@
     "import:select-calibration": "jiti scripts/select-promoted-import-calibration-set.ts",
     "import:calibration-workplan": "jiti scripts/generate-calibration-workplan.ts",
     "import:audit-calibration-foundation": "jiti scripts/audit-calibration-foundation.ts",
+    "import:audit-ranking-calibration": "jiti scripts/audit-ranking-calibration.ts",
+    "import:audit-chromatic-calibration": "jiti scripts/audit-chromatic-calibration.ts",
+    "import:audit-bass-calibration": "jiti scripts/audit-bass-calibration.ts",
+    "import:audit-almada-example": "jiti scripts/audit-almada-example.ts",
+    "import:audit-dominant-tension": "jiti scripts/audit-dominant-tension-corpus.ts",
+    "import:audit-unresolved-dominants": "jiti scripts/audit-unresolved-dominant-tension.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

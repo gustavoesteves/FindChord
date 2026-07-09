@@ -34,6 +34,14 @@ const BORROWED_QUALITIES: ChordQuality[] = [
   "13sus4"
 ];
 
+const FLAT_VI_QUALITIES: ChordQuality[] = [
+  "maj",
+  "maj7",
+  "6",
+  "6_9",
+  "add9"
+];
+
 function chromaticDistance(root: string | null, center: string): number | null {
   if (!root) return null;
   const rootChroma = Note.chroma(root);
@@ -51,6 +59,11 @@ function isBorrowableQuality(quality: ChordQuality): boolean {
   return BORROWED_QUALITIES.includes(quality);
 }
 
+function isBorrowableQualityForDegree(quality: ChordQuality, degree: number): boolean {
+  if (degree === 8) return FLAT_VI_QUALITIES.includes(quality);
+  return isBorrowableQuality(quality);
+}
+
 export function analyzeModalBorrowingColor(
   chord: string,
   context: ModalBorrowingContext
@@ -59,11 +72,11 @@ export function analyzeModalBorrowingColor(
   if (context.idiom === "modal" || context.idiom === "minor-functional") return null;
 
   const resolved = resolveChordSymbol(chord);
-  if (!isBorrowableQuality(resolved.quality)) return null;
 
   const root = normalizedRoot(chord);
   const degree = chromaticDistance(root, context.center);
   if (!root || (degree !== 8 && degree !== 10)) return null;
+  if (!isBorrowableQualityForDegree(resolved.quality, degree)) return null;
 
   if (degree === 8) {
     return {

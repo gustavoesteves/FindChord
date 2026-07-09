@@ -351,4 +351,66 @@ describe("F28 Voice Leading Proposal Ranking", () => {
       "Condução de vozes: baixo do SubV7 resolve por semitom descendente"
     ]));
   });
+
+  it("rewards altered dominant tension only when it resolves locally", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("unsupported-alt", ["Cmaj7", "G7alt", "Bmaj7"]),
+      proposal("resolved-alt", ["Cmaj7", "G7alt", "Cmaj7"])
+    ], phraseContext, anchors);
+
+    const resolved = ranked.find(item => item.id === "resolved-alt");
+    const unsupported = ranked.find(item => item.id === "unsupported-alt");
+
+    expect(ranked[0].id).toBe("resolved-alt");
+    expect(resolved?.dominantTensionRankBonus).toBeGreaterThan(0);
+    expect(resolved?.unsupportedDominantTensionPenalty).toBe(0);
+    expect(resolved?.explanation).toContain("Ranking: 1 tensão dominante alterada resolve localmente");
+    expect(unsupported?.unsupportedDominantTensionPenalty).toBeGreaterThan(0);
+    expect(unsupported?.explanation).toContain("Ranking: 1 tensão dominante alterada sem alvo local fica atrás");
+  });
+
+  it("softens lower-neighbor side arrival only when melody supports the arrival", () => {
+    const withoutMelodicSupport = rankReharmonizationProposalsByVoiceLeading([
+      proposal("unsupported-alt", ["Cmaj7", "G7alt", "Bmaj7"])
+    ], phraseContext, [
+      { measureIndex: 2, pitch: "A", duration: 960 }
+    ])[0];
+    const withMelodicSupport = rankReharmonizationProposalsByVoiceLeading([
+      proposal("melodic-side-arrival", ["Cmaj7", "G7alt", "Bmaj7"])
+    ], phraseContext, [
+      { measureIndex: 2, pitch: "D#", duration: 960 },
+      { measureIndex: 2, pitch: "F#", duration: 960 }
+    ])[0];
+
+    expect(withMelodicSupport.unsupportedDominantTensionPenalty).toBeLessThan(
+      withoutMelodicSupport.unsupportedDominantTensionPenalty || 0
+    );
+    expect(withMelodicSupport.unsupportedDominantTensionPenalty).toBeGreaterThan(0);
+    expect(withMelodicSupport.explanation).toContain(
+      "Ranking: 1 tensão dominante alterada tem chegada lateral sustentada pela melodia"
+    );
+  });
+
+  it("keeps delayed, prolonged and deceptive altered dominants as contextual support", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("delayed-alt", ["Cmaj7", "G7alt", "Dm7", "Cmaj7"]),
+      proposal("prolonged-alt", ["Cmaj7", "G7alt", "G13", "Cmaj7"]),
+      proposal("deceptive-alt", ["Cmaj7", "G7(b9)", "Am7"])
+    ], phraseContext, anchors);
+
+    for (const item of ranked) {
+      expect(item.dominantTensionRankBonus).toBeGreaterThan(0);
+      expect(item.unsupportedDominantTensionPenalty).toBe(0);
+      expect(item.explanation).toContain("Ranking: 1 tensão dominante alterada tem resolução contextual");
+    }
+  });
+
+  it("does not penalize unresolved color dominants as altered tension", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("color-dominant", ["Cmaj7", "G13", "F#maj7"])
+    ], phraseContext, anchors);
+
+    expect(ranked[0].dominantTensionRankBonus).toBe(0);
+    expect(ranked[0].unsupportedDominantTensionPenalty).toBe(0);
+  });
 });
