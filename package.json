@@ -24,6 +24,7 @@
     "import:audit-unresolved-dominants": "jiti scripts/audit-unresolved-dominant-tension.ts",
     "report:proposal-curation": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-proposal-curation-report.ts",
     "report:proposal-consequences": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-proposal-consequence-report.ts",
+    "report:local-route-repetition": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-local-route-repetition-report.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

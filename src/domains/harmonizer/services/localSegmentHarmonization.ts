@@ -14,9 +14,23 @@ import {
 } from "../../../utils/music/analysis/strategies/PresentableWindowSelector";
 import { applyReferenceCenterToPhraseContext } from "../../../utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 import { rankReharmonizationProposalsByVoiceLeading } from "../../../utils/music/analysis/strategies/VoiceLeadingProposalRanker";
-import { proposalHarmonicIdentity } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
+import {
+  proposalChordSequenceIdentity,
+  proposalHarmonicIdentity
+} from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
 
 export interface LocalSegmentHarmonization {
+  id: string;
+  title: string;
+  reasonLabel: string;
+  measureIndexes: number[];
+  selectedCenter: string;
+  proposalCount: number;
+  primaryProposal: ReharmonizationProposal;
+  occurrences?: LocalSegmentOccurrence[];
+}
+
+export interface LocalSegmentOccurrence {
   id: string;
   title: string;
   reasonLabel: string;
@@ -113,6 +127,37 @@ export function removeRepeatedLocalSegmentIdeas(
     shownIdentities.add(identity);
     return true;
   });
+}
+
+export function groupRepeatedLocalSegmentRoutes(
+  segments: LocalSegmentHarmonization[]
+): LocalSegmentHarmonization[] {
+  const grouped: LocalSegmentHarmonization[] = [];
+
+  for (const segment of segments) {
+    const key = `${segment.selectedCenter}|${proposalChordSequenceIdentity(segment.primaryProposal)}`;
+    const group = grouped.find(candidate => (
+      `${candidate.selectedCenter}|${proposalChordSequenceIdentity(candidate.primaryProposal)}` === key
+    ));
+    const occurrence: LocalSegmentOccurrence = {
+      id: segment.id,
+      title: segment.title,
+      reasonLabel: segment.reasonLabel,
+      measureIndexes: segment.measureIndexes,
+      selectedCenter: segment.selectedCenter,
+      proposalCount: segment.proposalCount,
+      primaryProposal: segment.primaryProposal
+    };
+
+    if (!group) {
+      grouped.push({ ...segment, occurrences: [occurrence] });
+      continue;
+    }
+
+    group.occurrences = [...(group.occurrences || []), occurrence];
+  }
+
+  return grouped;
 }
 
 function reasonLabel(window: PresentableHarmonizationWindow): string {

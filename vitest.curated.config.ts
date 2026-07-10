@@ -52,6 +52,8 @@ export default defineConfig({
       "scripts/proposal-presentation-planner.spec.ts",
       "scripts/proposal-harmonic-identity.spec.ts",
       "scripts/proposal-curation-audit.spec.ts",
+      "scripts/local-route-repetition-audit.spec.ts",
+      "scripts/local-route-repetition-audit.spec.ts",
       "scripts/proposal-consequence-similarity.spec.ts",
       "scripts/proposal-consequence-audit.spec.ts",
       "scripts/presentable-window-selector.spec.ts",

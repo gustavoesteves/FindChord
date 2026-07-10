@@ -25,6 +25,7 @@ import {
 } from "../../../utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 import {
   buildLocalSegmentHarmonizations,
+  groupRepeatedLocalSegmentRoutes,
   removeRepeatedLocalSegmentIdeas
 } from "../services/localSegmentHarmonization";
 import { dedupeHarmonicallyEquivalentProposals } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
@@ -174,7 +175,9 @@ export function useHarmonizerProposals({
       primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
       boldnessMode: PRESENTATION_MODE
     });
-    return removeRepeatedLocalSegmentIdeas(segments, displayedProposals);
+    return groupRepeatedLocalSegmentRoutes(
+      removeRepeatedLocalSegmentIdeas(segments, displayedProposals)
+    );
   }, [
     displayedProposals,
     melodyAnchorsData.allAnchors,

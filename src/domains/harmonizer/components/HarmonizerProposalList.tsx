@@ -181,7 +181,9 @@ export default function HarmonizerProposalList({
             {localSegments.map(segment => (
               <div key={segment.id} className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <span className="text-zinc-300">{segment.title}</span>
+                  <span className="text-zinc-300">
+                    {segment.title}{segment.occurrences && segment.occurrences.length > 1 ? ` (${segment.occurrences.length} locais)` : ""}
+                  </span>
                   <span className="text-zinc-600">/</span>
                   <span className="text-sky-300">{segment.selectedCenter}</span>
                   <span className="text-zinc-600">/</span>
@@ -190,6 +192,7 @@ export default function HarmonizerProposalList({
                 <HarmonizationProposalCard
                   proposal={segment.primaryProposal}
                   applyLabel="Aplicar trecho em Escrever"
+                  localOccurrences={segment.occurrences}
                   onApply={onApplyProposal}
                 />
               </div>

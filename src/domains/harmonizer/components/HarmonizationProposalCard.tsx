@@ -7,6 +7,7 @@ import type {
   ReharmonizationPresentationRole,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
+import type { LocalSegmentOccurrence } from "../services/localSegmentHarmonization";
 import type {
   HarmonicDiagnosticCategory
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
@@ -15,6 +16,7 @@ interface HarmonizationProposalCardProps {
   proposal: ReharmonizationProposal;
   onApply: (proposal: ReharmonizationProposal) => void;
   applyLabel?: string;
+  localOccurrences?: LocalSegmentOccurrence[];
 }
 
 function measureLabel(currentMeasure: number, nextMeasure?: number): string {
@@ -74,7 +76,8 @@ const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
 export default function HarmonizationProposalCard({
   proposal,
   onApply,
-  applyLabel = "Aplicar em Escrever"
+  applyLabel = "Aplicar em Escrever",
+  localOccurrences = []
 }: HarmonizationProposalCardProps) {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [areVariantsOpen, setAreVariantsOpen] = useState(false);
@@ -208,6 +211,29 @@ export default function HarmonizationProposalCard({
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {localOccurrences.length > 1 && (
+              <div className="mt-4 pt-3 border-t border-zinc-800/50">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300">
+                  Outros locais ({localOccurrences.length - 1})
+                </span>
+                <div className="mt-3 flex flex-col gap-2">
+                  {localOccurrences.slice(1).map(occurrence => (
+                    <div key={occurrence.id} className="flex flex-wrap items-center justify-between gap-2 border-l-2 border-emerald-500/30 pl-3">
+                      <span className="text-xs text-zinc-300">{occurrence.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => onApply(occurrence.primaryProposal)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 text-xs font-bold transition cursor-pointer"
+                      >
+                        Aplicar neste local
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

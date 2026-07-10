@@ -14,6 +14,13 @@ export function proposalHarmonicIdentity(proposal: ReharmonizationProposal): str
     .join("|");
 }
 
+export function proposalChordSequenceIdentity(proposal: ReharmonizationProposal): string {
+  return [...proposal.measures]
+    .sort((a, b) => a.measureIndex - b.measureIndex)
+    .flatMap(measure => measure.chords.map(chordIdentity))
+    .join(",");
+}
+
 export function dedupeHarmonicallyEquivalentProposals(
   proposals: ReharmonizationProposal[]
 ): ReharmonizationProposal[] {

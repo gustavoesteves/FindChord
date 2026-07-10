@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
-import { buildLocalSegmentHarmonizations } from "../src/domains/harmonizer/services/localSegmentHarmonization";
+import {
+  buildLocalSegmentHarmonizations,
+  groupRepeatedLocalSegmentRoutes,
+  type LocalSegmentHarmonization
+} from "../src/domains/harmonizer/services/localSegmentHarmonization";
+import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 
 function anchor(measureIndex: number, pitch: string): MelodicAnchor {
   return { measureIndex, pitch, duration: 1920 };
@@ -58,5 +63,34 @@ describe("buildLocalSegmentHarmonizations", () => {
     expect(segments[0].measureIndexes).not.toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(segments[0].primaryProposal.measures.length).toBeGreaterThan(0);
     expect(segments[0].reasonLabel).toBe("Boa referência");
+  });
+
+  it("groups one route while preserving each applicable location", () => {
+    const proposal = (id: string, measureIndex: number): ReharmonizationProposal => ({
+      id,
+      kind: "validated-harmonization",
+      name: "Estratégia — Centro de referência",
+      measures: [{ measureIndex, chords: ["C", "G7", "C"] }],
+      explanation: [],
+      bassLine: ["C", "G", "C"]
+    });
+    const segments: LocalSegmentHarmonization[] = [1, 9].map((measureIndex, index) => ({
+      id: `segment-${index}`,
+      title: `Compassos ${measureIndex}-${measureIndex + 7}`,
+      reasonLabel: "Boa referência",
+      measureIndexes: [measureIndex],
+      selectedCenter: "C maior",
+      proposalCount: 1,
+      primaryProposal: proposal(`proposal-${index}`, measureIndex)
+    }));
+
+    const grouped = groupRepeatedLocalSegmentRoutes(segments);
+
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].occurrences).toHaveLength(2);
+    expect(grouped[0].occurrences?.map(occurrence => occurrence.title)).toEqual([
+      "Compassos 1-8",
+      "Compassos 9-16"
+    ]);
   });
 });
