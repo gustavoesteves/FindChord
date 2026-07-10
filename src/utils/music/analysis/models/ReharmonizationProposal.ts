@@ -61,4 +61,5 @@ export interface ReharmonizationProposal {
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
   cadentialTarget?: string;
   diagnostics?: HarmonicDiagnostic[];
+  colorVariants?: ReharmonizationProposal[];
 }

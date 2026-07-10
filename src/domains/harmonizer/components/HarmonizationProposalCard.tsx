@@ -14,11 +14,30 @@ import type {
 interface HarmonizationProposalCardProps {
   proposal: ReharmonizationProposal;
   onApply: (proposal: ReharmonizationProposal) => void;
+  applyLabel?: string;
 }
 
 function measureLabel(currentMeasure: number, nextMeasure?: number): string {
   if (!nextMeasure || nextMeasure <= currentMeasure + 1) return `Comp. ${currentMeasure}`;
   return `Comp. ${currentMeasure}-${nextMeasure - 1}`;
+}
+
+interface ChordChange {
+  measureIndex: number;
+  from: string;
+  to: string;
+}
+
+function chordChanges(
+  proposal: ReharmonizationProposal,
+  variant: ReharmonizationProposal
+): ChordChange[] {
+  const baseByMeasure = new Map(proposal.measures.map(measure => [measure.measureIndex, measure.chords]));
+  return variant.measures.flatMap(measure => measure.chords.flatMap((chord, chordIndex) => {
+    const baseChord = baseByMeasure.get(measure.measureIndex)?.[chordIndex];
+    if (!baseChord || baseChord === chord) return [];
+    return [{ measureIndex: measure.measureIndex, from: baseChord, to: chord }];
+  }));
 }
 
 const KIND_LABELS: Record<ReharmonizationProposalKind, string> = {
@@ -52,8 +71,13 @@ const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   compatibility: "Compatibilidade"
 };
 
-export default function HarmonizationProposalCard({ proposal, onApply }: HarmonizationProposalCardProps) {
+export default function HarmonizationProposalCard({
+  proposal,
+  onApply,
+  applyLabel = "Aplicar em Escrever"
+}: HarmonizationProposalCardProps) {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [areVariantsOpen, setAreVariantsOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
@@ -80,7 +104,7 @@ export default function HarmonizationProposalCard({ proposal, onApply }: Harmoni
             onClick={() => onApply(proposal)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"
           >
-            Aplicar em Escrever
+            {applyLabel}
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
           </div>
@@ -138,6 +162,54 @@ export default function HarmonizationProposalCard({ proposal, onApply }: Harmoni
                 );
               })}
             </div>
+
+            {proposal.colorVariants && proposal.colorVariants.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-zinc-800/50">
+                <button
+                  type="button"
+                  onClick={() => setAreVariantsOpen(!areVariantsOpen)}
+                  className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-amber-300 hover:text-amber-200 transition cursor-pointer"
+                  aria-expanded={areVariantsOpen}
+                >
+                  Variações de cor ({proposal.colorVariants.length})
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${areVariantsOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {areVariantsOpen && (
+                  <div className="mt-3 flex flex-col gap-3">
+                    {proposal.colorVariants.map(variant => (
+                      <div
+                        key={variant.id}
+                        className="flex flex-col gap-2 border-l-2 border-amber-500/30 pl-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-zinc-300">{variant.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => onApply(variant)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 text-xs font-bold transition cursor-pointer"
+                          >
+                            Aplicar variação
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {chordChanges(proposal, variant).map((change, index) => (
+                            <span
+                              key={`${variant.id}-${change.measureIndex}-${index}`}
+                              className="text-xs text-zinc-400"
+                            >
+                              Comp. {change.measureIndex}: <span className="text-zinc-500">{change.from}</span>
+                              {" → "}<span className="text-amber-200">{change.to}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {(proposal.explanation.length > 0 || (proposal.diagnostics && proposal.diagnostics.length > 0)) && (
               <div className="mt-3 pt-3 border-t border-zinc-800/50">

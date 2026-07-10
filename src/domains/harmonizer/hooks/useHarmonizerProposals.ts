@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { GravityFieldManager } from "../../../utils/music/analysis/engines/GravityFieldManager";
 import { PhraseAnalysisEngine } from "../../../utils/music/analysis/engines/PhraseAnalysisEngine";
 import type { ScoreSnapshot } from "../../../utils/music/analysis/models/ScoreSnapshot";
-import type { ReharmonizationBoldnessMode } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import {
   diagnostic,
   diagnosticsForMode,
@@ -24,17 +23,27 @@ import {
   applyReferenceCenterToPhraseContext,
   formatReferenceCenterEvidenceSentence
 } from "../../../utils/music/analysis/strategies/ReferenceAwarePhraseContext";
+import {
+  buildLocalSegmentHarmonizations,
+  removeRepeatedLocalSegmentIdeas
+} from "../services/localSegmentHarmonization";
+import { dedupeHarmonicallyEquivalentProposals } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
+import { groupNearEquivalentColorVariants } from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
+
+const PRESENTATION_MODE = "balanced" as const;
+
+function uniqueMeasureIndexes(anchors: { measureIndex: number }[]): number[] {
+  return Array.from(new Set(anchors.map(anchor => anchor.measureIndex))).sort((a, b) => a - b);
+}
 
 interface UseHarmonizerProposalsParams {
   scoreSnapshot: ScoreSnapshot | null;
   activeSection: FormalSection | undefined;
-  boldnessMode?: ReharmonizationBoldnessMode;
 }
 
 export function useHarmonizerProposals({
   scoreSnapshot,
-  activeSection,
-  boldnessMode = "balanced"
+  activeSection
 }: UseHarmonizerProposalsParams) {
   const melodyAnchorsData = useMemo(
     () => selectMelodicAnchors(scoreSnapshot?.notes, activeSection),
@@ -98,15 +107,23 @@ export function useHarmonizerProposals({
       ? [existingHarmonyProposal, ...alternatives]
       : alternatives;
 
-    return annotateProposalPresentationRoles(withReference, boldnessMode, phraseContext || undefined);
+    const uniqueProposals = dedupeHarmonicallyEquivalentProposals(withReference);
+    const groupedProposals = phraseContext
+      ? groupNearEquivalentColorVariants(uniqueProposals, {
+        center: phraseContext.selectedCenter.tonic,
+        classificationMode: phraseContext.selectedCenter.mode === "minor"
+          ? "minor-functional"
+          : "major-functional"
+      })
+      : uniqueProposals;
+    return annotateProposalPresentationRoles(groupedProposals, PRESENTATION_MODE, phraseContext || undefined);
   }, [
     existingHarmonyProposal,
     controlledReharmonizationProposals,
     proposals,
     phraseContext,
     melodyAnchorsData.anchors,
-    sectionHarmonies,
-    boldnessMode
+    sectionHarmonies
   ]);
 
   const referenceDiagnostics = useMemo(() => {
@@ -149,14 +166,32 @@ export function useHarmonizerProposals({
     [displayedProposals]
   );
 
+  const localSegments = useMemo(() => {
+    const segments = buildLocalSegmentHarmonizations({
+      anchors: melodyAnchorsData.allAnchors,
+      keySignature: scoreSnapshot?.metadata?.keySignature,
+      referenceHarmonies: sectionHarmonies,
+      primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
+      boldnessMode: PRESENTATION_MODE
+    });
+    return removeRepeatedLocalSegmentIdeas(segments, displayedProposals);
+  }, [
+    displayedProposals,
+    melodyAnchorsData.allAnchors,
+    melodyAnchorsData.anchors,
+    scoreSnapshot?.metadata?.keySignature,
+    sectionHarmonies
+  ]);
+
   const visibleDiagnostics = useMemo(() => diagnosticsForMode(
     [...omittedStrategyDiagnostics, ...referenceDiagnostics, ...presentationDiagnostics],
-    boldnessMode
-  ), [omittedStrategyDiagnostics, referenceDiagnostics, presentationDiagnostics, boldnessMode]);
+    PRESENTATION_MODE
+  ), [omittedStrategyDiagnostics, referenceDiagnostics, presentationDiagnostics]);
 
   return {
     displayedProposals,
     melodyAnchorsData,
+    localSegments,
     phraseContext,
     rejectedExperimentalCount,
     omittedStrategyDiagnostics: visibleDiagnostics

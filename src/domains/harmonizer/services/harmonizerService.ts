@@ -10,6 +10,7 @@ import { generateControlledSubstitutionProposals } from "../../../utils/music/an
 
 export interface MelodicAnchorSelection {
   anchors: MelodicAnchor[];
+  allAnchors: MelodicAnchor[];
   isTruncated: boolean;
 }
 
@@ -44,7 +45,7 @@ export function selectMelodicAnchors(
   activeSection: SectionRange | undefined,
   limit = 32
 ): MelodicAnchorSelection {
-  if (!notes) return { anchors: [], isTruncated: false };
+  if (!notes) return { anchors: [], allAnchors: [], isTruncated: false };
 
   const sortedNotes = [...notes].sort((a, b) => a.tickStart - b.tickStart);
   let relevantNotes = sortedNotes;
@@ -70,6 +71,7 @@ export function selectMelodicAnchors(
 
   return {
     anchors: anchors.slice(0, limit),
+    allAnchors: anchors,
     isTruncated: anchors.length > limit
   };
 }

@@ -1,8 +1,5 @@
 import type { ReharmonizationProposal } from "../../../utils/music/analysis/models/ReharmonizationProposal";
-import type {
-  ReharmonizationBoldnessMode,
-  ReharmonizationPresentationLayer
-} from "../../../utils/music/analysis/models/ReharmonizationProposal";
+import type { ReharmonizationPresentationLayer } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import { Palette } from "lucide-react";
 import {
   groupDiagnosticsBySource,
@@ -11,27 +8,22 @@ import {
   type HarmonicDiagnosticSource
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
 import { groupProposalsByPresentationLayer } from "../../../utils/music/analysis/strategies/ProposalPresentationPlanner";
+import type { LocalSegmentHarmonization } from "../services/localSegmentHarmonization";
 import HarmonizationProposalCard from "./HarmonizationProposalCard";
 
 interface HarmonizerProposalListProps {
   proposals: ReharmonizationProposal[];
+  localSegments: LocalSegmentHarmonization[];
   hasMelodicAnchors: boolean;
   rejectedExperimentalCount: number;
   omittedStrategyDiagnostics: HarmonicDiagnostic[];
   isExpanded: boolean;
-  boldnessMode: ReharmonizationBoldnessMode;
-  onBoldnessModeChange: (mode: ReharmonizationBoldnessMode) => void;
   onToggleExpanded: () => void;
   onApplyProposal: (proposal: ReharmonizationProposal) => void;
 }
 
 const COLLAPSED_LAYER_PROPOSAL_LIMIT = 2;
 const COLLAPSED_FUNCTIONAL_COLOR_LIMIT = 3;
-const BOLDNESS_OPTIONS: Array<{ mode: ReharmonizationBoldnessMode; label: string }> = [
-  { mode: "simple", label: "Simples" },
-  { mode: "balanced", label: "Equilibrado" },
-  { mode: "exploratory", label: "Exploratório" }
-];
 const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
   reference: "Referência",
@@ -64,12 +56,11 @@ function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
 
 export default function HarmonizerProposalList({
   proposals,
+  localSegments,
   hasMelodicAnchors,
   rejectedExperimentalCount,
   omittedStrategyDiagnostics,
   isExpanded,
-  boldnessMode,
-  onBoldnessModeChange,
   onToggleExpanded,
   onApplyProposal
 }: HarmonizerProposalListProps) {
@@ -96,27 +87,6 @@ export default function HarmonizerProposalList({
 
   return (
     <div className="flex flex-col gap-6">
-      {proposals.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {BOLDNESS_OPTIONS.map(option => {
-            const isActive = option.mode === boldnessMode;
-            return (
-              <button
-                key={option.mode}
-                onClick={() => onBoldnessModeChange(option.mode)}
-                className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition cursor-pointer ${
-                  isActive
-                    ? "bg-sky-500/15 border-sky-400/40 text-sky-100"
-                    : "bg-zinc-900/30 border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {rejectedExperimentalCount > 0 && (
         <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
           {rejectedExperimentalMessage(rejectedExperimentalCount)}
@@ -191,6 +161,38 @@ export default function HarmonizerProposalList({
                 proposal={proposal}
                 onApply={onApplyProposal}
               />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {localSegments.length > 0 && (
+        <section className="flex flex-col gap-3 border-t border-zinc-800/70 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+              Trechos locais
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              {localSegments.length}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {localSegments.map(segment => (
+              <div key={segment.id} className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-zinc-300">{segment.title}</span>
+                  <span className="text-zinc-600">/</span>
+                  <span className="text-sky-300">{segment.selectedCenter}</span>
+                  <span className="text-zinc-600">/</span>
+                  <span className="text-emerald-300">{segment.reasonLabel}</span>
+                </div>
+                <HarmonizationProposalCard
+                  proposal={segment.primaryProposal}
+                  applyLabel="Aplicar trecho em Escrever"
+                  onApply={onApplyProposal}
+                />
+              </div>
             ))}
           </div>
         </section>
