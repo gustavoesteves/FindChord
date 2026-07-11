@@ -27,7 +27,7 @@ const COLLAPSED_FUNCTIONAL_COLOR_LIMIT = 3;
 const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
   reference: "Referência",
-  presentation: "Apresentação"
+  presentation: "Organização"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   omission: "Omissão",
@@ -96,7 +96,7 @@ export default function HarmonizerProposalList({
       {diagnosticGroups.length > 0 && (
         <div className="rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
           <div className="font-black uppercase tracking-widest text-[10px] text-sky-200 mb-2">
-            Leituras omitidas
+            Leituras ocultas
           </div>
           <div className="flex flex-col gap-3">
             {diagnosticGroups.map((group) => (

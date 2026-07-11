@@ -10,8 +10,8 @@ interface ContextualScaleSuggestionsPanelProps {
 
 const FUNCTION_LABELS: Record<ContextualScaleCandidate["harmonicFunction"], string> = {
   tonic: "Repouso",
-  predominant: "Preparacao",
-  dominant: "Resolucao",
+  predominant: "Preparação",
+  dominant: "Resolução",
   modal: "Modal",
   color: "Cor"
 };
@@ -19,7 +19,7 @@ const FUNCTION_LABELS: Record<ContextualScaleCandidate["harmonicFunction"], stri
 const INTENT_LABELS: Record<ContextualScaleCandidate["intent"], string> = {
   inside: "Dentro",
   functional: "Funcional",
-  tension: "Tensao",
+  tension: "Tensão",
   outside: "Fora"
 };
 
@@ -33,8 +33,8 @@ const INTENT_CLASSNAMES: Record<ContextualScaleCandidate["intent"], string> = {
 const ROLE_LABELS: Record<NonNullable<SectionScaleSuggestionSet["presentationRole"]>, string> = {
   primary: "Principal",
   alternative: "Alternativa",
-  comparative: "Comparacao",
-  adventurous: "Exploracao"
+  comparative: "Comparação",
+  adventurous: "Exploração"
 };
 
 const MELODIC_FIT_LABELS: Record<SectionScaleSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
@@ -132,13 +132,13 @@ function ScaleReading({ candidate, compact = false }: { candidate: ContextualSca
               <span>Alvos: <strong className="text-sky-200">{candidate.guideToneTargets.join(", ")}</strong></span>
             )}
             {candidate.guideToneResolutions.length > 0 && (
-              <span>Resolucoes: <strong className="text-sky-200">{candidate.guideToneResolutions.join(", ")}</strong></span>
+              <span>Resoluções: <strong className="text-sky-200">{candidate.guideToneResolutions.join(", ")}</strong></span>
             )}
             {candidate.linearFragments.length > 0 && (
               <span>Fragmentos: <strong className="text-emerald-100">{candidate.linearFragments.join(", ")}</strong></span>
             )}
             {candidate.supportedTensions.length > 0 && (
-              <span>Tensoes: <strong className="text-amber-200">{candidate.supportedTensions.join(", ")}</strong></span>
+              <span>Tensões: <strong className="text-amber-200">{candidate.supportedTensions.join(", ")}</strong></span>
             )}
             {candidate.passingNotes.length > 0 && (
               <span>Passagens: <strong className="text-amber-100">{candidate.passingNotes.join(", ")}</strong></span>

@@ -7,6 +7,14 @@ interface HarmonizerHeaderProps {
   onSync: () => void;
 }
 
+function cadenceLabel(cadenceType: string): string {
+  if (cadenceType === "HALF") return "meia cadência";
+  if (cadenceType === "AUTHENTIC") return "cadência autêntica";
+  if (cadenceType === "PLAGAL") return "cadência plagal";
+  if (cadenceType === "DECEPTIVE") return "cadência deceptiva";
+  return "cadência em aberto";
+}
+
 export default function HarmonizerHeader({
   phraseContext,
   canSync,
@@ -29,7 +37,7 @@ export default function HarmonizerHeader({
                 <span>Centro alternativo: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "Menor" : "Maior"}</span>
               )}
               <span className="mt-1">
-                Frase termina em: {phraseContext.cadentialTarget.targetPitch} ({phraseContext.cadentialTarget.cadenceType === "HALF" ? "Meia Cadência" : phraseContext.cadentialTarget.cadenceType})
+                Frase termina em: {phraseContext.cadentialTarget.targetPitch} ({cadenceLabel(phraseContext.cadentialTarget.cadenceType)})
               </span>
             </div>
           )}
@@ -45,4 +53,3 @@ export default function HarmonizerHeader({
     </div>
   );
 }
-
