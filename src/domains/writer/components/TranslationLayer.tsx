@@ -15,8 +15,6 @@ import {
   Trash2, 
   History, 
   BookOpen, 
-  Eye,
-  EyeOff
 } from "lucide-react";
 
 interface SavedChord {
@@ -38,7 +36,6 @@ export const TranslationLayer: React.FC = () => {
   const { state, actions } = useWriter();
 
   // Estados Locais
-  const [showMidi, setShowMidi] = useState<boolean>(false);
   const [customName, setCustomName] = useState<string>("");
 
   // Biblioteca, Capturados e Favoritos persistidos
@@ -93,6 +90,12 @@ export const TranslationLayer: React.FC = () => {
       positionFret: activeFrets.length > 0 ? Math.min(...activeFrets) : 0,
       notes: frets.map((f, idx) => f !== null ? getNoteAt(tuning[idx], f) : "x")
     });
+  };
+
+  const tensionReading = (level: number) => {
+    if (level >= 0.72) return "Tensão alta";
+    if (level >= 0.42) return "Tensão moderada";
+    return "Tensão baixa";
   };
 
   // Construir objeto SavedChord
@@ -253,18 +256,8 @@ export const TranslationLayer: React.FC = () => {
           <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
             <h3 className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-purple-400" />
-              Cognição Harmônica (Tradução)
+              Leitura do acorde
             </h3>
-            
-            {activeChord && (
-              <button
-                onClick={() => setShowMidi(!showMidi)}
-                className="px-2.5 py-1 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-950/40 text-[10px] font-bold text-zinc-400 hover:text-zinc-200 transition-all flex items-center gap-1 cursor-pointer"
-              >
-                {showMidi ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                {showMidi ? "Ocultar detalhes" : "Mostrar detalhes"}
-              </button>
-            )}
           </div>
 
           {activeChord ? (
@@ -273,12 +266,12 @@ export const TranslationLayer: React.FC = () => {
                 {/* Nome do Acorde e Notas */}
                 <div className="flex flex-col gap-3">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[10px] font-black tracking-wider text-purple-400 uppercase">Acorde Identificado:</span>
+                    <span className="text-[10px] font-black tracking-wider text-purple-400 uppercase">Acorde:</span>
                     <span className="text-3xl font-black text-white tracking-tight">{activeChord.symbol}</span>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-zinc-500 font-bold uppercase">Notas Físicas:</span>
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase">Notas tocadas:</span>
                     <div className="flex flex-wrap gap-1.5">
                       {activeChord.notes.map((n, i) => (
                         <span key={i} className="px-2.5 py-1 bg-zinc-950 border border-zinc-850 rounded-lg font-bold text-xs text-zinc-250">
@@ -287,19 +280,6 @@ export const TranslationLayer: React.FC = () => {
                       ))}
                     </div>
                   </div>
-
-                  {showMidi && (
-                    <div className="p-3 bg-zinc-950 border border-purple-500/20 rounded-xl animate-scale-up flex flex-col gap-1">
-                      <span className="text-[9px] text-purple-400 font-bold uppercase">Pitches MIDI Absolutos:</span>
-                      <div className="font-mono text-xs text-purple-300">
-                        [{selectedFrets
-                          .map((f, idx) => (f !== null ? noteToMidi(getNoteAt(tuning[idx], f)) : null))
-                          .filter((n): n is number => n !== null)
-                          .sort((a, b) => a - b)
-                          .join(", ")}]
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Especificações Teóricas */}
@@ -325,8 +305,8 @@ export const TranslationLayer: React.FC = () => {
 
                   <div className="col-span-2 p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-850 flex items-center justify-between">
                     <div>
-                      <span className="text-[9px] text-zinc-500 uppercase font-bold">Tensão Estimada</span>
-                      <p className="text-xs font-bold text-purple-400 mt-0.5">{activeChord.tensionLevel.toFixed(2)}</p>
+                      <span className="text-[9px] text-zinc-500 uppercase font-bold">Tensão</span>
+                      <p className="text-xs font-bold text-purple-400 mt-0.5">{tensionReading(activeChord.tensionLevel)}</p>
                     </div>
                     <div className="w-1/2 bg-zinc-950 rounded-full h-1.5 overflow-hidden border border-zinc-850">
                       <div 
@@ -368,7 +348,7 @@ export const TranslationLayer: React.FC = () => {
             </div>
           ) : (
             <div className="py-8 text-center text-zinc-500 text-xs italic">
-              Selecione trastes no braço virtual para decodificar notas e expor a análise cognitiva.
+              Selecione trastes no braço virtual para ler o acorde tocado.
             </div>
           )}
         </div>

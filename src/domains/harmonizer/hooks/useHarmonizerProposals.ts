@@ -16,6 +16,10 @@ import {
 import {
   buildControlledReharmonizationProposals,
   buildExistingHarmonyProposal,
+  buildProposalScaleSuggestionSets,
+  buildScaleLinearRoutes,
+  buildScaleReadingRegions,
+  buildSectionScaleSuggestions,
   selectMelodicAnchors,
   selectSectionHarmonies
 } from "../services/harmonizerService";
@@ -127,6 +131,34 @@ export function useHarmonizerProposals({
     sectionHarmonies
   ]);
 
+  const contextualScaleSuggestionSets = useMemo(() => {
+    const referenceSuggestions = buildSectionScaleSuggestions(
+      sectionHarmonies,
+      melodyAnchorsData.allAnchors,
+      phraseContext
+    );
+    const referenceSet = referenceSuggestions.length > 0
+      ? [{
+        id: "reference-harmony",
+        label: "Harmonia da partitura",
+        source: "reference" as const,
+        suggestions: referenceSuggestions,
+        regions: buildScaleReadingRegions(referenceSuggestions),
+        linearRoutes: buildScaleLinearRoutes(referenceSuggestions)
+      }]
+      : [];
+
+    return [
+      ...referenceSet,
+      ...buildProposalScaleSuggestionSets(displayedProposals, melodyAnchorsData.allAnchors, phraseContext)
+    ];
+  }, [
+    displayedProposals,
+    sectionHarmonies,
+    melodyAnchorsData.allAnchors,
+    phraseContext
+  ]);
+
   const referenceDiagnostics = useMemo(() => {
     const diagnostics: HarmonicDiagnostic[] = [];
     if (phraseContext?.selectedCenterSource === "reference") {
@@ -196,6 +228,7 @@ export function useHarmonizerProposals({
     melodyAnchorsData,
     localSegments,
     phraseContext,
+    contextualScaleSuggestionSets,
     rejectedExperimentalCount,
     omittedStrategyDiagnostics: visibleDiagnostics
   };

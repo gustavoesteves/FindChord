@@ -57,6 +57,19 @@ export const VoicingSearchLayer: React.FC = () => {
     return distance;
   };
 
+  const ergonomicLabel = (score: number) => {
+    if (score >= 78) return "confortável";
+    if (score >= 55) return "tocável";
+    return "exige abertura";
+  };
+
+  const movementLabel = (distance: number) => {
+    if (distance === 0) return "mesma posição";
+    if (distance <= 4) return "movimento curto";
+    if (distance <= 10) return "movimento médio";
+    return "nova região";
+  };
+
   // 3. Filtragem e Ordenação com base na Aba Ativa
   const processedVoicings = useMemo(() => {
     let list = [...voicingResults];
@@ -189,7 +202,7 @@ export const VoicingSearchLayer: React.FC = () => {
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-purple-400" />
           <div>
-            <h3 className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">Buscador de Voicings Equivalentes</h3>
+            <h3 className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">Variações de voicing</h3>
             {activeChord && (
               <p className="text-[10px] text-zinc-400 font-medium">
                 Variações harmônicas tocáveis para o acorde: <span className="text-purple-300 font-bold">{activeChord.symbol}</span>
@@ -202,8 +215,8 @@ export const VoicingSearchLayer: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none">
           {([
             { id: "todos", name: "Todos" },
-            { id: "ergonomicos", name: "🎸 Ergonômicos" },
-            { id: "distancia", name: "🚶 Movimento Mínimo" },
+            { id: "ergonomicos", name: "Confortáveis" },
+            { id: "distancia", name: "Menor movimento" },
             { id: "drops", name: "Drop 2 / 3" },
             { id: "abertos", name: "Abertos" },
             { id: "fechados", name: "Fechados" }
@@ -257,16 +270,13 @@ export const VoicingSearchLayer: React.FC = () => {
                       {voicing.positionFret === 0 ? "Cordas Soltas" : `Casa: ${voicing.positionFret}`}
                     </span>
 
-                    {/* Exibir métricas de classificação */}
                     <div className="flex gap-1.5 mt-2 flex-wrap justify-center">
                       <span className="text-[8px] px-1 py-0.5 rounded font-black bg-emerald-950/40 border border-emerald-900/40 text-emerald-400">
-                        E: {ergScore}
+                        {ergonomicLabel(ergScore)}
                       </span>
-                      {dist > 0 && (
-                        <span className="text-[8px] px-1 py-0.5 rounded font-black bg-amber-950/40 border border-amber-900/40 text-amber-400">
-                          Δ: {dist}
-                        </span>
-                      )}
+                      <span className="text-[8px] px-1 py-0.5 rounded font-black bg-amber-950/40 border border-amber-900/40 text-amber-400">
+                        {movementLabel(dist)}
+                      </span>
                     </div>
                   </div>
                 </div>

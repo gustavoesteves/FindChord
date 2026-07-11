@@ -235,9 +235,41 @@ MuseScore {
 
         var score = curScore;
         var symbol = data.symbol || data.chordSymbol || "";
+        if (typeof symbol !== "string" || symbol.trim().length === 0 || symbol.length > 80) {
+            logText.text = "Cifra rejeitada: formato invalido.";
+            postLog("Rejected chord symbol before insertion");
+            return;
+        }
 
         try {
             score.startCmd();
+
+            // A selecao do MuseScore e a fonte de verdade para o ponto de
+            // insercao. Sem ela, o cursor deve respeitar a selecao atual do
+            // proprio plugin antes de cair no inicio da partitura.
+            var targetTick = -1;
+            var targetTrack = -1;
+            var selection = score.selection;
+            if (selection && selection.elements && selection.elements.length > 0) {
+                for (var i = 0; i < selection.elements.length; i++) {
+                    var selected = selection.elements[i];
+                    var current = selected;
+                    var depth = 0;
+
+                    while (current && depth++ < 12) {
+                        if (targetTrack === -1 && typeof current.track !== "undefined") {
+                            targetTrack = current.track;
+                        }
+                        if (typeof current.tick !== "undefined") {
+                            targetTick = current.tick;
+                            break;
+                        }
+                        current = current.parent;
+                    }
+
+                    if (targetTick !== -1) break;
+                }
+            }
 
             var cursor = score.newCursor();
             if (!cursor) {
@@ -245,9 +277,21 @@ MuseScore {
                 return;
             }
 
-            cursor.rewind(0);
+            if (targetTrack !== -1) cursor.track = targetTrack;
 
-            // move safely to first note
+            if (targetTick !== -1) {
+                cursor.rewind(0);
+                while (cursor.segment && cursor.tick < targetTick) {
+                    if (!cursor.next()) break;
+                }
+            } else {
+                // Quando nao ha elemento selecionado, tenta a selecao de
+                // cursor do MuseScore antes de usar o inicio da partitura.
+                cursor.rewind(1);
+                if (!cursor.segment) cursor.rewind(0);
+            }
+
+            // Avanca com seguranca ate um segmento musical no ponto escolhido.
             var safety = 0;
             while (cursor.segment && 
                    (!cursor.element || (cursor.element.type !== Element.CHORD && cursor.element.type !== Element.REST)) &&
@@ -255,10 +299,26 @@ MuseScore {
                 if (!cursor.next()) break;
             }
 
+            // Nunca adicionar um elemento se a varredura terminou fora de um
+            // segmento valido: o binding nativo do MuseScore pode encerrar o
+            // processo em vez de produzir uma excecao JavaScript.
+            if (!cursor.segment || !cursor.element ||
+                (cursor.element.type !== Element.CHORD && cursor.element.type !== Element.REST)) {
+                score.endCmd();
+                logText.text = "Nenhum ponto valido para inserir a cifra.";
+                return;
+            }
+
             var harmony = newElement(Element.HARMONY);
             if (harmony) {
-                harmony.text = symbol;
+                // O elemento precisa estar anexado ao score antes de receber
+                // o texto; a ordem inversa pode derrubar o MuseScore.
                 cursor.add(harmony);
+                harmony.text = symbol;
+            } else {
+                score.endCmd();
+                logText.text = "Nao foi possivel criar a cifra.";
+                return;
             }
 
             score.endCmd();

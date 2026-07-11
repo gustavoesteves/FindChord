@@ -3,6 +3,7 @@ import type { ScoreSnapshot } from "./music/analysis/models/ScoreSnapshot";
 import { useScoreSessionStore } from "../store/useScoreSessionStore";
 import { WebSocketTransport } from "./music/bridge/TransportLayer";
 import type { BridgeMessage, MutationCommand } from "./music/bridge/Protocol";
+import { resolveChordSymbol } from "./music/theory/ChordSymbolResolver";
 
 export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
@@ -11,6 +12,29 @@ type StatusListener = (status: ConnectionStatus) => void;
 type ScoreSessionPayload =
   | { type: "SCORE_SNAPSHOT"; data: ScoreSnapshot }
   | { type: "CURSOR_CHANGED"; cursorTick: number };
+
+/**
+ * MuseScore recebe somente a cifra musical, nao os metadados de analise.
+ * Omissões como `(no3)` servem ao motor de deteccao, mas nao devem atravessar
+ * o parser de cifras do plugin.
+ */
+export function toMuseScoreChordSymbol(symbol: string): string | null {
+  if (typeof symbol !== "string") return null;
+
+  const withoutOmissions = symbol
+    .trim()
+    .replace(/\((?:no(?:3|5|root)|no[357])\)/gi, "")
+    .replace(/\bno(?:3|5|root)\b/gi, "");
+
+  if (!withoutOmissions || /^(N\.?C\.?|nochord)$/i.test(withoutOmissions)) return null;
+
+  const resolved = resolveChordSymbol(withoutOmissions, "plain");
+  if (!resolved.root || resolved.confidence === "ambiguous" || resolved.quality === "N.C.") {
+    return null;
+  }
+
+  return resolved.display;
+}
 
 function isScoreSessionPayload(payload: unknown): payload is ScoreSessionPayload {
   if (!payload || typeof payload !== "object") return false;
@@ -53,6 +77,12 @@ class MuseScoreAdapter {
   }
 
   public async sendChord(chord: CanonicalChordEvent): Promise<boolean> {
+    const chordSymbol = toMuseScoreChordSymbol(chord.symbol);
+    if (!chordSymbol) {
+      console.warn("Cifra rejeitada antes do envio ao MuseScore:", chord.symbol);
+      return false;
+    }
+
     const msg: BridgeMessage = {
       protocolVersion: '1.0',
       messageType: 'MUTATION',
@@ -60,8 +90,8 @@ class MuseScoreAdapter {
         type: 'MUTATION',
         action: 'INSERT_CHORD',
         targetTick: 0,
-        chordSymbol: chord.symbol,
-        data: chord
+        chordSymbol,
+        data: { ...chord, symbol: chordSymbol }
       } satisfies MutationCommand
     };
     try {

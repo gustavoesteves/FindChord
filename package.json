@@ -25,6 +25,8 @@
     "report:proposal-curation": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-proposal-curation-report.ts",
     "report:proposal-consequences": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-proposal-consequence-report.ts",
     "report:local-route-repetition": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-local-route-repetition-report.ts",
+    "report:harmonization-density": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-harmonization-density-report.ts",
+    "report:contextual-scales": "JITI_FS_CACHE=false JITI_MODULE_CACHE=false node --import jiti/register scripts/generate-contextual-scale-audit.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

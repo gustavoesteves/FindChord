@@ -73,6 +73,13 @@ const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   compatibility: "Compatibilidade"
 };
 
+function voiceLeadingLabel(score: number): string {
+  if (score <= 3) return "Condução muito próxima";
+  if (score <= 6) return "Condução suave";
+  if (score <= 10) return "Movimento moderado";
+  return "Movimento amplo";
+}
+
 export default function HarmonizationProposalCard({
   proposal,
   onApply,
@@ -127,8 +134,8 @@ export default function HarmonizationProposalCard({
             {proposal.voiceLeadingScore !== undefined && proposal.voiceLeadingEvidence && proposal.voiceLeadingEvidence.length > 0 && (
               <div className="mb-3">
                 <span className="text-[10px] uppercase font-bold text-zinc-500 mr-2">Condução:</span>
-                <span className="text-sm font-mono text-emerald-300">
-                  {proposal.voiceLeadingScore.toFixed(2)}
+                <span className="text-sm font-semibold text-emerald-300">
+                  {voiceLeadingLabel(proposal.voiceLeadingScore)}
                 </span>
               </div>
             )}
