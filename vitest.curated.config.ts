@@ -23,6 +23,7 @@ export default defineConfig({
       "scripts/blues-functional-strategy.spec.ts",
       "scripts/applied-harmonic-vocabulary-audit.spec.ts",
       "scripts/bright-size-life-diagnostic.spec.ts",
+      "scripts/chord-nomenclature-regression.spec.ts",
       "scripts/chord-symbol-real-music-compatibility.spec.ts",
       "scripts/chord-symbol-resolver.spec.ts",
       "scripts/chromatic-calibration.spec.ts",

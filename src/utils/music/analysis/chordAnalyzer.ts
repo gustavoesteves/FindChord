@@ -47,6 +47,29 @@ function getQualityExoticPenalty(quality: ChordQuality): number {
   return penalties[quality] !== undefined ? penalties[quality] : 3;
 }
 
+function getRequiredNamedExtensions(quality: ChordQuality): number[] {
+  const requiredExtensions: Partial<Record<ChordQuality, number[]>> = {
+    "69": [9, 14],
+    add9: [14],
+    minorAdd9: [14],
+    dominant9th: [14],
+    major9th: [14],
+    minor9th: [14],
+    dominant11th: [17],
+    minor11th: [17],
+    dominant13th: [21],
+    major13th: [21],
+    minor13th: [21],
+    dominant7b9: [13],
+    "dominant7#9": [15],
+    "dominant7#11": [18],
+    dominant7b13: [20],
+    "major7#11": [18]
+  };
+
+  return requiredExtensions[quality] || [];
+}
+
 function getLowestNote(positions: FretPosition[]): FretPosition | null {
   if (positions.length === 0) return null;
   return [...positions].reduce((lowest, current) => {
@@ -83,6 +106,10 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       
       // Notas absolutas da hipótese teórica
       const formulaPitchClasses = def.semitones.map(s => (rootPC + s) % 12);
+      const missingNamedExtensions = getRequiredNamedExtensions(quality).filter(s => (
+        !uniquePitchClasses.includes((rootPC + s) % 12)
+      ));
+      if (missingNamedExtensions.length > 0) return;
       
       let score = 0;
       const omissions: string[] = [];
