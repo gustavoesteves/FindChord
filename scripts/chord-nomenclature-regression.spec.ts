@@ -26,7 +26,9 @@ describe("regressao de nomenclatura de cifras", () => {
     const withoutThird = analyzeChords(positions(["A", "D", "F#", "G#"]));
 
     expect(withEleventh[0]?.notationInternational).toBe("Amaj7(add11)");
+    expect(withEleventh[0]?.tensions).toContain("11");
     expect(withThirteenth[0]?.notationInternational).toBe("Amaj13");
+    expect(withThirteenth[0]?.tensions).toContain("13");
     expect(withoutThird[0]?.notationInternational).not.toBe("Amaj13");
     expect(withoutThird[0]?.omissions).not.toContain("3");
   });

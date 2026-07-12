@@ -19,6 +19,7 @@ export interface ChordCandidate {
   confidence: number;
   omissions: string[];
   additions: string[];
+  tensions?: string[];
   bass?: string;
   notationInternational: string;
   notationBrazilian: string;

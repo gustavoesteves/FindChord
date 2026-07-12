@@ -298,8 +298,8 @@ export const TranslationLayer: React.FC = () => {
                   </div>
                   <div className="p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-850">
                     <span className="text-[9px] text-zinc-500 uppercase font-bold">Tensões</span>
-                    <p className="text-xs font-bold text-zinc-250 mt-0.5 truncate" title={activeChord.additions.join(", ")}>
-                      {activeChord.additions.join(", ") || "Nenhuma"}
+                    <p className="text-xs font-bold text-zinc-250 mt-0.5 truncate" title={activeChord.tensions.join(", ")}>
+                      {activeChord.tensions.join(", ") || "Nenhuma"}
                     </p>
                   </div>
 

@@ -107,6 +107,28 @@ function canOmitThirdWithoutChangingLabel(quality: ChordQuality, soundingNoteCou
   return quality === "dominant7b5" && soundingNoteCount === 3;
 }
 
+function getSoundingTensions(root: string, quality: ChordQuality, notes: string[]): string[] {
+  const rootPC = getPitchClass(root);
+  if (rootPC < 0) return [];
+
+  const labels = notes.flatMap(note => {
+    const notePC = getPitchClass(note);
+    if (notePC < 0) return [];
+
+    const offset = (notePC - rootPC + 12) % 12;
+    if (offset === 1) return ["b9"];
+    if (offset === 2) return ["9"];
+    if (offset === 3 && !quality.toLowerCase().includes("minor") && quality !== "diminished" && quality !== "halfDiminished" && quality !== "diminished7th") return ["#9"];
+    if (offset === 5 && quality !== "sus4" && quality !== "dominant7sus4") return ["11"];
+    if (offset === 6 && quality !== "dominant7b5" && quality !== "halfDiminished" && quality !== "diminished" && quality !== "diminished7th") return ["#11"];
+    if (offset === 8 && quality !== "augmented") return ["b13"];
+    if (offset === 9 && quality !== "major6th" && quality !== "minor6th" && quality !== "69") return ["13"];
+    return [];
+  });
+
+  return Array.from(new Set(labels));
+}
+
 function getLowestNote(positions: FretPosition[]): FretPosition | null {
   if (positions.length === 0) return null;
   return [...positions].reduce((lowest, current) => {
@@ -315,6 +337,7 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
         drawnNotes: uniqueNoteNames,
         omissions,
         additions,
+        tensions: getSoundingTensions(chordRoot, quality, uniqueNoteNames),
         bass: bassValue,
         score,
         confidence: 0, // Definido na normalização

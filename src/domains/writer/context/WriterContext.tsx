@@ -14,6 +14,7 @@ interface DetectedChord {
   voicingType: string;
   tensionLevel: number;
   additions: string[];
+  tensions: string[];
   root: string;
   quality: string;
 }
@@ -96,6 +97,7 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         voicingType,
         tensionLevel,
         additions: c.additions || [],
+        tensions: c.tensions || [],
         root: c.root,
         quality: c.quality
       };
