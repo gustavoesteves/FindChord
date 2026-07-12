@@ -27,6 +27,7 @@ interface SavedChord {
   bass: string;
   inversion: string;
   voicingType: string;
+  tensions?: string[];
   tensionLevel: number;
   isFavorite: boolean;
   timestamp: number;
@@ -98,6 +99,17 @@ export const TranslationLayer: React.FC = () => {
     return "Tensão baixa";
   };
 
+  const chordColorSummary = (chord: Pick<SavedChord, "notes" | "tensions" | "voicingType" | "bass">) => {
+    const details = [
+      chord.notes.length > 0 ? chord.notes.join(" ") : null,
+      chord.tensions && chord.tensions.length > 0 ? `tensões ${chord.tensions.join(", ")}` : null,
+      chord.voicingType,
+      `baixo ${chord.bass}`
+    ].filter(Boolean);
+
+    return details.join(" · ");
+  };
+
   // Construir objeto SavedChord
   const buildSavedChord = (name?: string): SavedChord | null => {
     if (!activeChord) return null;
@@ -117,6 +129,7 @@ export const TranslationLayer: React.FC = () => {
       bass: activeChord.bass,
       inversion: activeChord.inversion,
       voicingType: activeChord.voicingType,
+      tensions: activeChord.tensions,
       tensionLevel: activeChord.tensionLevel,
       isFavorite: false,
       timestamp: Date.now()
@@ -400,7 +413,7 @@ export const TranslationLayer: React.FC = () => {
                       className="flex-1 text-left flex flex-col gap-0.5 cursor-pointer"
                     >
                       <span className="font-bold text-xs text-zinc-200 leading-none">{item.name || item.symbol}</span>
-                      <span className="text-[9px] text-zinc-500 font-semibold">{item.symbol} | {item.voicingType}</span>
+                      <span className="text-[9px] text-zinc-500 font-semibold">{item.symbol} · {chordColorSummary(item)}</span>
                     </button>
                     <div className="flex items-center gap-0.5">
                       <button
@@ -436,7 +449,7 @@ export const TranslationLayer: React.FC = () => {
                       className="flex-1 text-left flex flex-col gap-0.5 cursor-pointer"
                     >
                       <span className="font-bold text-xs text-zinc-200 leading-none">{item.symbol}</span>
-                      <span className="text-[8px] text-zinc-500 font-mono">Frets: [{item.frets.map(f => f === null ? "x" : f).join(",")}]</span>
+                      <span className="text-[9px] text-zinc-500 font-semibold">{chordColorSummary(item)}</span>
                     </button>
                     <div className="flex items-center gap-0.5">
                       <button
@@ -472,7 +485,7 @@ export const TranslationLayer: React.FC = () => {
                       className="flex-1 text-left flex flex-col gap-0.5 cursor-pointer"
                     >
                       <span className="font-bold text-xs text-zinc-200 leading-none">{item.name || item.symbol}</span>
-                      <span className="text-[9px] text-zinc-500 font-semibold">{item.symbol} | Baixo: {item.bass}</span>
+                      <span className="text-[9px] text-zinc-500 font-semibold">{item.symbol} · {chordColorSummary(item)}</span>
                     </button>
                     <div className="flex items-center gap-0.5">
                       <button
