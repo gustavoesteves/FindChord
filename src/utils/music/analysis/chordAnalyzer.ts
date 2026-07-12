@@ -47,8 +47,12 @@ function getQualityExoticPenalty(quality: ChordQuality): number {
   return penalties[quality] !== undefined ? penalties[quality] : 3;
 }
 
-function getRequiredNamedExtensions(quality: ChordQuality): number[] {
-  const requiredExtensions: Partial<Record<ChordQuality, number[]>> = {
+function getRequiredNamedTones(quality: ChordQuality): number[] {
+  const requiredTones: Partial<Record<ChordQuality, number[]>> = {
+    power: [7],
+    sus2: [2],
+    sus4: [5],
+    dominant7sus4: [5],
     "69": [9, 14],
     add9: [14],
     minorAdd9: [14],
@@ -67,7 +71,40 @@ function getRequiredNamedExtensions(quality: ChordQuality): number[] {
     "major7#11": [18]
   };
 
-  return requiredExtensions[quality] || [];
+  return requiredTones[quality] || [];
+}
+
+function requiresSeventhOrSixth(quality: ChordQuality): boolean {
+  return [
+    "major6th",
+    "minor6th",
+    "69",
+    "dominant7th",
+    "major7th",
+    "minor7th",
+    "minorMajor7th",
+    "dominant7b5",
+    "halfDiminished",
+    "diminished7th",
+    "dominant7sus4",
+    "dominant9th",
+    "major9th",
+    "minor9th",
+    "dominant11th",
+    "minor11th",
+    "dominant13th",
+    "major13th",
+    "minor13th",
+    "dominant7b9",
+    "dominant7#9",
+    "dominant7#11",
+    "dominant7b13",
+    "major7#11"
+  ].includes(quality);
+}
+
+function canOmitThirdWithoutChangingLabel(quality: ChordQuality, soundingNoteCount: number): boolean {
+  return quality === "dominant7b5" && soundingNoteCount === 3;
 }
 
 function getLowestNote(positions: FretPosition[]): FretPosition | null {
@@ -106,10 +143,24 @@ export function analyzeChords(positions: FretPosition[]): ChordCandidate[] {
       
       // Notas absolutas da hipótese teórica
       const formulaPitchClasses = def.semitones.map(s => (rootPC + s) % 12);
-      const missingNamedExtensions = getRequiredNamedExtensions(quality).filter(s => (
+      const thirdIndex = def.semitones.findIndex(s => s % 12 === 3 || s % 12 === 4);
+      if (
+        thirdIndex >= 0
+        && !canOmitThirdWithoutChangingLabel(quality, uniquePitchClasses.length)
+        && !uniquePitchClasses.includes(formulaPitchClasses[thirdIndex])
+      ) return;
+
+      const seventhOrSixthIndex = def.semitones.findIndex(s => s % 12 === 9 || s % 12 === 10 || s % 12 === 11);
+      if (
+        requiresSeventhOrSixth(quality)
+        && seventhOrSixthIndex >= 0
+        && !uniquePitchClasses.includes(formulaPitchClasses[seventhOrSixthIndex])
+      ) return;
+
+      const missingNamedTones = getRequiredNamedTones(quality).filter(s => (
         !uniquePitchClasses.includes((rootPC + s) % 12)
       ));
-      if (missingNamedExtensions.length > 0) return;
+      if (missingNamedTones.length > 0) return;
       
       let score = 0;
       const omissions: string[] = [];
