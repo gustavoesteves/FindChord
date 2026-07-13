@@ -68,7 +68,17 @@ function compactProgressionDetail(proposal: ReharmonizationProposal, nameCounts:
   const chords = proposal.measures.flatMap(measure => measure.chords);
   const visibleChords = chords.slice(0, MAX_TITLE_DETAIL_CHORDS);
   const suffix = chords.length > visibleChords.length ? "..." : "";
-  return `Percurso: ${visibleChords.join(" - ")}${suffix}`;
+  const route = `Percurso: ${visibleChords.join(" - ")}${suffix}`;
+
+  if (proposal.cadentialTarget && /ii-V/i.test(proposal.name)) {
+    return `Alvo: ${proposal.cadentialTarget} · ${route}`;
+  }
+
+  if (proposal.cadentialTarget && /Centro de referência/i.test(proposal.name)) {
+    return `Centro: ${proposal.cadentialTarget} · ${route}`;
+  }
+
+  return route;
 }
 
 export default function HarmonizerProposalList({
