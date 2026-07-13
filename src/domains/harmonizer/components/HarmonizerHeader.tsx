@@ -30,14 +30,14 @@ export default function HarmonizerHeader({
             Caminhos de harmonização possíveis para a melodia selecionada.
           </span>
           {phraseContext && (
-            <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4 text-xs font-mono text-zinc-300">
-              <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Contexto Detectado</span>
-              <span>Centro principal: {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "Menor" : "Maior"}</span>
+            <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4 text-xs text-zinc-300">
+              <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Leitura da frase</span>
+              <span>Centro: {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}</span>
               {phraseContext.tonalCenterCandidates.length > 1 && (
-                <span>Centro alternativo: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "Menor" : "Maior"}</span>
+                <span>Outra possibilidade: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "menor" : "maior"}</span>
               )}
               <span className="mt-1">
-                Frase termina em: {phraseContext.cadentialTarget.targetPitch} ({cadenceLabel(phraseContext.cadentialTarget.cadenceType)})
+                Chegada: {phraseContext.cadentialTarget.targetPitch} ({cadenceLabel(phraseContext.cadentialTarget.cadenceType)})
               </span>
             </div>
           )}
