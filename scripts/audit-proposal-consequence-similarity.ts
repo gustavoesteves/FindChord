@@ -166,7 +166,8 @@ function renderMarkdown(rows: ProposalConsequenceAuditRow[]): string {
   lines.push("## Leitura");
   lines.push("");
   lines.push("Esta e uma auditoria conservadora: qualquer mudanca de raiz, baixo, densidade temporal ou funcao contextual impede a classificacao como quase equivalente.");
-  lines.push("Os pares encontrados ainda nao sao ocultados. Eles formam a base para decidir entre agrupar variacoes de cor no mesmo card ou manter cards separados quando a extensao altera de fato a conducao de vozes.");
+  lines.push("No fluxo atual da UI, esses pares podem ser agrupados como variacoes de cor do mesmo card quando preservam tempo, funcao, raiz e baixo.");
+  lines.push("A auditoria continua registrando os pares completos para revisao musical: se a extensao alterar a conducao de vozes de forma relevante, a regra deve ser refinada antes de agrupar.");
   lines.push("O CSV registra as duas progressoes completas para revisao musical.");
   lines.push("");
   return lines.join("\n");

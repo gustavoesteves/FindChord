@@ -24,5 +24,6 @@ A auditoria procura propostas nao identicas que preservam tempo, percurso funcio
 ## Leitura
 
 Esta e uma auditoria conservadora: qualquer mudanca de raiz, baixo, densidade temporal ou funcao contextual impede a classificacao como quase equivalente.
-Os pares encontrados ainda nao sao ocultados. Eles formam a base para decidir entre agrupar variacoes de cor no mesmo card ou manter cards separados quando a extensao altera de fato a conducao de vozes.
+No fluxo atual da UI, esses pares podem ser agrupados como variacoes de cor do mesmo card quando preservam tempo, funcao, raiz e baixo.
+A auditoria continua registrando os pares completos para revisao musical: se a extensao alterar a conducao de vozes de forma relevante, a regra deve ser refinada antes de agrupar.
 O CSV registra as duas progressoes completas para revisao musical.

@@ -16,6 +16,7 @@ interface HarmonizationProposalCardProps {
   proposal: ReharmonizationProposal;
   onApply: (proposal: ReharmonizationProposal) => void;
   applyLabel?: string;
+  titleDetail?: string;
   localOccurrences?: LocalSegmentOccurrence[];
 }
 
@@ -84,6 +85,7 @@ export default function HarmonizationProposalCard({
   proposal,
   onApply,
   applyLabel = "Aplicar em Escrever",
+  titleDetail,
   localOccurrences = []
 }: HarmonizationProposalCardProps) {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
@@ -98,6 +100,11 @@ export default function HarmonizationProposalCard({
               {KIND_LABELS[proposal.kind]}
             </span>
             <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{proposal.name}</span>
+            {titleDetail && (
+              <span className="text-xs font-medium text-zinc-500 normal-case tracking-normal">
+                {titleDetail}
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {proposal.presentationLayer && (

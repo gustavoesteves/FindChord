@@ -39,6 +39,7 @@ const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string
   "reference-aware": "Centro de referência",
   reharmonization: "Rearmonização"
 };
+const MAX_TITLE_DETAIL_CHORDS = 5;
 
 function rejectedExperimentalMessage(count: number): string {
   return count === 1
@@ -54,6 +55,22 @@ function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
     || (proposal.apparentFunctionReferenceBonus || 0) > 0;
 }
 
+function duplicateNameCounts(proposals: ReharmonizationProposal[]): Map<string, number> {
+  return proposals.reduce((counts, proposal) => {
+    counts.set(proposal.name, (counts.get(proposal.name) || 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+}
+
+function compactProgressionDetail(proposal: ReharmonizationProposal, nameCounts: Map<string, number>): string | undefined {
+  if ((nameCounts.get(proposal.name) || 0) <= 1) return undefined;
+
+  const chords = proposal.measures.flatMap(measure => measure.chords);
+  const visibleChords = chords.slice(0, MAX_TITLE_DETAIL_CHORDS);
+  const suffix = chords.length > visibleChords.length ? "..." : "";
+  return `Percurso: ${visibleChords.join(" - ")}${suffix}`;
+}
+
 export default function HarmonizerProposalList({
   proposals,
   localSegments,
@@ -66,6 +83,10 @@ export default function HarmonizerProposalList({
 }: HarmonizerProposalListProps) {
   const structuralProposals = proposals.filter(proposal => !isFunctionalColorProposal(proposal));
   const functionalColorProposals = proposals.filter(isFunctionalColorProposal);
+  const proposalNameCounts = duplicateNameCounts([
+    ...proposals,
+    ...localSegments.map(segment => segment.primaryProposal)
+  ]);
   const structuralLayerGroups = groupProposalsByPresentationLayer(structuralProposals);
   const visibleStructuralLayerGroups = structuralLayerGroups.map(group => ({
     ...group,
@@ -133,6 +154,7 @@ export default function HarmonizerProposalList({
               <HarmonizationProposalCard
                 key={proposal.id}
                 proposal={proposal}
+                titleDetail={compactProgressionDetail(proposal, proposalNameCounts)}
                 onApply={onApplyProposal}
               />
             ))}
@@ -159,6 +181,7 @@ export default function HarmonizerProposalList({
               <HarmonizationProposalCard
                 key={proposal.id}
                 proposal={proposal}
+                titleDetail={compactProgressionDetail(proposal, proposalNameCounts)}
                 onApply={onApplyProposal}
               />
             ))}
@@ -192,6 +215,7 @@ export default function HarmonizerProposalList({
                 <HarmonizationProposalCard
                   proposal={segment.primaryProposal}
                   applyLabel="Aplicar trecho em Escrever"
+                  titleDetail={compactProgressionDetail(segment.primaryProposal, proposalNameCounts)}
                   localOccurrences={segment.occurrences}
                   onApply={onApplyProposal}
                 />
