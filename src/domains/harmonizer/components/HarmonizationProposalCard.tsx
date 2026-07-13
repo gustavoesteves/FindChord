@@ -117,13 +117,13 @@ export default function HarmonizationProposalCard({
                 {PRESENTATION_ROLE_LABELS[proposal.presentationRole]}
               </span>
             )}
-          <button
-            onClick={() => onApply(proposal)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"
-          >
-            {applyLabel}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+            <button
+              onClick={() => onApply(proposal)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"
+            >
+              {applyLabel}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 

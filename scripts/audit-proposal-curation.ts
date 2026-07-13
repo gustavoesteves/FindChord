@@ -20,6 +20,10 @@ import {
   buildLocalSegmentHarmonizations,
   removeRepeatedLocalSegmentIdeas
 } from "../src/domains/harmonizer/services/localSegmentHarmonization";
+import {
+  proposalDisplayNameCounts,
+  proposalVisibleSignature
+} from "../src/domains/harmonizer/services/proposalDisplayContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -93,9 +97,15 @@ function proposalNames(
   main: ReharmonizationProposal[],
   local: ReturnType<typeof buildLocalSegmentHarmonizations>
 ): string {
+  const allProposals = [
+    ...main,
+    ...local.map(segment => segment.primaryProposal)
+  ];
+  const nameCounts = proposalDisplayNameCounts(allProposals);
+
   return [
-    ...main.map(proposal => proposal.name),
-    ...local.map(segment => `${segment.title}: ${segment.primaryProposal.name}`)
+    ...main.map(proposal => proposalVisibleSignature(proposal, nameCounts)),
+    ...local.map(segment => `${segment.title}: ${proposalVisibleSignature(segment.primaryProposal, nameCounts)}`)
   ].join(" | ");
 }
 

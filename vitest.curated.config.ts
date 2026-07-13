@@ -56,6 +56,7 @@ export default defineConfig({
       "scripts/omitted-strategy-diagnostics.spec.ts",
       "scripts/palhaco-diagnostic.spec.ts",
       "scripts/proposal-presentation-planner.spec.ts",
+      "scripts/proposal-display-context.spec.ts",
       "scripts/proposal-harmonic-identity.spec.ts",
       "scripts/proposal-curation-audit.spec.ts",
       "scripts/local-route-repetition-audit.spec.ts",
