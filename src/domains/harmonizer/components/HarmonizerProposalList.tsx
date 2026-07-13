@@ -201,7 +201,7 @@ export default function HarmonizerProposalList({
                 </div>
                 <HarmonizationProposalCard
                   proposal={segment.primaryProposal}
-                  applyLabel="Aplicar trecho em Escrever"
+                  applyLabel="Usar trecho"
                   titleDetail={proposalTitleDetail(segment.primaryProposal, proposalNameCounts)}
                   localOccurrences={segment.occurrences}
                   onApply={onApplyProposal}

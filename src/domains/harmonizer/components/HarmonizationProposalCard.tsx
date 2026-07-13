@@ -84,7 +84,7 @@ function voiceLeadingLabel(score: number): string {
 export default function HarmonizationProposalCard({
   proposal,
   onApply,
-  applyLabel = "Aplicar em Escrever",
+  applyLabel = "Usar harmonia",
   titleDetail,
   localOccurrences = []
 }: HarmonizationProposalCardProps) {
@@ -206,7 +206,7 @@ export default function HarmonizationProposalCard({
                             onClick={() => onApply(variant)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 text-xs font-bold transition cursor-pointer"
                           >
-                            Aplicar variação
+                            Usar variação
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -242,7 +242,7 @@ export default function HarmonizationProposalCard({
                         onClick={() => onApply(occurrence.primaryProposal)}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 text-xs font-bold transition cursor-pointer"
                       >
-                        Aplicar neste local
+                        Usar neste local
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -259,7 +259,7 @@ export default function HarmonizationProposalCard({
                   className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-zinc-500 hover:text-indigo-300 transition cursor-pointer"
                   aria-expanded={isAnalysisOpen}
                 >
-                  Ver análise
+                  Por que funciona
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isAnalysisOpen ? "rotate-180" : ""}`} />
                 </button>
 
