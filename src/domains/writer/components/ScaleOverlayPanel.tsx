@@ -317,7 +317,7 @@ export default function ScaleOverlayPanel() {
         <div>
           <p className="text-sm font-bold text-zinc-500">Nenhum acorde detectado</p>
           <p className="text-xs text-zinc-600 mt-1 max-w-xs">
-            Pressione casas no braço virtual (aba "Captura &amp; Fretboard") para identificar um acorde e ver as escalas compatíveis.
+            Pressione casas no braço (aba "Braço") para identificar um acorde e ver as escalas compatíveis.
           </p>
         </div>
       </div>

@@ -138,7 +138,7 @@ export const VirtualFretboard: React.FC = () => {
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold tracking-wide text-zinc-400">
-            {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço Virtual (24 Trastes)"}
+            {state.activeChord ? `Acorde: ${state.activeChord.symbol}` : "Braço"}
           </span>
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
         </div>
@@ -163,7 +163,7 @@ export const VirtualFretboard: React.FC = () => {
             title="Tocar dedilhado"
           >
             <Volume2 className="h-3.5 w-3.5" />
-            Tocar Acorde do Braço
+            Tocar acorde
           </button>
 
           <button
@@ -172,7 +172,7 @@ export const VirtualFretboard: React.FC = () => {
             title="Limpar braço"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Limpar Braço
+            Limpar braço
           </button>
         </div>
       </div>

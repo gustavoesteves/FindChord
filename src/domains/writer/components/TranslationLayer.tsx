@@ -228,7 +228,7 @@ export const TranslationLayer: React.FC = () => {
     }
   };
 
-  // Exportar Biblioteca como JSON
+  // Exportar Biblioteca
   const handleExportJSON = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(libraryChords, null, 2));
     const downloadAnchor = document.createElement("a");
@@ -239,7 +239,7 @@ export const TranslationLayer: React.FC = () => {
     downloadAnchor.remove();
   };
 
-  // Importar shapes JSON
+  // Importar Biblioteca
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
     if (e.target.files && e.target.files[0]) {
@@ -254,7 +254,7 @@ export const TranslationLayer: React.FC = () => {
             alert("Biblioteca importada com sucesso!");
           }
         } catch {
-          alert("Erro ao ler JSON. Certifique-se de que o formato seja válido.");
+          alert("Não foi possível importar a biblioteca. Verifique se o arquivo foi exportado pelo Find Chord.");
         }
       };
     }
@@ -370,10 +370,10 @@ export const TranslationLayer: React.FC = () => {
       {/* Biblioteca de Shapes, Histórico e Import/Export (1/3 da largura) */}
       <div className="flex flex-col gap-6">
         
-        {/* Utilitários JSON */}
+        {/* Utilitários da biblioteca */}
         <div className="p-4 rounded-2xl border border-zinc-850 bg-zinc-900/40 backdrop-blur-xl shadow-lg flex flex-col gap-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-zinc-400 border-b border-zinc-800 pb-1.5">
-            Intercâmbio de Dados
+            Biblioteca
           </h4>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -381,11 +381,11 @@ export const TranslationLayer: React.FC = () => {
               className="px-2 py-2 rounded-xl border border-zinc-800 hover:border-zinc-750 bg-zinc-950/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer"
             >
               <Download className="h-3.5 w-3.5 text-purple-400" />
-              Exportar JSON
+              Exportar
             </button>
             <label className="px-2 py-2 rounded-xl border border-zinc-800 hover:border-zinc-750 bg-zinc-950/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer text-center">
               <Upload className="h-3.5 w-3.5 text-purple-400" />
-              Importar JSON
+              Importar
               <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
             </label>
           </div>

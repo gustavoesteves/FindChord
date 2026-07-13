@@ -44,7 +44,7 @@ export default function TuningSettings() {
         }`}
       >
         <Sliders className="h-3.5 w-3.5" />
-        ⚙️ Afinação
+        Afinação
       </button>
 
       {showTuning && (
@@ -52,7 +52,7 @@ export default function TuningSettings() {
           <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-400" />
-              <h2 className="text-xs font-extrabold text-zinc-100 uppercase tracking-wider">Afinador & Afinações</h2>
+              <h2 className="text-xs font-extrabold text-zinc-100 uppercase tracking-wider">Afinações</h2>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-800/40 text-purple-300 font-bold uppercase tracking-wider">
               {tuningPreset}
@@ -74,7 +74,7 @@ export default function TuningSettings() {
             </div>
 
             <div className="flex flex-col gap-1 xl:col-span-3">
-              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Preset de Afinação</label>
+              <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Afinação</label>
               <select
                 value={tuningPreset}
                 onChange={handleTuningPresetChange}
@@ -102,7 +102,7 @@ export default function TuningSettings() {
 
             <div className="flex flex-col gap-1 xl:col-span-4">
               <label className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                Ajuste Fino por Corda (1ª à {tuning.length}ª)
+                Ajuste por corda (1ª à {tuning.length}ª)
               </label>
               <div 
                 className="grid gap-1.5" 

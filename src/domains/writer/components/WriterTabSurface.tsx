@@ -10,9 +10,9 @@ import type { TabConfig } from "../../suite/components/StandardLayout";
 type WriterTab = "input" | "translation" | "voicings" | "scales";
 
 const WRITER_TABS: TabConfig<WriterTab>[] = [
-  { id: "input", label: "Captura & Fretboard", icon: Sliders },
-  { id: "translation", label: "Teoria & Biblioteca", icon: BookOpen },
-  { id: "voicings", label: "Shapes Alternativos", icon: Search },
+  { id: "input", label: "Braço", icon: Sliders },
+  { id: "translation", label: "Acorde & Biblioteca", icon: BookOpen },
+  { id: "voicings", label: "Variações de voicing", icon: Search },
   { id: "scales", label: "Escalas Compatíveis", icon: Music },
 ];
 
