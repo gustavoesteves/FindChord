@@ -3,8 +3,6 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import type {
   ReharmonizationProposal,
   ReharmonizationProposalKind,
-  ReharmonizationPresentationLayer,
-  ReharmonizationPresentationRole,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { LocalSegmentOccurrence } from "../services/localSegmentHarmonization";
@@ -57,17 +55,6 @@ const ROUTE_PROFILE_LABELS: Record<ReharmonizationRouteProfile, string> = {
   radical: "Radical"
 };
 
-const PRESENTATION_ROLE_LABELS: Record<ReharmonizationPresentationRole, string> = {
-  primary: "Principal",
-  alternative: "Alternativa",
-  comparative: "Contraste",
-  adventurous: "Afastamento"
-};
-const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string> = {
-  basic: "Harmonia básica",
-  "reference-aware": "Centro de referência",
-  reharmonization: "Rearmonização"
-};
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   omission: "Fora da seleção",
   comparison: "Contexto",
@@ -107,16 +94,6 @@ export default function HarmonizationProposalCard({
             )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {proposal.presentationLayer && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-200 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded">
-                {PRESENTATION_LAYER_LABELS[proposal.presentationLayer]}
-              </span>
-            )}
-            {proposal.presentationRole && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-sky-200 bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded">
-                {PRESENTATION_ROLE_LABELS[proposal.presentationRole]}
-              </span>
-            )}
             <button
               onClick={() => onApply(proposal)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"

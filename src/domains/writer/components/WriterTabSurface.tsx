@@ -12,7 +12,7 @@ type WriterTab = "input" | "translation" | "voicings" | "scales";
 const WRITER_TABS: TabConfig<WriterTab>[] = [
   { id: "input", label: "Braço", icon: Sliders },
   { id: "translation", label: "Acorde & Biblioteca", icon: BookOpen },
-  { id: "voicings", label: "Variações de voicing", icon: Search },
+  { id: "voicings", label: "Aberturas do acorde", icon: Search },
   { id: "scales", label: "Escalas Compatíveis", icon: Music },
 ];
 

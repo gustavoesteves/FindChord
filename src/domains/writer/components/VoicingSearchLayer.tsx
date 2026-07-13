@@ -202,10 +202,10 @@ export const VoicingSearchLayer: React.FC = () => {
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-purple-400" />
           <div>
-            <h3 className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">Variações de voicing</h3>
+            <h3 className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">Aberturas do acorde</h3>
             {activeChord && (
               <p className="text-[10px] text-zinc-400 font-medium">
-                Variações harmônicas tocáveis para o acorde: <span className="text-purple-300 font-bold">{activeChord.symbol}</span>
+                Formas tocáveis para o acorde: <span className="text-purple-300 font-bold">{activeChord.symbol}</span>
               </p>
             )}
           </div>
@@ -285,12 +285,12 @@ export const VoicingSearchLayer: React.FC = () => {
           </div>
         ) : (
           <div className="py-12 border border-dashed border-zinc-850 rounded-xl text-center text-zinc-500 text-xs italic">
-            Nenhum voicing corresponde aos filtros de conceitos harmônicos selecionados.
+            Nenhuma abertura corresponde aos filtros selecionados.
           </div>
         )
       ) : (
         <div className="py-12 border border-dashed border-zinc-850 rounded-xl text-center text-zinc-500 text-xs italic">
-          Desenhe notas no braço para habilitar o buscador de voicings equivalentes.
+          Desenhe notas no braço para ver aberturas equivalentes.
         </div>
       )}
     </div>

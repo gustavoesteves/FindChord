@@ -338,13 +338,13 @@ export const TranslationLayer: React.FC = () => {
                   className="w-full sm:w-auto px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg transition-all active:scale-95 cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  Registrar em Capturados
+                  Capturar acorde
                 </button>
 
                 <form onSubmit={handleSaveToLibrary} className="w-full sm:w-auto flex items-center gap-2">
                   <input
                     type="text"
-                    placeholder="Nomear shape (ex: Alterado)"
+                    placeholder="Nomear fôrma (ex: Alterado)"
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
                     className="flex-1 sm:w-48 px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 focus:outline-none focus:border-purple-500/50"
@@ -354,7 +354,7 @@ export const TranslationLayer: React.FC = () => {
                     className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700/60 text-zinc-200 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                   >
                     <Save className="h-3.5 w-3.5 text-purple-400" />
-                    Salvar na Biblioteca
+                    Salvar
                   </button>
                 </form>
               </div>
@@ -395,7 +395,7 @@ export const TranslationLayer: React.FC = () => {
         <div className="p-4 rounded-2xl border border-zinc-850 bg-zinc-900/40 backdrop-blur-xl shadow-2xl flex flex-col gap-3 max-h-[380px] overflow-y-auto scrollbar-thin">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1 border-b border-zinc-800 pb-1.5">
             <BookOpen className="h-3.5 w-3.5 text-purple-400" />
-            Biblioteca & Histórico
+            Biblioteca e histórico
           </h4>
 
           <div className="flex flex-col gap-4">
@@ -440,7 +440,7 @@ export const TranslationLayer: React.FC = () => {
                 <History className="h-3 w-3" /> Capturados
               </span>
               {capturedChords.length === 0 ? (
-                <span className="text-[10px] text-zinc-650 italic pl-1">Nenhum shape capturado.</span>
+                <span className="text-[10px] text-zinc-650 italic pl-1">Nenhuma fôrma capturada.</span>
               ) : (
                 capturedChords.map(item => (
                   <div key={item.id} className="p-2 rounded-lg bg-zinc-950/60 border border-zinc-850 hover:border-zinc-800 flex items-center justify-between gap-1.5 transition-all">

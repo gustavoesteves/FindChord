@@ -31,7 +31,7 @@ const COLLAPSED_FUNCTIONAL_COLOR_LIMIT = 3;
 const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
   reference: "Referência",
-  presentation: "Curadoria"
+  presentation: "Seleção"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   omission: "Fora da seleção",
