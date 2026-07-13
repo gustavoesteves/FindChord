@@ -48,4 +48,19 @@ describe("proposal display context", () => {
 
     expect(proposalTitleDetail(second, counts)).toBe("Centro: F · Comp. 1-4 · Percurso: F - Bb - C7 - F");
   });
+
+  it("adds the apparent-function reading for repeated color cards", () => {
+    const first = {
+      ...proposal("sharp-iv", "Estratégia — Função aparente", ["C", "F#m7(b5)", "G7", "C"], "C"),
+      explanation: ["substitui F por F#m7(b5)", "preserva função PD"]
+    };
+    const second = {
+      ...proposal("sus", "Estratégia — Função aparente", ["C", "F", "G7sus4", "G7", "C"], "C"),
+      explanation: ["insere G7sus4 antes de G7", "preserva função PD"]
+    };
+    const counts = proposalDisplayNameCounts([first, second]);
+
+    expect(proposalTitleDetail(first, counts)).toContain("Leitura: substitui F por F#m7(b5)");
+    expect(proposalVisibleSignature(second, counts)).toContain("Leitura: insere G7sus4 antes de G7");
+  });
 });

@@ -23,6 +23,7 @@ export function proposalTitleDetail(
   const lastMeasure = measureIndexes[measureIndexes.length - 1];
   const scope = firstMeasure === lastMeasure ? `Comp. ${firstMeasure}` : `Comp. ${firstMeasure}-${lastMeasure}`;
   const route = `${scope} · Percurso: ${visibleChords.join(" - ")}${suffix}`;
+  const apparentFunctionLabel = apparentFunctionDetail(proposal);
 
   if (proposal.cadentialTarget && /ii-V/i.test(proposal.name)) {
     return `Alvo: ${proposal.cadentialTarget} · ${route}`;
@@ -32,7 +33,26 @@ export function proposalTitleDetail(
     return `Centro: ${proposal.cadentialTarget} · ${route}`;
   }
 
+  if (apparentFunctionLabel) {
+    return `${apparentFunctionLabel} · ${route}`;
+  }
+
   return route;
+}
+
+function apparentFunctionDetail(proposal: ReharmonizationProposal): string | undefined {
+  if (!/Função aparente/i.test(proposal.name)) return undefined;
+
+  const substitution = proposal.explanation.find(item => /substitui .* por /i.test(item));
+  if (substitution) return `Leitura: ${substitution}`;
+
+  const insertion = proposal.explanation.find(item => /insere .* antes de /i.test(item));
+  if (insertion) return `Leitura: ${insertion}`;
+
+  const role = proposal.explanation.find(item => /trata .* como /i.test(item));
+  if (role) return `Leitura: ${role}`;
+
+  return undefined;
 }
 
 export function proposalVisibleSignature(
