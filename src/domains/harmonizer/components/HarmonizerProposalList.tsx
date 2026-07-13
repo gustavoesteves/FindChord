@@ -34,7 +34,7 @@ const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   presentation: "Curadoria"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
-  omission: "Fora do card",
+  omission: "Fora da seleção",
   comparison: "Contexto",
   compatibility: "Melodia"
 };
@@ -104,7 +104,7 @@ export default function HarmonizerProposalList({
       {diagnosticGroups.length > 0 && (
         <div className="rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
           <div className="font-black uppercase tracking-widest text-[10px] text-sky-200 mb-2">
-            Leituras ocultas
+            Outras leituras
           </div>
           <div className="flex flex-col gap-3">
             {diagnosticGroups.map((group) => (
@@ -155,7 +155,7 @@ export default function HarmonizerProposalList({
             <div className="flex items-center gap-2">
               <Palette className="w-4 h-4 text-fuchsia-300" />
               <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-200">
-                Cores funcionais
+                Cores harmônicas
               </span>
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-300/70">
@@ -180,7 +180,7 @@ export default function HarmonizerProposalList({
         <section className="flex flex-col gap-3 border-t border-zinc-800/70 pt-4">
           <div className="flex items-center justify-between gap-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-              Trechos locais
+              Focos locais
             </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
               {localSegments.length}

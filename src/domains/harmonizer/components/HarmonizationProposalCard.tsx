@@ -69,7 +69,7 @@ const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string
   reharmonization: "Rearmonização"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
-  omission: "Fora do card",
+  omission: "Fora da seleção",
   comparison: "Contexto",
   compatibility: "Melodia"
 };
