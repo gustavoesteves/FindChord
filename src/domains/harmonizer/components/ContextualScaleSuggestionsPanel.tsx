@@ -11,16 +11,16 @@ interface ContextualScaleSuggestionsPanelProps {
 const FUNCTION_LABELS: Record<ContextualScaleCandidate["harmonicFunction"], string> = {
   tonic: "Repouso",
   predominant: "Preparação",
-  dominant: "Resolução",
+  dominant: "Dominante",
   modal: "Modal",
   color: "Cor"
 };
 
 const INTENT_LABELS: Record<ContextualScaleCandidate["intent"], string> = {
-  inside: "Dentro",
-  functional: "Funcional",
+  inside: "Estável",
+  functional: "Direção",
   tension: "Tensão",
-  outside: "Fora"
+  outside: "Exterior"
 };
 
 const INTENT_CLASSNAMES: Record<ContextualScaleCandidate["intent"], string> = {
@@ -39,7 +39,7 @@ const ROLE_LABELS: Record<NonNullable<SectionScaleSuggestionSet["presentationRol
 
 const MELODIC_FIT_LABELS: Record<SectionScaleSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
   aligned: "Melodia apoia",
-  neutral: "Neutra",
+  neutral: "Melodia neutra",
   caution: "Revisar com a melodia"
 };
 
@@ -188,7 +188,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
           <div className="flex items-center gap-2">
             <CircleDot className="h-4 w-4 text-sky-300" />
             <span className="text-[10px] font-black uppercase tracking-widest text-sky-200">
-              Leituras de escala por contexto
+              Escalas para a harmonia
             </span>
           </div>
           <span className="text-xs text-zinc-500">
@@ -247,7 +247,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
           {regions.length > 0 && (
             <div className="flex flex-col gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 px-4 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-sky-200">
-                Leituras regionais
+                Regiões de escala
               </span>
               <div className="grid gap-2 md:grid-cols-2">
                 {regions.map(region => (
@@ -273,7 +273,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
           {linearRoutes.length > 0 && (
             <div className="flex flex-col gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-200">
-                Rotas lineares
+                Caminhos melódicos
               </span>
               <div className="grid gap-2 md:grid-cols-2">
                 {linearRoutes.map(route => (
