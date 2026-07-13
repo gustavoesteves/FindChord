@@ -218,14 +218,14 @@ export default function HarmonizerProposalList({
             onClick={onToggleExpanded}
             className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition cursor-pointer"
           >
-            {isExpanded ? "Mostrar Menos" : `Mostrar Mais Harmonizações (+${hiddenCount})`}
+            {isExpanded ? "Ver menos" : `Ver mais harmonizações (+${hiddenCount})`}
           </button>
         </div>
       )}
 
       {proposals.length === 0 && hasMelodicAnchors && (
         <div className="text-zinc-500 text-sm italic py-10 text-center">
-          Avaliando possibilidades estruturais...
+          Procurando caminhos harmônicos para esta melodia...
         </div>
       )}
       {!hasMelodicAnchors && (
