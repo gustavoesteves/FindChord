@@ -47,7 +47,7 @@ const KIND_LABELS: Record<ReharmonizationProposalKind, string> = {
   reference: "Referência harmônica",
   "validated-harmonization": "Harmonização validada",
   "controlled-reharmonization": "Rearmonização controlada",
-  "experimental-exploration": "Exploração experimental"
+  "experimental-exploration": "Afastamento experimental"
 };
 
 const ROUTE_PROFILE_LABELS: Record<ReharmonizationRouteProfile, string> = {
@@ -60,8 +60,8 @@ const ROUTE_PROFILE_LABELS: Record<ReharmonizationRouteProfile, string> = {
 const PRESENTATION_ROLE_LABELS: Record<ReharmonizationPresentationRole, string> = {
   primary: "Principal",
   alternative: "Alternativa",
-  comparative: "Comparação",
-  adventurous: "Exploração"
+  comparative: "Contraste",
+  adventurous: "Afastamento"
 };
 const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string> = {
   basic: "Harmonia básica",
@@ -69,9 +69,9 @@ const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string
   reharmonization: "Rearmonização"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
-  omission: "Omissão",
-  comparison: "Comparação",
-  compatibility: "Compatibilidade"
+  omission: "Fora do card",
+  comparison: "Contexto",
+  compatibility: "Melodia"
 };
 
 function voiceLeadingLabel(score: number): string {

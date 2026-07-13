@@ -33,8 +33,8 @@ const INTENT_CLASSNAMES: Record<ContextualScaleCandidate["intent"], string> = {
 const ROLE_LABELS: Record<NonNullable<SectionScaleSuggestionSet["presentationRole"]>, string> = {
   primary: "Principal",
   alternative: "Alternativa",
-  comparative: "Comparação",
-  adventurous: "Exploração"
+  comparative: "Contraste",
+  adventurous: "Afastamento"
 };
 
 const MELODIC_FIT_LABELS: Record<SectionScaleSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {

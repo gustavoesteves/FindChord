@@ -31,12 +31,12 @@ const COLLAPSED_FUNCTIONAL_COLOR_LIMIT = 3;
 const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
   reference: "Referência",
-  presentation: "Organização"
+  presentation: "Curadoria"
 };
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
-  omission: "Omissão",
-  comparison: "Comparação",
-  compatibility: "Compatibilidade"
+  omission: "Fora do card",
+  comparison: "Contexto",
+  compatibility: "Melodia"
 };
 const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string> = {
   basic: "Harmonia básica",
