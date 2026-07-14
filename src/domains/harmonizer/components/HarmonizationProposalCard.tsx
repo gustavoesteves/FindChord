@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import type {
+  ReharmonizationInputContext,
   ReharmonizationProposal,
   ReharmonizationProposalKind,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { LocalSegmentOccurrence } from "../services/localSegmentHarmonization";
+import { inputContextLabel } from "../services/harmonizerInputContext";
 import type {
   HarmonicDiagnosticCategory
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
@@ -60,6 +62,11 @@ const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   comparison: "Contexto",
   compatibility: "Melodia"
 };
+const INPUT_CONTEXT_TONE: Record<ReharmonizationInputContext, string> = {
+  "melody-only": "text-emerald-300",
+  "melody-with-reference-harmony": "text-sky-300",
+  "harmony-only-analysis": "text-amber-300"
+};
 
 function voiceLeadingLabel(score: number): string {
   if (score <= 3) return "Condução muito próxima";
@@ -74,6 +81,10 @@ export function proposalKindLabel(kind: ReharmonizationProposalKind): string {
 
 export function routeProfileLabel(profile: ReharmonizationRouteProfile): string {
   return ROUTE_PROFILE_LABELS[profile];
+}
+
+export function proposalInputContextLabel(context: ReharmonizationInputContext): string {
+  return inputContextLabel(context);
 }
 
 export default function HarmonizationProposalCard({
@@ -98,6 +109,11 @@ export default function HarmonizationProposalCard({
             {titleDetail && (
               <span className="text-xs font-medium text-zinc-500 normal-case tracking-normal">
                 {titleDetail}
+              </span>
+            )}
+            {proposal.inputContext && (
+              <span className={`text-[10px] font-black uppercase tracking-widest ${INPUT_CONTEXT_TONE[proposal.inputContext]}`}>
+                {proposalInputContextLabel(proposal.inputContext)}
               </span>
             )}
           </div>

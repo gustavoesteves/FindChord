@@ -32,6 +32,10 @@ import {
   groupRepeatedLocalSegmentRoutes,
   removeRepeatedLocalSegmentIdeas
 } from "../services/localSegmentHarmonization";
+import {
+  proposalsWithInputContext,
+  resolveHarmonizerInputContext
+} from "../services/harmonizerInputContext";
 import { dedupeHarmonicallyEquivalentProposals } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
 import { groupNearEquivalentColorVariants } from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
 
@@ -59,6 +63,11 @@ export function useHarmonizerProposals({
     () => selectSectionHarmonies(scoreSnapshot?.harmonies, activeSection),
     [scoreSnapshot, activeSection]
   );
+
+  const inputContext = useMemo(() => resolveHarmonizerInputContext({
+    melodicAnchorCount: melodyAnchorsData.anchors.length,
+    referenceHarmonyCount: sectionHarmonies.length
+  }), [melodyAnchorsData.anchors.length, sectionHarmonies.length]);
 
   const { proposals, phraseContext, rejectedExperimentalCount, omittedStrategyDiagnostics } = useMemo(() => {
     if (melodyAnchorsData.anchors.length === 0) {
@@ -89,8 +98,8 @@ export function useHarmonizerProposals({
   }, [melodyAnchorsData.anchors, scoreSnapshot?.metadata?.keySignature, sectionHarmonies]);
 
   const existingHarmonyProposal = useMemo(
-    () => buildExistingHarmonyProposal(sectionHarmonies),
-    [sectionHarmonies]
+    () => buildExistingHarmonyProposal(sectionHarmonies, inputContext),
+    [sectionHarmonies, inputContext]
   );
 
   const controlledReharmonizationProposals = useMemo(
@@ -121,14 +130,18 @@ export function useHarmonizerProposals({
           : "major-functional"
       })
       : uniqueProposals;
-    return annotateProposalPresentationRoles(groupedProposals, PRESENTATION_MODE, phraseContext || undefined);
+    return proposalsWithInputContext(
+      annotateProposalPresentationRoles(groupedProposals, PRESENTATION_MODE, phraseContext || undefined),
+      inputContext
+    );
   }, [
     existingHarmonyProposal,
     controlledReharmonizationProposals,
     proposals,
     phraseContext,
     melodyAnchorsData.anchors,
-    sectionHarmonies
+    sectionHarmonies,
+    inputContext
   ]);
 
   const contextualScaleSuggestionSets = useMemo(() => {
@@ -204,6 +217,7 @@ export function useHarmonizerProposals({
       anchors: melodyAnchorsData.allAnchors,
       keySignature: scoreSnapshot?.metadata?.keySignature,
       referenceHarmonies: sectionHarmonies,
+      inputContext,
       primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
       boldnessMode: PRESENTATION_MODE
     });
@@ -215,7 +229,8 @@ export function useHarmonizerProposals({
     melodyAnchorsData.allAnchors,
     melodyAnchorsData.anchors,
     scoreSnapshot?.metadata?.keySignature,
-    sectionHarmonies
+    sectionHarmonies,
+    inputContext
   ]);
 
   const visibleDiagnostics = useMemo(() => diagnosticsForMode(
@@ -228,6 +243,7 @@ export function useHarmonizerProposals({
     melodyAnchorsData,
     localSegments,
     phraseContext,
+    inputContext,
     contextualScaleSuggestionSets,
     rejectedExperimentalCount,
     omittedStrategyDiagnostics: visibleDiagnostics

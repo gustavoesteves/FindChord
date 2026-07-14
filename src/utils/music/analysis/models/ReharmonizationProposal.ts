@@ -15,6 +15,10 @@ export type ReharmonizationRouteProfile = "conservative" | "moderate" | "chromat
 export type ReharmonizationPresentationRole = "primary" | "alternative" | "comparative" | "adventurous";
 export type ReharmonizationPresentationLayer = "basic" | "reference-aware" | "reharmonization";
 export type ReharmonizationBoldnessMode = "simple" | "balanced" | "exploratory";
+export type ReharmonizationInputContext =
+  | "melody-only"
+  | "melody-with-reference-harmony"
+  | "harmony-only-analysis";
 export type ReharmonizationBassLineProfile =
   | "stepwise"
   | "chromatic"
@@ -58,6 +62,7 @@ export interface ReharmonizationProposal {
   unsupportedDominantTensionPenalty?: number;
   presentationRole?: ReharmonizationPresentationRole;
   presentationLayer?: ReharmonizationPresentationLayer;
+  inputContext?: ReharmonizationInputContext;
   harmonicIdiom?: ReharmonizationHarmonicIdiom;
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
   cadentialTarget?: string;

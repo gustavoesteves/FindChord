@@ -3,6 +3,7 @@ import { PhraseAnalysisEngine } from "../../../utils/music/analysis/engines/Phra
 import type { MelodicAnchor } from "../../../utils/music/analysis/models/ProjectionSet";
 import type {
   ReharmonizationBoldnessMode,
+  ReharmonizationInputContext,
   ReharmonizationProposal
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { ScoreHarmonyEvent } from "../../../utils/music/analysis/models/ScoreSnapshot";
@@ -18,6 +19,10 @@ import {
   proposalChordSequenceIdentity,
   proposalHarmonicIdentity
 } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
+import {
+  resolveHarmonizerInputContext,
+  withInputContext
+} from "./harmonizerInputContext";
 
 export interface LocalSegmentHarmonization {
   id: string;
@@ -44,6 +49,7 @@ export interface BuildLocalSegmentHarmonizationsOptions {
   anchors: MelodicAnchor[];
   keySignature?: string;
   referenceHarmonies?: ScoreHarmonyEvent[];
+  inputContext?: ReharmonizationInputContext | null;
   primaryMeasures?: number[];
   interestingMeasures?: number[];
   boldnessMode?: ReharmonizationBoldnessMode;
@@ -58,6 +64,7 @@ export function buildLocalSegmentHarmonizations({
   anchors,
   keySignature,
   referenceHarmonies = [],
+  inputContext,
   primaryMeasures = [],
   interestingMeasures = [],
   boldnessMode = "balanced",
@@ -79,6 +86,10 @@ export function buildLocalSegmentHarmonizations({
     const referenceForWindow = referenceHarmonies.filter(harmony => (
       window.measureIndexes.includes(harmony.measure)
     ));
+    const windowInputContext = inputContext || resolveHarmonizerInputContext({
+      melodicAnchorCount: window.anchors.length,
+      referenceHarmonyCount: referenceForWindow.length
+    });
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(window.anchors, keySignature),
       referenceForWindow
@@ -93,8 +104,9 @@ export function buildLocalSegmentHarmonizations({
       { referenceHarmonies: referenceForWindow }
     );
     const presented = annotateProposalPresentationRoles(ranked, boldnessMode, phraseContext);
-    const primaryProposal = presented.find(proposal => proposal.presentationRole === "primary") || presented[0];
-    if (!primaryProposal) continue;
+    const selectedPrimaryProposal = presented.find(proposal => proposal.presentationRole === "primary") || presented[0];
+    if (!selectedPrimaryProposal) continue;
+    const primaryProposal = withInputContext(selectedPrimaryProposal, windowInputContext);
 
     segments.push({
       id: `local-segment-${window.id}`,

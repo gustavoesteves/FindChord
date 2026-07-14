@@ -4,9 +4,10 @@ import type {
   ScoreNoteEvent
 } from "../../../utils/music/analysis/models/ScoreSnapshot";
 import type {
+  ReharmonizationInputContext,
+  ReharmonizationMeasure,
   ReharmonizationPresentationRole,
-  ReharmonizationProposal,
-  ReharmonizationMeasure
+  ReharmonizationProposal
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { PhraseContext } from "../../../utils/music/analysis/engines/PhraseAnalysisEngine";
 import { Note } from "tonal";
@@ -544,7 +545,8 @@ export function buildProposalScaleSuggestionSets(
 }
 
 export function buildExistingHarmonyProposal(
-  sectionHarmonies: ScoreHarmonyEvent[]
+  sectionHarmonies: ScoreHarmonyEvent[],
+  inputContext?: ReharmonizationInputContext | null
 ): ReharmonizationProposal | null {
   if (sectionHarmonies.length === 0) return null;
 
@@ -556,6 +558,7 @@ export function buildExistingHarmonyProposal(
     name: "Referência — Harmonia da partitura",
     measures: harmonyEventsToMeasures(sectionHarmonies),
     explanation: referenceAnalysis.explanation,
+    inputContext: inputContext || undefined,
     harmonicIdiom: referenceAnalysis.idiom?.idiom,
     harmonicBoundary: referenceAnalysis.minorModalBoundary?.boundary === "undetermined"
       ? undefined
