@@ -268,6 +268,7 @@ function compareReferences(generated: GeneratedAlmadaProposal[]): AlmadaComparis
 }
 
 function familySpecificityBonus(reference: AlmadaReference, proposal: GeneratedAlmadaProposal): number {
+  if (reference.id === "d" && proposal.name === "Estratégia — Dominantes secundárias") return 0.08;
   if (reference.id === "j" && proposal.name === "Estratégia — Mistura modal densa") return 0.1;
   if (reference.id === "k" && proposal.name === "Estratégia — Cromatismo de vizinhança") return 0.1;
   if (reference.id === "l" && proposal.name === "Estratégia — Cadência plagal menor") return 0.08;
@@ -346,10 +347,12 @@ function renderMarkdown(generated: GeneratedAlmadaProposal[], comparisons: Almad
   lines.push("- O motor ja cobre bem o ponto de partida: I-IV-V, expansao diatonica, dominantes secundarias e diminutos de passagem aparecem como propostas reais para a melodia.");
   lines.push("- A densidade deixou de ser apenas uma lacuna quantitativa: o motor ja consegue gerar alternativas densas, mas ainda precisa qualificar melhor a direcao cromatica dessas densidades.");
   lines.push("- A cadeia SubV funcional passou a reconhecer preparacoes por tritono para IV, V e I, aproximando a familia do exemplo `h` sem copiar literalmente a solucao do Almada.");
+  lines.push("- As dominantes secundarias passaram a cobrir o exemplo `d` com V7/IV e V7/V em baixo cromatico #IV.");
+  lines.push("- Os diminutos de passagem passaram a cobrir o exemplo `i` com baixo dirigido: I -> IIIº -> ii/IV -> #IVº -> I/V -> V -> I.");
   lines.push("- A mistura modal densa passou a cobrir o exemplo `j` como percurso bVImaj7 -> Imaj7 -> #IVø -> ivm7 -> iii7 -> V7 -> Imaj7.");
   lines.push("- O cromatismo de vizinhanca passou a cobrir o exemplo `k` como percurso I -> Iº -> I -> bIIº, regiao cromatica e retorno napolitano para I.");
   lines.push("- A chegada deceptiva cromatica passou a cobrir o exemplo `m` como familia intervalar: bIII -> iiiø -> IV -> iv -> II7 -> V -> #Vº -> vi.");
-  lines.push("- A cadencia plagal menor agora aparece como familia propria no exemplo `l`, justificada por conducao interna b6 -> 5 antes da tonica.");
+  lines.push("- A cadencia plagal menor agora cobre o exemplo `l` com mistura modal, diminuto cromatico, bVII7 e baixos dirigidos ate iv -> I.");
   lines.push("- As proximas lacunas qualitativas estao menos em vocabulario isolado e mais em graduar quando mediantes e cromatismos densos devem virar alternativas exploratorias.");
   lines.push("");
 

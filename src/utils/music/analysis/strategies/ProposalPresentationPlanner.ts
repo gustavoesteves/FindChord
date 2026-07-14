@@ -25,12 +25,28 @@ function isReference(proposal: ReharmonizationProposal): boolean {
   return proposal.kind === "reference";
 }
 
-function isAdventurous(proposal: ReharmonizationProposal): boolean {
+function isExploratoryChromatic(
+  proposal: ReharmonizationProposal,
+  phraseContext?: PhraseContext
+): boolean {
+  if ((proposal.chromaticLegibilityPenalty || 0) >= 1) return true;
+  if (
+    proposal.name === "Estratégia — Chegada deceptiva cromática"
+    && proposal.cadentialTarget
+    && phraseContext
+    && !samePitchClass(proposal.cadentialTarget, phraseContext.selectedCenter.tonic)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isAdventurous(proposal: ReharmonizationProposal, phraseContext?: PhraseContext): boolean {
   if (proposal.id.startsWith("strategy_reference_center_")) return false;
   if (isNonTonalReferenceIdiom(proposal.harmonicIdiom) && (proposal.apparentFunctionReferenceBonus || 0) > 0) {
     return false;
   }
-  return proposal.routeProfile === "radical";
+  return proposal.routeProfile === "radical" || isExploratoryChromatic(proposal, phraseContext);
 }
 
 function referenceIdiom(proposals: ReharmonizationProposal[]): ReharmonizationHarmonicIdiom | undefined {
@@ -97,9 +113,20 @@ function samePitchClass(a: string | undefined, b: string | undefined): boolean {
 function canBePrimary(
   proposal: ReharmonizationProposal,
   mode: ReharmonizationBoldnessMode,
-  phraseContext?: PhraseContext
+  phraseContext?: PhraseContext,
+  hasStablePrimaryCandidate = false
 ): boolean {
   if (mode === "exploratory") return true;
+  if (
+    mode === "balanced"
+    && hasStablePrimaryCandidate
+    && proposal.routeProfile === "chromatic"
+    && (proposal.kind === "controlled-reharmonization" || proposal.kind === "experimental-exploration")
+    && (proposal.apparentFunctionReferenceBonus || 0) < 0.35
+    && (proposal.referenceRootAgreement || 0) < 0.75
+  ) {
+    return false;
+  }
   if (
     mode === "balanced"
     && proposal.cadentialTarget
@@ -108,7 +135,7 @@ function canBePrimary(
   ) {
     return false;
   }
-  return !isAdventurous(proposal);
+  return !isAdventurous(proposal, phraseContext);
 }
 
 function presentationLayerFor(
@@ -164,17 +191,19 @@ function presentationPriority(proposal: ReharmonizationProposal): number {
 
 function nonPrimaryRole(
   proposal: ReharmonizationProposal,
-  hasReferenceBoundaryExplanation: boolean
+  hasReferenceBoundaryExplanation: boolean,
+  phraseContext?: PhraseContext
 ): ReharmonizationPresentationRole {
-  if (isAdventurous(proposal)) return "adventurous";
+  if (isAdventurous(proposal, phraseContext)) return "adventurous";
   return hasReferenceBoundaryExplanation ? "comparative" : "alternative";
 }
 
 function referenceBoundaryExplanationFor(
   proposal: ReharmonizationProposal,
-  boundary: ReharmonizationHarmonicBoundary | undefined
+  boundary: ReharmonizationHarmonicBoundary | undefined,
+  phraseContext?: PhraseContext
 ): string | undefined {
-  const prefix = isAdventurous(proposal) ? "Exploração mantida como comparação" : "Comparação";
+  const prefix = isAdventurous(proposal, phraseContext) ? "Exploração mantida como comparação" : "Comparação";
   if (boundary === "modal-center") {
     return `${prefix}: a referência sugere centro modal sem sensível cadencial`;
   }
@@ -187,7 +216,8 @@ function referenceBoundaryExplanationFor(
 function proposalDiagnosticFor(
   proposal: ReharmonizationProposal,
   role: ReharmonizationPresentationRole,
-  boundary: ReharmonizationHarmonicBoundary | undefined
+  boundary: ReharmonizationHarmonicBoundary | undefined,
+  phraseContext?: PhraseContext
 ): HarmonicDiagnostic | undefined {
   if (role === "comparative" && boundary === "modal-center") {
     return diagnostic(
@@ -208,6 +238,15 @@ function proposalDiagnosticFor(
   }
 
   if (role === "adventurous") {
+    if (isExploratoryChromatic(proposal, phraseContext)) {
+      return diagnostic(
+        `proposal-${proposal.id}-adventurous-chromatic-route`,
+        "presentation",
+        "comparison",
+        "Esta proposta foi mantida como exploração porque o cromatismo pede escuta mais cuidadosa."
+      );
+    }
+
     return diagnostic(
       `proposal-${proposal.id}-adventurous-route`,
       "presentation",
@@ -232,8 +271,13 @@ export function annotateProposalPresentationRoles(
   const hasReferenceBoundaryExplanation = boundary === "modal-center" || boundary === "minor-functional-cadential";
 
   const arranged = arrangeByBoldness(proposals, mode);
+  const hasStablePrimaryCandidate = arranged.some(proposal => (
+    !isReference(proposal)
+    && (proposal.routeProfile === "conservative" || proposal.routeProfile === "moderate")
+    && canBePrimary(proposal, mode, phraseContext, false)
+  ));
   const preferredPrimaryId = !shouldPreserveReferenceAsAnswer && preferredIdiom
-    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode, phraseContext) && proposal.harmonicIdiom === preferredIdiom)?.id
+    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode, phraseContext, hasStablePrimaryCandidate) && proposal.harmonicIdiom === preferredIdiom)?.id
     : undefined;
 
   return arranged.map((proposal, originalIndex) => {
@@ -241,7 +285,7 @@ export function annotateProposalPresentationRoles(
     if (isReference(proposal)) return { proposal: { ...proposal, presentationLayer }, originalIndex };
 
     const isPreferredPrimary = preferredPrimaryId ? proposal.id === preferredPrimaryId : !primaryAssigned;
-    if (!shouldPreserveReferenceAsAnswer && isPreferredPrimary && !primaryAssigned && canBePrimary(proposal, mode, phraseContext)) {
+    if (!shouldPreserveReferenceAsAnswer && isPreferredPrimary && !primaryAssigned && canBePrimary(proposal, mode, phraseContext, hasStablePrimaryCandidate)) {
       primaryAssigned = true;
       return {
         proposal: withPresentationRole(proposal, "primary", presentationLayer),
@@ -249,14 +293,14 @@ export function annotateProposalPresentationRoles(
       };
     }
 
-    const role = nonPrimaryRole(proposal, hasReferenceBoundaryExplanation);
+    const role = nonPrimaryRole(proposal, hasReferenceBoundaryExplanation, phraseContext);
     return {
       proposal: withPresentationRole(
         proposal,
         role,
         presentationLayer,
-        referenceBoundaryExplanationFor(proposal, boundary),
-        proposalDiagnosticFor(proposal, role, boundary)
+        referenceBoundaryExplanationFor(proposal, boundary, phraseContext),
+        proposalDiagnosticFor(proposal, role, boundary, phraseContext)
       ),
       originalIndex
     };
@@ -283,7 +327,11 @@ export function presentationDiagnosticsForProposals(
   proposals: ReharmonizationProposal[]
 ): HarmonicDiagnostic[] {
   const comparativeCount = proposals.filter(proposal => proposal.presentationRole === "comparative").length;
-  const adventurousCount = proposals.filter(proposal => proposal.presentationRole === "adventurous").length;
+  const chromaticAdventurousCount = proposals.filter(proposal => (
+    proposal.presentationRole === "adventurous"
+    && proposal.diagnostics?.some(item => item.id.endsWith("-adventurous-chromatic-route"))
+  )).length;
+  const adventurousCount = proposals.filter(proposal => proposal.presentationRole === "adventurous").length - chromaticAdventurousCount;
   const boundary = referenceBoundary(proposals);
   const diagnostics: HarmonicDiagnostic[] = [];
 
@@ -319,6 +367,18 @@ export function presentationDiagnosticsForProposals(
         ["simple", "balanced"]
       ));
     }
+  }
+
+  if (chromaticAdventurousCount > 0) {
+    diagnostics.push(diagnostic(
+      "presentation-adventurous-chromatic-proposals",
+      "presentation",
+      "comparison",
+      chromaticAdventurousCount === 1
+        ? "1 proposta cromática ficou como exploração para escuta cuidadosa."
+        : `${chromaticAdventurousCount} propostas cromáticas ficaram como exploração para escuta cuidadosa.`,
+      ["balanced", "exploratory"]
+    ));
   }
 
   if (adventurousCount > 0) {

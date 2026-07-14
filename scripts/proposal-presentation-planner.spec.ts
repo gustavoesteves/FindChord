@@ -90,14 +90,15 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned[3].presentationRole).toBe("adventurous");
   });
 
-  it("keeps ranked order in balanced mode", () => {
+  it("promotes stable routes over unsupported chromatic color in balanced mode", () => {
     const planned = annotateProposalPresentationRoles([
-      proposal("color", "chromatic"),
+      proposal("color", "chromatic", "controlled-reharmonization"),
       proposal("stable", "conservative")
     ], "balanced");
 
-    expect(planned.map(item => item.id)).toEqual(["color", "stable"]);
+    expect(planned.map(item => item.id)).toEqual(["stable", "color"]);
     expect(planned[0].presentationRole).toBe("primary");
+    expect(planned[1].presentationRole).toBe("alternative");
   });
 
   it("does not promote a local cadential target over a strong tonal reference center in balanced mode", () => {
@@ -121,6 +122,66 @@ describe("F31.3 Proposal Presentation Planner", () => {
     expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
       ["centered", "primary"],
       ["deceptive-arrival", "alternative"]
+    ]);
+  });
+
+  it("keeps deceptive chromatic arrivals away from the center as exploratory in balanced mode", () => {
+    const deceptive = {
+      ...proposal("deceptive-arrival", "chromatic", "controlled-reharmonization", "major-functional", undefined, "A"),
+      name: "Estratégia — Chegada deceptiva cromática"
+    };
+    const planned = annotateProposalPresentationRoles([
+      deceptive,
+      proposal("centered", "moderate", "validated-harmonization", "major-functional", undefined, "C")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["centered", "primary"],
+      ["deceptive-arrival", "adventurous"]
+    ]);
+    expect(planned[1].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "proposal-deceptive-arrival-adventurous-chromatic-route",
+        source: "presentation",
+        category: "comparison",
+        message: "Esta proposta foi mantida como exploração porque o cromatismo pede escuta mais cuidadosa."
+      })
+    ]));
+    expect(presentationDiagnosticsForProposals(planned)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "presentation-adventurous-chromatic-proposals",
+        source: "presentation",
+        category: "comparison",
+        message: "1 proposta cromática ficou como exploração para escuta cuidadosa."
+      })
+    ]));
+  });
+
+  it("keeps unsupported chromatic dominant color from taking primary over a stable centered route", () => {
+    const planned = annotateProposalPresentationRoles([
+      proposal("altered-dominants", "chromatic", "controlled-reharmonization", "major-functional", undefined, "C"),
+      proposal("tonal-classic", "conservative", "validated-harmonization", "major-functional", undefined, "C")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["tonal-classic", "primary"],
+      ["altered-dominants", "alternative"]
+    ]);
+  });
+
+  it("keeps dense unsupported chromatic routes exploratory even when they are not radical", () => {
+    const denseChromatic = {
+      ...proposal("dense-chromatic", "chromatic", "controlled-reharmonization"),
+      chromaticLegibilityPenalty: 1.2
+    };
+    const planned = annotateProposalPresentationRoles([
+      denseChromatic,
+      proposal("centered", "moderate")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["centered", "primary"],
+      ["dense-chromatic", "adventurous"]
     ]);
   });
 

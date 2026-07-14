@@ -41,7 +41,7 @@ describe("Chromatic calibration", () => {
     const primary = presented.find(proposal => proposal.presentationRole === "primary");
     const chromatic = presented.find(proposal => proposal.name === "Estratégia — Cromático Linear");
 
-    expect(primary?.name).toBe("Estratégia — Tonal Clássico");
+    expect(primary?.name).toBe("Estratégia — Centro modal");
     expect(chromatic?.presentationRole).not.toBe("primary");
     expect(chromatic?.chromaticLegibilityPenalty).toBeGreaterThan(0);
   });

@@ -675,11 +675,16 @@ export class StrategyGuidedHarmonizer {
     });
     if (!analysis) return [];
 
-    const measures = baseMeasures.map(measure => ({
-      measureIndex: measure.measureIndex,
-      chords: [...measure.chords]
-    }));
-    measures[finalMeasurePosition].chords.splice(finalTonicIndex, 0, minorSubdominant);
+    const directedMeasures = this.buildDirectedMinorPlagalMeasures(anchors, center, minorSubdominant);
+    const measures = directedMeasures.length > 0
+      ? directedMeasures
+      : baseMeasures.map(measure => ({
+        measureIndex: measure.measureIndex,
+        chords: [...measure.chords]
+      }));
+    if (directedMeasures.length === 0) {
+      measures[finalMeasurePosition].chords.splice(finalTonicIndex, 0, minorSubdominant);
+    }
 
     const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
     if (coverage < 0.72) return [];
@@ -690,15 +695,60 @@ export class StrategyGuidedHarmonizer {
       name: "Estratégia — Cadência plagal menor",
       measures,
       explanation: [
-        `insere ${minorSubdominant} antes de ${tonic}`,
+        directedMeasures.length > 0
+          ? `prepara ${minorSubdominant} por cromatismo e baixos dirigidos`
+          : `insere ${minorSubdominant} antes de ${tonic}`,
         "usa iv menor como empréstimo do modo paralelo menor",
         "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia",
+        ...(directedMeasures.length > 0
+          ? ["conduz a chegada plagal por linha interna até a tônica"]
+          : []),
         ...analysis.explanation
       ],
       bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
       cadentialTarget: center,
       harmonicIdiom: "major-functional"
     }];
+  }
+
+  private static buildDirectedMinorPlagalMeasures(
+    anchors: MelodicAnchor[],
+    center: string,
+    minorSubdominant: string
+  ): ReharmonizationMeasure[] {
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const flatSecond = this.chromaticDegree(center, "2m");
+    const second = this.chromaticDegree(center, "2M");
+    const sharpFourth = this.chromaticDegree(center, "4A");
+    const fifth = this.chromaticDegree(center, "5P");
+    const flatSeventh = this.chromaticDegree(center, "7m");
+    const seventh = this.chromaticDegree(center, "7M");
+    const third = this.chromaticDegree(center, "3M");
+    if (!flatSecond || !second || !sharpFourth || !fifth || !flatSeventh || !seventh || !third) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [`${center}m7`, `${flatSecond}dim7`]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [`${second}m7`, `${flatSeventh}7`]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [`${seventh}m7/${sharpFourth}`, `${fifth}7/${this.rootOfChord(minorSubdominant)}`]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [this.withOptionalBass(this.chordFromRoman(center, "I"), third), minorSubdominant, this.chordFromRoman(center, "I")]
+      }
+    ];
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    return coverage >= 0.72 ? measures : [];
   }
 
   private static buildDenseModalMixtureProposals(
@@ -1020,6 +1070,9 @@ export class StrategyGuidedHarmonizer {
   }
 
   private static buildSecondaryDominantMeasures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {
+    const directedDominantMeasures = this.buildDirectedSecondaryDominantMeasures(anchors, center);
+    if (directedDominantMeasures.length > 0) return directedDominantMeasures;
+
     const expanded = this.buildDiatonicExpansionMeasures(anchors, center);
     const measureIndexes = this.getMeasureIndexes(anchors);
     const profiles = this.classifyMeasureProfiles(anchors, measureIndexes);
@@ -1042,6 +1095,49 @@ export class StrategyGuidedHarmonizer {
         chords: enriched
       };
     });
+  }
+
+  private static buildDirectedSecondaryDominantMeasures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const tonic = this.chordFromRoman(center, "I");
+    const subdominant = this.chordFromRoman(center, "IV");
+    const dominant = this.chordFromRoman(center, "V");
+    const sharpFourth = this.chromaticDegree(center, "4A");
+    if (!sharpFourth) return [];
+
+    const dominantToSubdominant = this.secondaryDominantForTarget(subdominant, center);
+    const dominantToDominant = this.secondaryDominantForTarget(dominant, center);
+    if (!dominantToSubdominant || !dominantToDominant) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [tonic, dominantToSubdominant]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [`${subdominant}maj7`, this.withOptionalBass(dominantToDominant, sharpFourth)]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [`${dominant}7`]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [`${tonic}maj7`]
+      }
+    ];
+
+    const candidate: HarmonizationCandidate = {
+      strategy: "DOMINANTES_SECUNDARIAS",
+      center,
+      measures,
+      melody: anchors
+    };
+    const validation = validateHarmonicStrategy(candidate);
+    return validation.accepted ? measures : [];
   }
 
   private static buildAlteredDominantProposals(
@@ -1310,6 +1406,9 @@ export class StrategyGuidedHarmonizer {
   }
 
   private static buildPassingDiminishedMeasures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {
+    const directedBassMeasures = this.buildDirectedBassDiminishedMeasures(anchors, center);
+    if (directedBassMeasures.length > 0) return directedBassMeasures;
+
     const expanded = this.buildDiatonicExpansionMeasures(anchors, center);
     const measureIndexes = this.getMeasureIndexes(anchors);
     const profiles = this.classifyMeasureProfiles(anchors, measureIndexes);
@@ -1336,6 +1435,49 @@ export class StrategyGuidedHarmonizer {
         chords: enriched
       };
     });
+  }
+
+  private static buildDirectedBassDiminishedMeasures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const tonic = this.chordFromRoman(center, "I");
+    const tonicMaj7 = `${tonic}maj7`;
+    const supertonic = this.chordFromRoman(center, "ii");
+    const dominant = `${this.chordFromRoman(center, "V")}7`;
+    const third = this.chromaticDegree(center, "3M");
+    const fourth = this.chromaticDegree(center, "4P");
+    const sharpFourth = this.chromaticDegree(center, "4A");
+    const fifth = this.chromaticDegree(center, "5P");
+    if (!third || !fourth || !sharpFourth || !fifth) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [tonic, `${third}dim7`]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [this.withOptionalBass(supertonic, fourth), `${sharpFourth}dim7`]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [this.withOptionalBass(tonicMaj7, fifth), dominant]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [tonic]
+      }
+    ];
+
+    const candidate: HarmonizationCandidate = {
+      strategy: "DIMINUTO_PASSAGEM",
+      center,
+      measures,
+      melody: anchors
+    };
+    const validation = validateHarmonicStrategy(candidate);
+    return validation.accepted ? measures : [];
   }
 
   private static buildCadentialSubV7Measures(anchors: MelodicAnchor[], center: string): ReharmonizationMeasure[] {

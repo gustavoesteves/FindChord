@@ -365,6 +365,15 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     expect(attempt.validation.report.chordCount).toBeGreaterThanOrEqual(6);
     expect(attempt.validation.report.chordCount).toBeLessThanOrEqual(9);
     expect(attempt.proposal?.name).toBe("Estratégia — Dominantes secundárias");
+    expect(attempt.proposal?.measures.flatMap(measure => measure.chords)).toEqual([
+      "C",
+      "C7",
+      "Fmaj7",
+      "D7/F#",
+      "G7",
+      "Cmaj7"
+    ]);
+    expect(attempt.proposal?.bassLine).toEqual(["C", "C", "F", "F#", "G", "C"]);
   });
 
   it("generates and externally validates a passing diminished strategy proposal", () => {
@@ -380,8 +389,9 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     expect(attempt.validation.report.chordCount).toBeLessThanOrEqual(10);
     expect(attempt.proposal?.name).toBe("Estratégia — Diminutos de passagem");
     expect(attempt.proposal?.measures.flatMap(measure => measure.chords)).toEqual(
-      expect.arrayContaining(["G#dim7", "Edim7", "F#dim7"])
+      expect.arrayContaining(["Edim7", "Dm/F", "F#dim7", "Cmaj7/G"])
     );
+    expect(attempt.proposal?.bassLine).toEqual(["C", "E", "F", "F#", "G", "G", "C"]);
   });
 
   it("generates a minor plagal cadence as a progressive color when final tonic support is clear", () => {
@@ -389,9 +399,20 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(almadaMelody, phraseContext);
     const plagal = proposals.find(proposal => proposal.name === "Estratégia — Cadência plagal menor");
 
-    expect(plagal?.measures.flatMap(measure => measure.chords)).toEqual(expect.arrayContaining(["Fm", "C"]));
+    expect(plagal?.measures.flatMap(measure => measure.chords)).toEqual(expect.arrayContaining([
+      "Cm7",
+      "Dbdim7",
+      "Dm7",
+      "Bb7",
+      "Bm7/F#",
+      "G7/F",
+      "C/E",
+      "Fm",
+      "C"
+    ]));
     expect(plagal?.explanation).toEqual(expect.arrayContaining([
-      "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia"
+      "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia",
+      "conduz a chegada plagal por linha interna até a tônica"
     ]));
   });
 });

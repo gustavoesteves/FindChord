@@ -192,6 +192,9 @@ export function classifyFunctionInMode(
     if (degree === 2 || degree === 5) return "PD";
     if (degree === 7 || degree === 11) return "D";
   } else {
+    const explicitBass = chord.split("/")[1];
+    const bassRoman = explicitBass ? rootToRoman(Note.pitchClass(explicitBass) || explicitBass, center) : undefined;
+    if (roman === "I" && bassRoman === "V" && /(?:maj|M7|7M|Δ|\^)/.test(chord.split("/")[0])) return "D";
     if (functionMap.T.includes(roman)) return "T";
     if (functionMap.PD.includes(roman)) return "PD";
     if (functionMap.D.includes(roman)) return "D";
@@ -246,13 +249,15 @@ function diminishedPassingTarget(chord: string, nextChord: string | undefined, c
   if (!nextChord || !isPassingDiminishedChord(chord)) return null;
 
   const targetRoot = normalizeChordRoot(nextChord);
-  const targetChroma = Note.chroma(targetRoot);
-  if (targetChroma === undefined) return null;
+  const explicitBass = nextChord.split("/")[1];
+  const resolutionPitch = explicitBass ? Note.pitchClass(explicitBass) : targetRoot;
+  const resolutionChroma = Note.chroma(resolutionPitch);
+  if (resolutionChroma === undefined) return null;
 
   const chordTones = chordPitchClasses(chord);
   const resolvesUpBySemitone = chordTones.some(tone => {
     const toneChroma = Note.chroma(tone);
-    return toneChroma !== undefined && (targetChroma - toneChroma + 12) % 12 === 1;
+    return toneChroma !== undefined && (resolutionChroma - toneChroma + 12) % 12 === 1;
   });
   if (!resolvesUpBySemitone) return null;
 
