@@ -5,6 +5,24 @@ import {
 } from "../src/utils/music/analysis/strategies/ModalBorrowingAnalysis";
 
 describe("Modal borrowing analysis", () => {
+  it("identifies minor iv as a plagal color from the parallel minor", () => {
+    const analysis = analyzeModalBorrowingColor("Fm6", {
+      center: "C",
+      mode: "major",
+      idiom: "major-functional"
+    });
+
+    expect(analysis).toEqual(expect.objectContaining({
+      role: "BORROWED_MINOR_IV",
+      borrowedFrom: "parallel-minor",
+      impliedFunction: "PD",
+      root: "F"
+    }));
+    expect(analysis?.explanation).toEqual(expect.arrayContaining([
+      "cadência plagal menor prepara o retorno à tônica por condução interna"
+    ]));
+  });
+
   it("identifies bVI borrowed from the parallel minor in a major context", () => {
     const analysis = analyzeModalBorrowingColor("Abmaj7", {
       center: "C",
@@ -63,14 +81,15 @@ describe("Modal borrowing analysis", () => {
     })).toBeNull();
   });
 
-  it("collects only bVI and bVII colors from a progression", () => {
-    const analyses = analyzeModalBorrowingColors(["C", "Ab", "F", "Bb", "G7"], {
+  it("collects only parallel-minor colors from a progression", () => {
+    const analyses = analyzeModalBorrowingColors(["C", "Fm", "Ab", "F", "Bb", "G7"], {
       center: "C",
       mode: "major",
       idiom: "major-functional"
     });
 
     expect(analyses.map(analysis => analysis.role)).toEqual([
+      "BORROWED_MINOR_IV",
       "BORROWED_FLAT_VI",
       "BORROWED_FLAT_VII"
     ]);

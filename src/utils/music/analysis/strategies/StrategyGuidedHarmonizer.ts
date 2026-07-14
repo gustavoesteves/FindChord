@@ -128,9 +128,13 @@ export class StrategyGuidedHarmonizer {
       ...this.buildAlteredDominantProposals(anchors, phraseContext),
       ...this.buildAlteredDominantCycleProposals(anchors, phraseContext),
       ...this.buildFunctionalSubVProposals(anchors, phraseContext),
+      ...this.buildDeceptiveMediantArrivalProposals(anchors, phraseContext),
       ...melodyFirstProposals,
       ...this.buildApparentFunctionProposals(anchors, phraseContext),
       ...this.buildModalBorrowingProposals(anchors, phraseContext),
+      ...this.buildMinorPlagalCadenceProposals(anchors, phraseContext),
+      ...this.buildDenseModalMixtureProposals(anchors, phraseContext),
+      ...this.buildChromaticNeighborRegionProposals(anchors, phraseContext),
       ...this.buildLocalIiVProposals(anchors, phraseContext),
       ...this.buildDominantVampProposals(anchors, phraseContext),
       ...this.buildBluesProposals(anchors, phraseContext),
@@ -638,6 +642,189 @@ export class StrategyGuidedHarmonizer {
     return null;
   }
 
+  private static buildMinorPlagalCadenceProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 4) return [];
+
+    const baseMeasures = this.buildDiatonicExpansionMeasures(anchors, center);
+    const finalMeasureIndex = measureIndexes[measureIndexes.length - 1];
+    const finalMeasurePosition = baseMeasures.findIndex(measure => measure.measureIndex === finalMeasureIndex);
+    const finalMeasure = finalMeasurePosition >= 0 ? baseMeasures[finalMeasurePosition] : null;
+    if (!finalMeasure) return [];
+
+    const tonic = this.chordFromRoman(center, "I");
+    const finalTonicIndex = finalMeasure.chords.findIndex(chord => this.romanForChordRoot(this.rootOfChord(chord), center) === "I");
+    if (finalTonicIndex < 0) return [];
+
+    const finalAnchors = anchors.filter(anchor => anchor.measureIndex === finalMeasureIndex);
+    if (finalAnchors.length === 0 || this.melodicFitForChord(tonic, finalAnchors) < 0.6) return [];
+
+    const minorSubdominant = `${this.chordFromRoman(center, "IV")}m`;
+    const analysis = analyzeModalBorrowingColor(minorSubdominant, {
+      center,
+      mode: "major",
+      idiom: "major-functional"
+    });
+    if (!analysis) return [];
+
+    const measures = baseMeasures.map(measure => ({
+      measureIndex: measure.measureIndex,
+      chords: [...measure.chords]
+    }));
+    measures[finalMeasurePosition].chords.splice(finalTonicIndex, 0, minorSubdominant);
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.72) return [];
+
+    return [{
+      id: `strategy_minor_plagal_cadence_${center.toLowerCase()}`,
+      kind: "controlled-reharmonization",
+      name: "Estratégia — Cadência plagal menor",
+      measures,
+      explanation: [
+        `insere ${minorSubdominant} antes de ${tonic}`,
+        "usa iv menor como empréstimo do modo paralelo menor",
+        "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia",
+        ...analysis.explanation
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: center,
+      harmonicIdiom: "major-functional"
+    }];
+  }
+
+  private static buildDenseModalMixtureProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const flatSix = this.chromaticDegree(center, "6m");
+    const sharpFourth = this.chromaticDegree(center, "4A");
+    const fourth = this.chromaticDegree(center, "4P");
+    const third = this.chromaticDegree(center, "3M");
+    const fifth = this.chromaticDegree(center, "5P");
+    if (!flatSix || !sharpFourth || !fourth || !third || !fifth) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [`${flatSix}maj7`, `${center}maj7`]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [`${sharpFourth}m7b5`, `${fourth}m7`]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [`${third}m7`, `${fifth}7`]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [`${center}maj7`]
+      }
+    ];
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.78) return [];
+
+    const finalMeasureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndexes[3]);
+    if (finalMeasureAnchors.length === 0 || this.melodicFitForChord(`${center}maj7`, finalMeasureAnchors) < 0.6) return [];
+
+    return [{
+      id: `strategy_dense_modal_mixture_${center.toLowerCase()}`,
+      kind: "controlled-reharmonization",
+      name: "Estratégia — Mistura modal densa",
+      measures,
+      explanation: [
+        "abre a frase por bVImaj7 como região momentânea do modo paralelo menor",
+        "aproxima #IVø e ivm7 por cromatismo antes de retornar ao campo maior",
+        `fecha com iii7 -> ${fifth}7 -> ${center}maj7 sem perder a tônica da frase`,
+        "trata a mistura modal como percurso dirigido, não como cor isolada"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: center,
+      harmonicIdiom: "major-functional",
+      routeProfile: "radical"
+    }];
+  }
+
+  private static buildChromaticNeighborRegionProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const flatSecond = this.chromaticDegree(center, "2m");
+    const second = this.chromaticDegree(center, "2M");
+    const flatThird = this.chromaticDegree(center, "3m");
+    const fourth = this.chromaticDegree(center, "4P");
+    const flatSix = this.chromaticDegree(center, "6m");
+    if (!flatSecond || !second || !flatThird || !fourth || !flatSix) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [center, `${center}dim7`, center, `${flatSecond}dim7`]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [fourth]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [`${flatThird}7`, `${second}m7b5`, `${flatSix}maj7`]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [`${flatSecond}7`, `${flatSecond}maj7`, `${center}maj7`]
+      }
+    ];
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.72) return [];
+
+    const finalMeasureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndexes[3]);
+    if (finalMeasureAnchors.length === 0 || this.melodicFitForChord(`${center}maj7`, finalMeasureAnchors) < 0.6) return [];
+
+    return [{
+      id: `strategy_chromatic_neighbor_region_${center.toLowerCase()}`,
+      kind: "controlled-reharmonization",
+      name: "Estratégia — Cromatismo de vizinhança",
+      measures,
+      explanation: [
+        "usa diminutos vizinhos ao redor da tônica antes de abrir a região subdominante",
+        `desloca a região central por ${flatThird}7 -> ${second}m7b5 -> ${flatSix}maj7`,
+        `fecha pela região napolitana ${flatSecond}7 -> ${flatSecond}maj7 -> ${center}maj7`,
+        "organiza o cromatismo denso como percurso de saída e retorno à tônica"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: center,
+      harmonicIdiom: "major-functional",
+      routeProfile: "radical"
+    }];
+  }
+
   private static classifyBorrowingTarget(chord: string, center: string): StrategyFunctionId {
     const roman = this.romanForChordRoot(this.rootOfChord(chord), center);
     return ["ii", "IV"].includes(roman) ? "PD" : "OTHER";
@@ -1019,7 +1206,8 @@ export class StrategyGuidedHarmonizer {
         const isCadentialTonic = measureIndex === measures.length - 1 && targetRoman === "I";
         if (!["IV", "V"].includes(targetRoman) && !isCadentialTonic) continue;
         if (preparedTargets.has(`${targetRoman}:${targetRoot}`)) continue;
-        if (this.previousChordInMeasure(measure.chords, chordIndex)?.includes("7")) continue;
+        const previousChord = this.previousChordInMeasure(measure.chords, chordIndex);
+        if (previousChord && analyzeDominantTension(previousChord).isDominant) continue;
 
         const subV = this.subV7ForTarget(targetRoot);
         const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measure.measureIndex);
@@ -1053,6 +1241,71 @@ export class StrategyGuidedHarmonizer {
       bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
       cadentialTarget: center,
       harmonicIdiom: "major-functional"
+    }];
+  }
+
+  private static buildDeceptiveMediantArrivalProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    if (phraseContext.selectedCenter.mode !== "major") return [];
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length !== 4) return [];
+
+    const flatThird = this.chromaticDegree(center, "3m");
+    const third = this.chromaticDegree(center, "3M");
+    const fourth = this.chromaticDegree(center, "4P");
+    const second = this.chromaticDegree(center, "2M");
+    const sharpFourth = this.chromaticDegree(center, "4A");
+    const fifth = this.chromaticDegree(center, "5P");
+    const sharpFifth = this.chromaticDegree(center, "5A");
+    const sixth = this.chromaticDegree(center, "6M");
+    if (!flatThird || !third || !fourth || !second || !sharpFourth || !fifth || !sharpFifth || !sixth) return [];
+
+    const measures: ReharmonizationMeasure[] = [
+      {
+        measureIndex: measureIndexes[0],
+        chords: [`${flatThird}maj7`, `${third}m7b5`]
+      },
+      {
+        measureIndex: measureIndexes[1],
+        chords: [`${fourth}6`, `${fourth}m6`]
+      },
+      {
+        measureIndex: measureIndexes[2],
+        chords: [`${second}7(b5)/${sharpFourth}`, `${fifth}7`]
+      },
+      {
+        measureIndex: measureIndexes[3],
+        chords: [`${sharpFifth}dim7`, `${sixth}m7`]
+      }
+    ];
+
+    const coverage = this.coverageForReferenceCenteredMeasures(measures, anchors);
+    if (coverage < 0.72) return [];
+
+    const finalMeasureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndexes[3]);
+    if (finalMeasureAnchors.length === 0 || this.melodicFitForChord(`${sixth}m7`, finalMeasureAnchors) === 0) return [];
+
+    return [{
+      id: `strategy_deceptive_mediant_arrival_${center.toLowerCase()}`,
+      kind: "controlled-reharmonization",
+      name: "Estratégia — Chegada deceptiva cromática",
+      measures,
+      explanation: [
+        "desloca a região tonal por bIII antes de retornar ao campo funcional",
+        "combina IV maior e iv menor como mistura modal de preparação",
+        `prepara ${sixth}m7 por dominante e diminuto de sensível`,
+        "usa chegada deceptiva em vi como alternativa progressiva ao repouso direto em I"
+      ],
+      bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
+      cadentialTarget: sixth,
+      harmonicIdiom: "major-functional",
+      routeProfile: "radical"
     }];
   }
 
@@ -1306,6 +1559,10 @@ export class StrategyGuidedHarmonizer {
     const interval = DIATONIC_ROMAN_INTERVALS[roman] || "1P";
     const root = Note.pitchClass(Note.transpose(`${center}4`, interval));
     return `${root}${ROMAN_QUALITY[roman] || ""}`;
+  }
+
+  private static chromaticDegree(center: string, interval: string): string | null {
+    return Note.pitchClass(Note.transpose(`${center}4`, interval)) || null;
   }
 
   private static referenceTonicChord(center: string, mode: "major" | "minor", anchors: MelodicAnchor[] = []): string {

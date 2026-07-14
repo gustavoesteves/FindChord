@@ -62,7 +62,7 @@ describe("buildLocalSegmentHarmonizations", () => {
     expect(segments.length).toBeGreaterThan(0);
     expect(segments[0].measureIndexes).not.toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(segments[0].primaryProposal.measures.length).toBeGreaterThan(0);
-    expect(segments[0].reasonLabel).toBe("Boa referência");
+    expect(segments[0].reasonLabel).toBe("Harmonia da partitura");
   });
 
   it("groups one route while preserving each applicable location", () => {
@@ -77,7 +77,7 @@ describe("buildLocalSegmentHarmonizations", () => {
     const segments: LocalSegmentHarmonization[] = [1, 9].map((measureIndex, index) => ({
       id: `segment-${index}`,
       title: `Compassos ${measureIndex}-${measureIndex + 7}`,
-      reasonLabel: "Boa referência",
+      reasonLabel: "Harmonia da partitura",
       measureIndexes: [measureIndex],
       selectedCenter: "C maior",
       proposalCount: 1,

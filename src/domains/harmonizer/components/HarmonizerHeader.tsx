@@ -7,7 +7,7 @@ interface HarmonizerHeaderProps {
   onSync: () => void;
 }
 
-function cadenceLabel(cadenceType: string): string {
+export function cadenceLabel(cadenceType: string): string {
   if (cadenceType === "HALF") return "meia cadência";
   if (cadenceType === "AUTHENTIC") return "cadência autêntica";
   if (cadenceType === "PLAGAL") return "cadência plagal";
@@ -31,13 +31,13 @@ export default function HarmonizerHeader({
           </span>
           {phraseContext && (
             <div className="flex flex-col gap-1 ml-4 border-l border-zinc-800 pl-4 text-xs text-zinc-300">
-              <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Leitura da frase</span>
-              <span>Centro: {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}</span>
+              <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Leitura musical</span>
+              <span>Centro provável: {phraseContext.selectedCenter.tonic} {phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}</span>
               {phraseContext.tonalCenterCandidates.length > 1 && (
-                <span>Outra possibilidade: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "menor" : "maior"}</span>
+                <span>Alternativa: {phraseContext.tonalCenterCandidates[1].tonic} {phraseContext.tonalCenterCandidates[1].mode === "minor" ? "menor" : "maior"}</span>
               )}
               <span className="mt-1">
-                Chegada: {phraseContext.cadentialTarget.targetPitch} ({cadenceLabel(phraseContext.cadentialTarget.cadenceType)})
+                Final da frase: {phraseContext.cadentialTarget.targetPitch} ({cadenceLabel(phraseContext.cadentialTarget.cadenceType)})
               </span>
             </div>
           )}

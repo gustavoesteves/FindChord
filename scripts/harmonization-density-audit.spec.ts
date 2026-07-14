@@ -16,4 +16,12 @@ describe("harmonization density audit", () => {
     expect(row.generatedIdeaCount).toBeGreaterThan(0);
     expect(row.generatedDenseIdeaCount).toBeGreaterThan(0);
   });
+
+  it("offers a controlled dense alternative when the reference harmony has internal rhythm", () => {
+    const row = auditHarmonizationDensityForFile("Ain't misbehavin.musicxml");
+
+    expect(row.referenceDenseMeasures).toBeGreaterThan(0);
+    expect(row.generatedDenseIdeaCount).toBeGreaterThan(0);
+    expect(row.status).toBe("referencia-densa-coberta");
+  });
 });

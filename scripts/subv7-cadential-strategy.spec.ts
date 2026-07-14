@@ -211,8 +211,9 @@ describe("F29 Cadential SubV7 Strategy", () => {
     const chords = subv?.chords.join(" / ") || "";
 
     expect(primary?.name).toBe("Estratégia — Tonal Clássico");
-    expect(subv?.role).toBe("alternative");
+    expect(subv?.role).toBe("adventurous");
     expect(chords).toContain("Gb7");
+    expect(chords).toContain("Ab7");
     expect(chords).toContain("Db7");
     expect(subv?.explanation).toEqual(expect.arrayContaining([
       expect.stringContaining("prepara graus diatônicos por SubV"),

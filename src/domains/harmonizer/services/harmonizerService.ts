@@ -9,8 +9,15 @@ import type {
   ReharmonizationMeasure
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { PhraseContext } from "../../../utils/music/analysis/engines/PhraseAnalysisEngine";
+import { Note } from "tonal";
 import { analyzeReferenceHarmony } from "../../../utils/music/analysis/strategies/ReferenceHarmonyAnalysis";
 import { generateControlledSubstitutionProposals } from "../../../utils/music/analysis/strategies/ControlledSubstitutionProposals";
+import {
+  classifyFunction,
+  classifyFunctionInMode,
+  noteCoveredByChord,
+  normalizeChordRoot
+} from "../../../utils/music/analysis/strategies/HarmonicStrategyValidator";
 import {
   buildContextualScaleCandidates,
   type ContextualMelodicFit,
@@ -95,6 +102,123 @@ function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): Reharmonizatio
   return Array.from(measuresMap.entries())
     .sort((a, b) => a[0] - b[0])
     .map(([measureIndex, chords]) => ({ measureIndex, chords }));
+}
+
+function chordFromRoman(center: string, roman: string, mode: "major" | "minor"): string {
+  const majorIntervals: Record<string, string> = {
+    I: "1P",
+    ii: "2M",
+    iii: "3M",
+    IV: "4P",
+    V: "5P",
+    vi: "6M",
+    vii: "7M"
+  };
+  const minorIntervals: Record<string, string> = {
+    i: "1P",
+    ii: "2M",
+    iv: "4P",
+    V: "5P",
+    VI: "6m",
+    VII: "7m"
+  };
+  const qualities: Record<string, string> = {
+    I: "",
+    i: "m",
+    ii: mode === "minor" ? "m7b5" : "m7",
+    iii: "m7",
+    IV: mode === "minor" ? "m7" : "maj7",
+    iv: "m7",
+    V: "7",
+    vi: "m7",
+    VI: "maj7",
+    VII: "7",
+    vii: "m7b5"
+  };
+  const interval = mode === "minor" ? minorIntervals[roman] : majorIntervals[roman];
+  const root = interval ? Note.pitchClass(Note.transpose(`${center}4`, interval)) : undefined;
+  return `${root || center}${qualities[roman] || ""}`;
+}
+
+function referenceRhythmPalette(
+  fn: ReturnType<typeof classifyFunction>,
+  center: string,
+  mode: "major" | "minor"
+): string[] {
+  if (mode === "minor") {
+    if (fn === "T") return [chordFromRoman(center, "i", mode), chordFromRoman(center, "VI", mode), chordFromRoman(center, "VII", mode)];
+    if (fn === "PD") return [chordFromRoman(center, "ii", mode), chordFromRoman(center, "iv", mode)];
+    if (fn === "D") return [chordFromRoman(center, "V", mode)];
+    return [];
+  }
+
+  if (fn === "T") return [chordFromRoman(center, "I", mode), chordFromRoman(center, "vi", mode), chordFromRoman(center, "iii", mode)];
+  if (fn === "PD") return [chordFromRoman(center, "ii", mode), chordFromRoman(center, "IV", mode)];
+  if (fn === "D") return [chordFromRoman(center, "V", mode), chordFromRoman(center, "vii", mode)];
+  return [];
+}
+
+function melodyFit(chord: string, anchors: MelodicAnchor[]): number {
+  if (anchors.length === 0) return 1;
+  const covered = anchors.filter(anchor => noteCoveredByChord(anchor.pitch, chord)).length;
+  return covered / anchors.length;
+}
+
+function bestReferenceRhythmSubstitute(
+  harmony: ScoreHarmonyEvent,
+  melodyAnchors: MelodicAnchor[],
+  center: string,
+  mode: "major" | "minor"
+): string {
+  const fn = classifyFunctionInMode(harmony.harmony, center, mode === "minor" ? "minor-functional" : "major-functional");
+  const melody = selectMelodyForHarmony(harmony, melodyAnchors);
+  const originalFit = melodyFit(harmony.harmony, melody);
+  const candidates = referenceRhythmPalette(fn, center, mode)
+    .filter(candidate => normalizeChordRoot(candidate) !== normalizeChordRoot(harmony.harmony));
+
+  const best = candidates
+    .map(candidate => ({ candidate, fit: melodyFit(candidate, melody) }))
+    .filter(item => item.fit >= Math.max(0.25, originalFit - 0.1))
+    .sort((a, b) => b.fit - a.fit)[0]?.candidate;
+
+  return best || harmony.harmony;
+}
+
+function buildReferenceRhythmReharmonizationProposal(
+  sectionHarmonies: ScoreHarmonyEvent[],
+  melodyAnchors: MelodicAnchor[],
+  phraseContext: PhraseContext
+): ReharmonizationProposal | null {
+  const denseMeasureCount = new Map<number, number>();
+  for (const harmony of sectionHarmonies) {
+    denseMeasureCount.set(harmony.measure, (denseMeasureCount.get(harmony.measure) || 0) + 1);
+  }
+  if (!Array.from(denseMeasureCount.values()).some(count => count > 1)) return null;
+
+  const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+  if (!center) return null;
+
+  const mode = phraseContext.selectedCenter.mode;
+  const substitutedEvents = sectionHarmonies.map(harmony => ({
+    ...harmony,
+    harmony: bestReferenceRhythmSubstitute(harmony, melodyAnchors, center, mode)
+  }));
+  const changed = substitutedEvents.some((harmony, index) => harmony.harmony !== sectionHarmonies[index].harmony);
+  if (!changed) return null;
+
+  return {
+    id: "controlled-reference-rhythm",
+    kind: "controlled-reharmonization",
+    name: "Rearmonização — ritmo harmônico da partitura",
+    measures: harmonyEventsToMeasures(substitutedEvents),
+    explanation: [
+      "preserva o ritmo harmônico escrito na partitura",
+      "troca acordes por equivalentes funcionais quando a melodia sustenta a leitura",
+      "mantém a densidade da referência sem copiar literalmente a cifra do autor"
+    ],
+    bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony)),
+    cadentialTarget: center
+  };
 }
 
 export function selectMelodicAnchors(
@@ -449,7 +573,7 @@ export function buildControlledReharmonizationProposals(
 ): ReharmonizationProposal[] {
   if (sectionHarmonies.length === 0 || !phraseContext || melodyAnchors.length === 0) return [];
 
-  return generateControlledSubstitutionProposals(
+  const substitutionProposals: ReharmonizationProposal[] = generateControlledSubstitutionProposals(
     sectionHarmonies,
     melodyAnchors,
     phraseContext.selectedCenter.tonic,
@@ -464,12 +588,23 @@ export function buildControlledReharmonizationProposals(
     return {
       id: `controlled-substitution-${index}`,
       kind: "controlled-reharmonization",
-      name: "Rearmonização controlada — substituição funcional",
+      name: "Rearmonização — substituição funcional",
       measures: harmonyEventsToMeasures(substitutedEvents),
       explanation: controlled.explanation,
       bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony))
     };
   });
+
+  const referenceRhythmProposal = buildReferenceRhythmReharmonizationProposal(
+    sectionHarmonies,
+    melodyAnchors,
+    phraseContext
+  );
+
+  return [
+    ...substitutionProposals,
+    ...(referenceRhythmProposal ? [referenceRhythmProposal] : [])
+  ];
 }
 
 export function flattenProposalChords(proposal: ReharmonizationProposal): string[] {

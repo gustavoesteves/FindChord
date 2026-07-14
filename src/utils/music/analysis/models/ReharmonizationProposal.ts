@@ -53,6 +53,7 @@ export interface ReharmonizationProposal {
   temporalCoveragePenalty?: number;
   unsupportedChromaticPenalty?: number;
   chromaticLegibilityPenalty?: number;
+  directedChromaticRankBonus?: number;
   dominantTensionRankBonus?: number;
   unsupportedDominantTensionPenalty?: number;
   presentationRole?: ReharmonizationPresentationRole;

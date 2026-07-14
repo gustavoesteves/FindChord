@@ -32,6 +32,14 @@ function proposal(id: string, chords: string[]): ReharmonizationProposal {
   };
 }
 
+function controlledProposal(id: string, name: string, chords: string[]): ReharmonizationProposal {
+  return {
+    ...proposal(id, chords),
+    kind: "controlled-reharmonization",
+    name
+  };
+}
+
 function harmonies(chords: string[]): ScoreHarmonyEvent[] {
   return chords.map((harmony, index) => ({
     measure: index + 1,
@@ -412,5 +420,19 @@ describe("F28 Voice Leading Proposal Ranking", () => {
 
     expect(ranked[0].dominantTensionRankBonus).toBe(0);
     expect(ranked[0].unsupportedDominantTensionPenalty).toBe(0);
+  });
+
+  it("rewards named chromatic routes only when their progression is directed", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      controlledProposal("generic-chromatic", "Estratégia — Cromático Linear", ["Cmaj7", "F#7", "Bbmaj7", "Cmaj7"]),
+      controlledProposal("dense-modal-mixture", "Estratégia — Mistura modal densa", ["Abmaj7", "Cmaj7", "F#m7b5", "Fm7", "Em7", "G7", "Cmaj7"])
+    ], phraseContext, anchors);
+
+    const dense = ranked.find(item => item.id === "dense-modal-mixture");
+    const generic = ranked.find(item => item.id === "generic-chromatic");
+
+    expect(dense?.directedChromaticRankBonus).toBeGreaterThan(0);
+    expect(dense?.explanation).toContain("Ranking: mistura modal densa com percurso dirigido fica como alternativa forte");
+    expect(generic?.directedChromaticRankBonus).toBe(0);
   });
 });

@@ -42,17 +42,17 @@ function chordChanges(
 }
 
 const KIND_LABELS: Record<ReharmonizationProposalKind, string> = {
-  reference: "Referência harmônica",
-  "validated-harmonization": "Harmonização validada",
-  "controlled-reharmonization": "Rearmonização controlada",
-  "experimental-exploration": "Afastamento experimental"
+  reference: "Harmonia da partitura",
+  "validated-harmonization": "Proposta harmônica",
+  "controlled-reharmonization": "Rearmonização",
+  "experimental-exploration": "Exploração distante"
 };
 
 const ROUTE_PROFILE_LABELS: Record<ReharmonizationRouteProfile, string> = {
-  conservative: "Conservadora",
+  conservative: "Próxima",
   moderate: "Moderada",
   chromatic: "Cromática",
-  radical: "Radical"
+  radical: "Mais distante"
 };
 
 const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
@@ -66,6 +66,14 @@ function voiceLeadingLabel(score: number): string {
   if (score <= 6) return "Condução suave";
   if (score <= 10) return "Movimento moderado";
   return "Movimento amplo";
+}
+
+export function proposalKindLabel(kind: ReharmonizationProposalKind): string {
+  return KIND_LABELS[kind];
+}
+
+export function routeProfileLabel(profile: ReharmonizationRouteProfile): string {
+  return ROUTE_PROFILE_LABELS[profile];
 }
 
 export default function HarmonizationProposalCard({
@@ -84,7 +92,7 @@ export default function HarmonizationProposalCard({
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-              {KIND_LABELS[proposal.kind]}
+              {proposalKindLabel(proposal.kind)}
             </span>
             <span className="text-sm font-black text-zinc-300 uppercase tracking-widest">{proposal.name}</span>
             {titleDetail && (
@@ -126,9 +134,9 @@ export default function HarmonizationProposalCard({
 
             {proposal.routeProfile && (
               <div className="mb-3">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 mr-2">Perfil:</span>
+                <span className="text-[10px] uppercase font-bold text-zinc-500 mr-2">Distância:</span>
                 <span className="text-sm font-semibold text-sky-300">
-                  {ROUTE_PROFILE_LABELS[proposal.routeProfile]}
+                  {routeProfileLabel(proposal.routeProfile)}
                 </span>
               </div>
             )}
@@ -208,7 +216,7 @@ export default function HarmonizationProposalCard({
             {localOccurrences.length > 1 && (
               <div className="mt-4 pt-3 border-t border-zinc-800/50">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300">
-                  Outros locais ({localOccurrences.length - 1})
+                  Outras ocorrências ({localOccurrences.length - 1})
                 </span>
                 <div className="mt-3 flex flex-col gap-2">
                   {localOccurrences.slice(1).map(occurrence => (
@@ -219,7 +227,7 @@ export default function HarmonizationProposalCard({
                         onClick={() => onApply(occurrence.primaryProposal)}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 text-xs font-bold transition cursor-pointer"
                       >
-                        Usar neste local
+                        Usar neste trecho
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>

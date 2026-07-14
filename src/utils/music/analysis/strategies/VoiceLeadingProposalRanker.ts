@@ -195,6 +195,7 @@ function routeAwareRankScore(proposal: ReharmonizationProposal): number {
   const temporalCoveragePenalty = proposal.temporalCoveragePenalty ?? 0;
   const unsupportedChromaticPenalty = proposal.unsupportedChromaticPenalty ?? 0;
   const chromaticLegibilityPenalty = proposal.chromaticLegibilityPenalty ?? 0;
+  const directedChromaticRankBonus = proposal.directedChromaticRankBonus ?? 0;
   const dominantTensionRankBonus = proposal.dominantTensionRankBonus ?? 0;
   const unsupportedDominantTensionPenalty = proposal.unsupportedDominantTensionPenalty ?? 0;
   return Number((
@@ -202,6 +203,7 @@ function routeAwareRankScore(proposal: ReharmonizationProposal): number {
     - routeCost * 0.05
     + bassBonus
     + apparentReferenceBonus
+    + directedChromaticRankBonus
     + dominantTensionRankBonus
     - temporalCoveragePenalty
     - unsupportedChromaticPenalty
@@ -328,6 +330,43 @@ function chromaticLegibilityPenalty(
     chromaticLegibilityPenalty: 1.2,
     evidence: ["Ranking: cromatismo denso sem raiz de referência ou resolução clara fica como alternativa"]
   };
+}
+
+function directedChromaticRanking(
+  proposal: ReharmonizationProposal,
+  transitionReports: VoiceLeadingTransitionReport[]
+): Pick<ReharmonizationProposal, "directedChromaticRankBonus"> & { evidence: string[] } {
+  const isChromaticRoute = proposal.routeProfile === "chromatic" || proposal.routeProfile === "radical";
+  if (!isChromaticRoute || proposal.kind !== "controlled-reharmonization") {
+    return { directedChromaticRankBonus: 0, evidence: [] };
+  }
+
+  const hasVoiceLeadingSupport = transitionReports.some(report => (
+    report.guideToneResolutionCount > 0 || report.commonToneCount >= 2
+  ));
+
+  if (proposal.name === "Estratégia — Mistura modal densa" && hasVoiceLeadingSupport) {
+    return {
+      directedChromaticRankBonus: 0.35,
+      evidence: ["Ranking: mistura modal densa com percurso dirigido fica como alternativa forte"]
+    };
+  }
+
+  if (proposal.name === "Estratégia — Cadência plagal menor") {
+    return {
+      directedChromaticRankBonus: 0.25,
+      evidence: ["Ranking: cadência plagal menor tem direção clara para a tônica"]
+    };
+  }
+
+  if (proposal.name === "Estratégia — Chegada deceptiva cromática" && hasVoiceLeadingSupport) {
+    return {
+      directedChromaticRankBonus: 0.15,
+      evidence: ["Ranking: chegada deceptiva cromática tem percurso dirigido, mas permanece colorística"]
+    };
+  }
+
+  return { directedChromaticRankBonus: 0, evidence: [] };
 }
 
 function pitchClass(note: string | undefined | null): string | null {
@@ -459,6 +498,7 @@ export function annotateProposalVoiceLeading(
   const temporalCoverage = temporalCoveragePenalty(withRankingContext, anchors);
   const unsupportedChromatic = unsupportedChromaticPenalty(withRankingContext);
   const chromaticLegibility = chromaticLegibilityPenalty(withRankingContext, transitionReports);
+  const directedChromatic = directedChromaticRanking(withRankingContext, transitionReports);
   const dominantTension = dominantTensionRanking(withRankingContext, anchors);
   const voiceLeadingDiagnostic = voiceLeadingDiagnosticFor(
     proposal,
@@ -474,6 +514,7 @@ export function annotateProposalVoiceLeading(
     ...temporalCoverage.evidence,
     ...unsupportedChromatic.evidence,
     ...chromaticLegibility.evidence,
+    ...directedChromatic.evidence,
     ...dominantTension.evidence
   ];
   const diagnostics = [
@@ -491,6 +532,7 @@ export function annotateProposalVoiceLeading(
     temporalCoveragePenalty: temporalCoverage.temporalCoveragePenalty,
     unsupportedChromaticPenalty: unsupportedChromatic.unsupportedChromaticPenalty,
     chromaticLegibilityPenalty: chromaticLegibility.chromaticLegibilityPenalty,
+    directedChromaticRankBonus: directedChromatic.directedChromaticRankBonus,
     dominantTensionRankBonus: dominantTension.dominantTensionRankBonus,
     unsupportedDominantTensionPenalty: dominantTension.unsupportedDominantTensionPenalty,
     apparentFunctionReferenceBonus: referenceBonus.apparentFunctionReferenceBonus,

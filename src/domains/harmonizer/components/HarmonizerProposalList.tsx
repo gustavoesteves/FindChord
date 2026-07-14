@@ -1,6 +1,7 @@
+import { useState } from "react";
 import type { ReharmonizationProposal } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { ReharmonizationPresentationLayer } from "../../../utils/music/analysis/models/ReharmonizationProposal";
-import { Palette } from "lucide-react";
+import { ChevronDown, Palette } from "lucide-react";
 import {
   groupDiagnosticsBySource,
   type HarmonicDiagnostic,
@@ -26,7 +27,11 @@ interface HarmonizerProposalListProps {
   onApplyProposal: (proposal: ReharmonizationProposal) => void;
 }
 
-const COLLAPSED_LAYER_PROPOSAL_LIMIT = 2;
+const COLLAPSED_LAYER_PROPOSAL_LIMITS: Record<ReharmonizationPresentationLayer, number> = {
+  basic: 2,
+  "reference-aware": 2,
+  reharmonization: 5
+};
 const COLLAPSED_FUNCTIONAL_COLOR_LIMIT = 3;
 const DIAGNOSTIC_SOURCE_LABELS: Record<HarmonicDiagnosticSource, string> = {
   generation: "Melodia",
@@ -39,15 +44,15 @@ const DIAGNOSTIC_CATEGORY_LABELS: Record<HarmonicDiagnosticCategory, string> = {
   compatibility: "Melodia"
 };
 const PRESENTATION_LAYER_LABELS: Record<ReharmonizationPresentationLayer, string> = {
-  basic: "Harmonia básica",
-  "reference-aware": "Centro de referência",
-  reharmonization: "Rearmonização"
+  basic: "Fundamento harmônico",
+  "reference-aware": "Leitura da obra",
+  reharmonization: "Rearmonizações progressivas"
 };
 
-function rejectedExperimentalMessage(count: number): string {
+export function rejectedDistantPathMessage(count: number): string {
   return count === 1
-    ? "1 exploração experimental foi omitida por baixa compatibilidade melódica."
-    : `${count} explorações experimentais foram omitidas por baixa compatibilidade melódica.`;
+    ? "1 caminho distante ficou fora da seleção por não sustentar bem a melodia."
+    : `${count} caminhos distantes ficaram fora da seleção por não sustentarem bem a melodia.`;
 }
 
 function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
@@ -56,6 +61,75 @@ function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
     || proposal.explanation.some(item => /Função aparente/i.test(item))
     || proposal.explanation.some(item => /empréstimo modal|modo paralelo/i.test(item))
     || (proposal.apparentFunctionReferenceBonus || 0) > 0;
+}
+
+function proposalFamilyKey(proposal: ReharmonizationProposal): string {
+  if (/Dominantes alteradas|Ciclo de dominantes|Dominantes secundárias/.test(proposal.name)) return "dominants";
+  if (/SubV/.test(proposal.name)) return "subv";
+  if (/Diminutos|Cromatismo de vizinhança/.test(proposal.name)) return "chromatic-neighbor";
+  if (/Mistura modal|Cadência plagal|Empréstimo modal/.test(proposal.name)) return "modal-mixture";
+  if (/Chegada deceptiva/.test(proposal.name)) return "deceptive";
+  if (/Contraponto/.test(proposal.name)) return "bass-counterpoint";
+  if (/Tonal Clássico|Harmonia básica|Harmonia fundamental|Melodia primeiro|Expansão funcional/.test(proposal.name)) return "foundation";
+  if (/Função aparente/.test(proposal.name)) return "apparent-function";
+  return proposal.name;
+}
+
+function addUniqueProposal(
+  selected: ReharmonizationProposal[],
+  candidate: ReharmonizationProposal | undefined
+): void {
+  if (!candidate) return;
+  if (selected.some(proposal => proposal.id === candidate.id)) return;
+  selected.push(candidate);
+}
+
+function fillDistinctFamilies(
+  selected: ReharmonizationProposal[],
+  proposals: ReharmonizationProposal[],
+  limit: number
+): void {
+  const selectedFamilies = new Set(selected.map(proposalFamilyKey));
+
+  for (const proposal of proposals) {
+    if (selected.length >= limit) return;
+    if (selected.some(item => item.id === proposal.id)) continue;
+
+    const family = proposalFamilyKey(proposal);
+    if (selectedFamilies.has(family)) continue;
+    selected.push(proposal);
+    selectedFamilies.add(family);
+  }
+
+  for (const proposal of proposals) {
+    if (selected.length >= limit) return;
+    addUniqueProposal(selected, proposal);
+  }
+}
+
+export function visibleProposalsForLayer(
+  layer: ReharmonizationPresentationLayer,
+  proposals: ReharmonizationProposal[],
+  isExpanded: boolean
+): ReharmonizationProposal[] {
+  if (isExpanded) return proposals;
+
+  const limit = COLLAPSED_LAYER_PROPOSAL_LIMITS[layer];
+  if (layer !== "reharmonization") return proposals.slice(0, limit);
+
+  const selected: ReharmonizationProposal[] = [];
+  addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole === "primary"));
+  addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole !== "adventurous"));
+  addUniqueProposal(selected, proposals.find(proposal => (proposal.directedChromaticRankBonus || 0) > 0));
+  fillDistinctFamilies(
+    selected,
+    proposals.filter(proposal => proposal.presentationRole !== "adventurous"),
+    Math.max(0, limit - 1)
+  );
+  addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole === "adventurous"));
+  fillDistinctFamilies(selected, proposals, limit);
+
+  return selected.slice(0, limit);
 }
 
 export default function HarmonizerProposalList({
@@ -68,6 +142,7 @@ export default function HarmonizerProposalList({
   onToggleExpanded,
   onApplyProposal
 }: HarmonizerProposalListProps) {
+  const [areSecondaryReadingsOpen, setAreSecondaryReadingsOpen] = useState(false);
   const structuralProposals = proposals.filter(proposal => !isFunctionalColorProposal(proposal));
   const functionalColorProposals = proposals.filter(isFunctionalColorProposal);
   const proposalNameCounts = proposalDisplayNameCounts([
@@ -77,18 +152,17 @@ export default function HarmonizerProposalList({
   const structuralLayerGroups = groupProposalsByPresentationLayer(structuralProposals);
   const visibleStructuralLayerGroups = structuralLayerGroups.map(group => ({
     ...group,
-    proposals: isExpanded
-      ? group.proposals
-      : group.proposals.slice(0, COLLAPSED_LAYER_PROPOSAL_LIMIT)
+    proposals: visibleProposalsForLayer(group.layer, group.proposals, isExpanded)
   }));
   const visibleFunctionalColorProposals = isExpanded
     ? functionalColorProposals
     : functionalColorProposals.slice(0, COLLAPSED_FUNCTIONAL_COLOR_LIMIT);
   const hiddenStructuralCount = isExpanded
     ? 0
-    : structuralLayerGroups.reduce((count, group) => (
-      count + Math.max(0, group.proposals.length - COLLAPSED_LAYER_PROPOSAL_LIMIT)
-    ), 0);
+    : structuralLayerGroups.reduce((count, group) => {
+      const visibleGroup = visibleStructuralLayerGroups.find(item => item.layer === group.layer);
+      return count + Math.max(0, group.proposals.length - (visibleGroup?.proposals.length || 0));
+    }, 0);
   const hiddenFunctionalColorCount = Math.max(0, functionalColorProposals.length - COLLAPSED_FUNCTIONAL_COLOR_LIMIT);
   const hiddenCount = isExpanded ? 0 : hiddenStructuralCount + hiddenFunctionalColorCount;
   const diagnosticGroups = groupDiagnosticsBySource(omittedStrategyDiagnostics);
@@ -97,43 +171,48 @@ export default function HarmonizerProposalList({
     <div className="flex flex-col gap-6">
       {rejectedExperimentalCount > 0 && (
         <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
-          {rejectedExperimentalMessage(rejectedExperimentalCount)}
+          {rejectedDistantPathMessage(rejectedExperimentalCount)}
         </div>
       )}
 
       {diagnosticGroups.length > 0 && (
         <div className="rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
-          <div className="font-black uppercase tracking-widest text-[10px] text-sky-200 mb-2">
-            Outras leituras
-          </div>
-          <div className="flex flex-col gap-3">
-            {diagnosticGroups.map((group) => (
-              <div key={group.source} className="flex flex-col gap-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-sky-300/80">
-                  {DIAGNOSTIC_SOURCE_LABELS[group.source]}
-                </span>
-                {group.diagnostics.map((diagnostic, index) => (
-                  <span key={`${diagnostic.id}-${index}`} className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-sky-200/70">
-                      {DIAGNOSTIC_CATEGORY_LABELS[diagnostic.category]}
-                    </span>
-                    <span>{diagnostic.message}</span>
+          <button
+            type="button"
+            onClick={() => setAreSecondaryReadingsOpen(!areSecondaryReadingsOpen)}
+            className="flex w-full items-center justify-between gap-3 text-left font-black uppercase tracking-widest text-[10px] text-sky-200 transition hover:text-sky-100 cursor-pointer"
+            aria-expanded={areSecondaryReadingsOpen}
+          >
+            Leituras secundárias ({omittedStrategyDiagnostics.length})
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${areSecondaryReadingsOpen ? "rotate-180" : ""}`} />
+          </button>
+          {areSecondaryReadingsOpen && (
+            <div className="mt-3 flex flex-col gap-3">
+              {diagnosticGroups.map((group) => (
+                <div key={group.source} className="flex flex-col gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-sky-300/80">
+                    {DIAGNOSTIC_SOURCE_LABELS[group.source]}
                   </span>
-                ))}
-              </div>
-            ))}
-          </div>
+                  {group.diagnostics.map((diagnostic, index) => (
+                    <span key={`${diagnostic.id}-${index}`} className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-sky-200/70">
+                        {DIAGNOSTIC_CATEGORY_LABELS[diagnostic.category]}
+                      </span>
+                      <span>{diagnostic.message}</span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {visibleStructuralLayerGroups.map((group) => (
         <section key={group.layer} className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3 border-t border-zinc-800/70 pt-4">
+          <div className="border-t border-zinc-800/70 pt-4">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
               {PRESENTATION_LAYER_LABELS[group.layer]}
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-              {group.proposals.length}/{structuralLayerGroups.find(item => item.layer === group.layer)?.proposals.length || group.proposals.length}
             </span>
           </div>
           <div className="flex flex-col gap-3">
@@ -151,15 +230,10 @@ export default function HarmonizerProposalList({
 
       {functionalColorProposals.length > 0 && (
         <section className="flex flex-col gap-3 border-t border-fuchsia-500/20 pt-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Palette className="w-4 h-4 text-fuchsia-300" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-200">
-                Cores harmônicas
-              </span>
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-300/70">
-              {functionalColorProposals.length}
+          <div className="flex items-center gap-2">
+            <Palette className="w-4 h-4 text-fuchsia-300" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-200">
+              Cores harmônicas
             </span>
           </div>
 
@@ -178,21 +252,16 @@ export default function HarmonizerProposalList({
 
       {localSegments.length > 0 && (
         <section className="flex flex-col gap-3 border-t border-zinc-800/70 pt-4">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-              Focos locais
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-              {localSegments.length}
-            </span>
-          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+            Trechos específicos
+          </span>
 
           <div className="flex flex-col gap-3">
             {localSegments.map(segment => (
               <div key={segment.id} className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                   <span className="text-zinc-300">
-                    {segment.title}{segment.occurrences && segment.occurrences.length > 1 ? ` (${segment.occurrences.length} locais)` : ""}
+                    {segment.title}{segment.occurrences && segment.occurrences.length > 1 ? ` (${segment.occurrences.length} ocorrências)` : ""}
                   </span>
                   <span className="text-zinc-600">/</span>
                   <span className="text-sky-300">{segment.selectedCenter}</span>

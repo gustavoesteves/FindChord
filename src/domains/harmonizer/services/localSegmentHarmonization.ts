@@ -161,20 +161,20 @@ export function groupRepeatedLocalSegmentRoutes(
 }
 
 function reasonLabel(window: PresentableHarmonizationWindow): string {
-  if (window.reasons.includes("interesting-event")) return "Tensão local";
-  if (window.reasons.includes("reference-coverage")) return "Boa referência";
+  if (window.reasons.includes("interesting-event")) return "Ponto de tensão";
+  if (window.reasons.includes("reference-coverage")) return "Harmonia da partitura";
   return reasonLabelFromFirstReason(window.reasons[0]);
 }
 
 function reasonLabelFromFirstReason(reason: PresentableWindowReason | undefined): string {
   if (reason === "primary-window") return "Trecho principal";
-  if (reason === "reference-coverage") return "Boa referência";
-  if (reason === "interesting-event") return "Tensão local";
-  return "Trecho local";
+  if (reason === "reference-coverage") return "Harmonia da partitura";
+  if (reason === "interesting-event") return "Ponto de tensão";
+  return "Trecho destacado";
 }
 
 function measureRangeLabel(measures: number[]): string {
-  if (measures.length === 0) return "Trecho local";
+  if (measures.length === 0) return "Trecho destacado";
   const first = measures[0];
   const last = measures[measures.length - 1];
   return first === last ? `Compasso ${first}` : `Compassos ${first}-${last}`;

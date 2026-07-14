@@ -94,11 +94,6 @@ function samePitchClass(a: string | undefined, b: string | undefined): boolean {
   return !!aPc && !!bPc && aPc === bPc;
 }
 
-function hasStrongReferenceCenter(phraseContext: PhraseContext | undefined): boolean {
-  return phraseContext?.selectedCenterSource === "reference"
-    && (phraseContext.selectedCenter.confidence >= 0.7 || (phraseContext.selectedCenterEvidence?.length || 0) > 0);
-}
-
 function canBePrimary(
   proposal: ReharmonizationProposal,
   mode: ReharmonizationBoldnessMode,
@@ -107,8 +102,8 @@ function canBePrimary(
   if (mode === "exploratory") return true;
   if (
     mode === "balanced"
-    && hasStrongReferenceCenter(phraseContext)
     && proposal.cadentialTarget
+    && phraseContext
     && !samePitchClass(proposal.cadentialTarget, phraseContext?.selectedCenter.tonic)
   ) {
     return false;

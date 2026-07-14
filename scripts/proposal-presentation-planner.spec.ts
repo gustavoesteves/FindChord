@@ -112,6 +112,18 @@ describe("F31.3 Proposal Presentation Planner", () => {
     ]);
   });
 
+  it("does not promote a deceptive cadential target as the main answer in balanced mode", () => {
+    const planned = annotateProposalPresentationRoles([
+      proposal("deceptive-arrival", "chromatic", "controlled-reharmonization", "major-functional", undefined, "A"),
+      proposal("centered", "moderate", "validated-harmonization", "major-functional", undefined, "C")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["centered", "primary"],
+      ["deceptive-arrival", "alternative"]
+    ]);
+  });
+
   it("allows a reference-centered proposal to become primary even when route cost is high", () => {
     const centered = proposal("strategy_reference_center_e", "radical", "validated-harmonization", "minor-functional", undefined, "E");
     const planned = annotateProposalPresentationRoles([

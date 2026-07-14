@@ -353,8 +353,8 @@ export function renderRealMusicAuditMarkdown(results: RealMusicAuditResult[]): s
     lines.push(`- Proposta primaria: ${primary?.name || "sem proposta primaria"}`);
     lines.push(`- Camada da proposta: ${primary ? presentationLayerLabel(primary.presentationLayer) : "n/a"}`);
     const cadentialTarget = proposalCadentialTarget(primary);
-    if (cadentialTarget) lines.push(`- Alvo cadencial da proposta: ${cadentialTarget}`);
-    lines.push(`- Perfil: rota ${primary?.routeProfile || "n/a"}; baixo ${primary?.bassLineProfile || "n/a"}; conducao ${formatNumber(primary?.voiceLeadingScore)}`);
+    lines.push(`- Alvo cadencial da proposta: ${cadentialTarget || "n/a"}`);
+    lines.push(`- Resumo: rota ${primary?.routeProfile || "n/a"}; baixo ${primary?.bassLineProfile || "n/a"}; conducao ${formatNumber(primary?.voiceLeadingScore)}`);
     lines.push(`- Cifras: ${primary ? chordSummary(primary) : "n/a"}`);
     lines.push(`- Baixo: ${primary?.bassLine.join(" -> ") || "n/a"}`);
     const proposalEvidence = proposalExplanationSummary(primary);

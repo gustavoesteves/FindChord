@@ -383,4 +383,15 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
       expect.arrayContaining(["G#dim7", "Edim7", "F#dim7"])
     );
   });
+
+  it("generates a minor plagal cadence as a progressive color when final tonic support is clear", () => {
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(almadaMelody, "C");
+    const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(almadaMelody, phraseContext);
+    const plagal = proposals.find(proposal => proposal.name === "Estratégia — Cadência plagal menor");
+
+    expect(plagal?.measures.flatMap(measure => measure.chords)).toEqual(expect.arrayContaining(["Fm", "C"]));
+    expect(plagal?.explanation).toEqual(expect.arrayContaining([
+      "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia"
+    ]));
+  });
 });

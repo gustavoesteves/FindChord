@@ -2,7 +2,7 @@ import { Note } from "tonal";
 import { chordRoot, resolveChordSymbol, type ChordQuality } from "../../theory/ChordSymbolResolver";
 import type { StrategyFunctionId } from "./HarmonicStrategyValidator";
 
-export type ModalBorrowingColorRole = "BORROWED_FLAT_VI" | "BORROWED_FLAT_VII";
+export type ModalBorrowingColorRole = "BORROWED_MINOR_IV" | "BORROWED_FLAT_VI" | "BORROWED_FLAT_VII";
 
 export interface ModalBorrowingContext {
   center: string;
@@ -42,6 +42,15 @@ const FLAT_VI_QUALITIES: ChordQuality[] = [
   "add9"
 ];
 
+const MINOR_IV_QUALITIES: ChordQuality[] = [
+  "m",
+  "m7",
+  "m6",
+  "m6_9",
+  "m9",
+  "m11"
+];
+
 function chromaticDistance(root: string | null, center: string): number | null {
   if (!root) return null;
   const rootChroma = Note.chroma(root);
@@ -60,6 +69,7 @@ function isBorrowableQuality(quality: ChordQuality): boolean {
 }
 
 function isBorrowableQualityForDegree(quality: ChordQuality, degree: number): boolean {
+  if (degree === 5) return MINOR_IV_QUALITIES.includes(quality);
   if (degree === 8) return FLAT_VI_QUALITIES.includes(quality);
   return isBorrowableQuality(quality);
 }
@@ -75,8 +85,22 @@ export function analyzeModalBorrowingColor(
 
   const root = normalizedRoot(chord);
   const degree = chromaticDistance(root, context.center);
-  if (!root || (degree !== 8 && degree !== 10)) return null;
+  if (!root || (degree !== 5 && degree !== 8 && degree !== 10)) return null;
   if (!isBorrowableQualityForDegree(resolved.quality, degree)) return null;
+
+  if (degree === 5) {
+    return {
+      chord,
+      root,
+      role: "BORROWED_MINOR_IV",
+      borrowedFrom: "parallel-minor",
+      impliedFunction: "PD",
+      explanation: [
+        "iv menor vem do modo paralelo menor em contexto maior",
+        "cadência plagal menor prepara o retorno à tônica por condução interna"
+      ]
+    };
+  }
 
   if (degree === 8) {
     return {
