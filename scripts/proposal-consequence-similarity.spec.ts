@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 import {
   compareProposalConsequences,
-  groupNearEquivalentColorVariants
+  groupNearEquivalentColorVariants,
+  groupNearReferenceVariants
 } from "../src/utils/music/analysis/strategies/ProposalConsequenceSimilarity";
 
 function proposal(id: string, chords: string[]): ReharmonizationProposal {
@@ -81,5 +82,19 @@ describe("proposal consequence similarity", () => {
 
     expect(groupNearEquivalentColorVariants([reference, generated], { center: "C" })).toHaveLength(2);
     expect(groupNearEquivalentColorVariants([generated, controlled], { center: "C" })).toHaveLength(1);
+  });
+
+  it("moves near-equivalent generated readings under the reference card", () => {
+    const reference = { ...proposal("reference", ["C", "D7", "G7", "C"]), kind: "reference" as const };
+    const nearReference = proposal("generated-color", ["Cmaj7", "D7(b13)", "G9", "C6"]);
+    const differentBass = proposal("bass-line", ["C", "D7/F#", "G7", "C"]);
+
+    const grouped = groupNearReferenceVariants(
+      [reference, nearReference, differentBass],
+      { center: "C" }
+    );
+
+    expect(grouped.map(item => item.id)).toEqual(["reference", "bass-line"]);
+    expect(grouped[0].colorVariants?.map(variant => variant.id)).toEqual(["generated-color"]);
   });
 });

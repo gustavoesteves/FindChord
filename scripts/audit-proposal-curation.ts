@@ -5,7 +5,10 @@ import { GravityFieldManager } from "../src/utils/music/analysis/engines/Gravity
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 import { dedupeHarmonicallyEquivalentProposals } from "../src/utils/music/analysis/strategies/ProposalHarmonicIdentity";
-import { groupNearEquivalentColorVariants } from "../src/utils/music/analysis/strategies/ProposalConsequenceSimilarity";
+import {
+  groupNearEquivalentColorVariants,
+  groupNearReferenceVariants
+} from "../src/utils/music/analysis/strategies/ProposalConsequenceSimilarity";
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import { applyReferenceCenterToPhraseContext } from "../src/utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
@@ -156,9 +159,17 @@ export function analyzeProposalCurationForFile(
   const reference = buildExistingHarmonyProposal(harmonies);
   const rawMain = reference ? [reference, ...ranked] : ranked;
   const exactMain = dedupeHarmonicallyEquivalentProposals(rawMain);
+  const referenceGroupedMain = options.groupColorVariants === false
+    ? exactMain
+    : groupNearReferenceVariants(exactMain, {
+      center: phraseContext.selectedCenter.tonic,
+      classificationMode: phraseContext.selectedCenter.mode === "minor"
+        ? "minor-functional"
+        : "major-functional"
+    });
   const groupedMain = options.groupColorVariants === false
     ? exactMain
-    : groupNearEquivalentColorVariants(exactMain, {
+    : groupNearEquivalentColorVariants(referenceGroupedMain, {
       center: phraseContext.selectedCenter.tonic,
       classificationMode: phraseContext.selectedCenter.mode === "minor"
         ? "minor-functional"

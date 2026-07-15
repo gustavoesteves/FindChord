@@ -87,6 +87,41 @@ export function groupNearEquivalentColorVariants(
   return grouped;
 }
 
+export function groupNearReferenceVariants(
+  proposals: ReharmonizationProposal[],
+  options: CompareProposalConsequencesOptions
+): ReharmonizationProposal[] {
+  const referenceIndex = proposals.findIndex(proposal => proposal.kind === "reference");
+  if (referenceIndex < 0) return proposals;
+
+  const reference = proposals[referenceIndex];
+  const referenceVariants: ReharmonizationProposal[] = [];
+  const kept: ReharmonizationProposal[] = [];
+
+  for (const proposal of proposals) {
+    if (proposal.id === reference.id) continue;
+    const report = compareProposalConsequences(reference, proposal, options);
+    if (report.relationship === "near-equivalent-color") {
+      referenceVariants.push(withoutColorVariants(proposal));
+    } else {
+      kept.push(proposal);
+    }
+  }
+
+  return [
+    {
+      ...withoutColorVariants(reference),
+      colorVariants: [
+        ...(reference.colorVariants || []).map(withoutColorVariants),
+        ...referenceVariants
+      ].filter((proposal, index, variants) => (
+        variants.findIndex(candidate => candidate.id === proposal.id) === index
+      ))
+    },
+    ...kept
+  ];
+}
+
 const MIN_NEAR_EQUIVALENT_SONORITY_AGREEMENT = 0.6;
 
 function proposalSlots(proposal: ReharmonizationProposal): ProposalSlot[] {

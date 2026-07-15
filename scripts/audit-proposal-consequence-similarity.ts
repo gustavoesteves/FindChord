@@ -28,6 +28,10 @@ export interface ProposalConsequenceAuditRow {
   sonorityAgreement: number;
 }
 
+interface CollectNearEquivalentPairsOptions {
+  includeGroupedVariants?: boolean;
+}
+
 function chordSummary(idea: CuratedProposalIdea): string {
   return idea.proposal.measures
     .map(measure => measure.chords.join(" / "))
@@ -78,9 +82,12 @@ export function collectNearEquivalentPairsForAnalysis(
   return rows;
 }
 
-export function collectNearEquivalentPairsForFile(relativeFile: string): ProposalConsequenceAuditRow[] {
+export function collectNearEquivalentPairsForFile(
+  relativeFile: string,
+  options: CollectNearEquivalentPairsOptions = {}
+): ProposalConsequenceAuditRow[] {
   return collectNearEquivalentPairsForAnalysis(analyzeProposalCurationForFile(relativeFile, {
-    groupColorVariants: false
+    groupColorVariants: options.includeGroupedVariants === true ? false : undefined
   }));
 }
 
@@ -166,9 +173,9 @@ function renderMarkdown(rows: ProposalConsequenceAuditRow[]): string {
   lines.push("## Leitura");
   lines.push("");
   lines.push("Esta e uma auditoria conservadora: qualquer mudanca de raiz, baixo, densidade temporal ou funcao contextual impede a classificacao como quase equivalente.");
-  lines.push("No fluxo atual da UI, esses pares podem ser agrupados como variacoes de cor do mesmo card quando preservam tempo, funcao, raiz e baixo.");
-  lines.push("A auditoria continua registrando os pares completos para revisao musical: se a extensao alterar a conducao de vozes de forma relevante, a regra deve ser refinada antes de agrupar.");
-  lines.push("O CSV registra as duas progressoes completas para revisao musical.");
+  lines.push("O relatorio principal usa o conjunto pos-curadoria: se uma leitura ja foi agrupada como variacao de cor ou leitura proxima da referencia, ela nao conta como card duplicado.");
+  lines.push("Resultado esperado: quando a curadoria esta funcionando, este relatorio deve tender a zero pares quase equivalentes visiveis.");
+  lines.push("Para investigacao de candidatos brutos antes do agrupamento, use `includeGroupedVariants: true` na coleta programatica.");
   lines.push("");
   return lines.join("\n");
 }

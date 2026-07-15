@@ -37,7 +37,10 @@ import {
   resolveHarmonizerInputContext
 } from "../services/harmonizerInputContext";
 import { dedupeHarmonicallyEquivalentProposals } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
-import { groupNearEquivalentColorVariants } from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
+import {
+  groupNearEquivalentColorVariants,
+  groupNearReferenceVariants
+} from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
 
 const PRESENTATION_MODE = "balanced" as const;
 
@@ -122,14 +125,22 @@ export function useHarmonizerProposals({
       : alternatives;
 
     const uniqueProposals = dedupeHarmonicallyEquivalentProposals(withReference);
-    const groupedProposals = phraseContext
-      ? groupNearEquivalentColorVariants(uniqueProposals, {
+    const referenceGroupedProposals = phraseContext
+      ? groupNearReferenceVariants(uniqueProposals, {
         center: phraseContext.selectedCenter.tonic,
         classificationMode: phraseContext.selectedCenter.mode === "minor"
           ? "minor-functional"
           : "major-functional"
       })
       : uniqueProposals;
+    const groupedProposals = phraseContext
+      ? groupNearEquivalentColorVariants(referenceGroupedProposals, {
+        center: phraseContext.selectedCenter.tonic,
+        classificationMode: phraseContext.selectedCenter.mode === "minor"
+          ? "minor-functional"
+          : "major-functional"
+      })
+      : referenceGroupedProposals;
     return proposalsWithInputContext(
       annotateProposalPresentationRoles(groupedProposals, PRESENTATION_MODE, phraseContext || undefined),
       inputContext

@@ -100,6 +100,14 @@ export function proposalReferenceRelationLabel(relation: ReharmonizationReferenc
   return referenceRelationLabel(relation);
 }
 
+export function proposalVariantSectionLabel(proposal: ReharmonizationProposal): string {
+  return proposal.kind === "reference" ? "Leituras próximas" : "Variações de cor";
+}
+
+export function proposalVariantApplyLabel(proposal: ReharmonizationProposal): string {
+  return proposal.kind === "reference" ? "Usar leitura" : "Usar variação";
+}
+
 export default function HarmonizationProposalCard({
   proposal,
   onApply,
@@ -207,7 +215,7 @@ export default function HarmonizationProposalCard({
                   className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-amber-300 hover:text-amber-200 transition cursor-pointer"
                   aria-expanded={areVariantsOpen}
                 >
-                  Variações de cor ({proposal.colorVariants.length})
+                  {proposalVariantSectionLabel(proposal)} ({proposal.colorVariants.length})
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${areVariantsOpen ? "rotate-180" : ""}`} />
                 </button>
 
@@ -225,7 +233,7 @@ export default function HarmonizationProposalCard({
                             onClick={() => onApply(variant)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20 text-xs font-bold transition cursor-pointer"
                           >
-                            Usar variação
+                            {proposalVariantApplyLabel(proposal)}
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>

@@ -3,10 +3,13 @@ import {
   proposalInputContextLabel,
   proposalKindLabel,
   proposalReferenceRelationLabel,
+  proposalVariantApplyLabel,
+  proposalVariantSectionLabel,
   routeProfileLabel
 } from "../src/domains/harmonizer/components/HarmonizationProposalCard";
 import type {
   ReharmonizationInputContext,
+  ReharmonizationProposal,
   ReharmonizationProposalKind,
   ReharmonizationReferenceRelation,
   ReharmonizationRouteProfile
@@ -17,6 +20,17 @@ import {
 } from "../src/domains/harmonizer/services/harmonizerInputContext";
 
 describe("Harmonization proposal card labels", () => {
+  function proposal(kind: ReharmonizationProposalKind): ReharmonizationProposal {
+    return {
+      id: kind,
+      kind,
+      name: kind,
+      measures: [],
+      explanation: [],
+      bassLine: []
+    };
+  }
+
   it("uses composer-facing proposal labels instead of engine status labels", () => {
     const labels = ([
       "reference",
@@ -131,5 +145,12 @@ describe("Harmonization proposal card labels", () => {
       explanation: [],
       bassLine: []
     }, "melody-with-reference-harmony")).toBe("melody-derived-alternative");
+  });
+
+  it("uses reference-specific wording for near readings grouped under the score harmony", () => {
+    expect(proposalVariantSectionLabel(proposal("reference"))).toBe("Leituras próximas");
+    expect(proposalVariantApplyLabel(proposal("reference"))).toBe("Usar leitura");
+    expect(proposalVariantSectionLabel(proposal("controlled-reharmonization"))).toBe("Variações de cor");
+    expect(proposalVariantApplyLabel(proposal("controlled-reharmonization"))).toBe("Usar variação");
   });
 });
