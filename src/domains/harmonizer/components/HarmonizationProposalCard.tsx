@@ -4,10 +4,11 @@ import type {
   ReharmonizationInputContext,
   ReharmonizationProposal,
   ReharmonizationProposalKind,
+  ReharmonizationReferenceRelation,
   ReharmonizationRouteProfile
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
 import type { LocalSegmentOccurrence } from "../services/localSegmentHarmonization";
-import { inputContextLabel } from "../services/harmonizerInputContext";
+import { inputContextLabel, referenceRelationLabel } from "../services/harmonizerInputContext";
 import type {
   HarmonicDiagnosticCategory
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
@@ -67,6 +68,14 @@ const INPUT_CONTEXT_TONE: Record<ReharmonizationInputContext, string> = {
   "melody-with-reference-harmony": "text-sky-300",
   "harmony-only-analysis": "text-amber-300"
 };
+const REFERENCE_RELATION_TONE: Record<ReharmonizationReferenceRelation, string> = {
+  "reference-original": "text-zinc-400",
+  "reference-rhythm-preserved": "text-sky-300",
+  "reference-close": "text-emerald-300",
+  "reference-functional-variation": "text-violet-300",
+  "melody-derived-alternative": "text-indigo-300",
+  "harmony-only-reading": "text-amber-300"
+};
 
 function voiceLeadingLabel(score: number): string {
   if (score <= 3) return "Condução muito próxima";
@@ -85,6 +94,10 @@ export function routeProfileLabel(profile: ReharmonizationRouteProfile): string 
 
 export function proposalInputContextLabel(context: ReharmonizationInputContext): string {
   return inputContextLabel(context);
+}
+
+export function proposalReferenceRelationLabel(relation: ReharmonizationReferenceRelation): string {
+  return referenceRelationLabel(relation);
 }
 
 export default function HarmonizationProposalCard({
@@ -114,6 +127,11 @@ export default function HarmonizationProposalCard({
             {proposal.inputContext && (
               <span className={`text-[10px] font-black uppercase tracking-widest ${INPUT_CONTEXT_TONE[proposal.inputContext]}`}>
                 {proposalInputContextLabel(proposal.inputContext)}
+              </span>
+            )}
+            {proposal.referenceRelation && (
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${REFERENCE_RELATION_TONE[proposal.referenceRelation]}`}>
+                {proposalReferenceRelationLabel(proposal.referenceRelation)}
               </span>
             )}
           </div>

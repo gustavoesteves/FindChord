@@ -2,14 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   proposalInputContextLabel,
   proposalKindLabel,
+  proposalReferenceRelationLabel,
   routeProfileLabel
 } from "../src/domains/harmonizer/components/HarmonizationProposalCard";
 import type {
   ReharmonizationInputContext,
   ReharmonizationProposalKind,
+  ReharmonizationReferenceRelation,
   ReharmonizationRouteProfile
 } from "../src/utils/music/analysis/models/ReharmonizationProposal";
-import { resolveHarmonizerInputContext } from "../src/domains/harmonizer/services/harmonizerInputContext";
+import {
+  referenceRelationForProposal,
+  resolveHarmonizerInputContext
+} from "../src/domains/harmonizer/services/harmonizerInputContext";
 
 describe("Harmonization proposal card labels", () => {
   it("uses composer-facing proposal labels instead of engine status labels", () => {
@@ -66,5 +71,65 @@ describe("Harmonization proposal card labels", () => {
     expect(resolveHarmonizerInputContext({ melodicAnchorCount: 8, referenceHarmonyCount: 4 })).toBe("melody-with-reference-harmony");
     expect(resolveHarmonizerInputContext({ melodicAnchorCount: 0, referenceHarmonyCount: 4 })).toBe("harmony-only-analysis");
     expect(resolveHarmonizerInputContext({ melodicAnchorCount: 0, referenceHarmonyCount: 0 })).toBeNull();
+  });
+
+  it("labels reference relation as musical comparison instead of numeric agreement", () => {
+    const labels = ([
+      "reference-original",
+      "reference-rhythm-preserved",
+      "reference-close",
+      "reference-functional-variation",
+      "melody-derived-alternative",
+      "harmony-only-reading"
+    ] satisfies ReharmonizationReferenceRelation[]).map(proposalReferenceRelationLabel);
+
+    expect(labels).toEqual([
+      "Cifra escrita pelo autor",
+      "Preserva o ritmo harmônico da partitura",
+      "Próxima da harmonia da partitura",
+      "Varia a partitura mantendo função",
+      "Alternativa guiada pela melodia",
+      "Leitura sem validação melódica"
+    ]);
+    expect(labels.join(" ")).not.toMatch(/agreement|referenceRoot|percentual/i);
+  });
+
+  it("classifies proposal relation to the reference harmony", () => {
+    expect(referenceRelationForProposal({
+      id: "existing-harmony-reference",
+      kind: "reference",
+      name: "Referência — Harmonia da partitura",
+      measures: [],
+      explanation: [],
+      bassLine: []
+    }, "melody-with-reference-harmony")).toBe("reference-original");
+
+    expect(referenceRelationForProposal({
+      id: "controlled-reference-rhythm",
+      kind: "controlled-reharmonization",
+      name: "Rearmonização — ritmo harmônico da partitura",
+      measures: [],
+      explanation: [],
+      bassLine: []
+    }, "melody-with-reference-harmony")).toBe("reference-rhythm-preserved");
+
+    expect(referenceRelationForProposal({
+      id: "close",
+      kind: "validated-harmonization",
+      name: "Estratégia — Centro de referência",
+      measures: [],
+      explanation: [],
+      bassLine: [],
+      referenceRootAgreement: 0.8
+    }, "melody-with-reference-harmony")).toBe("reference-close");
+
+    expect(referenceRelationForProposal({
+      id: "melody",
+      kind: "validated-harmonization",
+      name: "Estratégia — Melodia primeiro",
+      measures: [],
+      explanation: [],
+      bassLine: []
+    }, "melody-with-reference-harmony")).toBe("melody-derived-alternative");
   });
 });

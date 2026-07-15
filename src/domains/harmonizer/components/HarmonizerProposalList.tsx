@@ -119,6 +119,9 @@ export function visibleProposalsForLayer(
 
   const selected: ReharmonizationProposal[] = [];
   addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole === "primary"));
+  addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-rhythm-preserved"));
+  addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-functional-variation"));
+  addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-close"));
   addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole !== "adventurous"));
   addUniqueProposal(selected, proposals.find(proposal => (proposal.directedChromaticRankBonus || 0) > 0));
   fillDistinctFamilies(

@@ -19,6 +19,13 @@ export type ReharmonizationInputContext =
   | "melody-only"
   | "melody-with-reference-harmony"
   | "harmony-only-analysis";
+export type ReharmonizationReferenceRelation =
+  | "reference-original"
+  | "reference-rhythm-preserved"
+  | "reference-close"
+  | "reference-functional-variation"
+  | "melody-derived-alternative"
+  | "harmony-only-reading";
 export type ReharmonizationBassLineProfile =
   | "stepwise"
   | "chromatic"
@@ -63,6 +70,7 @@ export interface ReharmonizationProposal {
   presentationRole?: ReharmonizationPresentationRole;
   presentationLayer?: ReharmonizationPresentationLayer;
   inputContext?: ReharmonizationInputContext;
+  referenceRelation?: ReharmonizationReferenceRelation;
   harmonicIdiom?: ReharmonizationHarmonicIdiom;
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
   cadentialTarget?: string;

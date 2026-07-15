@@ -9,7 +9,8 @@ function proposal(
   id: string,
   name: string,
   role: ReharmonizationProposal["presentationRole"] = "alternative",
-  bonus = 0
+  bonus = 0,
+  referenceRelation?: ReharmonizationProposal["referenceRelation"]
 ): ReharmonizationProposal {
   return {
     id,
@@ -20,6 +21,7 @@ function proposal(
     bassLine: ["C"],
     presentationRole: role,
     presentationLayer: "reharmonization",
+    referenceRelation,
     directedChromaticRankBonus: bonus
   };
 }
@@ -51,6 +53,25 @@ describe("Harmonizer proposal list curation", () => {
     ];
 
     expect(visibleProposalsForLayer("reharmonization", proposals, true)).toBe(proposals);
+  });
+
+  it("keeps reference-rhythm and functional reference variations visible in collapsed mode", () => {
+    const visible = visibleProposalsForLayer("reharmonization", [
+      proposal("primary", "Estratégia — Melodia primeiro", "primary"),
+      proposal("dominants", "Estratégia — Dominantes alteradas"),
+      proposal("reference-rhythm", "Rearmonização — ritmo harmônico da partitura", "alternative", 0, "reference-rhythm-preserved"),
+      proposal("functional-variation", "Estratégia — Função aparente", "alternative", 0, "reference-functional-variation"),
+      proposal("neighbor", "Estratégia — Cromatismo de vizinhança"),
+      proposal("subv", "Estratégia — SubV funcional", "adventurous")
+    ], false);
+
+    expect(visible.map(item => item.id)).toEqual([
+      "primary",
+      "reference-rhythm",
+      "functional-variation",
+      "dominants",
+      "subv"
+    ]);
   });
 
   it("describes omitted distant paths without engine-facing wording", () => {
