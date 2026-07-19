@@ -51,7 +51,7 @@ export function WriterMaterialFretboardPanel({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black tracking-widest uppercase text-sky-300">
-                Alvos no braço
+                Mapa no braço
               </span>
               <div className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-ping"></div>
             </div>
@@ -70,7 +70,7 @@ export function WriterMaterialFretboardPanel({
               }`}
               title="Mostrar função da nota no acorde ou no material"
             >
-              Posição
+              Função
             </button>
             <button
               type="button"
@@ -88,7 +88,7 @@ export function WriterMaterialFretboardPanel({
 
         <details className="group relative select-none">
           <summary className="list-none flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-zinc-400 cursor-pointer hover:border-zinc-700 hover:text-zinc-200">
-            Alvos
+            Ajustar mapa
           </summary>
           <div className="absolute right-0 z-20 mt-2 flex w-[280px] flex-wrap gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950/95 p-2 shadow-2xl">
             {LOCAL_MATERIAL_NOTE_CATEGORIES.map(item => {

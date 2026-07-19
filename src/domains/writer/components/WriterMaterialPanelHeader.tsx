@@ -14,9 +14,9 @@ export function WriterMaterialPanelHeader({
       <div className="flex items-center gap-2.5">
         <Sparkles className="h-5 w-5 text-purple-400" />
         <div>
-          <h2 className="text-base font-extrabold text-zinc-100 uppercase tracking-wider">Materiais do Acorde</h2>
+          <h2 className="text-base font-extrabold text-zinc-100 uppercase tracking-wider">Navegar o acorde</h2>
           <p className="text-[10px] text-zinc-400 font-medium">
-            Ideias melódicas para explorar o acorde selecionado
+            Materiais melodicos para transformar a forma em frase
           </p>
         </div>
       </div>

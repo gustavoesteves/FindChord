@@ -13,9 +13,9 @@ export interface LocalMaterialSuggestedLine {
 }
 
 const DEFAULT_SOURCE_DESCRIPTION: LocalMaterialSourceDescription = {
-  desc: "Escala de improvisação sintonizada com a tônica e características do acorde.",
+  desc: "Material melodico ligado ao acorde, com apoios e cores para explorar no instrumento.",
   mood: "Combinação harmônica fluida.",
-  tip: "Explore alternando entre notas estruturais e extensões cromáticas."
+  tip: "Comece pelos apoios do acorde e abra as cores quando a frase pedir."
 };
 
 const SOURCE_DESCRIPTIONS: Record<string, LocalMaterialSourceDescription> = {

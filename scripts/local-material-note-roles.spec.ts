@@ -19,18 +19,18 @@ describe("F209 papeis de nota em materiais locais", () => {
   it("destaca notas caracteristicas da fonte melodica", () => {
     expect(classifyLocalMaterialNote("F#", "C", cmaj7, "lydian")).toMatchObject({
       category: "characteristic",
-      label: "#11 (Modal)"
+      label: "#11 (Identidade)"
     });
     expect(classifyLocalMaterialNote("A", "C", ["C", "Eb", "G", "Bb"], "dorian")).toMatchObject({
       category: "characteristic",
-      label: "13 (Modal)"
+      label: "13 (Identidade)"
     });
   });
 
   it("separa avoid notes de tensoes estaveis", () => {
     expect(classifyLocalMaterialNote("F", "C", cmaj7, "major")).toMatchObject({
       category: "avoid",
-      label: "11 (Evitar)"
+      label: "11 (Passagem)"
     });
     expect(classifyLocalMaterialNote("D", "C", cmaj7, "major")).toMatchObject({
       category: "tension",

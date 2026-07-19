@@ -66,11 +66,11 @@ describe("F246 acao tocavel do material ativo", () => {
 
     expect(action).toMatchObject({
       name: "A lydian dominant",
-      eyebrowLabel: "Notas do material",
+      eyebrowLabel: "Ouvir material",
       theoryDesc: "Mantenha a leitura conectada ao contorno da melodia.",
       displayNotes: ["A", "B", "C#", "D#", "E", "F#", "G"],
       notes: ["A4", "B4", "C#4", "D#4", "E4", "F#4", "G4"],
-      buttonLabel: "Ouvir notas"
+      buttonLabel: "Ouvir material"
     });
   });
 

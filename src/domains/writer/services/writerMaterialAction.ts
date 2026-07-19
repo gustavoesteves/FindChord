@@ -39,10 +39,10 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
 
   return {
     name: input.focusedPaletteItem.title,
-    eyebrowLabel: "Notas do material",
+    eyebrowLabel: "Ouvir material",
     theoryDesc: input.focusedPaletteItem.subtitle,
     notes: displayNotes.map(note => playableWriterMaterialNote(note)),
     displayNotes,
-    buttonLabel: "Ouvir notas"
+    buttonLabel: "Ouvir material"
   };
 }

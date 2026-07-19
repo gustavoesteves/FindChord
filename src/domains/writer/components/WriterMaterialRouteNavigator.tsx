@@ -22,28 +22,23 @@ export function WriterMaterialRouteNavigator({
   const availableRoutes = visibleWriterMaterialRoutes(routes);
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/40 p-4 select-none">
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center">
-        <div className="flex flex-col gap-2">
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Acorde em foco</span>
-            <div className="mt-1 flex flex-wrap items-end gap-2">
-              <span className="text-4xl font-black leading-none text-zinc-100">{chordName}</span>
-              {activeRoute && (
-                <span className="mb-1 rounded-full border border-sky-300/30 bg-sky-400/10 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-sky-200">
-                  {activeRoute.label}
-                </span>
-              )}
-            </div>
-            {activeRoute && (
-              <p className="mt-2 max-w-md text-[10px] font-semibold leading-snug text-zinc-500">
-                {activeRoute.description}
-              </p>
-            )}
+    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/35 p-3 select-none">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="text-3xl font-black leading-none text-zinc-100">{chordName}</span>
+            <span className="rounded-full border border-zinc-800 bg-zinc-950/80 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-zinc-500">
+              navegar acorde
+            </span>
           </div>
+          {activeRoute && (
+            <p className="max-w-sm text-right text-[10px] font-semibold leading-snug text-zinc-500">
+              {activeRoute.description}
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {availableRoutes.map(route => {
             const isActive = route.id === activeRouteId;
             return (
@@ -52,14 +47,19 @@ export function WriterMaterialRouteNavigator({
                 key={route.id}
                 aria-pressed={isActive}
                 onClick={() => onSelectRoute(route.id)}
-                className={`rounded-xl border px-3 py-2 text-left transition cursor-pointer min-w-[135px] ${
+                className={`rounded-xl border px-3 py-2 text-left transition cursor-pointer ${
                   isActive
                     ? "border-sky-300/80 bg-sky-400/15 text-zinc-100"
                     : "border-zinc-800 bg-zinc-950/70 hover:border-zinc-600 text-zinc-300"
                 }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] font-black uppercase tracking-wider">{route.label}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-black ${
+                    isActive ? "bg-sky-300 text-zinc-950" : "bg-zinc-900 text-zinc-500"
+                  }`}>
+                    {route.items.length}
+                  </span>
                 </div>
               </button>
             );

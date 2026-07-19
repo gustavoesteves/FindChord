@@ -20,8 +20,8 @@ export interface LocalMaterialNoteRole {
 export const LOCAL_MATERIAL_NOTE_CATEGORIES: LocalMaterialNoteCategoryDescriptor[] = [
   {
     category: "root",
-    label: "Tônica",
-    title: "Alternar visibilidade das tônicas",
+    label: "Repouso",
+    title: "Alternar pontos de repouso",
     activeClassName: "bg-[#0165e7]/10 border-[#0165e7]/45 text-zinc-200 shadow-[0_0_6px_rgba(1,101,231,0.06)]",
     dotActiveClassName: "bg-[#0165e7] shadow-[0_0_5px_#0165e7]"
   },
@@ -34,8 +34,8 @@ export const LOCAL_MATERIAL_NOTE_CATEGORIES: LocalMaterialNoteCategoryDescriptor
   },
   {
     category: "characteristic",
-    label: "Cor",
-    title: "Alternar visibilidade das notas de assinatura modal",
+    label: "Identidade",
+    title: "Alternar notas que definem a cor do material",
     activeClassName: "bg-[#FCD34D]/10 border-[#FCD34D]/45 text-zinc-200 shadow-[0_0_6px_rgba(252,211,77,0.06)]",
     dotActiveClassName: "bg-[#FCD34D] shadow-[0_0_8px_#FCD34D] animate-pulse"
   },
@@ -48,8 +48,8 @@ export const LOCAL_MATERIAL_NOTE_CATEGORIES: LocalMaterialNoteCategoryDescriptor
   },
   {
     category: "avoid",
-    label: "Evitar",
-    title: "Alternar visibilidade das notas de evitar",
+    label: "Passagem",
+    title: "Alternar notas de friccao ou passagem",
     activeClassName: "bg-[#EF4444]/10 border-[#EF4444]/45 text-zinc-200 shadow-[0_0_6px_rgba(239,68,68,0.06)]",
     dotActiveClassName: "bg-[#EF4444] shadow-[0_0_5px_#EF4444] border border-dashed border-red-500"
   }
@@ -78,54 +78,54 @@ export function classifyLocalMaterialNote(
   if (notePC === rootPC) {
     return {
       category: "root",
-      label: "R (Tonica)",
+      label: "R (Repouso)",
       color: "#0165e7",
-      tooltip: "Tonica: centro de repouso do acorde."
+      tooltip: "Repouso: centro de estabilidade do acorde."
     };
   }
 
   if (sourceType.includes("lydian") && distance === 6) {
     return {
       category: "characteristic",
-      label: "#11 (Modal)",
+      label: "#11 (Identidade)",
       color: "#FCD34D",
-      tooltip: "Assinatura lidia: quarta aumentada como cor caracteristica."
+      tooltip: "Identidade lidia: quarta aumentada como cor caracteristica."
     };
   }
 
   if (sourceType.includes("dorian") && distance === 9) {
     return {
       category: "characteristic",
-      label: "13 (Modal)",
+      label: "13 (Identidade)",
       color: "#FCD34D",
-      tooltip: "Assinatura dorica: sexta maior como cor caracteristica."
+      tooltip: "Identidade dorica: sexta maior como cor caracteristica."
     };
   }
 
   if (sourceType.includes("mixolydian") && distance === 10) {
     return {
       category: "characteristic",
-      label: "b7 (Modal)",
+      label: "b7 (Identidade)",
       color: "#FCD34D",
-      tooltip: "Assinatura mixolidia: setima menor como cor dominante."
+      tooltip: "Identidade mixolidia: setima menor como cor dominante."
     };
   }
 
   if (sourceType.includes("phrygian") && distance === 1) {
     return {
       category: "characteristic",
-      label: "b9 (Modal)",
+      label: "b9 (Identidade)",
       color: "#FCD34D",
-      tooltip: "Assinatura frigia: segunda menor como cor caracteristica."
+      tooltip: "Identidade frigia: segunda menor como cor caracteristica."
     };
   }
 
   if (sourceType.includes("locrian") && distance === 6) {
     return {
       category: "characteristic",
-      label: "b5 (Modal)",
+      label: "b5 (Identidade)",
       color: "#FCD34D",
-      tooltip: "Assinatura locria: quinta diminuta como instabilidade estrutural."
+      tooltip: "Identidade locria: quinta diminuta como instabilidade estrutural."
     };
   }
 
@@ -155,15 +155,15 @@ export function classifyLocalMaterialNote(
 
   if (isAvoidFourth || isAvoidSixth || isAvoidSecond) {
     const labels: Record<number, string> = {
-      1: "b9 (Evitar)",
-      5: "11 (Evitar)",
-      8: "b13 (Evitar)"
+      1: "b9 (Passagem)",
+      5: "11 (Passagem)",
+      8: "b13 (Passagem)"
     };
     return {
       category: "avoid",
-      label: labels[distance] || "Evitar",
+      label: labels[distance] || "Passagem",
       color: "#EF4444",
-      tooltip: "Nota de evitar: use como passagem, suspensao ou friccao controlada."
+      tooltip: "Passagem: use como suspensao breve ou friccao controlada."
     };
   }
 

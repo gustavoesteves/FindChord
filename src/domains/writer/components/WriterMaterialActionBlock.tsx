@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Play, Sparkles } from "lucide-react";
 import type { WriterMaterialAction } from "../services/writerMaterialAction";
 
 export interface WriterMaterialActionBlockProps {
@@ -8,7 +8,7 @@ export interface WriterMaterialActionBlockProps {
 
 export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActionBlockProps) {
   return (
-    <div className="rounded-2xl border border-sky-300/50 bg-sky-400/10 p-4 text-zinc-300 shadow-inner select-none animate-fade-in">
+    <div className="rounded-2xl border border-sky-300/45 bg-sky-400/10 p-4 text-zinc-300 shadow-inner select-none animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-start">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5">
@@ -19,7 +19,7 @@ export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActi
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-black text-zinc-100 leading-tight">{action.name}</span>
-            <p className="max-w-2xl text-[10px] text-zinc-400 leading-relaxed font-semibold">
+            <p className="max-w-2xl text-[10px] text-zinc-400 leading-relaxed font-semibold line-clamp-2">
               {action.theoryDesc}
             </p>
           </div>
@@ -34,9 +34,10 @@ export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActi
         <button
           type="button"
           onClick={() => onPlay(action.notes)}
-          className="flex items-center justify-center gap-1 text-[9px] font-black px-4 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(125,211,252,0.2)] hover:scale-105"
+          className="flex items-center justify-center gap-1.5 text-[9px] font-black px-4 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(125,211,252,0.2)] hover:scale-105"
         >
-          ▶ {action.buttonLabel}
+          <Play className="h-3 w-3 fill-current" />
+          {action.buttonLabel}
         </button>
       </div>
     </div>

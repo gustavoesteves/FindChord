@@ -12,7 +12,7 @@ describe("F225 migração do fretboard de materiais para renderer comum", () => 
       noteName: "C4",
       displayLabel: "R",
       color: "#0165e7",
-      tooltip: "C - R (Tonica)",
+      tooltip: "C - R (Repouso)",
       strokeClassName: "stroke-zinc-950",
       glowRadius: 4
     };

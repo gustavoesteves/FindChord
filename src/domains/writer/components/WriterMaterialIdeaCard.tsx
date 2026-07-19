@@ -45,25 +45,29 @@ export function WriterMaterialIdeaCard({
           {isActive ? "Em foco" : item.intentLabel}
         </span>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-1">
-        {item.cells.map(cell => (
-          <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[8px] font-black text-sky-100">
-            {cell}
-          </span>
-        ))}
-        {item.extraMaterialCount > 0 && (
-          <span className="rounded border border-zinc-800 bg-zinc-900/70 px-1.5 py-0.5 text-[8px] font-black text-zinc-500">
-            +{item.extraMaterialCount}
-          </span>
-        )}
-      </div>
-      <p className="mt-2 line-clamp-2 text-[9.5px] font-semibold leading-snug text-zinc-500">
+      {isActive && (
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {item.cells.map(cell => (
+            <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[8px] font-black text-sky-100">
+              {cell}
+            </span>
+          ))}
+          {item.extraMaterialCount > 0 && (
+            <span className="rounded border border-zinc-800 bg-zinc-900/70 px-1.5 py-0.5 text-[8px] font-black text-zinc-500">
+              +{item.extraMaterialCount}
+            </span>
+          )}
+        </div>
+      )}
+      <p className={`${isActive ? "mt-2" : "mt-1.5"} line-clamp-2 text-[9.5px] font-semibold leading-snug text-zinc-500`}>
         {shortHint}
       </p>
-      <div className="mt-2 flex items-center justify-between gap-2 text-[8.5px] font-black uppercase tracking-wider text-zinc-600">
-        <span className="truncate">Base: {item.source.name}</span>
-        <span className="shrink-0">ver no braço</span>
-      </div>
+      {isActive && (
+        <div className="mt-2 flex items-center justify-between gap-2 text-[8.5px] font-black uppercase tracking-wider text-zinc-600">
+          <span className="truncate">Base: {item.source.name}</span>
+          <span className="shrink-0">no braço</span>
+        </div>
+      )}
     </button>
   );
 }
