@@ -18,6 +18,7 @@ const INPUT_CONTEXT_LABELS: Record<ReharmonizationInputContext, string> = {
 const REFERENCE_RELATION_LABELS: Record<ReharmonizationReferenceRelation, string> = {
   "reference-original": "Cifra escrita pelo autor",
   "reference-rhythm-preserved": "Preserva o ritmo harmônico da partitura",
+  "reference-contour-preserved": "Preserva o contorno da partitura",
   "reference-close": "Próxima da harmonia da partitura",
   "reference-functional-variation": "Varia a partitura mantendo função",
   "melody-derived-alternative": "Alternativa guiada pela melodia",
@@ -51,6 +52,7 @@ export function referenceRelationForProposal(
   if (inputContext !== "melody-with-reference-harmony") return undefined;
   if (proposal.kind === "reference") return "reference-original";
   if (proposal.id === "controlled-reference-rhythm") return "reference-rhythm-preserved";
+  if (proposal.id === "controlled-reference-contour") return "reference-contour-preserved";
   if ((proposal.referenceRootAgreement || 0) >= 0.75) return "reference-close";
   if ((proposal.referenceFunctionAgreement || 0) >= 0.65 || (proposal.apparentFunctionReferenceBonus || 0) > 0) {
     return "reference-functional-variation";

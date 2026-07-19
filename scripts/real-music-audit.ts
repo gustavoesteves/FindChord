@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { Note, Scale } from "tonal";
 import { PhraseAnalysisEngine, type PhraseContext } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { GravityFieldManager, type GravityProposalGenerationResult } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
@@ -14,6 +15,13 @@ import {
   formatReferenceCenterEvidenceSentence
 } from "../src/utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 import { analyzeModalBorrowingColors } from "../src/utils/music/analysis/strategies/ModalBorrowingAnalysis";
+import { buildControlledReharmonizationProposals } from "../src/domains/harmonizer/services/harmonizerService";
+import { filterDiagnosticsForPrimaryProposal } from "../src/domains/harmonizer/services/harmonizerDiagnostics";
+import { resolveChordSymbol } from "../src/utils/music/theory/ChordSymbolResolver";
+import {
+  summarizeAppliedHarmonicVocabulary,
+  type AppliedHarmonicVocabularySummary
+} from "./audit-applied-harmonic-vocabulary";
 import type { HarmonicDiagnostic } from "../src/utils/music/analysis/models/HarmonicDiagnostic";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
@@ -71,8 +79,11 @@ export type DualPathClassification =
 
 type CenterShiftTriageCategory =
   | "likely-reference-local-center"
+  | "relative-major-minor-resolved"
   | "review-reference-center"
   | "melody-only-vocabulary-gap";
+type CenterShiftReferenceAlignment = "aligned" | "partial" | "divergent";
+type SameCenterReferenceContribution = "enriches-route" | "changes-route-for-review";
 
 export interface RealMusicAuditResult {
   file: string;
@@ -88,6 +99,11 @@ export interface RealMusicAuditResult {
   selectedCenter?: string;
   selectedCenterSource?: PhraseContext["selectedCenterSource"];
   selectedCenterEvidence?: string[];
+  referenceWindowChords?: string;
+  referenceWindowBass?: string;
+  referenceBassAgreement?: string;
+  referenceBassAgreementRatio?: number;
+  referenceVocabulary?: AppliedHarmonicVocabularySummary;
   proposalCount: number;
   primaryProposal?: ReharmonizationProposal;
   functionalColors?: FunctionalColorAuditSummary;
@@ -172,6 +188,25 @@ export function findHarmonizableWindow(
   return bestWindow;
 }
 
+function referenceHarmoniesForAnchors(
+  referenceHarmonies: ScoreHarmonyEvent[],
+  anchors: MelodicAnchor[]
+): ScoreHarmonyEvent[] {
+  const anchorMeasures = new Set(anchors.map(anchor => anchor.measureIndex));
+  return referenceHarmonies.filter(harmony => anchorMeasures.has(harmony.measure));
+}
+
+function proposalsForAuditWindow(
+  window: RealMusicAuditWindow,
+  referenceHarmonies: ScoreHarmonyEvent[]
+): ReharmonizationProposal[] {
+  const scopedReference = referenceHarmoniesForAnchors(referenceHarmonies, window.anchors);
+  return [
+    ...buildControlledReharmonizationProposals(scopedReference, window.anchors, window.phraseContext),
+    ...window.generation.proposals
+  ];
+}
+
 export function auditRealMusicFile(file: string): RealMusicAuditResult {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(realMusicDir, file), "utf8"));
   const base = {
@@ -217,23 +252,25 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
   }
 
   const ranked = rankReharmonizationProposalsByVoiceLeading(
-    harmonizable.generation.proposals,
+    proposalsForAuditWindow(harmonizable, snapshot.harmonies),
     harmonizable.phraseContext,
     harmonizable.anchors,
     { referenceHarmonies: snapshot.harmonies }
   );
   const presented = annotateProposalPresentationRoles(ranked, "balanced", harmonizable.phraseContext);
   const primaryProposal = selectPrimaryProposal(presented);
+  const referenceForWindow = referenceHarmoniesForAnchors(snapshot.harmonies, harmonizable.anchors);
+  const bassAgreement = referenceBassAgreement(referenceForWindow, primaryProposal);
   const functionalColors = summarizeFunctionalColorAlternatives(presented, primaryProposal);
-  const diagnostics = [
-    ...harmonizable.generation.omittedStrategyDiagnostics,
-    ...(primaryProposal?.diagnostics || [])
-  ];
   const referenceComparison = compareProposalToReferenceHarmony(
     primaryProposal,
     snapshot.harmonies,
     harmonizable.phraseContext.selectedCenter.tonic
   );
+  const diagnostics = filterDiagnosticsForPrimaryProposal([
+    ...harmonizable.generation.omittedStrategyDiagnostics,
+    ...(primaryProposal?.diagnostics || [])
+  ], primaryProposal);
   const modalBorrowingReferenceColors = summarizeModalBorrowingReferenceColors(
     snapshot.harmonies,
     harmonizable.anchors,
@@ -256,6 +293,15 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
     selectedCenter: `${harmonizable.phraseContext.selectedCenter.tonic} ${harmonizable.phraseContext.selectedCenter.mode}`,
     selectedCenterSource: harmonizable.phraseContext.selectedCenterSource,
     selectedCenterEvidence: harmonizable.phraseContext.selectedCenterEvidence,
+    referenceWindowChords: referenceHarmonySummary(referenceForWindow),
+    referenceWindowBass: referenceBassSummary(referenceForWindow),
+    referenceBassAgreement: bassAgreement ? `${bassAgreement.matching}/${bassAgreement.compared}` : undefined,
+    referenceBassAgreementRatio: bassAgreement?.ratio,
+    referenceVocabulary: summarizeAppliedHarmonicVocabulary(
+      referenceForWindow,
+      harmonizable.phraseContext.selectedCenter.tonic,
+      harmonizable.phraseContext.selectedCenter.mode
+    ),
     proposalCount: presented.length,
     primaryProposal,
     functionalColors,
@@ -275,10 +321,14 @@ export function renderRealMusicAuditMarkdown(results: RealMusicAuditResult[]): s
   const modalBorrowingReferenceTotals = summarizeModalBorrowingReferenceTotals(results);
   const dualPathTotals = summarizeDualPathClassificationTotals(results);
   const centerShiftTriageTotals = summarizeCenterShiftTriageTotals(results);
+  const centerShiftReferenceAlignmentTotals = summarizeCenterShiftReferenceAlignmentTotals(results);
+  const sameCenterReferenceContributionTotals = summarizeSameCenterReferenceContributionTotals(results);
+  const bassPreservationTotals = summarizeBassPreservationTotals(results);
   const lines = [
     "# F39 — Relatorio musical por obra",
     "",
     "Este relatorio e gerado a partir das partituras em `docs/musics` e resume a leitura atual do motor sobre cada arquivo real.",
+    "Escopo: apenas arquivos `.musicxml` no nivel raiz de `docs/musics`; subpastas importadas sao cobertas pelas auditorias F108/F109.",
     "",
     "A leitura nao pretende ser julgamento estetico final. Ela registra o que o sistema conseguiu importar, qual janela melodica foi usada, qual centro foi escolhido e qual proposta primaria saiu do pipeline.",
     "",
@@ -297,10 +347,19 @@ export function renderRealMusicAuditMarkdown(results: RealMusicAuditResult[]): s
     `- Referencia destrava harmonizacao: ${dualPathTotals.referenceUnlocksHarmony}`,
     `- Referencia muda centro: ${dualPathTotals.referenceShiftsCenter}`,
     `- Mesmo centro, harmonizacao diferente: ${dualPathTotals.sameCenterDifferentHarmonization}`,
+    `- Mesmo centro, referencia enriquece rota: ${sameCenterReferenceContributionTotals["enriches-route"]}`,
+    `- Mesmo centro, revisar rota da referencia: ${sameCenterReferenceContributionTotals["changes-route-for-review"]}`,
+    `- Baixo da referencia preservado parcialmente: ${bassPreservationTotals.partial}`,
+    `- Baixo da referencia pouco preservado: ${bassPreservationTotals.low}`,
     `- Sem proposta comparavel entre caminhos: ${dualPathTotals.noComparableProposal}`,
     `- Triagem centro local da referencia: ${centerShiftTriageTotals.likelyReferenceLocalCenter}`,
+    `- Triagem relativo maior/menor resolvido: ${centerShiftTriageTotals.relativeMajorMinorResolved}`,
     `- Triagem revisar centro inferido: ${centerShiftTriageTotals.reviewReferenceCenter}`,
     `- Triagem vocabulario melodia-only: ${centerShiftTriageTotals.melodyOnlyVocabularyGap}`,
+    `- Centros alterados alinhados com a referencia: ${centerShiftReferenceAlignmentTotals.aligned}`,
+    `- Centros alterados parcialmente alinhados: ${centerShiftReferenceAlignmentTotals.partial}`,
+    `- Centros alterados ainda divergentes: ${centerShiftReferenceAlignmentTotals.divergent}`,
+    `- Centros alterados para escuta/revisao da referencia: ${centerShiftReferenceAlignmentTotals.partial}`,
     `- Amostras de triagem - referencia muda centro: ${examplesSummary(dualPathTotals.examples.referenceShiftsCenter)}`,
     `- Amostras de triagem - mesmo centro, harmonizacao diferente: ${examplesSummary(dualPathTotals.examples.sameCenterDifferentHarmonization)}`,
     `- Amostras de triagem - referencia destrava harmonizacao: ${examplesSummary(dualPathTotals.examples.referenceUnlocksHarmony)}`,
@@ -308,6 +367,14 @@ export function renderRealMusicAuditMarkdown(results: RealMusicAuditResult[]): s
     "## Triagem de centros alterados pela referencia",
     "",
     ...centerShiftTriageLines(results),
+    "",
+    "## Triagem de mesmo centro",
+    "",
+    ...sameCenterTriageLines(results),
+    "",
+    "## Triagem de baixo da referencia",
+    "",
+    ...referenceBassTriageLines(results),
     "",
     "## Obras",
     ""
@@ -348,15 +415,18 @@ export function renderRealMusicAuditMarkdown(results: RealMusicAuditResult[]): s
       lines.push(`- Caminho melodia-only: ${pathSummary(result.dualPathComparison.melodyOnly)}`);
       lines.push(`- Caminho com referencia: ${pathSummary(result.dualPathComparison.referenceAware)}`);
       lines.push(`- Divergencia dos caminhos: ${pathDivergenceSummary(result.dualPathComparison)}`);
-      lines.push(`- Leitura da divergencia: ${dualPathClassificationLabel(result.dualPathComparison.classification)}`);
+      lines.push(`- Leitura da divergencia: ${dualPathClassificationLabel(result.dualPathComparison.classification, result)}`);
     }
     lines.push(`- Proposta primaria: ${primary?.name || "sem proposta primaria"}`);
     lines.push(`- Camada da proposta: ${primary ? presentationLayerLabel(primary.presentationLayer) : "n/a"}`);
     const cadentialTarget = proposalCadentialTarget(primary);
     lines.push(`- Alvo cadencial da proposta: ${cadentialTarget || "n/a"}`);
     lines.push(`- Resumo: rota ${primary?.routeProfile || "n/a"}; baixo ${primary?.bassLineProfile || "n/a"}; conducao ${formatNumber(primary?.voiceLeadingScore)}`);
+    if (result.referenceWindowChords) lines.push(`- Referencia na janela: ${result.referenceWindowChords}`);
     lines.push(`- Cifras: ${primary ? chordSummary(primary) : "n/a"}`);
+    if (result.referenceWindowBass) lines.push(`- Baixo da referencia: ${result.referenceWindowBass}`);
     lines.push(`- Baixo: ${primary?.bassLine.join(" -> ") || "n/a"}`);
+    if (result.referenceBassAgreement) lines.push(`- Preservacao do baixo: ${result.referenceBassAgreement}`);
     const proposalEvidence = proposalExplanationSummary(primary);
     if (proposalEvidence.length > 0) {
       lines.push("- Evidencias da proposta:");
@@ -456,7 +526,7 @@ function examplesSummary(examples: string[]): string {
 }
 
 function summarizeCenterShiftTriageTotals(results: RealMusicAuditResult[]): Record<
-  "likelyReferenceLocalCenter" | "reviewReferenceCenter" | "melodyOnlyVocabularyGap",
+  "likelyReferenceLocalCenter" | "relativeMajorMinorResolved" | "reviewReferenceCenter" | "melodyOnlyVocabularyGap",
   number
 > {
   return results.reduce((totals, result) => {
@@ -464,13 +534,51 @@ function summarizeCenterShiftTriageTotals(results: RealMusicAuditResult[]): Reco
 
     const category = classifyCenterShiftTriage(result);
     if (category === "likely-reference-local-center") totals.likelyReferenceLocalCenter++;
+    if (category === "relative-major-minor-resolved") totals.relativeMajorMinorResolved++;
     if (category === "review-reference-center") totals.reviewReferenceCenter++;
     if (category === "melody-only-vocabulary-gap") totals.melodyOnlyVocabularyGap++;
     return totals;
   }, {
     likelyReferenceLocalCenter: 0,
+    relativeMajorMinorResolved: 0,
     reviewReferenceCenter: 0,
     melodyOnlyVocabularyGap: 0
+  });
+}
+
+function summarizeCenterShiftReferenceAlignmentTotals(results: RealMusicAuditResult[]): Record<CenterShiftReferenceAlignment, number> {
+  return results.reduce((totals, result) => {
+    if (result.dualPathComparison?.classification !== "reference-shifts-center") return totals;
+    totals[classifyCenterShiftReferenceAlignment(result)]++;
+    return totals;
+  }, {
+    aligned: 0,
+    partial: 0,
+    divergent: 0
+  });
+}
+
+function summarizeSameCenterReferenceContributionTotals(results: RealMusicAuditResult[]): Record<SameCenterReferenceContribution, number> {
+  return results.reduce((totals, result) => {
+    if (result.dualPathComparison?.classification !== "same-center-different-harmonization") return totals;
+    totals[classifySameCenterReferenceContribution(result)]++;
+    return totals;
+  }, {
+    "enriches-route": 0,
+    "changes-route-for-review": 0
+  });
+}
+
+function summarizeBassPreservationTotals(results: RealMusicAuditResult[]): { partial: number; low: number } {
+  return results.reduce((totals, result) => {
+    const ratio = result.referenceBassAgreementRatio;
+    if (ratio === undefined) return totals;
+    if (ratio < 0.5) totals.low++;
+    else if (ratio < 0.75) totals.partial++;
+    return totals;
+  }, {
+    partial: 0,
+    low: 0
   });
 }
 
@@ -485,8 +593,76 @@ function centerShiftTriageLines(results: RealMusicAuditResult[]): string[] {
     const proposal = comparison.referenceAware.primaryProposalName || "sem proposta";
     const referenceCenter = referenceCenterSummary(result.referenceComparison) || "referencia sem centro inferido";
     const triage = centerShiftTriageLabel(classifyCenterShiftTriage(result));
-    return `- ${result.file}: ${triage}; melodia ${melody}; referencia ${reference}; proposta ${proposal}; ${referenceCenter}`;
+    const alignment = centerShiftReferenceAlignmentLabel(classifyCenterShiftReferenceAlignment(result));
+    const comparisonSummary = referenceComparisonSummary(result.referenceComparison);
+    return `- ${result.file}: ${triage}; ${alignment}; melodia ${melody}; referencia ${reference}; proposta ${proposal}; ${referenceCenter}; ${comparisonSummary}`;
   });
+}
+
+function sameCenterTriageLines(results: RealMusicAuditResult[]): string[] {
+  const sameCenter = results.filter(result => result.dualPathComparison?.classification === "same-center-different-harmonization");
+  if (sameCenter.length === 0) return ["Nenhuma obra nesta categoria."];
+
+  return sameCenter.map(result => {
+    const comparison = result.dualPathComparison!;
+    const center = comparison.referenceAware.selectedCenter || comparison.melodyOnly.selectedCenter || "sem centro";
+    const melodyProposal = comparison.melodyOnly.primaryProposalName || "sem proposta";
+    const referenceProposal = comparison.referenceAware.primaryProposalName || "sem proposta";
+    const contribution = sameCenterReferenceContributionLabel(classifySameCenterReferenceContribution(result));
+    const comparisonSummary = referenceComparisonSummary(result.referenceComparison);
+    const vocabulary = referenceVocabularyLabel(result.referenceVocabulary);
+    return `- ${result.file}: ${contribution}; centro ${center}; melodia ${melodyProposal}; referencia ${referenceProposal}; ${comparisonSummary}; ${vocabulary}`;
+  });
+}
+
+function referenceBassTriageLines(results: RealMusicAuditResult[]): string[] {
+  const candidates = results
+    .filter(result => result.referenceBassAgreementRatio !== undefined && result.referenceBassAgreementRatio < 0.75)
+    .sort((a, b) => (a.referenceBassAgreementRatio || 0) - (b.referenceBassAgreementRatio || 0));
+
+  if (candidates.length === 0) return ["Nenhuma obra nesta categoria."];
+
+  return candidates.map(result => {
+    const ratio = result.referenceBassAgreementRatio || 0;
+    const label = ratio < 0.5 ? "baixo pouco preservado" : "baixo parcialmente preservado";
+    const proposal = result.primaryProposal?.name || "sem proposta";
+    return `- ${result.file}: ${label}; ${result.referenceBassAgreement}; proposta ${proposal}`;
+  });
+}
+
+function classifySameCenterReferenceContribution(result: RealMusicAuditResult): SameCenterReferenceContribution {
+  return result.referenceComparison?.status === "aligned"
+    ? "enriches-route"
+    : "changes-route-for-review";
+}
+
+function sameCenterReferenceContributionLabel(category: SameCenterReferenceContribution): string {
+  if (category === "enriches-route") return "referencia enriquece rota no mesmo centro";
+  return "referencia muda rota para escuta/revisao";
+}
+
+function referenceVocabularyLabel(summary: AppliedHarmonicVocabularySummary | undefined): string {
+  if (!summary) return "vocabulario da referencia: n/a";
+  const labels: string[] = [];
+  if (summary.iiVCells > 0) labels.push(`${summary.iiVCells} ii-V`);
+  if (summary.appliedDominants > 0) labels.push(`${summary.appliedDominants} dominantes aplicadas`);
+  if (summary.primaryDominants > 0) labels.push(`${summary.primaryDominants} dominantes primarias`);
+  if (summary.tritoneSubstitutions > 0) labels.push(`${summary.tritoneSubstitutions} SubV`);
+  if (summary.resolvedDiminished > 0) labels.push(`${summary.resolvedDiminished} diminutos resolvidos`);
+  if (summary.modalBorrowingColors > 0) labels.push(`${summary.modalBorrowingColors} emprestimos modais`);
+  if (summary.minorPlagalCadences > 0) labels.push(`${summary.minorPlagalCadences} cadencias plagais menores`);
+  if (summary.tonicMajorSixths > 0) labels.push(`${summary.tonicMajorSixths} tonicas 6/6-9`);
+  if (summary.slashChordDensity >= 0.25) labels.push(`baixo indicado ${summary.slashChordDensity.toFixed(2)}`);
+  return labels.length > 0
+    ? `vocabulario da referencia: ${labels.join(", ")}`
+    : "vocabulario da referencia: funcional direto";
+}
+
+function classifyCenterShiftReferenceAlignment(result: RealMusicAuditResult): CenterShiftReferenceAlignment {
+  const status = result.referenceComparison?.status;
+  if (status === "aligned") return "aligned";
+  if (status === "partially-aligned") return "partial";
+  return "divergent";
 }
 
 function classifyCenterShiftTriage(result: RealMusicAuditResult): CenterShiftTriageCategory {
@@ -496,6 +672,8 @@ function classifyCenterShiftTriage(result: RealMusicAuditResult): CenterShiftTri
 
   const referenceAwareCenter = dualPath.referenceAware.selectedCenter;
   const melodyOnlyCenter = dualPath.melodyOnly.selectedCenter;
+  const relativePairResolved = comparison.status === "aligned"
+    && isRelativeMajorMinorPair(melodyOnlyCenter, referenceAwareCenter);
   const localReferenceCenter = centerName(comparison.localReferenceCenter, comparison.localReferenceCenterMode);
   const globalReferenceCenter = centerName(comparison.globalReferenceCenter, comparison.globalReferenceCenterMode);
   const mainReferenceCenter = centerName(comparison.referenceCenter, comparison.referenceCenterMode);
@@ -514,8 +692,11 @@ function classifyCenterShiftTriage(result: RealMusicAuditResult): CenterShiftTri
     mainConfidence === "weak"
     || (localReferenceCenter && localConfidence === "weak" && localReferenceCenter !== referenceAwareCenter)
   ) {
+    if (relativePairResolved) return "relative-major-minor-resolved";
     return "review-reference-center";
   }
+
+  if (relativePairResolved) return "relative-major-minor-resolved";
 
   if (hasConfidentLocalReference || (hasConfidentReference && melodyMatchesGlobalReference)) {
     return "likely-reference-local-center";
@@ -533,10 +714,36 @@ function centerName(center: string | undefined, mode: "major" | "minor" | undefi
   return `${center} ${mode || "major"}`;
 }
 
+function parseCenterName(center: string | undefined): { tonic: string; mode: "major" | "minor" } | null {
+  const match = center?.match(/^([A-G](?:#|b)?) (major|minor)$/);
+  if (!match) return null;
+  const tonic = Note.pitchClass(match[1]);
+  if (!tonic) return null;
+  return { tonic, mode: match[2] as "major" | "minor" };
+}
+
+function isRelativeMajorMinorPair(a: string | undefined, b: string | undefined): boolean {
+  const first = parseCenterName(a);
+  const second = parseCenterName(b);
+  if (!first || !second || first.mode === second.mode) return false;
+
+  const major = first.mode === "major" ? first : second;
+  const minor = first.mode === "minor" ? first : second;
+  const relativeMinor = Scale.get(`${major.tonic} major`).notes[5];
+  return Note.pitchClass(relativeMinor) === minor.tonic;
+}
+
 function centerShiftTriageLabel(category: CenterShiftTriageCategory): string {
   if (category === "likely-reference-local-center") return "hipotese: centro local da referencia";
+  if (category === "relative-major-minor-resolved") return "hipotese: relativo maior/menor resolvido pela referencia";
   if (category === "review-reference-center") return "hipotese: revisar centro inferido";
   return "hipotese: vocabulario melodia-only insuficiente";
+}
+
+function centerShiftReferenceAlignmentLabel(category: CenterShiftReferenceAlignment): string {
+  if (category === "aligned") return "referencia alinhada";
+  if (category === "partial") return "referencia parcial para escuta/revisao";
+  return "referencia divergente";
 }
 
 function formatDualPathExample(result: RealMusicAuditResult): string {
@@ -631,7 +838,7 @@ function summarizeHarmonizationPath(
   if (!window) return emptyPathSummary();
 
   const ranked = rankReharmonizationProposalsByVoiceLeading(
-    window.generation.proposals,
+    proposalsForAuditWindow(window, referenceHarmonies),
     window.phraseContext,
     window.anchors,
     { referenceHarmonies }
@@ -666,10 +873,17 @@ function pathDivergenceSummary(comparison: DualHarmonizationPathComparison): str
   return divergences.length > 0 ? divergences.join(", ") : "caminhos alinhados";
 }
 
-function dualPathClassificationLabel(classification: DualPathClassification): string {
+function dualPathClassificationLabel(
+  classification: DualPathClassification,
+  result?: RealMusicAuditResult
+): string {
   if (classification === "aligned") return "caminhos alinhados";
   if (classification === "reference-unlocks-harmony") return "a referência destrava a harmonização";
-  if (classification === "reference-shifts-center") return "a referência muda o centro percebido";
+  if (classification === "reference-shifts-center") {
+    return result && classifyCenterShiftTriage(result) === "relative-major-minor-resolved"
+      ? "a harmonia escrita resolve a ambiguidade relativo maior/menor"
+      : "a referência muda o centro percebido";
+  }
   if (classification === "same-center-different-harmonization") return "mesmo centro, harmonização diferente";
   if (classification === "different-harmonization") return "harmonização diferente";
   return "sem proposta comparável";
@@ -744,8 +958,63 @@ function formatNumber(value: number | undefined): string {
 
 function chordSummary(proposal: ReharmonizationProposal): string {
   return proposal.measures
-    .map(measure => `${measure.measureIndex}:${measure.chords.join("/")}`)
+    .map(measure => `${measure.measureIndex}:${measure.chords.join(", ")}`)
     .join(" | ");
+}
+
+function normalizedReferenceChord(chord: string): string {
+  const resolved = resolveChordSymbol(chord, "plain");
+  return resolved.warnings.length === 0 ? resolved.normalized : chord;
+}
+
+function bassForChord(chord: string): string {
+  const resolved = resolveChordSymbol(chord, "plain");
+  if (resolved.bass) return resolved.bass;
+  if (resolved.root) return resolved.root;
+  return chord.match(/^[A-G](?:#|b)?/)?.[0] || chord;
+}
+
+function referenceHarmonySummary(harmonies: ScoreHarmonyEvent[]): string | undefined {
+  if (harmonies.length === 0) return undefined;
+  const byMeasure = new Map<number, string[]>();
+  for (const harmony of harmonies) {
+    const chords = byMeasure.get(harmony.measure) || [];
+    chords.push(normalizedReferenceChord(harmony.harmony));
+    byMeasure.set(harmony.measure, chords);
+  }
+
+  return Array.from(byMeasure.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([measure, chords]) => `${measure}:${chords.join(", ")}`)
+    .join(" | ");
+}
+
+function referenceBassLine(harmonies: ScoreHarmonyEvent[]): string[] {
+  return harmonies.map(harmony => bassForChord(normalizedReferenceChord(harmony.harmony)));
+}
+
+function referenceBassSummary(harmonies: ScoreHarmonyEvent[]): string | undefined {
+  const bass = referenceBassLine(harmonies);
+  return bass.length > 0 ? bass.join(" -> ") : undefined;
+}
+
+function referenceBassAgreement(
+  harmonies: ScoreHarmonyEvent[],
+  proposal: ReharmonizationProposal | undefined
+): { matching: number; compared: number; ratio: number } | undefined {
+  if (!proposal || harmonies.length === 0 || proposal.bassLine.length === 0) return undefined;
+  const referenceBass = referenceBassLine(harmonies);
+  const compared = Math.min(referenceBass.length, proposal.bassLine.length);
+  if (compared === 0) return undefined;
+  const matching = referenceBass
+    .slice(0, compared)
+    .filter((bass, index) => bass === proposal.bassLine[index])
+    .length;
+  return {
+    matching,
+    compared,
+    ratio: matching / compared
+  };
 }
 
 function diagnosticSummary(diagnostics: HarmonicDiagnostic[]): string[] {
@@ -807,6 +1076,7 @@ function summarizeModalBorrowingReferenceColors(
 }
 
 function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
+  if (proposal.id === "controlled-reference-rhythm" || proposal.id === "controlled-reference-contour") return false;
   return proposal.name === "Estratégia — Função aparente"
     || proposal.name === "Estratégia — Empréstimo modal"
     || proposal.explanation.some(item => /Função aparente/i.test(item))
@@ -904,7 +1174,7 @@ function referenceOverlapForPrimaryProposal(
   if (referenceHarmonies.length === 0) return 0;
   const referenceMeasures = new Set(referenceHarmonies.map(harmony => harmony.measure));
   const ranked = rankReharmonizationProposalsByVoiceLeading(
-    generation.proposals,
+    proposalsForAuditWindow({ generation, phraseContext, anchors, referenceOverlapCount: 0 }, referenceHarmonies),
     phraseContext,
     anchors,
     { referenceHarmonies }

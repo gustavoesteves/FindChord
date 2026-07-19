@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { PhraseAnalysisEngine, type PhraseContext } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import {
-  buildProposalScaleSuggestionSets,
-  buildProposalScaleSuggestions,
-  buildScaleLinearRoutes,
-  buildScaleReadingRegions,
+  buildMaterialLinearRoutes,
+  buildMaterialReadingRegions,
+  buildProposalMaterialSuggestionSets,
+  buildProposalMaterialSuggestions,
   selectMelodyForHarmony
 } from "../src/domains/harmonizer/services/harmonizerService";
 
@@ -71,7 +71,7 @@ describe("F119 janela temporal da melodia", () => {
       { measureIndex: 4, pitch: "C", duration: 960 }
     ];
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
-    const suggestions = buildProposalScaleSuggestions({
+    const suggestions = buildProposalMaterialSuggestions({
       id: "primary",
       kind: "validated-harmonization",
       name: "Harmonizacao basica",
@@ -101,7 +101,7 @@ describe("F119 janela temporal da melodia", () => {
       ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
       selectedCenter: { tonic: "C", mode: "major" }
     } as PhraseContext;
-    const sets = buildProposalScaleSuggestionSets([
+    const sets = buildProposalMaterialSuggestionSets([
       {
         id: "basic",
         kind: "validated-harmonization",
@@ -160,7 +160,7 @@ describe("F119 janela temporal da melodia", () => {
       ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
       selectedCenter: { tonic: "C", mode: "major" }
     } as PhraseContext;
-    const suggestions = buildProposalScaleSuggestions({
+    const suggestions = buildProposalMaterialSuggestions({
       id: "classical",
       kind: "validated-harmonization",
       name: "Estrategia - Tonal Classico",
@@ -171,7 +171,7 @@ describe("F119 janela temporal da melodia", () => {
       explanation: [],
       bassLine: ["C", "F"]
     }, anchors, phraseContext);
-    const regions = buildScaleReadingRegions(suggestions);
+    const regions = buildMaterialReadingRegions(suggestions);
 
     expect(suggestions[0]?.endMeasure).toBe(4);
     expect(regions[0]).toMatchObject({
@@ -189,7 +189,7 @@ describe("F119 janela temporal da melodia", () => {
       { measureIndex: 3, pitch: "E", duration: 960 }
     ];
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
-    const suggestions = buildProposalScaleSuggestions({
+    const suggestions = buildProposalMaterialSuggestions({
       id: "subv-local",
       kind: "controlled-reharmonization",
       name: "Estrategia - SubV funcional",
@@ -201,7 +201,7 @@ describe("F119 janela temporal da melodia", () => {
       explanation: [],
       bassLine: ["Db", "Db", "C"]
     }, anchors, phraseContext);
-    const regions = buildScaleReadingRegions(suggestions);
+    const regions = buildMaterialReadingRegions(suggestions);
 
     expect(suggestions.filter(suggestion => suggestion.chord === "Db7")).toHaveLength(2);
     expect(regions.some(region => region.chords.includes("Db7"))).toBe(false);
@@ -216,7 +216,7 @@ describe("F119 janela temporal da melodia", () => {
       { measureIndex: 4, pitch: "C", duration: 960 }
     ];
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
-    const suggestions = buildProposalScaleSuggestions({
+    const suggestions = buildProposalMaterialSuggestions({
       id: "basic",
       kind: "validated-harmonization",
       name: "Harmonizacao basica",
@@ -229,7 +229,7 @@ describe("F119 janela temporal da melodia", () => {
       explanation: [],
       bassLine: ["C", "F", "G", "C"]
     }, anchors, phraseContext);
-    const routes = buildScaleLinearRoutes(suggestions);
+    const routes = buildMaterialLinearRoutes(suggestions);
 
     expect(routes).toHaveLength(1);
     expect(routes[0]).toMatchObject({
@@ -254,7 +254,7 @@ describe("F119 janela temporal da melodia", () => {
       { measureIndex: 4, pitch: "C", duration: 960 }
     ];
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C");
-    const suggestions = buildProposalScaleSuggestions({
+    const suggestions = buildProposalMaterialSuggestions({
       id: "two-cadences",
       kind: "validated-harmonization",
       name: "Duas cadencias",
@@ -267,7 +267,7 @@ describe("F119 janela temporal da melodia", () => {
       explanation: [],
       bassLine: ["G", "C", "G", "C"]
     }, anchors, phraseContext);
-    const routes = buildScaleLinearRoutes(suggestions);
+    const routes = buildMaterialLinearRoutes(suggestions);
 
     expect(routes).toHaveLength(2);
     expect(routes[0]).toMatchObject({

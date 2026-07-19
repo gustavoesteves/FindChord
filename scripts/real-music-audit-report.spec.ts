@@ -15,8 +15,11 @@ describe("F39 real music audit report", () => {
     expect(results.filter(result => result.status === "harmonized").length).toBeGreaterThan(0);
     expect(results.filter(result => result.referenceComparison?.comparedMeasures).length).toBeGreaterThan(0);
     expect(markdown).toContain("# F39 — Relatorio musical por obra");
+    expect(markdown).toContain("Escopo: apenas arquivos `.musicxml` no nivel raiz de `docs/musics`");
     expect(markdown).toContain("## Obras");
     expect(markdown).toContain("## Triagem de centros alterados pela referencia");
+    expect(markdown).toContain("## Triagem de mesmo centro");
+    expect(markdown).toContain("## Triagem de baixo da referencia");
     expect(markdown).toContain("- Obras com cores funcionais:");
     expect(markdown).toContain("- Cores funcionais geradas:");
     expect(markdown).toContain("- Cores funcionais como alternativas:");
@@ -26,10 +29,19 @@ describe("F39 real music audit report", () => {
     expect(markdown).toContain("- Referencia destrava harmonizacao:");
     expect(markdown).toContain("- Referencia muda centro:");
     expect(markdown).toContain("- Mesmo centro, harmonizacao diferente:");
+    expect(markdown).toContain("- Mesmo centro, referencia enriquece rota:");
+    expect(markdown).toContain("- Mesmo centro, revisar rota da referencia:");
+    expect(markdown).toContain("- Baixo da referencia preservado parcialmente:");
+    expect(markdown).toContain("- Baixo da referencia pouco preservado:");
     expect(markdown).toContain("- Sem proposta comparavel entre caminhos:");
     expect(markdown).toContain("- Triagem centro local da referencia:");
+    expect(markdown).toContain("- Triagem relativo maior/menor resolvido:");
     expect(markdown).toContain("- Triagem revisar centro inferido:");
     expect(markdown).toContain("- Triagem vocabulario melodia-only:");
+    expect(markdown).toContain("- Centros alterados alinhados com a referencia:");
+    expect(markdown).toContain("- Centros alterados parcialmente alinhados:");
+    expect(markdown).toContain("- Centros alterados ainda divergentes:");
+    expect(markdown).toContain("- Centros alterados para escuta/revisao da referencia:");
     expect(markdown).toContain("- Amostras de triagem - referencia muda centro:");
     expect(markdown).toContain("- Amostras de triagem - mesmo centro, harmonizacao diferente:");
     expect(markdown).toContain("- Amostras de triagem - referencia destrava harmonizacao:");
@@ -38,12 +50,21 @@ describe("F39 real music audit report", () => {
     expect(markdown).toContain("- Divergencia dos caminhos:");
     expect(markdown).toContain("- Leitura da divergencia:");
     expect(markdown).toContain("hipotese:");
+    expect(markdown).toContain("hipotese: relativo maior/menor resolvido pela referencia");
+    expect(markdown).toContain("vocabulario da referencia:");
+    expect(markdown).toContain("- Centros alterados parcialmente alinhados: 0");
+    expect(markdown).toContain("- Centros alterados para escuta/revisao da referencia: 0");
+    expect(markdown).toContain("referencia enriquece rota no mesmo centro");
+    expect(markdown).toContain("baixo ");
     expect(markdown).toContain("- Comparacao com referencia:");
     expect(markdown).toContain("- Centro da referencia:");
     expect(markdown).toContain("- Causas da comparacao:");
     expect(markdown).toContain("- Evidencias da proposta:");
     expect(markdown).toContain("- Alvo cadencial da proposta:");
     expect(markdown).toContain("- Camada da proposta:");
+    expect(markdown).toContain("- Referencia na janela:");
+    expect(markdown).toContain("- Baixo da referencia:");
+    expect(markdown).toContain("- Preservacao do baixo:");
     expect(markdown).toContain("- Cores funcionais:");
 
     for (const result of results) {
@@ -61,7 +82,7 @@ describe("F39 real music audit report", () => {
 
     expect(actualProof.referenceOverlapCount).toBeGreaterThan(0);
     expect(actualProof.proposalCount).toBeGreaterThan(0);
-    expect(actualProof.primaryProposal?.name).toBe("Estratégia — Centro de referência");
+    expect(actualProof.primaryProposal?.referenceRootAgreement || 0).toBeGreaterThan(0);
     expect(actualProof.referenceComparison?.status).not.toBe("no-reference");
     expect(autumnLeaves.referenceOverlapCount).toBeGreaterThan(0);
     expect(autumnLeaves.primaryProposal).toBeTruthy();

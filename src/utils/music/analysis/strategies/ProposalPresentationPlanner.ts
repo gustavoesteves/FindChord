@@ -46,6 +46,14 @@ function isAdventurous(proposal: ReharmonizationProposal, phraseContext?: Phrase
   if (isNonTonalReferenceIdiom(proposal.harmonicIdiom) && (proposal.apparentFunctionReferenceBonus || 0) > 0) {
     return false;
   }
+  if (
+    proposal.name === "Estratégia — Empréstimo modal"
+    && (proposal.apparentFunctionReferenceBonus || 0) >= 1
+    && (proposal.referenceRootAgreement || 0) >= 0.75
+    && (proposal.referenceFunctionAgreement || 0) >= 0.75
+  ) {
+    return false;
+  }
   return proposal.routeProfile === "radical" || isExploratoryChromatic(proposal, phraseContext);
 }
 
@@ -117,6 +125,22 @@ function canBePrimary(
   hasStablePrimaryCandidate = false
 ): boolean {
   if (mode === "exploratory") return true;
+  if (
+    mode === "balanced"
+    && proposal.id === "controlled-reference-contour"
+    && ((proposal.apparentFunctionReferenceBonus || 0) >= 0.65 || (proposal.referenceRootAgreement || 0) >= 0.5)
+  ) {
+    return true;
+  }
+  if (
+    mode === "balanced"
+    && proposal.name === "Estratégia — Empréstimo modal"
+    && (proposal.apparentFunctionReferenceBonus || 0) >= 1
+    && (proposal.referenceRootAgreement || 0) >= 0.75
+    && (proposal.referenceFunctionAgreement || 0) >= 0.75
+  ) {
+    return true;
+  }
   if (
     mode === "balanced"
     && hasStablePrimaryCandidate

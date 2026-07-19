@@ -106,6 +106,10 @@ function updateChord(
 export function suggestBassInversionsForVoiceLeading(
   proposal: ReharmonizationProposal
 ): ReharmonizationProposal {
+  if (proposal.id === "controlled-reference-contour" || proposal.id === "controlled-reference-rhythm") {
+    return proposal;
+  }
+
   const locations = flatChordLocations(proposal.measures);
   if (locations.length < 3) return proposal;
 

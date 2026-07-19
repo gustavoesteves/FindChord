@@ -7,7 +7,7 @@ import HarmonizerHeader from "./components/HarmonizerHeader";
 import MelodicAnchorLimitNotice from "./components/MelodicAnchorLimitNotice";
 import HarmonizerProposalList from "./components/HarmonizerProposalList";
 import HarmonizerSectionSelector from "./components/HarmonizerSectionSelector";
-import ContextualScaleSuggestionsPanel from "./components/ContextualScaleSuggestionsPanel";
+import ContextualMaterialSuggestionsPanel from "./components/ContextualMaterialSuggestionsPanel";
 import { useScoreSync } from "./hooks/useScoreSync";
 import { useActiveSection } from "./hooks/useActiveSection";
 import { useHarmonizerProposals } from "./hooks/useHarmonizerProposals";
@@ -40,7 +40,7 @@ export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScree
     melodyAnchorsData,
     localSegments,
     phraseContext,
-    contextualScaleSuggestionSets,
+    contextualMaterialSuggestionSets,
     rejectedExperimentalCount,
     omittedStrategyDiagnostics
   } = useHarmonizerProposals({
@@ -85,8 +85,8 @@ export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScree
         )}
 
         {activeView === "improvisation" && (
-          <ContextualScaleSuggestionsPanel
-            suggestionSets={contextualScaleSuggestionSets}
+          <ContextualMaterialSuggestionsPanel
+            suggestionSets={contextualMaterialSuggestionSets}
             hasMelodicContext={melodyAnchorsData.anchors.length > 0}
           />
         )}

@@ -25,6 +25,14 @@ function mergeCandidate(
     .slice(0, 4);
 }
 
+function matchingCandidate(
+  candidates: TonalCenterCandidate[],
+  tonic: string,
+  mode: TonalCenterCandidate["mode"]
+): TonalCenterCandidate | undefined {
+  return candidates.find(candidate => candidate.tonic === tonic && candidate.mode === mode);
+}
+
 export function formatReferenceCenterEvidence(evidence: string): string {
   const iiVMinor = evidence.match(/^iiø-V-i local aponta (.+) menor$/);
   if (iiVMinor) return `cadência iiø-V-i confirma ${iiVMinor[1]} menor`;
@@ -70,14 +78,26 @@ export function applyReferenceCenterToPhraseContext(
 
   const referenceAnalysis = analyzeReferenceHarmony(referenceHarmonies);
   const referenceCenter = referenceAnalysis.referenceCenter;
-  if (!referenceCenter || referenceCenter.confidence === "weak") return phraseContext;
+  if (!referenceCenter) return phraseContext;
+
+  const melodyCandidate = matchingCandidate(
+    phraseContext.tonalCenterCandidates,
+    referenceCenter.tonic,
+    referenceCenter.mode
+  );
+  const weakReferenceConfirmedByMelody = referenceCenter.confidence === "weak"
+    && melodyCandidate
+    && melodyCandidate.confidence >= 0.8;
+  if (referenceCenter.confidence === "weak" && !weakReferenceConfirmedByMelody) return phraseContext;
 
   const referenceCandidate: TonalCenterCandidate = {
     tonic: referenceCenter.tonic,
     mode: referenceCenter.mode,
     confidence: Math.max(
       referenceConfidenceValue(referenceCenter.confidence),
-      phraseContext.selectedCenter.confidence
+      weakReferenceConfirmedByMelody
+        ? Math.min(0.95, phraseContext.selectedCenter.confidence + 0.01)
+        : phraseContext.selectedCenter.confidence
     )
   };
 

@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { applyReferenceCenterToPhraseContext } from "../src/utils/music/analysis/strategies/ReferenceAwarePhraseContext";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
-import { buildContextualScaleCandidates, type ContextualScaleCandidate } from "../src/utils/music/theory/contextualScaleCandidates";
+import { buildContextualMaterialCandidates, type ContextualMaterialCandidate } from "../src/utils/music/theory/contextualMaterialCandidates";
 import { selectMelodyForHarmony } from "../src/domains/harmonizer/services/harmonizerService";
 
 const require = createRequire(import.meta.url);
@@ -53,7 +53,7 @@ function isAlteredChord(chord: string): boolean {
   return /(?:b5|#5|b9|#9|#11|b13|alt)/i.test(chord);
 }
 
-function isGenericFallback(candidate: ContextualScaleCandidate | undefined): boolean {
+function isGenericFallback(candidate: ContextualMaterialCandidate | undefined): boolean {
   return candidate?.type === "major" || candidate?.type === "minor pentatonic";
 }
 
@@ -72,7 +72,7 @@ export function auditContextualScaleLibrary(): ContextualScaleAuditReport {
     for (let index = 0; index < snapshot.harmonies.length; index++) {
       const harmony = snapshot.harmonies[index];
       harmonyEvents++;
-      const candidates = buildContextualScaleCandidates({
+      const candidates = buildContextualMaterialCandidates({
         chord: harmony.harmony,
         previousChord: snapshot.harmonies[index - 1]?.harmony,
         nextChord: snapshot.harmonies[index + 1]?.harmony,

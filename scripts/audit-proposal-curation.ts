@@ -46,6 +46,7 @@ export interface ProposalCurationAuditRow {
   uniqueMainIdeas: number;
   repeatedMainIdeas: number;
   exactRepeatedMainIdeas: number;
+  groupedReferenceIdeas: number;
   groupedColorIdeas: number;
   rawLocalIdeas: number;
   uniqueLocalIdeas: number;
@@ -130,6 +131,7 @@ export function analyzeProposalCurationForFile(
         uniqueMainIdeas: 0,
         repeatedMainIdeas: 0,
         exactRepeatedMainIdeas: 0,
+        groupedReferenceIdeas: 0,
         groupedColorIdeas: 0,
         rawLocalIdeas: 0,
         uniqueLocalIdeas: 0,
@@ -189,7 +191,8 @@ export function analyzeProposalCurationForFile(
   });
   const uniqueLocal = removeRepeatedLocalSegmentIdeas(rawLocal, uniqueMain);
   const exactRepeatedMainIdeas = rawMain.length - exactMain.length;
-  const groupedColorIdeas = exactMain.length - groupedMain.length;
+  const groupedReferenceIdeas = exactMain.length - referenceGroupedMain.length;
+  const groupedColorIdeas = referenceGroupedMain.length - groupedMain.length;
   const repeatedMainIdeas = rawMain.length - uniqueMain.length;
   const repeatedLocalIdeas = rawLocal.length - uniqueLocal.length;
   const totalVisibleCards = uniqueMain.length + uniqueLocal.length;
@@ -203,6 +206,7 @@ export function analyzeProposalCurationForFile(
       uniqueMainIdeas: uniqueMain.length,
       repeatedMainIdeas,
       exactRepeatedMainIdeas,
+      groupedReferenceIdeas,
       groupedColorIdeas,
       rawLocalIdeas: rawLocal.length,
       uniqueLocalIdeas: uniqueLocal.length,
@@ -251,6 +255,7 @@ function renderCsv(rows: ProposalCurationAuditRow[]): string {
     "uniqueMainIdeas",
     "repeatedMainIdeas",
     "exactRepeatedMainIdeas",
+    "groupedReferenceIdeas",
     "groupedColorIdeas",
     "rawLocalIdeas",
     "uniqueLocalIdeas",
@@ -271,8 +276,8 @@ function markdownCell(value: string | number): string {
 
 function renderTable(rows: ProposalCurationAuditRow[]): string[] {
   const lines = [
-    "| Arquivo | Brutas | Unicas | Exatas | Cores | Locais | Cards | Estado |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |"
+    "| Arquivo | Brutas | Unicas | Exatas | Referencia | Cores | Locais | Cards | Estado |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"
   ];
   for (const row of rows) {
     lines.push(`| ${[
@@ -280,6 +285,7 @@ function renderTable(rows: ProposalCurationAuditRow[]): string[] {
       row.rawMainIdeas,
       row.uniqueMainIdeas,
       row.exactRepeatedMainIdeas,
+      row.groupedReferenceIdeas,
       row.groupedColorIdeas,
       `${row.uniqueLocalIdeas}/${row.rawLocalIdeas}`,
       row.totalVisibleCards,
@@ -294,6 +300,7 @@ function renderMarkdown(rows: ProposalCurationAuditRow[]): string {
   const uniqueMainIdeas = rows.reduce((sum, row) => sum + row.uniqueMainIdeas, 0);
   const repeatedMainIdeas = rows.reduce((sum, row) => sum + row.repeatedMainIdeas, 0);
   const exactRepeatedMainIdeas = rows.reduce((sum, row) => sum + row.exactRepeatedMainIdeas, 0);
+  const groupedReferenceIdeas = rows.reduce((sum, row) => sum + row.groupedReferenceIdeas, 0);
   const groupedColorIdeas = rows.reduce((sum, row) => sum + row.groupedColorIdeas, 0);
   const rawLocalIdeas = rows.reduce((sum, row) => sum + row.rawLocalIdeas, 0);
   const uniqueLocalIdeas = rows.reduce((sum, row) => sum + row.uniqueLocalIdeas, 0);
@@ -319,6 +326,7 @@ function renderMarkdown(rows: ProposalCurationAuditRow[]): string {
     `- Ideias principais antes da curadoria: ${rawMainIdeas}`,
     `- Ideias principais unicas: ${uniqueMainIdeas}`,
     `- Repeticoes exatas principais removidas: ${exactRepeatedMainIdeas}`,
+    `- Leituras proximas da referencia agrupadas: ${groupedReferenceIdeas}`,
     `- Variacoes de cor agrupadas: ${groupedColorIdeas}`,
     `- Reducao total de cards principais: ${repeatedMainIdeas}`,
     `- Trechos locais antes da curadoria: ${rawLocalIdeas}`,
@@ -337,7 +345,7 @@ function renderMarkdown(rows: ProposalCurationAuditRow[]): string {
     "",
     "## Leitura",
     "",
-    "A curadoria separa repeticoes exatas de variacoes de cor. Nenhuma das duas combina inversoes, densidades ou posicoes temporais distintas.",
+    "A curadoria separa repeticoes exatas, leituras proximas da referencia e variacoes de cor. Nenhuma dessas camadas combina inversoes, densidades ou posicoes temporais distintas.",
     "Os casos com pouca variedade devem ser lidos como fila de investigacao: podem representar uma melodia realmente restritiva ou uma lacuna de vocabulario do motor.",
     "O CSV preserva todas as partituras e os nomes das ideias que permaneceram visiveis.",
     ""

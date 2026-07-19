@@ -238,6 +238,33 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     expect(withReference[0].explanation).toContain("Referência: confirma função aparente no mesmo contexto");
   });
 
+  it("treats reference-confirmed modal borrowing as structural color", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      controlledProposal("modal-borrowing", "Estratégia — Empréstimo modal", ["C", "Fm/C", "C", "G7"])
+    ], phraseContext, anchors, {
+      referenceHarmonies: harmonies(["C", "Fm/C", "C", "G7"])
+    });
+
+    expect(ranked[0].apparentFunctionReferenceBonus).toBeGreaterThan(1);
+    expect(ranked[0].referenceRootAgreement).toBeGreaterThanOrEqual(0.75);
+    expect(ranked[0].referenceFunctionAgreement).toBeGreaterThanOrEqual(0.75);
+    expect(ranked[0].explanation).toContain("Referência: confirma o empréstimo modal como parte da estrutura");
+  });
+
+  it("promotes a perfectly aligned reference contour over a generic tonal route", () => {
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      proposal("generic-tonal", ["Cmaj7", "Fmaj7", "G7", "Cmaj7"]),
+      controlledProposal("controlled-reference-contour", "Rearmonização — contorno da partitura", ["C", "Fm/C", "C", "G7"])
+    ], phraseContext, anchors, {
+      referenceHarmonies: harmonies(["C", "Fm/C", "C", "G7"])
+    });
+
+    expect(ranked[0].id).toBe("controlled-reference-contour");
+    expect(ranked[0].referenceRootAgreement).toBe(1);
+    expect(ranked[0].referenceFunctionAgreement).toBe(1);
+    expect(ranked[0].explanation).toContain("Referência: preserva a rota harmônica da partitura");
+  });
+
   it("suggests simple bass inversions when they smooth the bass line", () => {
     const ranked = rankReharmonizationProposalsByVoiceLeading([
       proposal("cadence", ["C", "G7", "C"])

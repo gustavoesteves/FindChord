@@ -376,6 +376,27 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
     expect(attempt.proposal?.bassLine).toEqual(["C", "C", "F", "F#", "G", "C"]);
   });
 
+  it("colors tonic regions with 6 when the melody sustains the sixth", () => {
+    const melody: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "A", duration: 960 },
+      { measureIndex: 2, pitch: "E", duration: 960 },
+      { measureIndex: 3, pitch: "F", duration: 960 },
+      { measureIndex: 4, pitch: "A", duration: 960 },
+      { measureIndex: 5, pitch: "G", duration: 960 },
+      { measureIndex: 6, pitch: "F", duration: 960 },
+      { measureIndex: 7, pitch: "B", duration: 960 },
+      { measureIndex: 8, pitch: "A", duration: 960 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(melody, "C");
+    const attempt = StrategyGuidedHarmonizer.tryStrategy("DOMINANTES_SECUNDARIAS", melody, phraseContext);
+    const chords = attempt.proposal?.measures.flatMap(measure => measure.chords);
+
+    expect(attempt.validation.accepted).toBe(true);
+    expect(chords).toEqual(expect.arrayContaining(["C6"]));
+    expect(chords).not.toEqual(expect.arrayContaining(["Cmaj13"]));
+  });
+
   it("generates and externally validates a passing diminished strategy proposal", () => {
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(almadaMelody, "C");
     const attempt = StrategyGuidedHarmonizer.tryStrategy("DIMINUTO_PASSAGEM", almadaMelody, phraseContext);

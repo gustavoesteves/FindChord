@@ -16,10 +16,10 @@ import {
 import {
   buildControlledReharmonizationProposals,
   buildExistingHarmonyProposal,
-  buildProposalScaleSuggestionSets,
-  buildScaleLinearRoutes,
-  buildScaleReadingRegions,
-  buildSectionScaleSuggestions,
+  buildMaterialLinearRoutes,
+  buildMaterialReadingRegions,
+  buildProposalMaterialSuggestionSets,
+  buildSectionMaterialSuggestions,
   selectMelodicAnchors,
   selectSectionHarmonies
 } from "../services/harmonizerService";
@@ -36,6 +36,7 @@ import {
   proposalsWithInputContext,
   resolveHarmonizerInputContext
 } from "../services/harmonizerInputContext";
+import { filterDiagnosticsForPrimaryProposal } from "../services/harmonizerDiagnostics";
 import { dedupeHarmonicallyEquivalentProposals } from "../../../utils/music/analysis/strategies/ProposalHarmonicIdentity";
 import {
   groupNearEquivalentColorVariants,
@@ -155,8 +156,8 @@ export function useHarmonizerProposals({
     inputContext
   ]);
 
-  const contextualScaleSuggestionSets = useMemo(() => {
-    const referenceSuggestions = buildSectionScaleSuggestions(
+  const contextualMaterialSuggestionSets = useMemo(() => {
+    const referenceSuggestions = buildSectionMaterialSuggestions(
       sectionHarmonies,
       melodyAnchorsData.allAnchors,
       phraseContext
@@ -167,14 +168,14 @@ export function useHarmonizerProposals({
         label: "Harmonia da partitura",
         source: "reference" as const,
         suggestions: referenceSuggestions,
-        regions: buildScaleReadingRegions(referenceSuggestions),
-        linearRoutes: buildScaleLinearRoutes(referenceSuggestions)
+        regions: buildMaterialReadingRegions(referenceSuggestions),
+        linearRoutes: buildMaterialLinearRoutes(referenceSuggestions)
       }]
       : [];
 
     return [
       ...referenceSet,
-      ...buildProposalScaleSuggestionSets(displayedProposals, melodyAnchorsData.allAnchors, phraseContext)
+      ...buildProposalMaterialSuggestionSets(displayedProposals, melodyAnchorsData.allAnchors, phraseContext)
     ];
   }, [
     displayedProposals,
@@ -245,9 +246,12 @@ export function useHarmonizerProposals({
   ]);
 
   const visibleDiagnostics = useMemo(() => diagnosticsForMode(
-    [...omittedStrategyDiagnostics, ...referenceDiagnostics, ...presentationDiagnostics],
+    filterDiagnosticsForPrimaryProposal(
+      [...omittedStrategyDiagnostics, ...referenceDiagnostics, ...presentationDiagnostics],
+      displayedProposals.find(proposal => proposal.presentationRole === "primary")
+    ),
     PRESENTATION_MODE
-  ), [omittedStrategyDiagnostics, referenceDiagnostics, presentationDiagnostics]);
+  ), [displayedProposals, omittedStrategyDiagnostics, referenceDiagnostics, presentationDiagnostics]);
 
   return {
     displayedProposals,
@@ -255,7 +259,7 @@ export function useHarmonizerProposals({
     localSegments,
     phraseContext,
     inputContext,
-    contextualScaleSuggestionSets,
+    contextualMaterialSuggestionSets,
     rejectedExperimentalCount,
     omittedStrategyDiagnostics: visibleDiagnostics
   };

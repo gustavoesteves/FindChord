@@ -17,7 +17,6 @@ interface ChordStore {
   selectedFrets: (number | null)[]; // Traste selecionado por corda (null se mutado)
   detectedChords: ChordCandidate[];
   selectedChordIndex: number | null;
-  activeScale: { name: string; notes: string[] } | null;
   notationStyle: "International" | "Brazilian" | "Academic"; // Estilo de notação ativo
   
   progressionChords: string[];
@@ -30,7 +29,6 @@ interface ChordStore {
   muteString: (stringIndex: number) => void;
   clearFretboard: () => void;
   setSelectedChordIndex: (index: number | null) => void;
-  setActiveScale: (scale: { name: string; notes: string[] } | null) => void;
   setSelectedVoicing: (voicing: VoicingShape | null) => void;
   setNotationStyle: (style: "International" | "Brazilian" | "Academic") => void;
   
@@ -74,7 +72,6 @@ export const useChordStore = create<ChordStore>((set, get) => {
     selectedFrets: Array(INSTRUMENTS[0].defaultTuning.length).fill(null),
     detectedChords: [],
     selectedChordIndex: null,
-    activeScale: null,
     notationStyle: "International",
     
     progressionChords: [],
@@ -90,8 +87,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
         tuning: [...instr.defaultTuning],
         selectedFrets: Array(instr.defaultTuning.length).fill(null),
         detectedChords: [],
-        selectedChordIndex: null,
-        activeScale: null
+        selectedChordIndex: null
       });
       // Recalcular com o novo afinamento
       const chords = recalculateChords(get().selectedFrets, instr.defaultTuning);
@@ -104,8 +100,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({
         tuningPreset: presetName,
         tuning: [...notes],
-        selectedChordIndex: null,
-        activeScale: null
+        selectedChordIndex: null
       });
       // Recalcular com o novo afinamento
       const chords = recalculateChords(get().selectedFrets, notes);
@@ -121,8 +116,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({
         tuningPreset: "Personalizado",
         tuning: currentTuning,
-        selectedChordIndex: null,
-        activeScale: null
+        selectedChordIndex: null
       });
 
       const chords = recalculateChords(get().selectedFrets, currentTuning);
@@ -150,7 +144,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
         // Se tinha um acorde selecionado anteriormente, tenta manter ou reseta para o 1º
         set({ selectedChordIndex: 0 });
       } else {
-        set({ selectedChordIndex: null, activeScale: null });
+        set({ selectedChordIndex: null });
       }
     },
 
@@ -166,7 +160,7 @@ export const useChordStore = create<ChordStore>((set, get) => {
       if (chords.length > 0) {
         set({ selectedChordIndex: 0 });
       } else {
-        set({ selectedChordIndex: null, activeScale: null });
+        set({ selectedChordIndex: null });
       }
     },
 
@@ -174,20 +168,14 @@ export const useChordStore = create<ChordStore>((set, get) => {
       set({
         selectedFrets: Array(get().tuning.length).fill(null),
         detectedChords: [],
-        selectedChordIndex: null,
-        activeScale: null
+        selectedChordIndex: null
       });
     },
 
     setSelectedChordIndex: (index) => {
       set({
-        selectedChordIndex: index,
-        activeScale: null     // Limpa escala antiga
+        selectedChordIndex: index
       });
-    },
-
-    setActiveScale: (scale) => {
-      set({ activeScale: scale });
     },
 
     setSelectedVoicing: (voicing) => {

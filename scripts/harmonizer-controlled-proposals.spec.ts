@@ -1,0 +1,83 @@
+import { describe, expect, it } from "vitest";
+import type { PhraseContext } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
+import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import { buildControlledReharmonizationProposals } from "../src/domains/harmonizer/services/harmonizerService";
+
+function harmony(measure: number, chord: string): ScoreHarmonyEvent {
+  return {
+    measure,
+    beat: 1,
+    harmony: chord,
+    tickStart: (measure - 1) * 1920,
+    tickEnd: measure * 1920,
+    durationTicks: 1920
+  };
+}
+
+function anchor(measureIndex: number, pitch: string): MelodicAnchor {
+  return {
+    measureIndex,
+    pitch,
+    duration: 480,
+    startTick: (measureIndex - 1) * 1920,
+    endTick: (measureIndex - 1) * 1920 + 480
+  };
+}
+
+function referenceContext(): PhraseContext {
+  return {
+    selectedCenter: { tonic: "E", mode: "minor", confidence: 0.9 },
+    selectedCenterSource: "reference",
+    tonalCenterCandidates: [{ tonic: "E", mode: "minor", confidence: 0.9 }],
+    cadentialTarget: { targetPitch: "E", cadenceType: "OPEN", confidence: 0.8 }
+  };
+}
+
+function majorReferenceContext(tonic: string): PhraseContext {
+  return {
+    selectedCenter: { tonic, mode: "major", confidence: 0.9 },
+    selectedCenterSource: "reference",
+    tonalCenterCandidates: [{ tonic, mode: "major", confidence: 0.9 }],
+    cadentialTarget: { targetPitch: tonic, cadenceType: "OPEN", confidence: 0.8 }
+  };
+}
+
+describe("Harmonizer controlled proposals", () => {
+  it("normalizes raw imported chord spellings in reference-rhythm proposals", () => {
+    const proposals = buildControlledReharmonizationProposals(
+      [
+        harmony(1, "Asus4(7,9,11,13)"),
+        harmony(1, "Bsus4(7)")
+      ],
+      [anchor(1, "A"), anchor(1, "B")],
+      referenceContext()
+    );
+
+    const rhythm = proposals.find(proposal => proposal.id === "controlled-reference-rhythm");
+
+    expect(rhythm?.measures[0].chords).toEqual(["A13sus4", "B7sus4"]);
+    expect(rhythm?.explanation).toContain("normaliza a cifragem mantendo a harmonia escrita");
+  });
+
+  it("preserves half-diminished and altered reference colors in contour proposals", () => {
+    const proposals = buildControlledReharmonizationProposals(
+      [
+        harmony(1, "Bbmaj7"),
+        harmony(2, "Ebm/Bb"),
+        harmony(3, "Am7b5"),
+        harmony(4, "D7(#9)")
+      ],
+      [anchor(1, "G"), anchor(2, "Gb"), anchor(3, "C"), anchor(4, "F#")],
+      majorReferenceContext("Bb")
+    );
+
+    const contour = proposals.find(proposal => proposal.id === "controlled-reference-contour");
+    const chords = contour?.measures.flatMap(measure => measure.chords);
+
+    expect(chords).toContain("Am7b5");
+    expect(chords).toContain("D7(#9)");
+    expect(chords).not.toContain("Am");
+    expect(chords).not.toContain("D7");
+  });
+});

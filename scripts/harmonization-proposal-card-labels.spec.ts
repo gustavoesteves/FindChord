@@ -4,6 +4,7 @@ import {
   proposalKindLabel,
   proposalReferenceRelationLabel,
   proposalVariantApplyLabel,
+  proposalVariantRelationLabel,
   proposalVariantSectionLabel,
   routeProfileLabel
 } from "../src/domains/harmonizer/components/HarmonizationProposalCard";
@@ -91,6 +92,7 @@ describe("Harmonization proposal card labels", () => {
     const labels = ([
       "reference-original",
       "reference-rhythm-preserved",
+      "reference-contour-preserved",
       "reference-close",
       "reference-functional-variation",
       "melody-derived-alternative",
@@ -100,6 +102,7 @@ describe("Harmonization proposal card labels", () => {
     expect(labels).toEqual([
       "Cifra escrita pelo autor",
       "Preserva o ritmo harmônico da partitura",
+      "Preserva o contorno da partitura",
       "Próxima da harmonia da partitura",
       "Varia a partitura mantendo função",
       "Alternativa guiada pela melodia",
@@ -128,6 +131,15 @@ describe("Harmonization proposal card labels", () => {
     }, "melody-with-reference-harmony")).toBe("reference-rhythm-preserved");
 
     expect(referenceRelationForProposal({
+      id: "controlled-reference-contour",
+      kind: "controlled-reharmonization",
+      name: "Rearmonização — contorno da partitura",
+      measures: [],
+      explanation: [],
+      bassLine: []
+    }, "melody-with-reference-harmony")).toBe("reference-contour-preserved");
+
+    expect(referenceRelationForProposal({
       id: "close",
       kind: "validated-harmonization",
       name: "Estratégia — Centro de referência",
@@ -152,5 +164,13 @@ describe("Harmonization proposal card labels", () => {
     expect(proposalVariantApplyLabel(proposal("reference"))).toBe("Usar leitura");
     expect(proposalVariantSectionLabel(proposal("controlled-reharmonization"))).toBe("Variações de cor");
     expect(proposalVariantApplyLabel(proposal("controlled-reharmonization"))).toBe("Usar variação");
+  });
+
+  it("shows composer-facing relation labels inside grouped variants", () => {
+    expect(proposalVariantRelationLabel({
+      ...proposal("validated-harmonization"),
+      referenceRelation: "reference-close"
+    })).toBe("Próxima da harmonia da partitura");
+    expect(proposalVariantRelationLabel(proposal("validated-harmonization"))).toBeUndefined();
   });
 });

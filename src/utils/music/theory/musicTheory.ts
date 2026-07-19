@@ -10,6 +10,8 @@ export interface ScaleInfo {
   notes: string[];
 }
 
+export type MaterialSourceMap = ScaleInfo;
+
 const CUSTOM_SCALE_TYPES: Record<string, { intervals: string[]; label: string }> = {
   "bebop dominant": {
     label: "bebop dominant",
@@ -64,9 +66,11 @@ const COMPATIBLE_SCALE_TYPES: Partial<Record<ChordQuality, string[]>> = {
   power: ["major pentatonic", "minor pentatonic"]
 };
 
-export function getCompatibleScaleTypes(quality: ChordQuality): string[] {
+export function getMaterialSourceMapTypes(quality: ChordQuality): string[] {
   return COMPATIBLE_SCALE_TYPES[quality] ?? ["major", "minor pentatonic"];
 }
+
+export const getCompatibleScaleTypes = getMaterialSourceMapTypes;
 
 function scaleInfoFor(root: string, scaleType: string): ScaleInfo | null {
   const customScale = CUSTOM_SCALE_TYPES[scaleType];
@@ -94,13 +98,20 @@ function scaleInfoFor(root: string, scaleType: string): ScaleInfo | null {
   };
 }
 
-export function getCompatibleScalesForQuality(root: string, quality: ChordQuality): ScaleInfo[] {
-  return getCompatibleScaleTypes(quality)
+export function getMaterialSourceMapsForQuality(root: string, quality: ChordQuality): MaterialSourceMap[] {
+  return getMaterialSourceMapTypes(quality)
     .map(scaleType => scaleInfoFor(root, scaleType))
-    .filter((scale): scale is ScaleInfo => scale !== null);
+    .filter((scale): scale is MaterialSourceMap => scale !== null);
 }
 
-// Escalas compatíveis com base em qualidade DSL proprietária.
+export const getCompatibleScalesForQuality = getMaterialSourceMapsForQuality;
+
+// Mapas de escala-fonte para materiais do acorde isolado.
+export function getMaterialSourceMaps(chord: ChordCandidate): MaterialSourceMap[] {
+  return getMaterialSourceMapsForQuality(chord.root, chord.quality);
+}
+
+// Compatibilidade com a nomenclatura antiga.
 export function getCompatibleScales(chord: ChordCandidate): ScaleInfo[] {
-  return getCompatibleScalesForQuality(chord.root, chord.quality);
+  return getMaterialSourceMaps(chord);
 }

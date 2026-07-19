@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getCompatibleScales } from "../src/utils/music/theory/musicTheory";
+import { getCompatibleScales, getMaterialSourceMaps } from "../src/utils/music/theory/musicTheory";
 import type { ChordCandidate } from "../src/utils/music/models/ChordCandidate";
 
 function chord(quality: ChordCandidate["quality"]): ChordCandidate {
@@ -55,5 +55,11 @@ describe("F114 escalas compativeis por qualidade", () => {
 
     expect(types.slice(0, 2)).toEqual(["mixolydian", "bebop dominant"]);
     expect(bebop?.notes).toEqual(["C", "D", "E", "F", "G", "A", "Bb", "B"]);
+  });
+
+  it("expoe o mesmo mapa pelo adaptador composer-first", () => {
+    expect(getMaterialSourceMaps(chord("dominant7th")).map(scale => scale.type)).toEqual(
+      getCompatibleScales(chord("dominant7th")).map(scale => scale.type)
+    );
   });
 });

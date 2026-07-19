@@ -219,6 +219,25 @@ describe("F31.3 Proposal Presentation Planner", () => {
     ]);
   });
 
+  it("allows reference-confirmed modal borrowing to become the balanced primary", () => {
+    const modalBorrowing = {
+      ...proposal("modal-borrowing", "chromatic", "controlled-reharmonization", "major-functional", undefined, "C"),
+      name: "Estratégia — Empréstimo modal",
+      apparentFunctionReferenceBonus: 1.15,
+      referenceRootAgreement: 0.875,
+      referenceFunctionAgreement: 0.875
+    };
+    const planned = annotateProposalPresentationRoles([
+      modalBorrowing,
+      proposal("generic-tonal", "conservative", "validated-harmonization", "major-functional", undefined, "C")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["modal-borrowing", "primary"],
+      ["generic-tonal", "alternative"]
+    ]);
+  });
+
   it("groups planned proposals by musical presentation layer", () => {
     const planned = annotateProposalPresentationRoles([
       proposal("basic-answer", "conservative"),

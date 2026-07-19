@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, CircleDot, Target } from "lucide-react";
-import type { SectionScaleSuggestion, SectionScaleSuggestionSet } from "../services/harmonizerService";
-import type { ContextualScaleCandidate, MelodySupportRole } from "../../../utils/music/theory/contextualScaleCandidates";
+import type { SectionMaterialSuggestion, SectionMaterialSuggestionSet } from "../services/harmonizerService";
+import type { ContextualMaterialCandidate, MelodySupportRole } from "../../../utils/music/theory/contextualMaterialCandidates";
 
-interface ContextualScaleSuggestionsPanelProps {
-  suggestionSets: SectionScaleSuggestionSet[];
+interface ContextualMaterialSuggestionsPanelProps {
+  suggestionSets: SectionMaterialSuggestionSet[];
   hasMelodicContext: boolean;
 }
 
-const FUNCTION_LABELS: Record<ContextualScaleCandidate["harmonicFunction"], string> = {
+const FUNCTION_LABELS: Record<ContextualMaterialCandidate["harmonicFunction"], string> = {
   tonic: "Repouso",
   predominant: "Preparação",
   dominant: "Dominante",
@@ -16,34 +16,34 @@ const FUNCTION_LABELS: Record<ContextualScaleCandidate["harmonicFunction"], stri
   color: "Cor"
 };
 
-const INTENT_LABELS: Record<ContextualScaleCandidate["intent"], string> = {
+const INTENT_LABELS: Record<ContextualMaterialCandidate["intent"], string> = {
   inside: "Estável",
   functional: "Direção",
   tension: "Tensão",
   outside: "Exterior"
 };
 
-const INTENT_CLASSNAMES: Record<ContextualScaleCandidate["intent"], string> = {
+const INTENT_CLASSNAMES: Record<ContextualMaterialCandidate["intent"], string> = {
   inside: "text-emerald-200 bg-emerald-500/10 border-emerald-500/20",
   functional: "text-sky-200 bg-sky-500/10 border-sky-500/20",
   tension: "text-amber-200 bg-amber-500/10 border-amber-500/20",
   outside: "text-rose-200 bg-rose-500/10 border-rose-500/20"
 };
 
-const ROLE_LABELS: Record<NonNullable<SectionScaleSuggestionSet["presentationRole"]>, string> = {
+const ROLE_LABELS: Record<NonNullable<SectionMaterialSuggestionSet["presentationRole"]>, string> = {
   primary: "Harmonia escolhida",
   alternative: "Outra leitura",
   comparative: "Comparação",
   adventurous: "Mais distante"
 };
 
-const MELODIC_FIT_LABELS: Record<SectionScaleSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
+const MELODIC_FIT_LABELS: Record<SectionMaterialSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
   aligned: "Melodia apoia",
   neutral: "Melodia neutra",
   caution: "Revisar com a melodia"
 };
 
-const MELODIC_FIT_CLASSNAMES: Record<SectionScaleSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
+const MELODIC_FIT_CLASSNAMES: Record<SectionMaterialSuggestionSet["linearRoutes"][number]["melodicFit"], string> = {
   aligned: "text-emerald-200 bg-emerald-500/10 border-emerald-500/20",
   neutral: "text-zinc-300 bg-zinc-500/10 border-zinc-500/20",
   caution: "text-amber-200 bg-amber-500/10 border-amber-500/20"
@@ -56,18 +56,18 @@ const SUPPORT_ROLE_LABELS: Record<MelodySupportRole, string> = {
   "linear-fragment": "fragmento"
 };
 
-function melodyCoverageLabel(candidate: ContextualScaleCandidate): string {
+function melodyCoverageLabel(candidate: ContextualMaterialCandidate): string {
   if (candidate.melodicFit === "aligned") return "melodia apoia";
   if (candidate.melodicFit === "caution") return "revisar com a melodia";
   if (candidate.melodyCoverage >= 0.65) return "apoio parcial";
   return "apoio discreto";
 }
 
-function groupSuggestionsByMeasure(suggestions: SectionScaleSuggestion[]): Array<{
+function groupSuggestionsByMeasure(suggestions: SectionMaterialSuggestion[]): Array<{
   measure: number;
-  suggestions: SectionScaleSuggestion[];
+  suggestions: SectionMaterialSuggestion[];
 }> {
-  const groups = new Map<number, SectionScaleSuggestion[]>();
+  const groups = new Map<number, SectionMaterialSuggestion[]>();
   for (const suggestion of suggestions) {
     const measureSuggestions = groups.get(suggestion.measure) || [];
     measureSuggestions.push(suggestion);
@@ -82,8 +82,9 @@ function groupSuggestionsByMeasure(suggestions: SectionScaleSuggestion[]): Array
     }));
 }
 
-function ScaleReading({ candidate, compact = false }: { candidate: ContextualScaleCandidate; compact?: boolean }) {
+function MaterialReading({ candidate, compact = false }: { candidate: ContextualMaterialCandidate; compact?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
+  const primaryMaterial = candidate.melodicMaterials[0];
   const melodySupportLabels = candidate.melodyMatches.map(note => {
     const roles = candidate.melodySupportRoles[note] || [];
     return roles.length > 0
@@ -94,7 +95,12 @@ function ScaleReading({ candidate, compact = false }: { candidate: ContextualSca
   return (
     <div className={`flex flex-col gap-2 border-l-2 border-sky-500/40 pl-3 ${compact ? "min-w-0" : ""}`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-sm font-bold text-white">{candidate.name}</span>
+        <span className="text-sm font-bold text-white">{primaryMaterial?.label || candidate.name}</span>
+        {primaryMaterial && (
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+            Fonte: {candidate.name}
+          </span>
+        )}
         <span className="text-[10px] font-black uppercase tracking-widest text-sky-300">
           {FUNCTION_LABELS[candidate.harmonicFunction]}
         </span>
@@ -110,6 +116,28 @@ function ScaleReading({ candidate, compact = false }: { candidate: ContextualSca
           </span>
         )}
       </div>
+
+      {primaryMaterial && (
+        <div className="flex flex-col gap-1 rounded-md border border-fuchsia-500/15 bg-fuchsia-500/5 px-2.5 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-200">
+              Células
+            </span>
+            {primaryMaterial.resolutionTargets.length > 0 && (
+              <span className="text-[10px] font-bold text-emerald-300">
+                resolve em {primaryMaterial.resolutionTargets.join(", ")}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {primaryMaterial.cells.slice(0, compact ? 4 : 6).map(cell => (
+              <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-2 py-0.5 text-[10px] font-bold text-fuchsia-100">
+                {cell}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
@@ -137,6 +165,21 @@ function ScaleReading({ candidate, compact = false }: { candidate: ContextualSca
             {candidate.linearFragments.length > 0 && (
               <span>Fragmentos: <strong className="text-emerald-100">{candidate.linearFragments.join(", ")}</strong></span>
             )}
+            {candidate.melodicMaterials.length > 0 && (
+              <div className="flex w-full flex-col gap-1">
+                <span>Materiais:</span>
+                {candidate.melodicMaterials.map(material => (
+                  <div key={material.label} className="flex flex-wrap items-center gap-1">
+                    <strong className="text-fuchsia-100">{material.label}</strong>
+                    {material.cells.map(cell => (
+                      <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-100">
+                        {cell}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
             {candidate.supportedTensions.length > 0 && (
               <span>Tensões: <strong className="text-amber-200">{candidate.supportedTensions.join(", ")}</strong></span>
             )}
@@ -159,7 +202,38 @@ function ScaleReading({ candidate, compact = false }: { candidate: ContextualSca
   );
 }
 
-export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMelodicContext }: ContextualScaleSuggestionsPanelProps) {
+function AlternativeMaterialReading({ candidate }: { candidate: ContextualMaterialCandidate }) {
+  const material = candidate.melodicMaterials[0];
+
+  return (
+    <div className={`flex min-w-[10rem] max-w-full flex-col gap-1 rounded border px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest ${INTENT_CLASSNAMES[candidate.intent]}`}>
+      <span>
+        {INTENT_LABELS[candidate.intent]} / {material?.label || candidate.name}
+      </span>
+      {material && (
+        <span className="text-[9px] font-black text-zinc-400">
+          Fonte: {candidate.name}
+        </span>
+      )}
+      {material && (
+        <div className="flex flex-col gap-1 normal-case tracking-normal">
+          <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-100">
+            Células
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {material.cells.slice(0, 3).map(cell => (
+              <span key={cell} className="rounded border border-zinc-800/80 bg-zinc-950/60 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-100">
+                {cell}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ContextualMaterialSuggestionsPanel({ suggestionSets, hasMelodicContext }: ContextualMaterialSuggestionsPanelProps) {
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const selectedSet = suggestionSets.find(set => set.id === selectedSetId) || suggestionSets[0];
   const suggestions = selectedSet?.suggestions || [];
@@ -188,7 +262,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
           <div className="flex items-center gap-2">
             <CircleDot className="h-4 w-4 text-sky-300" />
             <span className="text-[10px] font-black uppercase tracking-widest text-sky-200">
-              Escalas para a harmonia
+              Materiais para a harmonia
             </span>
           </div>
           <span className="text-xs text-zinc-500">
@@ -204,7 +278,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
 
       {suggestionSets.length === 0 ? (
         <div className="rounded-lg border border-zinc-800/70 bg-zinc-900/25 px-4 py-3 text-xs text-zinc-500">
-          Sincronize uma melodia para que o sistema gere uma harmonia e leia as possibilidades de escala por acorde.
+          Sincronize uma melodia para que o sistema gere uma harmonia e leia materiais melódicos por acorde.
         </div>
       ) : (
         <>
@@ -247,7 +321,7 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
           {regions.length > 0 && (
             <div className="flex flex-col gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 px-4 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-sky-200">
-                Regiões de escala
+                Regiões de material
               </span>
               <div className="grid gap-2 md:grid-cols-2">
                 {regions.map(region => (
@@ -260,7 +334,10 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
                         {INTENT_LABELS[region.intent]}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-zinc-100">{region.scaleName}</span>
+                    <span className="text-sm font-bold text-zinc-100">{region.materialLabel || "Mapa contextual"}</span>
+                    <span className="text-xs font-semibold text-zinc-500">
+                      Fonte: {region.sourceName}
+                    </span>
                     <span className="text-xs text-zinc-500">
                       {region.chordCount} acordes: {Array.from(new Set(region.chords)).join(", ")}
                     </span>
@@ -333,16 +410,14 @@ export default function ContextualScaleSuggestionsPanel({ suggestionSets, hasMel
                         </span>
                       </div>
                       <div className="flex min-w-0 flex-col gap-2">
-                        <ScaleReading candidate={suggestion.candidates[0]} compact />
+                        <MaterialReading candidate={suggestion.candidates[0]} compact />
                         {suggestion.candidates.slice(1, 3).length > 0 && (
                           <div className="flex flex-wrap gap-2 pl-3">
                             {suggestion.candidates.slice(1, 3).map(candidate => (
-                              <span
+                              <AlternativeMaterialReading
                                 key={`${suggestion.measure}-${suggestion.position ?? 0}-${candidate.type}`}
-                                className={`rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${INTENT_CLASSNAMES[candidate.intent]}`}
-                              >
-                                {INTENT_LABELS[candidate.intent]} / {candidate.name}
-                              </span>
+                                candidate={candidate}
+                              />
                             ))}
                           </div>
                         )}

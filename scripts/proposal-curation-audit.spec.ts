@@ -66,6 +66,9 @@ describe("proposal curation audit", () => {
 
     expect(row.rawMainIdeas).toBeGreaterThan(0);
     expect(row.uniqueMainIdeas).toBe(row.rawMainIdeas - row.repeatedMainIdeas);
+    expect(row.repeatedMainIdeas).toBe(
+      row.exactRepeatedMainIdeas + row.groupedReferenceIdeas + row.groupedColorIdeas
+    );
     expect(row.uniqueLocalIdeas).toBe(row.rawLocalIdeas - row.repeatedLocalIdeas);
     expect(row.totalVisibleCards).toBe(row.uniqueMainIdeas + row.uniqueLocalIdeas);
     expect(row.status).not.toBe("sem-ideia");

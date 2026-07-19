@@ -71,6 +71,7 @@ const INPUT_CONTEXT_TONE: Record<ReharmonizationInputContext, string> = {
 const REFERENCE_RELATION_TONE: Record<ReharmonizationReferenceRelation, string> = {
   "reference-original": "text-zinc-400",
   "reference-rhythm-preserved": "text-sky-300",
+  "reference-contour-preserved": "text-cyan-300",
   "reference-close": "text-emerald-300",
   "reference-functional-variation": "text-violet-300",
   "melody-derived-alternative": "text-indigo-300",
@@ -106,6 +107,10 @@ export function proposalVariantSectionLabel(proposal: ReharmonizationProposal): 
 
 export function proposalVariantApplyLabel(proposal: ReharmonizationProposal): string {
   return proposal.kind === "reference" ? "Usar leitura" : "Usar variação";
+}
+
+export function proposalVariantRelationLabel(variant: ReharmonizationProposal): string | undefined {
+  return variant.referenceRelation ? proposalReferenceRelationLabel(variant.referenceRelation) : undefined;
 }
 
 export default function HarmonizationProposalCard({
@@ -227,7 +232,14 @@ export default function HarmonizationProposalCard({
                         className="flex flex-col gap-2 border-l-2 border-amber-500/30 pl-3"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-zinc-300">{variant.name}</span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-bold text-zinc-300">{variant.name}</span>
+                            {proposalVariantRelationLabel(variant) && (
+                              <span className={`text-[9px] font-bold uppercase tracking-widest ${REFERENCE_RELATION_TONE[variant.referenceRelation!]}`}>
+                                {proposalVariantRelationLabel(variant)}
+                              </span>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => onApply(variant)}

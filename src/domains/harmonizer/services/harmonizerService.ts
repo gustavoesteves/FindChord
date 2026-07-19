@@ -19,11 +19,12 @@ import {
   noteCoveredByChord,
   normalizeChordRoot
 } from "../../../utils/music/analysis/strategies/HarmonicStrategyValidator";
+import { resolveChordSymbol } from "../../../utils/music/theory/ChordSymbolResolver";
 import {
-  buildContextualScaleCandidates,
+  buildContextualMaterialCandidates,
   type ContextualMelodicFit,
-  type ContextualScaleCandidate
-} from "../../../utils/music/theory/contextualScaleCandidates";
+  type ContextualMaterialCandidate
+} from "../../../utils/music/theory/contextualMaterialCandidates";
 
 export interface MelodicAnchorSelection {
   anchors: MelodicAnchor[];
@@ -31,23 +32,26 @@ export interface MelodicAnchorSelection {
   isTruncated: boolean;
 }
 
-export interface SectionScaleSuggestion {
+export interface SectionMaterialSuggestion {
   measure: number;
   endMeasure?: number;
   chord: string;
-  candidates: ContextualScaleCandidate[];
+  candidates: ContextualMaterialCandidate[];
   position?: number;
   source: "reference" | "proposal";
 }
 
-export interface SectionScaleReadingRegion {
+export interface SectionMaterialReadingRegion {
   id: string;
   startMeasure: number;
   endMeasure: number;
+  materialLabel?: string;
+  sourceName: string;
+  sourceType: string;
   scaleName: string;
   scaleType: string;
-  intent: ContextualScaleCandidate["intent"];
-  harmonicFunction: ContextualScaleCandidate["harmonicFunction"];
+  intent: ContextualMaterialCandidate["intent"];
+  harmonicFunction: ContextualMaterialCandidate["harmonicFunction"];
   chordCount: number;
   chords: string[];
 }
@@ -62,18 +66,22 @@ export interface SectionLinearRoute {
   melodyMatches: string[];
   melodicFit: ContextualMelodicFit;
   target?: string;
-  intent: ContextualScaleCandidate["intent"];
+  intent: ContextualMaterialCandidate["intent"];
 }
 
-export interface SectionScaleSuggestionSet {
+export interface SectionMaterialSuggestionSet {
   id: string;
   label: string;
   source: "reference" | "proposal";
   presentationRole?: ReharmonizationPresentationRole;
-  suggestions: SectionScaleSuggestion[];
-  regions: SectionScaleReadingRegion[];
+  suggestions: SectionMaterialSuggestion[];
+  regions: SectionMaterialReadingRegion[];
   linearRoutes: SectionLinearRoute[];
 }
+
+export type SectionScaleSuggestion = SectionMaterialSuggestion;
+export type SectionScaleReadingRegion = SectionMaterialReadingRegion;
+export type SectionScaleSuggestionSet = SectionMaterialSuggestionSet;
 
 interface SectionRange {
   startMeasure: number;
@@ -90,6 +98,15 @@ function chordBass(chord: string): string {
 
 function chordRoot(chord: string | undefined): string | undefined {
   return chord?.match(/^[A-G](?:#|b)?/)?.[0];
+}
+
+function normalizeControlledChordSymbol(chord: string): string {
+  const resolved = resolveChordSymbol(chord, "plain");
+  return resolved.warnings.length === 0 ? resolved.normalized : chord;
+}
+
+function slashBass(chord: string): string | undefined {
+  return chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
 }
 
 function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {
@@ -182,7 +199,89 @@ function bestReferenceRhythmSubstitute(
     .filter(item => item.fit >= Math.max(0.25, originalFit - 0.1))
     .sort((a, b) => b.fit - a.fit)[0]?.candidate;
 
-  return best || harmony.harmony;
+  if (!best || melodyFit(best, melody) <= originalFit + 0.15) {
+    return normalizeControlledChordSymbol(harmony.harmony);
+  }
+
+  return normalizeControlledChordSymbol(best);
+}
+
+function hasMinorQuality(chord: string): boolean {
+  return /(?:^|[A-G](?:#|b)?)-|m(?!aj)/i.test(chord) || /ø|dim/i.test(chord);
+}
+
+function hasDominantQuality(chord: string): boolean {
+  return /(7|9|11|13|alt|sus)/i.test(chord) && !/(maj|7M|M7|Δ)/i.test(chord) && !hasMinorQuality(chord);
+}
+
+function referenceContourPalette(harmony: ScoreHarmonyEvent): string[] {
+  const root = chordRoot(harmony.harmony);
+  if (!root) return [harmony.harmony];
+
+  const bass = slashBass(harmony.harmony);
+  const bassSuffix = bass && bass !== root ? `/${bass}` : "";
+
+  if (/m7b5|ø/i.test(harmony.harmony)) return [`${root}m7b5${bassSuffix}`, `${root}m${bassSuffix}`];
+  if (/dim|°/i.test(harmony.harmony)) return [`${root}dim7${bassSuffix}`, `${root}m7b5${bassSuffix}`];
+  if (hasMinorQuality(harmony.harmony)) return [`${root}m${bassSuffix}`, `${root}m7${bassSuffix}`, `${root}m6${bassSuffix}`];
+  if (hasDominantQuality(harmony.harmony)) return [`${root}7${bassSuffix}`, `${root}9${bassSuffix}`, `${root}13${bassSuffix}`];
+  return [`${root}${bassSuffix}`, `${root}6${bassSuffix}`, `${root}maj7${bassSuffix}`];
+}
+
+function shouldPreserveReferenceColor(chord: string): boolean {
+  return /(?:m7b5|ø|dim|°|alt|[#b](?:5|9|11|13)|\([^)]*[#b][^)]*\))/i.test(chord);
+}
+
+function bestReferenceContourSubstitute(
+  harmony: ScoreHarmonyEvent,
+  melodyAnchors: MelodicAnchor[]
+): string {
+  if (shouldPreserveReferenceColor(harmony.harmony)) {
+    return normalizeControlledChordSymbol(harmony.harmony);
+  }
+
+  const melody = selectMelodyForHarmony(harmony, melodyAnchors);
+  const originalFit = melodyFit(harmony.harmony, melody);
+  const originalRoot = normalizeChordRoot(harmony.harmony);
+  const candidates = referenceContourPalette(harmony)
+    .filter(candidate => normalizeChordRoot(candidate) === originalRoot);
+
+  const changed = candidates
+    .map(candidate => ({ candidate, fit: melodyFit(candidate, melody) }))
+    .filter(item => item.candidate !== harmony.harmony)
+    .filter(item => item.fit >= Math.max(0.25, originalFit - 0.2))
+    .sort((a, b) => b.fit - a.fit)[0]?.candidate;
+
+  return normalizeControlledChordSymbol(changed || candidates[0] || harmony.harmony);
+}
+
+function buildReferenceContourReharmonizationProposal(
+  sectionHarmonies: ScoreHarmonyEvent[],
+  melodyAnchors: MelodicAnchor[],
+  phraseContext: PhraseContext
+): ReharmonizationProposal | null {
+  if (sectionHarmonies.length < 2 || phraseContext.selectedCenterSource !== "reference") return null;
+
+  const substitutedEvents = sectionHarmonies.map(harmony => ({
+    ...harmony,
+    harmony: bestReferenceContourSubstitute(harmony, melodyAnchors)
+  }));
+  const changed = substitutedEvents.some((harmony, index) => harmony.harmony !== sectionHarmonies[index].harmony);
+  if (!changed) return null;
+
+  return {
+    id: "controlled-reference-contour",
+    kind: "controlled-reharmonization",
+    name: "Rearmonização — contorno da partitura",
+    measures: harmonyEventsToMeasures(substitutedEvents),
+    explanation: [
+      "preserva a rota harmônica indicada pela partitura",
+      "simplifica cores locais quando a melodia permite a leitura",
+      "mantém as raízes de referência como guia sem copiar literalmente toda a cifra"
+    ],
+    bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony)),
+    cadentialTarget: phraseContext.selectedCenter.tonic
+  };
 }
 
 function buildReferenceRhythmReharmonizationProposal(
@@ -200,12 +299,17 @@ function buildReferenceRhythmReharmonizationProposal(
   if (!center) return null;
 
   const mode = phraseContext.selectedCenter.mode;
+  const normalizedEvents = sectionHarmonies.map(harmony => ({
+    ...harmony,
+    harmony: normalizeControlledChordSymbol(harmony.harmony)
+  }));
   const substitutedEvents = sectionHarmonies.map(harmony => ({
     ...harmony,
     harmony: bestReferenceRhythmSubstitute(harmony, melodyAnchors, center, mode)
   }));
   const changed = substitutedEvents.some((harmony, index) => harmony.harmony !== sectionHarmonies[index].harmony);
   if (!changed) return null;
+  const structurallyChanged = substitutedEvents.some((harmony, index) => harmony.harmony !== normalizedEvents[index].harmony);
 
   return {
     id: "controlled-reference-rhythm",
@@ -214,7 +318,9 @@ function buildReferenceRhythmReharmonizationProposal(
     measures: harmonyEventsToMeasures(substitutedEvents),
     explanation: [
       "preserva o ritmo harmônico escrito na partitura",
-      "troca acordes por equivalentes funcionais quando a melodia sustenta a leitura",
+      structurallyChanged
+        ? "troca acordes por equivalentes funcionais quando a melodia sustenta a leitura"
+        : "normaliza a cifragem mantendo a harmonia escrita",
       "mantém a densidade da referência sem copiar literalmente a cifra do autor"
     ],
     bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony)),
@@ -307,18 +413,18 @@ export function selectMelodyForHarmony(
     }));
 }
 
-export function buildSectionScaleSuggestions(
+export function buildSectionMaterialSuggestions(
   sectionHarmonies: ScoreHarmonyEvent[],
   melodyAnchors: MelodicAnchor[],
   phraseContext: PhraseContext | null
-): SectionScaleSuggestion[] {
+): SectionMaterialSuggestion[] {
   if (!phraseContext) return [];
 
   return sectionHarmonies.flatMap((harmony, index) => {
     const previousChord = sectionHarmonies[index - 1]?.harmony;
     const nextChord = sectionHarmonies[index + 1]?.harmony;
     const nextMeasure = sectionHarmonies[index + 1]?.measure;
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: harmony.harmony,
       previousChord,
       nextChord,
@@ -340,11 +446,13 @@ export function buildSectionScaleSuggestions(
   });
 }
 
-export function buildProposalScaleSuggestions(
+export const buildSectionScaleSuggestions = buildSectionMaterialSuggestions;
+
+export function buildProposalMaterialSuggestions(
   proposal: ReharmonizationProposal | undefined,
   melodyAnchors: MelodicAnchor[],
   phraseContext: PhraseContext | null
-): SectionScaleSuggestion[] {
+): SectionMaterialSuggestion[] {
   if (!proposal || !phraseContext) return [];
 
   const chords = proposal.measures.flatMap(measure => measure.chords.map(chord => ({
@@ -363,7 +471,7 @@ export function buildProposalScaleSuggestions(
       tickEnd: 0,
       durationTicks: 0
     };
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: item.chord,
       previousChord: chords[index - 1]?.chord,
       nextChord,
@@ -385,9 +493,12 @@ export function buildProposalScaleSuggestions(
   });
 }
 
-function regionKey(suggestion: SectionScaleSuggestion): string {
+export const buildProposalScaleSuggestions = buildProposalMaterialSuggestions;
+
+function regionKey(suggestion: SectionMaterialSuggestion): string {
   const primary = suggestion.candidates[0];
   return [
+    primary?.melodicMaterials[0]?.label,
     primary?.name,
     primary?.type,
     primary?.intent,
@@ -395,14 +506,14 @@ function regionKey(suggestion: SectionScaleSuggestion): string {
   ].join("|");
 }
 
-function canCreateRegionalReading(candidate: ContextualScaleCandidate): boolean {
+function canCreateRegionalReading(candidate: ContextualMaterialCandidate): boolean {
   if (candidate.harmonicFunction === "dominant") return false;
   if (candidate.intent === "tension" || candidate.intent === "outside") return false;
   return ["tonic", "predominant", "modal"].includes(candidate.harmonicFunction);
 }
 
-export function buildScaleReadingRegions(suggestions: SectionScaleSuggestion[]): SectionScaleReadingRegion[] {
-  const regions: SectionScaleReadingRegion[] = [];
+export function buildMaterialReadingRegions(suggestions: SectionMaterialSuggestion[]): SectionMaterialReadingRegion[] {
+  const regions: SectionMaterialReadingRegion[] = [];
   const sorted = [...suggestions].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
   for (const suggestion of sorted) {
@@ -412,10 +523,12 @@ export function buildScaleReadingRegions(suggestions: SectionScaleSuggestion[]):
 
     const startMeasure = suggestion.measure;
     const endMeasure = suggestion.endMeasure ?? suggestion.measure;
+    const materialLabel = primary.melodicMaterials[0]?.label;
     const previous = regions[regions.length - 1];
     const sameReading = previous
-      && previous.scaleName === primary.name
-      && previous.scaleType === primary.type
+      && previous.materialLabel === materialLabel
+      && previous.sourceName === primary.name
+      && previous.sourceType === primary.type
       && previous.intent === primary.intent
       && previous.harmonicFunction === primary.harmonicFunction
       && startMeasure <= previous.endMeasure + 1;
@@ -431,6 +544,9 @@ export function buildScaleReadingRegions(suggestions: SectionScaleSuggestion[]):
       id: `${startMeasure}-${endMeasure}-${regionKey(suggestion)}`,
       startMeasure,
       endMeasure,
+      materialLabel,
+      sourceName: primary.name,
+      sourceType: primary.type,
       scaleName: primary.name,
       scaleType: primary.type,
       intent: primary.intent,
@@ -443,7 +559,9 @@ export function buildScaleReadingRegions(suggestions: SectionScaleSuggestion[]):
   return regions.filter(region => region.endMeasure > region.startMeasure || region.chordCount > 1);
 }
 
-function primaryLinearFragments(suggestion: SectionScaleSuggestion): string[] {
+export const buildScaleReadingRegions = buildMaterialReadingRegions;
+
+function primaryLinearFragments(suggestion: SectionMaterialSuggestion): string[] {
   return suggestion.candidates[0]?.linearFragments || [];
 }
 
@@ -453,7 +571,7 @@ const MELODIC_FIT_PRIORITY: Record<SectionLinearRoute["melodicFit"], number> = {
   caution: 2
 };
 
-function canCreateLinearRoute(suggestion: SectionScaleSuggestion): boolean {
+function canCreateLinearRoute(suggestion: SectionMaterialSuggestion): boolean {
   const primary = suggestion.candidates[0];
   if (!primary) return false;
   if (primary.linearFragments.length === 0) return false;
@@ -461,7 +579,7 @@ function canCreateLinearRoute(suggestion: SectionScaleSuggestion): boolean {
   return primary.harmonicFunction === "dominant" && !!primary.resolutionTarget;
 }
 
-export function buildScaleLinearRoutes(suggestions: SectionScaleSuggestion[]): SectionLinearRoute[] {
+export function buildMaterialLinearRoutes(suggestions: SectionMaterialSuggestion[]): SectionLinearRoute[] {
   const routes: SectionLinearRoute[] = [];
   const sorted = [...suggestions].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
@@ -523,13 +641,15 @@ export function buildScaleLinearRoutes(suggestions: SectionScaleSuggestion[]): S
     ));
 }
 
-export function buildProposalScaleSuggestionSets(
+export const buildScaleLinearRoutes = buildMaterialLinearRoutes;
+
+export function buildProposalMaterialSuggestionSets(
   proposals: ReharmonizationProposal[],
   melodyAnchors: MelodicAnchor[],
   phraseContext: PhraseContext | null
-): SectionScaleSuggestionSet[] {
+): SectionMaterialSuggestionSet[] {
   return proposals.flatMap(proposal => {
-    const suggestions = buildProposalScaleSuggestions(proposal, melodyAnchors, phraseContext);
+    const suggestions = buildProposalMaterialSuggestions(proposal, melodyAnchors, phraseContext);
     return suggestions.length > 0
       ? [{
         id: proposal.id,
@@ -537,12 +657,14 @@ export function buildProposalScaleSuggestionSets(
         source: "proposal" as const,
         presentationRole: proposal.presentationRole,
         suggestions,
-        regions: buildScaleReadingRegions(suggestions),
-        linearRoutes: buildScaleLinearRoutes(suggestions)
+        regions: buildMaterialReadingRegions(suggestions),
+        linearRoutes: buildMaterialLinearRoutes(suggestions)
       }]
       : [];
   });
 }
+
+export const buildProposalScaleSuggestionSets = buildProposalMaterialSuggestionSets;
 
 export function buildExistingHarmonyProposal(
   sectionHarmonies: ScoreHarmonyEvent[],
@@ -603,9 +725,15 @@ export function buildControlledReharmonizationProposals(
     melodyAnchors,
     phraseContext
   );
+  const referenceContourProposal = buildReferenceContourReharmonizationProposal(
+    sectionHarmonies,
+    melodyAnchors,
+    phraseContext
+  );
 
   return [
     ...substitutionProposals,
+    ...(referenceContourProposal ? [referenceContourProposal] : []),
     ...(referenceRhythmProposal ? [referenceRhythmProposal] : [])
   ];
 }

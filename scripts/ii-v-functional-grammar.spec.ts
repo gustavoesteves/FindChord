@@ -97,6 +97,49 @@ describe("F26.8b ii-V Local Region Generation", () => {
     ]));
   });
 
+  it("offers a compact ii-V when the same measure supports preparation and dominant", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "A", duration: 960 },
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "D", duration: 960 },
+      { measureIndex: 2, pitch: "F#", duration: 960 },
+      { measureIndex: 3, pitch: "G", duration: 1920 }
+    ];
+    const phraseContext: PhraseContext = {
+      selectedCenter: { tonic: "C", mode: "major", confidence: 0.8 },
+      tonalCenterCandidates: [{ tonic: "C", mode: "major", confidence: 0.8 }],
+      cadentialTarget: { targetPitch: "G", cadenceType: "OPEN", confidence: 0.8 }
+    };
+
+    const proposal = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .find(candidate => candidate.name === "Estratégia — ii-V compacto");
+
+    expect(proposal?.measures.map(measure => measure.chords)).toEqual([
+      ["Am7", "D7"],
+      ["Gmaj7"],
+      ["Gmaj7"]
+    ]);
+    expect(proposal?.explanation).toContain("condensa célula ii-V local em G");
+  });
+
+  it("does not offer a compact ii-V when the preparation bar lacks dominant support", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "E", duration: 1920 },
+      { measureIndex: 2, pitch: "D", duration: 960 },
+      { measureIndex: 2, pitch: "F#", duration: 960 },
+      { measureIndex: 3, pitch: "G", duration: 1920 }
+    ];
+    const phraseContext: PhraseContext = {
+      selectedCenter: { tonic: "C", mode: "major", confidence: 0.8 },
+      tonalCenterCandidates: [{ tonic: "C", mode: "major", confidence: 0.8 }],
+      cadentialTarget: { targetPitch: "G", cadenceType: "OPEN", confidence: 0.8 }
+    };
+
+    const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
+
+    expect(proposals.some(proposal => proposal.name === "Estratégia — ii-V compacto")).toBe(false);
+  });
+
   it("generates a local minor iiø-V-i when the phrase arrives in the relative minor region", () => {
     const anchors: MelodicAnchor[] = [
       { measureIndex: 1, pitch: "B", duration: 960 },
@@ -130,5 +173,6 @@ describe("F26.8b ii-V Local Region Generation", () => {
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
 
     expect(proposals.some(proposal => proposal.name === "Estratégia — Gramática funcional ii-V")).toBe(false);
+    expect(proposals.some(proposal => proposal.name === "Estratégia — ii-V compacto")).toBe(false);
   });
 });

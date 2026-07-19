@@ -11,9 +11,9 @@ type WriterTab = "input" | "translation" | "voicings" | "scales";
 
 const WRITER_TABS: TabConfig<WriterTab>[] = [
   { id: "input", label: "Braço", icon: Sliders },
-  { id: "translation", label: "Acorde & Biblioteca", icon: BookOpen },
+  { id: "translation", label: "Leitura do acorde", icon: BookOpen },
   { id: "voicings", label: "Aberturas do acorde", icon: Search },
-  { id: "scales", label: "Escalas Compatíveis", icon: Music },
+  { id: "scales", label: "Materiais do acorde", icon: Music },
 ];
 
 export default function WriterTabSurface() {

@@ -1038,14 +1038,14 @@ export class StrategyGuidedHarmonizer {
       }
 
       if (fn === "T" && isFinal) {
-        return { measureIndex, chords: [this.chordFromRoman(center, "I")] };
+        return { measureIndex, chords: [this.tonicColorForMeasure(center, measureAnchors)] };
       }
 
       if (fn === "T") {
         return {
           measureIndex,
           chords: [
-            this.chordFromRoman(center, "I"),
+            this.tonicColorForMeasure(center, measureAnchors),
             this.bestCoveringChord(center, ["vi", "iii"], measureAnchors)
           ]
         };
@@ -1703,6 +1703,15 @@ export class StrategyGuidedHarmonizer {
     return `${root}${ROMAN_QUALITY[roman] || ""}`;
   }
 
+  private static tonicColorForMeasure(center: string, anchors: MelodicAnchor[]): string {
+    const notes = new Set(anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean));
+    const sixth = Note.pitchClass(Note.transpose(`${center}4`, "6M"));
+    const ninth = Note.pitchClass(Note.transpose(`${center}4`, "2M"));
+    if (sixth && ninth && notes.has(sixth) && notes.has(ninth)) return `${center}6/9`;
+    if (sixth && notes.has(sixth)) return `${center}6`;
+    return this.chordFromRoman(center, "I");
+  }
+
   private static chromaticDegree(center: string, interval: string): string | null {
     return Note.pitchClass(Note.transpose(`${center}4`, interval)) || null;
   }
@@ -2037,6 +2046,12 @@ export class StrategyGuidedHarmonizer {
 
     for (const proposal of this.buildWindowedIiVProposals(anchors, phraseContext)) {
       if (!proposals.some(existing => existing.measures.map(measure => measure.measureIndex).join("-") === proposal.measures.map(measure => measure.measureIndex).join("-"))) {
+        proposals.push(proposal);
+      }
+    }
+
+    for (const proposal of this.buildCompactWindowedIiVProposals(anchors, phraseContext)) {
+      if (!proposals.some(existing => existing.id === proposal.id)) {
         proposals.push(proposal);
       }
     }
@@ -2451,11 +2466,40 @@ export class StrategyGuidedHarmonizer {
     return proposals;
   }
 
+  private static buildCompactWindowedIiVProposals(
+    anchors: MelodicAnchor[],
+    phraseContext: PhraseContext
+  ): ReharmonizationProposal[] {
+    const globalTonic = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!globalTonic) return [];
+
+    const measureIndexes = this.getMeasureIndexes(anchors);
+    if (measureIndexes.length < 3) return [];
+
+    const proposals: ReharmonizationProposal[] = [];
+    const localTonicCandidates = this.localIiVTonicCandidates(phraseContext);
+    for (let i = 0; i < measureIndexes.length - 2; i++) {
+      const targetMeasures = measureIndexes.slice(i, i + 3);
+      const proposal = this.bestCompactWindowedIiVProposalForMeasures(targetMeasures, anchors, globalTonic, localTonicCandidates);
+      if (proposal) proposals.push(proposal);
+    }
+
+    return proposals;
+  }
+
   private static localIiVTonicCandidates(phraseContext: PhraseContext): string[] {
     const candidates = new Set<string>();
     const selected = phraseContext.selectedCenter;
     const selectedTonic = Note.pitchClass(selected.tonic);
     if (selectedTonic) candidates.add(selectedTonic);
+    const cadentialTarget = Note.pitchClass(phraseContext.cadentialTarget.targetPitch);
+    if (
+      cadentialTarget
+      && phraseContext.cadentialTarget.confidence >= 0.5
+      && phraseContext.cadentialTarget.cadenceType !== "HALF"
+    ) {
+      candidates.add(cadentialTarget);
+    }
 
     if (selected.mode === "minor") {
       const relativeMajor = Note.pitchClass(Note.transpose(`${selected.tonic}4`, "3m"));
@@ -2504,6 +2548,59 @@ export class StrategyGuidedHarmonizer {
     }
 
     return null;
+  }
+
+  private static bestCompactWindowedIiVProposalForMeasures(
+    targetMeasures: number[],
+    anchors: MelodicAnchor[],
+    globalTonic: string,
+    localTonicCandidates: string[]
+  ): ReharmonizationProposal | null {
+    for (const localTonic of localTonicCandidates) {
+      if (localTonic === globalTonic) continue;
+
+      const localMode = this.inferLocalIiVMode(globalTonic, localTonic);
+      const [preparation, dominant, tonic] = this.localIiVChords(localTonic, localMode);
+      const firstMeasureAnchors = anchors.filter(anchor => anchor.measureIndex === targetMeasures[0]);
+      if (!this.compactIiVPreparationFits(firstMeasureAnchors, preparation, dominant)) continue;
+
+      const measures = [
+        { measureIndex: targetMeasures[0], chords: [preparation, dominant] },
+        { measureIndex: targetMeasures[1], chords: [tonic] },
+        { measureIndex: targetMeasures[2], chords: [tonic] }
+      ];
+
+      if (!this.localIiVCoversMelody(measures, anchors, localTonic)) continue;
+
+      return {
+        id: `strategy_compact_iiv_${targetMeasures.join("_")}_${localTonic.toLowerCase()}`,
+        kind: "validated-harmonization",
+        name: "Estratégia — ii-V compacto",
+        measures,
+        explanation: [
+          `condensa célula ii-V local em ${localTonic}`,
+          localMode === "minor"
+            ? "usa preparação meio-diminuta e dominante no mesmo compasso"
+            : "usa preparação predominante e dominante no mesmo compasso",
+          "mantém a resolução local nos compassos seguintes"
+        ],
+        bassLine: measures.flatMap(measure => measure.chords.map(chord => this.rootOfChord(chord) || chord)),
+        cadentialTarget: localTonic
+      };
+    }
+
+    return null;
+  }
+
+  private static compactIiVPreparationFits(
+    anchors: MelodicAnchor[],
+    preparation: string,
+    dominant: string
+  ): boolean {
+    if (anchors.length === 0) return false;
+    const supportsPreparation = anchors.some(anchor => noteCoveredByChord(anchor.pitch, preparation));
+    const supportsDominant = anchors.some(anchor => noteCoveredByChord(anchor.pitch, dominant));
+    return supportsPreparation && supportsDominant;
   }
 
   private static inferLocalIiVMode(globalTonic: string, localTonic: string): "major" | "minor" {
@@ -2566,7 +2663,7 @@ export class StrategyGuidedHarmonizer {
     if (!center) return false;
 
     return proposal.explanation.some(explanation => {
-      const localCadence = explanation.match(/(?:cria uma cadência local para|reconhece célula ii-V local em) ([A-G](?:#|b)?)/);
+      const localCadence = explanation.match(/(?:cria uma cadência local para|reconhece célula ii-V local em|condensa célula ii-V local em) ([A-G](?:#|b)?)/);
       const localTarget = localCadence ? Note.pitchClass(localCadence[1]) : null;
       return !!localTarget && localTarget !== center;
     });

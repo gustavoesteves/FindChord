@@ -55,11 +55,12 @@ describe("Harmonizer proposal list curation", () => {
     expect(visibleProposalsForLayer("reharmonization", proposals, true)).toBe(proposals);
   });
 
-  it("keeps reference-rhythm and functional reference variations visible in collapsed mode", () => {
+  it("keeps reference-shaped and functional reference variations visible in collapsed mode", () => {
     const visible = visibleProposalsForLayer("reharmonization", [
       proposal("primary", "Estratégia — Melodia primeiro", "primary"),
       proposal("dominants", "Estratégia — Dominantes alteradas"),
       proposal("reference-rhythm", "Rearmonização — ritmo harmônico da partitura", "alternative", 0, "reference-rhythm-preserved"),
+      proposal("reference-contour", "Rearmonização — contorno da partitura", "alternative", 0, "reference-contour-preserved"),
       proposal("functional-variation", "Estratégia — Função aparente", "alternative", 0, "reference-functional-variation"),
       proposal("neighbor", "Estratégia — Cromatismo de vizinhança"),
       proposal("subv", "Estratégia — SubV funcional", "adventurous")
@@ -68,8 +69,8 @@ describe("Harmonizer proposal list curation", () => {
     expect(visible.map(item => item.id)).toEqual([
       "primary",
       "reference-rhythm",
+      "reference-contour",
       "functional-variation",
-      "dominants",
       "subv"
     ]);
   });

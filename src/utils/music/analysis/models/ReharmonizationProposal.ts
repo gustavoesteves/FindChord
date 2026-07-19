@@ -22,6 +22,7 @@ export type ReharmonizationInputContext =
 export type ReharmonizationReferenceRelation =
   | "reference-original"
   | "reference-rhythm-preserved"
+  | "reference-contour-preserved"
   | "reference-close"
   | "reference-functional-variation"
   | "melody-derived-alternative"

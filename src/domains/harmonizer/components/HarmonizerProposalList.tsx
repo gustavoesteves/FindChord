@@ -56,6 +56,13 @@ export function rejectedDistantPathMessage(count: number): string {
 }
 
 function isFunctionalColorProposal(proposal: ReharmonizationProposal): boolean {
+  if (
+    proposal.referenceRelation === "reference-rhythm-preserved"
+    || proposal.referenceRelation === "reference-contour-preserved"
+    || proposal.referenceRelation === "reference-close"
+  ) {
+    return false;
+  }
   return proposal.name === "Estratégia — Função aparente"
     || proposal.name === "Estratégia — Empréstimo modal"
     || proposal.explanation.some(item => /Função aparente/i.test(item))
@@ -120,6 +127,7 @@ export function visibleProposalsForLayer(
   const selected: ReharmonizationProposal[] = [];
   addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole === "primary"));
   addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-rhythm-preserved"));
+  addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-contour-preserved"));
   addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-functional-variation"));
   addUniqueProposal(selected, proposals.find(proposal => proposal.referenceRelation === "reference-close"));
   addUniqueProposal(selected, proposals.find(proposal => proposal.presentationRole !== "adventurous"));

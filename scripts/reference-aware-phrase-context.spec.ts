@@ -60,6 +60,29 @@ describe("F48 reference-aware phrase context", () => {
     expect(refined.selectedCenterSource).toBe("melody");
   });
 
+  it("uses a weak reference center when it confirms a strong melodic/key candidate", () => {
+    const context: PhraseContext = {
+      ...phraseContext("Bb"),
+      selectedCenter: { tonic: "Bb", mode: "minor", confidence: 0.95 },
+      tonalCenterCandidates: [
+        { tonic: "Bb", mode: "minor", confidence: 0.95 },
+        { tonic: "Db", mode: "major", confidence: 0.85 }
+      ]
+    };
+
+    const refined = applyReferenceCenterToPhraseContext(
+      context,
+      harmonies(["Db", "Ebm7", "Ab7", "Db7"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "Db",
+      mode: "major"
+    }));
+    expect(refined.selectedCenter.confidence).toBe(0.95);
+    expect(refined.selectedCenterSource).toBe("reference");
+  });
+
   it("formats reference-center evidence as musician-facing language", () => {
     expect(formatReferenceCenterEvidence("ii-V-I local aponta G maior")).toBe("cadência ii-V-I confirma G maior");
     expect(formatReferenceCenterEvidence("V-I local aponta Bb maior")).toBe("cadência V-I confirma Bb maior");

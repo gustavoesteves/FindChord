@@ -257,6 +257,15 @@ function unsupportedChromaticPenalty(
   };
 }
 
+function isReferenceConfirmedModalBorrowing(
+  proposal: ReharmonizationProposal,
+  comparison: ReturnType<typeof compareProposalToReferenceHarmony>
+): boolean {
+  if (proposal.name !== "Estratégia — Empréstimo modal") return false;
+  if (comparison.referenceIdiom !== "major-functional") return false;
+  return comparison.rootAgreement >= 0.75 && comparison.functionAgreement >= 0.75;
+}
+
 function apparentFunctionReferenceBonus(
   proposal: ReharmonizationProposal,
   phraseContext: PhraseContext,
@@ -274,18 +283,42 @@ function apparentFunctionReferenceBonus(
   const idiomMatchesReference = !!proposal.harmonicIdiom
     && proposal.harmonicIdiom === comparison.referenceIdiom
     && proposal.harmonicIdiom !== "major-functional";
+  const modalBorrowingBonus = isReferenceConfirmedModalBorrowing(proposal, comparison) ? 0.8 : 0;
   if (comparison.status === "aligned") {
     const apparentBonus = comparison.causes.includes("apparent-function-preserved") ? 0.15 : 0;
     const idiomBonus = idiomMatchesReference ? 0.35 : 0;
+    const contourBonus = proposal.id === "controlled-reference-contour"
+      ? comparison.rootAgreement >= 1 && comparison.functionAgreement >= 1 ? 2.9 : 1.1
+      : 0;
     return {
-      apparentFunctionReferenceBonus: 0.35 + apparentBonus + idiomBonus,
+      apparentFunctionReferenceBonus: 0.35 + apparentBonus + idiomBonus + contourBonus + modalBorrowingBonus,
       referenceFunctionAgreement: comparison.functionAgreement,
       referenceRootAgreement: comparison.rootAgreement,
       evidence: [
         "Referência: preserva função no mesmo contexto",
+        ...(contourBonus > 0 ? ["Referência: preserva a rota harmônica da partitura"] : []),
+        ...(modalBorrowingBonus > 0 ? ["Referência: confirma o empréstimo modal como parte da estrutura"] : []),
         ...(idiomBonus > 0 ? ["Referência: confirma o mesmo idioma harmônico"] : []),
         ...(apparentBonus > 0 ? ["Referência: confirma função aparente no mesmo contexto"] : [])
       ]
+    };
+  }
+
+  if (modalBorrowingBonus > 0) {
+    return {
+      apparentFunctionReferenceBonus: 0.75,
+      referenceFunctionAgreement: comparison.functionAgreement,
+      referenceRootAgreement: comparison.rootAgreement,
+      evidence: ["Referência: confirma o empréstimo modal como parte da estrutura"]
+    };
+  }
+
+  if (proposal.id === "controlled-reference-contour" && comparison.rootAgreement >= 0.5) {
+    return {
+      apparentFunctionReferenceBonus: comparison.rootAgreement >= 0.75 ? 1.05 : 0.65,
+      referenceFunctionAgreement: comparison.functionAgreement,
+      referenceRootAgreement: comparison.rootAgreement,
+      evidence: ["Referência: preserva a rota harmônica da partitura"]
     };
   }
 

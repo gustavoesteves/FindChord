@@ -1,5 +1,10 @@
 # Diagnostico - Escalas compativeis
 
+> Nota de direção: este diagnóstico descreve a transição de uma funcionalidade
+> antiga. A direção atual do produto está consolidada em
+> `docs/theory/composer_first_harmony_model.md`: a escala passa a ser mapa/fonte,
+> e o material musical passa a ser a primeira camada útil para o compositor.
+
 ## Escopo
 
 Este documento avalia a funcionalidade `Escalas Compatíveis` da aba `Escrever`
