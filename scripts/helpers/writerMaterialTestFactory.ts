@@ -3,9 +3,9 @@ import {
   type WriterMaterialIntentLabel,
   type WriterMaterialPaletteItem
 } from "../../src/domains/writer/services/writerMaterialPalette";
-import type { ScaleInfo } from "../../src/utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../src/utils/music/theory/musicTheory";
 
-export function writerMaterialTestSource(name: string, overrides: Partial<ScaleInfo> = {}): ScaleInfo {
+export function writerMaterialTestSource(name: string, overrides: Partial<MaterialSourceMap> = {}): MaterialSourceMap {
   return {
     name,
     type: name.toLowerCase(),

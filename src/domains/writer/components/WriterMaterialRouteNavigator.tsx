@@ -38,7 +38,7 @@ export function WriterMaterialRouteNavigator({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
           {availableRoutes.map(route => {
             const isActive = route.id === activeRouteId;
             return (
@@ -61,6 +61,9 @@ export function WriterMaterialRouteNavigator({
                     {route.items.length}
                   </span>
                 </div>
+                <p className="mt-1 text-[10px] font-semibold leading-snug text-zinc-500">
+                  {route.description}
+                </p>
               </button>
             );
           })}

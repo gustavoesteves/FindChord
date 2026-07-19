@@ -3,17 +3,17 @@ import { BookOpen, Music, Search, Sliders } from "lucide-react";
 import { TranslationLayer } from "./TranslationLayer";
 import { VirtualFretboard } from "./VirtualFretboard";
 import { VoicingSearchLayer } from "./VoicingSearchLayer";
-import ScaleOverlayPanel from "./ScaleOverlayPanel";
+import WriterMaterialPanel from "./WriterMaterialPanel";
 import { StandardLayout } from "../../suite/components/StandardLayout";
 import type { TabConfig } from "../../suite/components/StandardLayout";
 
-type WriterTab = "input" | "translation" | "voicings" | "scales";
+type WriterTab = "input" | "translation" | "voicings" | "materials";
 
 const WRITER_TABS: TabConfig<WriterTab>[] = [
   { id: "input", label: "Braço", icon: Sliders },
   { id: "translation", label: "Leitura do acorde", icon: BookOpen },
   { id: "voicings", label: "Aberturas do acorde", icon: Search },
-  { id: "scales", label: "Materiais do acorde", icon: Music },
+  { id: "materials", label: "Materiais do acorde", icon: Music },
 ];
 
 export default function WriterTabSurface() {
@@ -43,9 +43,9 @@ export default function WriterTabSurface() {
         </div>
       )}
 
-      {activeTab === "scales" && (
+      {activeTab === "materials" && (
         <div className="w-full">
-          <ScaleOverlayPanel />
+          <WriterMaterialPanel />
         </div>
       )}
     </StandardLayout>

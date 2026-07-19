@@ -4,10 +4,10 @@ import {
   playableWriterMaterialNote
 } from "../src/domains/writer/services/writerMaterialAction";
 import type { WriterActiveMaterialPanel } from "../src/domains/writer/services/writerActiveMaterialPanel";
-import type { ScaleInfo } from "../src/utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../src/utils/music/theory/musicTheory";
 import { writerMaterialTestItem } from "./helpers/writerMaterialTestFactory";
 
-const source: ScaleInfo = {
+const source: MaterialSourceMap = {
   name: "A Lydian Dominant",
   type: "lydian dominant",
   intervals: ["1P", "2M", "3M", "4A", "5P", "6M", "7m"],

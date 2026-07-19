@@ -1,4 +1,4 @@
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import { buildLocalChordMaterialReadings } from "../../../utils/music/theory/localChordMaterials";
 import type { ChordCandidate } from "../../../utils/music/models/ChordCandidate";
 import { buildWriterActiveMaterialPanel } from "./writerActiveMaterialPanel";
@@ -19,7 +19,7 @@ export interface WriterMaterialScreenModelInput {
   activeChord: ChordCandidate;
   notationStyle: WriterNotationStyle;
   preferredRouteId: WriterMaterialRouteId;
-  localActiveSource: ScaleInfo | null;
+  selectedMaterialSource: MaterialSourceMap | null;
 }
 
 export function chordNameForWriterMaterialScreen(
@@ -40,7 +40,7 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
   const effectiveRoute = materialRoutes.find(route => route.id === effectiveRouteId);
   const routedMaterialPalette = itemsForWriterMaterialRoute(materialPalette, effectiveRouteId);
   const routePresentation = presentWriterMaterialRoute(routedMaterialPalette);
-  const focusedMaterialSource = resolveWriterMaterialFocus(input.localActiveSource, routedMaterialPalette);
+  const focusedMaterialSource = resolveWriterMaterialFocus(input.selectedMaterialSource, routedMaterialPalette);
   const focusedPaletteItem =
     routedMaterialPalette.find(item => item.source.name === focusedMaterialSource?.name) || null;
   const activeMaterialPanel = focusedMaterialSource

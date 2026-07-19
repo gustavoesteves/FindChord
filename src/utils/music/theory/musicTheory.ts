@@ -3,14 +3,15 @@ import { simplifyNote } from "../core/pitch";
 import type { ChordQuality } from "../constants/chordRegistry";
 import type { ChordCandidate } from "../models/ChordCandidate";
 
-export interface ScaleInfo {
+export interface MaterialSourceMap {
   name: string;
   type: string;
   intervals: string[];
   notes: string[];
 }
 
-export type MaterialSourceMap = ScaleInfo;
+// Compatibilidade com a nomenclatura antiga.
+export type ScaleInfo = MaterialSourceMap;
 
 const CUSTOM_SCALE_TYPES: Record<string, { intervals: string[]; label: string }> = {
   "bebop dominant": {
@@ -20,13 +21,13 @@ const CUSTOM_SCALE_TYPES: Record<string, { intervals: string[]; label: string }>
 };
 
 /**
- * Ordem pedagógica das escalas para cada qualidade explícita da DSL.
+ * Ordem pedagógica dos mapas-fonte para cada qualidade explícita da DSL.
  *
  * Isto ainda é um adaptador sem contexto tonal: a primeira opção é a leitura
  * mais estável do acorde isolado e as seguintes são cores possíveis. A
  * escolha contextual (função, melodia e resolução) pertence ao Harmonizar.
  */
-const COMPATIBLE_SCALE_TYPES: Partial<Record<ChordQuality, string[]>> = {
+const MATERIAL_SOURCE_MAP_TYPES: Partial<Record<ChordQuality, string[]>> = {
   major: ["major", "lydian", "major pentatonic", "bebop major"],
   major6th: ["major", "lydian", "major pentatonic"],
   major7th: ["major", "lydian", "major pentatonic", "bebop major"],
@@ -67,32 +68,32 @@ const COMPATIBLE_SCALE_TYPES: Partial<Record<ChordQuality, string[]>> = {
 };
 
 export function getMaterialSourceMapTypes(quality: ChordQuality): string[] {
-  return COMPATIBLE_SCALE_TYPES[quality] ?? ["major", "minor pentatonic"];
+  return MATERIAL_SOURCE_MAP_TYPES[quality] ?? ["major", "minor pentatonic"];
 }
 
 export const getCompatibleScaleTypes = getMaterialSourceMapTypes;
 
-function scaleInfoFor(root: string, scaleType: string): ScaleInfo | null {
-  const customScale = CUSTOM_SCALE_TYPES[scaleType];
+function materialSourceMapFor(root: string, sourceType: string): MaterialSourceMap | null {
+  const customScale = CUSTOM_SCALE_TYPES[sourceType];
   if (customScale) {
     return {
       name: `${root} ${customScale.label}`,
-      type: scaleType,
+      type: sourceType,
       intervals: customScale.intervals,
       notes: customScale.intervals.map(interval => simplifyNote(TonalNote.transpose(root, interval)))
     };
   }
 
-  const scale = TonalScale.get(`${root} ${scaleType}`);
+  const scale = TonalScale.get(`${root} ${sourceType}`);
   if (scale.empty) return null;
 
-  const rawName = scale.name || scaleType;
+  const rawName = scale.name || sourceType;
   const startsWithRoot = rawName.toLowerCase().startsWith(`${root.toLowerCase()} `) || rawName.toLowerCase() === root.toLowerCase();
   const displayName = startsWithRoot ? rawName : `${root} ${rawName}`;
 
   return {
     name: displayName,
-    type: scaleType,
+    type: sourceType,
     intervals: scale.intervals,
     notes: scale.notes.map(n => simplifyNote(n))
   };
@@ -100,8 +101,8 @@ function scaleInfoFor(root: string, scaleType: string): ScaleInfo | null {
 
 export function getMaterialSourceMapsForQuality(root: string, quality: ChordQuality): MaterialSourceMap[] {
   return getMaterialSourceMapTypes(quality)
-    .map(scaleType => scaleInfoFor(root, scaleType))
-    .filter((scale): scale is MaterialSourceMap => scale !== null);
+    .map(sourceType => materialSourceMapFor(root, sourceType))
+    .filter((source): source is MaterialSourceMap => source !== null);
 }
 
 export const getCompatibleScalesForQuality = getMaterialSourceMapsForQuality;

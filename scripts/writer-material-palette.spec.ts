@@ -12,7 +12,7 @@ describe("F227 paleta composicional de materiais do acorde", () => {
     expect(actionLabelForWriterMaterialIntent("Funcional")).toBe("Colorir sem sair");
     expect(actionLabelForWriterMaterialIntent("Cor")).toBe("Explorar cor");
     expect(actionLabelForWriterMaterialIntent("Tensão")).toBe("Preparar resolução");
-    expect(actionLabelForWriterMaterialIntent("Fora")).toBe("Tensionar por fora");
+    expect(actionLabelForWriterMaterialIntent("Fora")).toBe("Sair e voltar");
   });
 
   it("apresenta o material tocavel antes da fonte teorica", () => {

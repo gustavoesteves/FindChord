@@ -1,13 +1,13 @@
 import { EyeOff, Sparkles } from "lucide-react";
 
 export interface WriterMaterialPanelHeaderProps {
-  hasActiveFilter: boolean;
-  onClearFilter: () => void;
+  hasSelectedMaterial: boolean;
+  onClearSelection: () => void;
 }
 
 export function WriterMaterialPanelHeader({
-  hasActiveFilter,
-  onClearFilter
+  hasSelectedMaterial,
+  onClearSelection
 }: WriterMaterialPanelHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/40 pb-4 gap-3 select-none">
@@ -20,14 +20,14 @@ export function WriterMaterialPanelHeader({
           </p>
         </div>
       </div>
-      {hasActiveFilter && (
+      {hasSelectedMaterial && (
         <button
           type="button"
-          onClick={onClearFilter}
+          onClick={onClearSelection}
           className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold border border-zinc-800 cursor-pointer transition active:scale-95"
         >
           <EyeOff className="h-3 w-3" />
-          Limpar destaque
+          Voltar ao primeiro material
         </button>
       )}
     </div>

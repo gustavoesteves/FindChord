@@ -1,4 +1,4 @@
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import type { WriterMaterialPaletteItem } from "../services/writerMaterialPalette";
 import type { WriterMaterialRoutePresentation } from "../services/writerMaterialRoutes";
 import { WriterMaterialIdeaCard } from "./WriterMaterialIdeaCard";
@@ -6,8 +6,8 @@ import { WriterMaterialIdeaCard } from "./WriterMaterialIdeaCard";
 export interface WriterMaterialIdeasColumnProps {
   items: WriterMaterialPaletteItem[];
   routePresentation: WriterMaterialRoutePresentation;
-  focusedSource: ScaleInfo | null;
-  onSelect: (source: ScaleInfo) => void;
+  focusedSource: MaterialSourceMap | null;
+  onSelect: (source: MaterialSourceMap) => void;
 }
 
 export function WriterMaterialIdeasColumn({

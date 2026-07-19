@@ -1,4 +1,4 @@
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import type { WriterActiveMaterialPanel } from "./writerActiveMaterialPanel";
 import type { WriterMaterialPaletteItem } from "./writerMaterialPalette";
 
@@ -13,7 +13,7 @@ export interface WriterMaterialAction {
 
 export interface WriterMaterialActionInput {
   activePanel: WriterActiveMaterialPanel | null;
-  focusedSource: ScaleInfo | null;
+  focusedSource: MaterialSourceMap | null;
   focusedPaletteItem: WriterMaterialPaletteItem | null;
 }
 

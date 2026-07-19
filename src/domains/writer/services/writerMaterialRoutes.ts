@@ -3,7 +3,7 @@ import type {
   WriterMaterialPaletteItem
 } from "./writerMaterialPalette";
 
-export type WriterMaterialRouteId = "inside" | "color" | "tension";
+export type WriterMaterialRouteId = "inside" | "color" | "tension" | "outside";
 
 export const DEFAULT_WRITER_MATERIAL_ROUTE_ID: WriterMaterialRouteId = "inside";
 
@@ -36,6 +36,11 @@ const ROUTE_DEFINITIONS: Omit<WriterMaterialRoute, "items">[] = [
     id: "tension",
     label: "Tensionar",
     description: "Criar instabilidade controlada antes do retorno."
+  },
+  {
+    id: "outside",
+    label: "Sair e voltar",
+    description: "Deslocar para fora e retornar aos apoios do acorde."
   }
 ];
 
@@ -44,7 +49,7 @@ const ROUTE_BY_INTENT_LABEL: Record<WriterMaterialIntentLabel, WriterMaterialRou
   Funcional: "color",
   Cor: "color",
   Tensão: "tension",
-  Fora: "tension"
+  Fora: "outside"
 };
 
 export function routeForWriterMaterialIntent(intentLabel: WriterMaterialIntentLabel): WriterMaterialRouteId {

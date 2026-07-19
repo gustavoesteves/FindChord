@@ -1,5 +1,5 @@
 import type { MelodicAnchor } from "../analysis/models/ProjectionSet";
-import type { ScaleInfo } from "./musicTheory";
+import type { MaterialSourceMap } from "./musicTheory";
 
 export type ContextualMaterialRole = "primary" | "color" | "resolution";
 export type ContextualHarmonicFunction = "tonic" | "predominant" | "dominant" | "modal" | "color";
@@ -40,7 +40,7 @@ export interface ContextualMelodicMaterial {
   practiceHint: string;
 }
 
-export interface ContextualMaterialCandidate extends ScaleInfo {
+export interface ContextualMaterialCandidate extends MaterialSourceMap {
   chord: string;
   role: ContextualMaterialRole;
   intent: ContextualMaterialIntent;

@@ -1,5 +1,5 @@
 import type { LocalChordMaterialReading } from "../../../utils/music/theory/localChordMaterials";
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 
 export type WriterMaterialIntentLabel = "Dentro" | "Funcional" | "Cor" | "Tensão" | "Fora";
 export type WriterMaterialActionLabel =
@@ -7,18 +7,18 @@ export type WriterMaterialActionLabel =
   | "Colorir sem sair"
   | "Explorar cor"
   | "Preparar resolução"
-  | "Tensionar por fora";
+  | "Sair e voltar";
 
 const ACTION_LABEL_BY_INTENT: Record<WriterMaterialIntentLabel, WriterMaterialActionLabel> = {
   Dentro: "Apoiar o acorde",
   Funcional: "Colorir sem sair",
   Cor: "Explorar cor",
   Tensão: "Preparar resolução",
-  Fora: "Tensionar por fora"
+  Fora: "Sair e voltar"
 };
 
 export interface WriterMaterialPaletteItem {
-  source: ScaleInfo;
+  source: MaterialSourceMap;
   title: string;
   subtitle: string;
   cells: string[];

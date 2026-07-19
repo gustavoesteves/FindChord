@@ -22,20 +22,32 @@ function chord(partial: Partial<ChordCandidate>): ChordCandidate {
 }
 
 describe("F207 materiais locais do acorde", () => {
-  it("combina mapas-fonte com candidatos material-first para o Escrever", () => {
+  it("combina mapas-fonte com candidatos de vamp local para o Escrever", () => {
     const readings = buildLocalChordMaterialReadings(chord({}));
 
     expect(readings.length).toBeGreaterThan(0);
     expect(readings[0]?.source.type).toBeTruthy();
     expect(readings[0]?.candidate?.chord).toBe("G7");
+    expect(readings[0]?.candidate?.guideTones).toEqual(["B", "F"]);
     expect(readings[0]?.primaryMaterial).toBe(readings[0]?.candidate?.melodicMaterials[0]);
     expect(readings[0]?.extraMaterialCount).toBe(Math.max(0, (readings[0]?.candidate?.melodicMaterials.length || 0) - 1));
     expect(readings.some(reading => reading.candidate?.melodicMaterials.length)).toBe(true);
   });
 
-  it("mantem o acorde isolado como contexto local, sem alvo de resolucao inventado", () => {
+  it("mantem o acorde isolado como vamp local, sem alvo de resolucao inventado", () => {
     const readings = buildLocalChordMaterialReadings(chord({}));
 
-    expect(readings.every(reading => !reading.candidate?.resolutionTarget)).toBe(true);
+    expect(readings.every(reading => (
+      reading.candidate?.melodicMaterials.every(material => material.resolutionTargets.length === 0) ?? true
+    ))).toBe(true);
+  });
+
+  it("ordena materiais locais do mais interno para o outside", () => {
+    const readings = buildLocalChordMaterialReadings(chord({}));
+    const intents = readings.map(reading => reading.candidate?.intent);
+
+    expect(intents.indexOf("inside")).toBeLessThan(intents.indexOf("tension"));
+    expect(intents.indexOf("tension")).toBeLessThan(intents.indexOf("outside"));
+    expect(readings.at(-1)?.source.type).toBe("side slip minor pentatonic");
   });
 });

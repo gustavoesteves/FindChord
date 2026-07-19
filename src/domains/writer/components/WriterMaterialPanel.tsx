@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useChordStore } from "../../../store/useChordStore";
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import {
   type LocalMaterialNoteCategory
 } from "../../../utils/music/theory/localMaterialNoteRoles";
@@ -13,14 +13,17 @@ import { WriterMaterialIdeasColumn } from "./WriterMaterialIdeasColumn";
 import { WriterMaterialInsightPanel } from "./WriterMaterialInsightPanel";
 import { WriterMaterialPanelHeader } from "./WriterMaterialPanelHeader";
 import { WriterMaterialRouteNavigator } from "./WriterMaterialRouteNavigator";
-import { defaultWriterMaterialCategoryVisibility } from "../services/writerMaterialCategoryVisibility";
+import {
+  defaultWriterMaterialCategoryVisibility,
+  effectiveWriterMaterialCategoryVisibility
+} from "../services/writerMaterialCategoryVisibility";
 import { buildWriterMaterialScreenModel } from "../services/writerMaterialScreenModel";
 import {
   DEFAULT_WRITER_MATERIAL_ROUTE_ID,
   type WriterMaterialRouteId
 } from "../services/writerMaterialRoutes";
 
-export default function ScaleOverlayPanel() {
+export default function WriterMaterialPanel() {
   const {
     detectedChords,
     selectedChordIndex,
@@ -28,7 +31,7 @@ export default function ScaleOverlayPanel() {
     tuning
   } = useChordStore();
 
-  const [localActiveSource, setLocalActiveSource] = useState<ScaleInfo | null>(null);
+  const [selectedMaterialSource, setSelectedMaterialSource] = useState<MaterialSourceMap | null>(null);
   const [activeRouteId, setActiveRouteId] = useState<WriterMaterialRouteId>(DEFAULT_WRITER_MATERIAL_ROUTE_ID);
   const [labelMode, setLabelMode] = useState<LocalMaterialFretboardLabelMode>("position");
   const [isSupportMapOpen, setIsSupportMapOpen] = useState(false);
@@ -57,28 +60,28 @@ export default function ScaleOverlayPanel() {
     activeChord,
     notationStyle,
     preferredRouteId: activeRouteId,
-    localActiveSource
+    selectedMaterialSource
   });
 
-  const toggleMaterialSourceOverlay = (source: ScaleInfo) => {
-    if (localActiveSource && localActiveSource.name === source.name) {
-      setLocalActiveSource(null);
-    } else {
-      setLocalActiveSource(source);
-    }
+  const selectMaterialSource = (source: MaterialSourceMap) => {
+    setSelectedMaterialSource(source);
   };
 
   const selectRoute = (routeId: WriterMaterialRouteId) => {
     setActiveRouteId(routeId);
-    setLocalActiveSource(null);
+    setSelectedMaterialSource(null);
   };
+  const effectiveVisibleCategories = effectiveWriterMaterialCategoryVisibility(
+    materialScreen.effectiveRouteId,
+    visibleCategories
+  );
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4">
         <WriterMaterialPanelHeader
-          hasActiveFilter={Boolean(localActiveSource)}
-          onClearFilter={() => setLocalActiveSource(null)}
+          hasSelectedMaterial={Boolean(selectedMaterialSource)}
+          onClearSelection={() => setSelectedMaterialSource(null)}
         />
 
         <div className="flex flex-col gap-4">
@@ -101,7 +104,7 @@ export default function ScaleOverlayPanel() {
                 source={materialScreen.focusedMaterialSource}
                 activeChord={activeChord}
                 focusedTitle={materialScreen.focusedPaletteItem?.title}
-                visibleCategories={visibleCategories}
+                visibleCategories={effectiveVisibleCategories}
                 labelMode={labelMode}
                 onLabelModeChange={setLabelMode}
                 onToggleCategory={toggleCategoryVisibility}
@@ -112,7 +115,7 @@ export default function ScaleOverlayPanel() {
                   items={materialScreen.routedMaterialPalette}
                   routePresentation={materialScreen.routePresentation}
                   focusedSource={materialScreen.focusedMaterialSource}
-                  onSelect={toggleMaterialSourceOverlay}
+                  onSelect={selectMaterialSource}
                 />
 
                 <div className="lg:col-span-5">

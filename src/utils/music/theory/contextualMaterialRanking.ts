@@ -1,5 +1,5 @@
 import { Note } from "tonal";
-import type { ScaleInfo } from "./musicTheory";
+import type { MaterialSourceMap } from "./musicTheory";
 import type {
   ContextualHarmonicFunction,
   ContextualMaterialCandidate,
@@ -27,17 +27,17 @@ function fragmentNotes(fragments: string[]): string[] {
   ))));
 }
 
-function noteNamesInScale(scale: ScaleInfo): string[] {
+function noteNamesInScale(scale: MaterialSourceMap): string[] {
   return scale.notes.map(note => Note.pitchClass(note)).filter(Boolean);
 }
 
-function passingNotesFor(scale: ScaleInfo, chordTones: string[], root: string): string[] {
+function passingNotesFor(scale: MaterialSourceMap, chordTones: string[], root: string): string[] {
   if (scale.type !== "bebop dominant") return [];
   const leadingTone = Note.pitchClass(Note.transpose(root, "7M"));
   return leadingTone && !chordTones.includes(leadingTone) ? [leadingTone] : [];
 }
 
-export function passingNoteFragmentsFor(scale: ScaleInfo, root: string, passingNotes: string[]): string[] {
+export function passingNoteFragmentsFor(scale: MaterialSourceMap, root: string, passingNotes: string[]): string[] {
   if (scale.type !== "bebop dominant" || passingNotes.length === 0) return [];
   const flatSeventh = Note.pitchClass(Note.transpose(root, "7m"));
   const tonic = Note.pitchClass(root);
@@ -98,7 +98,7 @@ export function supportRoleAdjustment(rolesByNote: Record<string, MelodySupportR
 }
 
 export function scoreMaterialCandidate(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   chordTones: string[],
   melodyNotes: WeightedMelodyNote[],

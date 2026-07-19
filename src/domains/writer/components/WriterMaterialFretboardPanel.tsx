@@ -1,4 +1,4 @@
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import {
   LOCAL_MATERIAL_NOTE_CATEGORIES,
   LOCAL_MATERIAL_NOTE_CATEGORY_DOT_INACTIVE_CLASS,
@@ -15,7 +15,7 @@ import {
 
 export interface WriterMaterialFretboardPanelProps {
   tuning: string[];
-  source: ScaleInfo | null;
+  source: MaterialSourceMap | null;
   activeChord: WriterMaterialFretboardChordContext;
   focusedTitle?: string;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;

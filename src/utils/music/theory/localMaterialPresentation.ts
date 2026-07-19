@@ -108,6 +108,21 @@ const SOURCE_DESCRIPTIONS: Record<string, LocalMaterialSourceDescription> = {
     desc: "Diminuta Semitom/Tom (Dom-Dim) — Alterna semitons e tons a partir da tônica.",
     mood: "Altamente tensa, intrigante, sofisticada e simétrica.",
     tip: "Recurso forte sobre dominantes estáticos, gerando b9, #9, #11 e 13 em uma única coleção."
+  },
+  "dominant diminished axis": {
+    desc: "Eixo diminuto dominante — Dominantes separados por terças menores, com ii menores relacionados como vocabulário de tensão.",
+    mood: "Tensão organizada, cromática e expansiva.",
+    tip: "Use os ii menores do eixo como degraus de tensão e volte às notas-guia do dominante para estabilizar."
+  },
+  "side slip minor pentatonic": {
+    desc: "Side slip pentatônico — Deslocamento de pentatônica menor meio tom para fora antes de retornar ao acorde.",
+    mood: "Externo, direto e de alto contraste.",
+    tip: "Toque o deslocamento como gesto breve. O efeito depende de voltar com clareza aos apoios do acorde."
+  },
+  "minor dorian pentatonic stack": {
+    desc: "Pilha pentatônica dórica — Pentatônicas menores da tônica, quinta e segundo grau para abrir 9, 11 e 13.",
+    mood: "Menor modal, fluido e expansivo sem perder repouso.",
+    tip: "Comece na pentatônica menor da tônica; use as outras como abertura de cor e retorne à terça menor."
   }
 };
 
@@ -146,6 +161,21 @@ const SUGGESTED_LINES: Record<string, LocalMaterialSuggestedLine> = {
     name: "Contorno meio-diminuto",
     theoryDesc: "Contorna a quinta diminuta para criar instabilidade antes da resolução.",
     intervals: ["1P", "3m", "5d", "7m", "8P", "5d", "1P"]
+  },
+  "dominant diminished axis": {
+    name: "Eixo por ii menores",
+    theoryDesc: "Abre o dominante pelo ii menor relacionado e fecha voltando às notas-guia do acorde.",
+    intervals: ["5P", "7m", "9M", "11P", "7m", "3M", "1P"]
+  },
+  "side slip minor pentatonic": {
+    name: "Pentatônica fora e volta",
+    theoryDesc: "Desloca a pentatônica menor meio tom para fora e retorna para a terça e a tônica.",
+    intervals: ["4A", "6M", "7M", "1A", "3M", "1P"]
+  },
+  "minor dorian pentatonic stack": {
+    name: "Pentatônicas dóricas",
+    theoryDesc: "Abre o menor por pentatônicas relacionadas e volta para a terça menor como identidade do acorde.",
+    intervals: ["1P", "3m", "4P", "5P", "7m", "9M", "11P", "13M", "5P", "3m"]
   }
 };
 

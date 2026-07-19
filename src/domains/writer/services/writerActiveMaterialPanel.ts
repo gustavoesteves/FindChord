@@ -1,4 +1,4 @@
-import type { ContextualMaterialCandidate } from "../../../utils/music/theory/contextualMaterialCandidates";
+import type { ContextualMelodicMaterial } from "../../../utils/music/theory/contextualMaterialTypes";
 import {
   describeLocalMaterialSource,
   notesForLocalMaterialLine,
@@ -14,7 +14,7 @@ export interface WriterActiveMaterialLine extends LocalMaterialSuggestedLine {
 
 export interface WriterActiveMaterialPanel {
   sourceType: string;
-  melodicMaterials: NonNullable<ContextualMaterialCandidate["melodicMaterials"]>;
+  melodicMaterials: ContextualMelodicMaterial[];
   studyLine?: WriterActiveMaterialLine;
   theory: LocalMaterialSourceDescription;
 }
@@ -22,7 +22,7 @@ export interface WriterActiveMaterialPanel {
 export interface WriterActiveMaterialPanelInput {
   sourceType: string;
   chordRoot: string;
-  candidate?: ContextualMaterialCandidate;
+  candidate?: { melodicMaterials: ContextualMelodicMaterial[] };
 }
 
 export function buildWriterActiveMaterialPanel(input: WriterActiveMaterialPanelInput): WriterActiveMaterialPanel {

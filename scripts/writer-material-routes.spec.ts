@@ -25,7 +25,7 @@ describe("F237 rotas musicais para materiais do acorde", () => {
     expect(routeForWriterMaterialIntent("Funcional")).toBe("color");
     expect(routeForWriterMaterialIntent("Cor")).toBe("color");
     expect(routeForWriterMaterialIntent("Tensão")).toBe("tension");
-    expect(routeForWriterMaterialIntent("Fora")).toBe("tension");
+    expect(routeForWriterMaterialIntent("Fora")).toBe("outside");
   });
 
   it("classifica itens por rota musical", () => {
@@ -33,7 +33,7 @@ describe("F237 rotas musicais para materiais do acorde", () => {
     expect(routeForWriterMaterialItem(palette[1])).toBe("color");
     expect(routeForWriterMaterialItem(palette[2])).toBe("color");
     expect(routeForWriterMaterialItem(palette[3])).toBe("tension");
-    expect(routeForWriterMaterialItem(palette[4])).toBe("tension");
+    expect(routeForWriterMaterialItem(palette[4])).toBe("outside");
   });
 
   it("comeca pela rota mais repousada", () => {
@@ -45,7 +45,8 @@ describe("F237 rotas musicais para materiais do acorde", () => {
     expect(routes.map(route => [route.id, route.items.length])).toEqual([
       ["inside", 1],
       ["color", 2],
-      ["tension", 2]
+      ["tension", 1],
+      ["outside", 1]
     ]);
   });
 
@@ -54,7 +55,8 @@ describe("F237 rotas musicais para materiais do acorde", () => {
     expect(routes.map(route => [route.id, route.label, route.description])).toEqual([
       ["inside", "Ficar dentro", "Apoiar o acorde e manter repouso claro."],
       ["color", "Colorir", "Adicionar uma cor reconhecível sem sair do centro."],
-      ["tension", "Tensionar", "Criar instabilidade controlada antes do retorno."]
+      ["tension", "Tensionar", "Criar instabilidade controlada antes do retorno."],
+      ["outside", "Sair e voltar", "Deslocar para fora e retornar aos apoios do acorde."]
     ]);
   });
 

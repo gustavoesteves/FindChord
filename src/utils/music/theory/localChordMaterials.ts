@@ -1,33 +1,42 @@
 import type { ChordCandidate } from "../models/ChordCandidate";
 import {
-  buildContextualMaterialCandidates,
-  type ContextualMaterialCandidate,
-  type ContextualMelodicMaterial
-} from "./contextualMaterialCandidates";
-import { getMaterialSourceMaps, type MaterialSourceMap } from "./musicTheory";
+  buildLocalChordVampMaterialCandidates,
+  type LocalChordVampMaterialCandidate
+} from "./localChordVampMaterials";
+import type {
+  ContextualMaterialIntent,
+  ContextualMelodicMaterial
+} from "./contextualMaterialTypes";
+import type { MaterialSourceMap } from "./musicTheory";
 
 export interface LocalChordMaterialReading {
   source: MaterialSourceMap;
-  candidate?: ContextualMaterialCandidate;
+  candidate?: LocalChordVampMaterialCandidate;
   primaryMaterial?: ContextualMelodicMaterial;
   extraMaterialCount: number;
 }
 
+const LOCAL_INTENT_PRIORITY: Record<ContextualMaterialIntent, number> = {
+  inside: 400,
+  functional: 300,
+  tension: 200,
+  outside: 100
+};
+
 function materialPriorityFor(reading: LocalChordMaterialReading): number {
   const materialCount = reading.candidate?.melodicMaterials.length || 0;
   const confidence = reading.candidate?.confidence || 0;
-  return materialCount * 100 + confidence;
+  const intent = reading.candidate?.intent || "functional";
+  return LOCAL_INTENT_PRIORITY[intent] + confidence + materialCount * 0.01;
 }
 
 export function buildLocalChordMaterialReadings(chord: ChordCandidate): LocalChordMaterialReading[] {
-  const sourceMaps = getMaterialSourceMaps(chord);
-  const candidates = buildContextualMaterialCandidates({
-    chord: chord.notationInternational
-  });
+  const candidates = buildLocalChordVampMaterialCandidates(chord);
   const candidateByType = new Map(candidates.map(candidate => [candidate.type, candidate]));
 
-  return sourceMaps
-    .map(source => {
+  return candidates
+    .map(candidateSource => {
+      const source: MaterialSourceMap = candidateSource;
       const candidate = candidateByType.get(source.type);
       const primaryMaterial = candidate?.melodicMaterials[0];
       return {

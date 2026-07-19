@@ -1,18 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildContextualMaterialCandidates,
-  buildContextualScaleCandidates
-} from "../src/utils/music/theory/contextualScaleCandidates";
+import { buildContextualMaterialCandidates } from "../src/utils/music/theory/contextualMaterialCandidates";
 
-describe("F115 candidatas contextuais de escala", () => {
-  it("mantem alias material-first equivalente ao builder legado", () => {
-    expect(buildContextualMaterialCandidates({ chord: "G7", nextChord: "C" })).toEqual(
-      buildContextualScaleCandidates({ chord: "G7", nextChord: "C" })
-    );
-  });
-
-  it("trata ii-V-I como contexto funcional, sem transformar toda escala em equivalente", () => {
-    const candidates = buildContextualScaleCandidates({
+describe("F115 candidatas contextuais de material", () => {
+  it("trata ii-V-I como contexto funcional, sem transformar todo material em equivalente", () => {
+    const candidates = buildContextualMaterialCandidates({
       chord: "Dm7",
       nextChord: "G7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -26,7 +17,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("reconhece IV em campo maior como preparacao subdominante", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Fmaj7",
       nextChord: "G7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -38,7 +29,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("reconhece dominante com resolucao e cobre a melodia", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "C",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -74,7 +65,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("promove leitura cuja passagem cromatica conversa com a melodia", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "C",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -95,7 +86,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("separa leitura interna, funcional e tensional para improviso", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "C",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -109,7 +100,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("marca cor de tonica como funcional, sem confundir com leitura interna", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
       melody: ["E", "G", "B"]
@@ -120,7 +111,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material dorico praticavel para acordes m7", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Dm7",
       tonalCenter: { tonic: "C", mode: "major" },
       melody: ["D", "F", "B"]
@@ -138,7 +129,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece triade superior lidia para maj7 colorido", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
       melody: ["D", "F#", "A"]
@@ -156,7 +147,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material de dominante sus e resolucao local da quarta quando houver abertura", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7sus4",
       nextChord: "G7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -175,7 +166,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material de tons inteiros para acordes aumentados", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7(#5)",
       melody: ["G", "B", "D#"]
     });
@@ -192,7 +183,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material para menor com setima maior", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "AmM7",
       tonalCenter: { tonic: "A", mode: "minor" },
       melody: ["A", "C", "G#"]
@@ -210,7 +201,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material de add9 maior sem transformar em maj7", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Bbadd9",
       melody: ["Bb", "C", "D"]
     });
@@ -227,7 +218,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material pentatonico aberto para power chord", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "F#5",
       melody: ["F#", "C#"]
     });
@@ -244,7 +235,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("pondera notas longas da melodia e penaliza nota de evitar sustentada", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "C",
       tonalCenter: { tonic: "C", mode: "major" },
       melody: [
@@ -259,7 +250,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("mantem a alteracao escrita em vez de cair no fallback maior", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7(b9)",
       nextChord: "Cm",
       tonalCenter: { tonic: "C", mode: "minor" },
@@ -272,7 +263,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece materiais melodicos da diminuta H/W para dominante com b9", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A7(b9)",
       nextChord: "Dmaj7",
       tonalCenter: { tonic: "D", mode: "major" },
@@ -293,7 +284,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece celulas da escala alterada com resolucao para o acorde-alvo", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A7alt",
       nextChord: "Dmaj7",
       tonalCenter: { tonic: "D", mode: "major" },
@@ -313,7 +304,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material de dominante natural com notas-guia", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -322,18 +313,18 @@ describe("F115 candidatas contextuais de escala", () => {
     });
     const mixolydian = candidates.find(candidate => candidate.type === "mixolydian");
 
-    expect(mixolydian?.melodicMaterials).toEqual([
+    expect(mixolydian?.melodicMaterials).toEqual(expect.arrayContaining([
       expect.objectContaining({
         label: "dominante natural / notas-guia",
         cells: ["G-B-D-F", "B->C", "F->E"],
         tensionProfile: ["3", "5", "b7", "9", "13"],
         resolutionTargets: ["C"]
       })
-    ]);
+    ]));
   });
 
   it("oferece material bebop dominante com cromatismo b7-7-1", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -353,7 +344,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("omite falsas resolucoes quando a nota-guia ja coincide com o alvo", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A9",
       nextChord: "C",
       melody: ["C#", "G"],
@@ -366,7 +357,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("ajusta a resolucao alterada quando o alvo e menor", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A7alt",
       nextChord: "Dm7",
       tonalCenter: { tonic: "D", mode: "minor" },
@@ -380,7 +371,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("nao oferece celulas alteradas para dominante comum sem alteracao escrita", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A13",
       nextChord: "Dmaj7",
       tonalCenter: { tonic: "D", mode: "major" },
@@ -393,7 +384,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("nao inventa seta cadencial alterada quando o proximo acorde tem a mesma raiz", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "A7alt",
       nextChord: "A13",
       melody: ["Bb", "C", "G"],
@@ -407,7 +398,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material lidio dominante quando o acorde funciona como SubV", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Db7",
       nextChord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -427,7 +418,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("nao chama lidio dominante natural de SubV sem resolucao cromatica", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G7",
       nextChord: "Cmaj7",
       tonalCenter: { tonic: "C", mode: "major" },
@@ -440,7 +431,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material locrio #2 para iiø preparando dominante menor", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Bm7b5",
       nextChord: "E7(b13)",
       tonalCenter: { tonic: "A", mode: "minor" },
@@ -460,7 +451,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("nao aplica o material iiø ao locrio natural sem 9 maior", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "Bm7b5",
       nextChord: "E7(b13)",
       tonalCenter: { tonic: "A", mode: "minor" },
@@ -472,7 +463,7 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("oferece material de diminuto resolvido por semitom", () => {
-    const candidates = buildContextualScaleCandidates({
+    const candidates = buildContextualMaterialCandidates({
       chord: "G#dim7",
       nextChord: "Am",
       tonalCenter: { tonic: "A", mode: "minor" },
@@ -491,11 +482,11 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it("expoe materiais seguros tambem para exploracao de acorde isolado", () => {
-    const dominantCandidates = buildContextualScaleCandidates({ chord: "A7(b9)" });
+    const dominantCandidates = buildContextualMaterialCandidates({ chord: "A7(b9)" });
     const halfWhole = dominantCandidates.find(candidate => candidate.type === "half-whole diminished");
-    const halfDiminishedCandidates = buildContextualScaleCandidates({ chord: "Bm7b5" });
+    const halfDiminishedCandidates = buildContextualMaterialCandidates({ chord: "Bm7b5" });
     const locrianSharpTwo = halfDiminishedCandidates.find(candidate => candidate.type === "locrian #2");
-    const diminishedCandidates = buildContextualScaleCandidates({ chord: "G#dim7" });
+    const diminishedCandidates = buildContextualMaterialCandidates({ chord: "G#dim7" });
     const wholeHalf = diminishedCandidates.find(candidate => candidate.type === "whole-half diminished");
 
     expect(halfWhole?.melodicMaterials[0]?.label).toBe("Arpejos diminutos H/W");
@@ -507,13 +498,13 @@ describe("F115 candidatas contextuais de escala", () => {
   });
 
   it.each(["D7(#9,b13)", "Ab(#5)"])("mapeia %s para uma familia alterada", chord => {
-    const candidates = buildContextualScaleCandidates({ chord });
+    const candidates = buildContextualMaterialCandidates({ chord });
 
     expect(candidates[0]?.type).not.toBe("major");
     expect(candidates[0]?.type).not.toBe("minor pentatonic");
   });
 
   it("retorna vazio para cifra que nao pertence ao contrato", () => {
-    expect(buildContextualScaleCandidates({ chord: "G(#75)" })).toEqual([]);
+    expect(buildContextualMaterialCandidates({ chord: "G(#75)" })).toEqual([]);
   });
 });

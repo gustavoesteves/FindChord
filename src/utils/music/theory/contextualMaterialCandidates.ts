@@ -30,7 +30,7 @@ import type {
   ContextualMaterialIntent,
   MaterialContext
 } from "./contextualMaterialTypes";
-import { getMaterialSourceMapsForQuality, type ScaleInfo } from "./musicTheory";
+import { getMaterialSourceMapsForQuality, type MaterialSourceMap } from "./musicTheory";
 
 export type {
   ContextualHarmonicFunction,
@@ -62,7 +62,7 @@ const INSIDE_SOURCE_TYPES = new Set([
   "minor pentatonic"
 ]);
 
-function determineIntent(source: ScaleInfo, harmonicFunction: ContextualHarmonicFunction): ContextualMaterialIntent {
+function determineIntent(source: MaterialSourceMap, harmonicFunction: ContextualHarmonicFunction): ContextualMaterialIntent {
   if (TENSION_SOURCE_TYPES.has(source.type)) return "tension";
   if (harmonicFunction === "dominant" && ["lydian dominant", "phrygian dominant"].includes(source.type)) {
     return "tension";

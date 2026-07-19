@@ -1,4 +1,4 @@
-import type { ScaleInfo } from "../../../utils/music/theory/musicTheory";
+import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import {
   shortHintForWriterMaterialCard,
   type WriterMaterialPaletteItem
@@ -8,7 +8,7 @@ export interface WriterMaterialIdeaCardProps {
   item: WriterMaterialPaletteItem;
   isActive: boolean;
   cardClassName: string;
-  onSelect: (source: ScaleInfo) => void;
+  onSelect: (source: MaterialSourceMap) => void;
 }
 
 export function WriterMaterialIdeaCard({

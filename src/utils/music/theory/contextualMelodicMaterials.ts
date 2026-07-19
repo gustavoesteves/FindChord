@@ -2,7 +2,7 @@ import { Note } from "tonal";
 import type { ChordQuality } from "../constants/chordRegistry";
 import { chordPitchClasses, resolveChordSymbol } from "./ChordSymbolResolver";
 import { simplifyNote } from "../core/pitch";
-import type { ScaleInfo } from "./musicTheory";
+import type { MaterialSourceMap } from "./musicTheory";
 import type {
   ContextualHarmonicFunction,
   ContextualMelodicMaterial
@@ -22,7 +22,7 @@ function transposePitchClass(root: string, interval: string): string | null {
   return Note.pitchClass(transposed) || null;
 }
 
-function noteFromScaleByChroma(scale: ScaleInfo, note: string | null): string | null {
+function noteFromScaleByChroma(scale: MaterialSourceMap, note: string | null): string | null {
   if (!note) return null;
   const chroma = Note.chroma(note);
   if (chroma === undefined) return null;
@@ -33,7 +33,7 @@ function displayNote(note: string | null): string | null {
   return note ? simplifyNote(note) : null;
 }
 
-function majorSharpTwoCellFromScale(root: string, scale: ScaleInfo): string[] {
+function majorSharpTwoCellFromScale(root: string, scale: MaterialSourceMap): string[] {
   return [
     Note.pitchClass(root),
     transposePitchClass(root, "3m"),
@@ -43,7 +43,7 @@ function majorSharpTwoCellFromScale(root: string, scale: ScaleInfo): string[] {
 }
 
 function halfWholeDiminishedMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   resolutionTarget: string | undefined
 ): ContextualMelodicMaterial[] {
@@ -105,7 +105,7 @@ function resolutionCell(from: string | null, to: string | null): string {
 }
 
 function alteredDominantMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   quality: ChordQuality,
   resolutionTarget: string | undefined,
@@ -144,7 +144,7 @@ function alteredDominantMaterials(
 }
 
 function naturalDominantMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   quality: ChordQuality,
   resolutionTarget: string | undefined,
@@ -189,7 +189,7 @@ function naturalDominantMaterials(
 }
 
 function relatedTwoMinorDominantMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   quality: ChordQuality
 ): ContextualMelodicMaterial[] {
@@ -248,7 +248,7 @@ function resolvesAsSubV(root: string, resolutionTarget: string | undefined): boo
 }
 
 function lydianDominantSubVMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   resolutionTarget: string | undefined,
   nextChord: string | undefined
@@ -282,7 +282,7 @@ function lydianDominantSubVMaterials(
 }
 
 function halfDiminishedMinorPreparationMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   nextChord: string | undefined
 ): ContextualMelodicMaterial[] {
@@ -337,7 +337,7 @@ function semitoneResolutionsToChord(note: string, targetChord: string | undefine
 }
 
 function resolvedDiminishedMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   nextChord: string | undefined
 ): ContextualMelodicMaterial[] {
@@ -368,7 +368,7 @@ function resolvedDiminishedMaterials(
   }];
 }
 
-function modalMinorMaterials(scale: ScaleInfo, root: string): ContextualMelodicMaterial[] {
+function modalMinorMaterials(scale: MaterialSourceMap, root: string): ContextualMelodicMaterial[] {
   if (scale.type !== "dorian") return [];
   const arpeggio = [
     displayNote(root),
@@ -403,7 +403,7 @@ function modalMinorMaterials(scale: ScaleInfo, root: string): ContextualMelodicM
   }];
 }
 
-function majorLydianMaterials(scale: ScaleInfo, root: string): ContextualMelodicMaterial[] {
+function majorLydianMaterials(scale: MaterialSourceMap, root: string): ContextualMelodicMaterial[] {
   if (scale.type !== "lydian") return [];
   const arpeggio = [
     displayNote(root),
@@ -439,7 +439,7 @@ function majorLydianMaterials(scale: ScaleInfo, root: string): ContextualMelodic
 }
 
 function suspendedDominantMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   quality: ChordQuality,
   nextChord: string | undefined
@@ -481,7 +481,7 @@ function suspendedDominantMaterials(
   }];
 }
 
-function wholeToneAugmentedMaterials(scale: ScaleInfo, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
+function wholeToneAugmentedMaterials(scale: MaterialSourceMap, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
   if (scale.type !== "whole tone" || quality !== "augmented") return [];
   const augmentedArpeggio = [
     displayNote(root),
@@ -509,7 +509,7 @@ function wholeToneAugmentedMaterials(scale: ScaleInfo, root: string, quality: Ch
   }];
 }
 
-function minorMajorMaterials(scale: ScaleInfo, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
+function minorMajorMaterials(scale: MaterialSourceMap, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
   if (!["melodic minor", "harmonic minor"].includes(scale.type) || quality !== "minorMajor7th") return [];
   const arpeggio = [
     displayNote(root),
@@ -538,7 +538,7 @@ function minorMajorMaterials(scale: ScaleInfo, root: string, quality: ChordQuali
   }];
 }
 
-function majorAddNineMaterials(scale: ScaleInfo, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
+function majorAddNineMaterials(scale: MaterialSourceMap, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
   if (!["major", "major pentatonic"].includes(scale.type) || quality !== "add9") return [];
   const addNineCell = [
     displayNote(root),
@@ -568,7 +568,7 @@ function majorAddNineMaterials(scale: ScaleInfo, root: string, quality: ChordQua
   }];
 }
 
-function powerChordPentatonicMaterials(scale: ScaleInfo, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
+function powerChordPentatonicMaterials(scale: MaterialSourceMap, root: string, quality: ChordQuality): ContextualMelodicMaterial[] {
   if (!["major pentatonic", "minor pentatonic"].includes(scale.type) || quality !== "power") return [];
   const rootNote = displayNote(root);
   const fifth = displayNote(transposePitchClass(root, "5P"));
@@ -601,7 +601,7 @@ function powerChordPentatonicMaterials(scale: ScaleInfo, root: string, quality: 
 }
 
 export function buildContextualMelodicMaterials(
-  scale: ScaleInfo,
+  scale: MaterialSourceMap,
   root: string,
   quality: ChordQuality,
   harmonicFunction: ContextualHarmonicFunction,
