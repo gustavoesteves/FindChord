@@ -107,6 +107,11 @@ export class GravityFieldManager {
               .sort((a, b) => a[0] - b[0])
               .map(([measureIndex, chords]) => ({ measureIndex, chords }));
 
+            if (!this.passesModeCompatibilityGate(measures, phraseContext)) {
+              rejectedExperimentalCount++;
+              continue;
+            }
+
             if (!this.passesMelodicCompatibilityGate(measures, anchors)) {
               rejectedExperimentalCount++;
               continue;
@@ -141,6 +146,25 @@ export class GravityFieldManager {
         ...this.melodicCompatibilityDiagnostics(anchors, allProposals)
       ]
     };
+  }
+
+  private static passesModeCompatibilityGate(
+    measures: ReharmonizationMeasure[],
+    phraseContext: PhraseContext
+  ): boolean {
+    if (phraseContext.selectedCenter.mode !== "minor") return true;
+    if (phraseContext.selectedCenterSource === "reference") return true;
+
+    const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
+    if (!center) return true;
+    const escapedCenter = center.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const tonicMajorPattern = new RegExp(`^${escapedCenter}(?:$|/|maj|M|6|add|Δ)`);
+    const boundaryChords = [
+      measures[0]?.chords[0],
+      measures[measures.length - 1]?.chords.at(-1)
+    ].filter((chord): chord is string => Boolean(chord));
+
+    return !boundaryChords.some(chord => tonicMajorPattern.test(chord));
   }
 
   private static melodicCompatibilityDiagnostics(

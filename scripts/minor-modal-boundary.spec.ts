@@ -104,4 +104,24 @@ describe("F34 Minor Functional vs Modal Boundary", () => {
     expect(names).toContain("Estratégia — Menor funcional");
     expect(names).not.toContain("Estratégia — Centro modal");
   });
+
+  it("rejects experimental tonic-major realization in minor centers", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "A", duration: 960 },
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "G", duration: 960 },
+      { measureIndex: 2, pitch: "B", duration: 960 },
+      { measureIndex: 3, pitch: "F", duration: 960 },
+      { measureIndex: 3, pitch: "A", duration: 960 },
+      { measureIndex: 4, pitch: "E", duration: 960 },
+      { measureIndex: 4, pitch: "G#", duration: 960 },
+      { measureIndex: 5, pitch: "A", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "Am");
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const chords = generation.proposals.flatMap(proposal => proposal.measures.flatMap(measure => measure.chords));
+
+    expect(chords).not.toEqual(expect.arrayContaining(["A", "Amaj7", "A6", "A6/9"]));
+    expect(generation.proposals.map(proposal => proposal.name)).toContain("Estratégia — Menor funcional");
+  });
 });

@@ -162,6 +162,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [MelodicInterpretationEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/MelodicInterpretationEngine.ts:7>), [ChordRealizationEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/ChordRealizationEngine.ts:91>), [HarmonicStrategyValidator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/HarmonicStrategyValidator.ts:47>).
 
+**Progresso:** realizações experimentais em centro menor agora passam por um gate de compatibilidade modal que rejeita abertura/fechamento em tônica maior/maj6/maj7 quando o centro menor veio da melodia. Centros corrigidos pela harmonia de referência não são bloqueados por esse guardrail. Estratégias menores validadas continuam ativas, e ideias experimentais úteis que não contradizem a tônica menor não são bloqueadas. Regressão coberta em `minor-modal-boundary.spec.ts`.
+
 **Evidência:** o vocabulário é construído em Dó maior e apenas transposto; `selectedCenter.mode` não participa do candidato nem da validação.
 
 **Reprodução:** C–Eb–G–C em Cm produziu `Cmaj7, Cm7/F, G7, Cdim7`; a proposta contrapontística também terminou em `Cmaj7`.
@@ -273,6 +275,8 @@ Pontos de entrada e fluxos principais:
 ## P2-7 — Cache de voicings ignora baixo, raiz e qualidade
 
 **Arquivos:** [voicingGenerator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/generation/voicingGenerator.ts:61>), `generateVoicings`; [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:121>).
+
+**Progresso:** a chave de cache inclui cifra, raiz, qualidade ativa, baixo físico, pitch classes, afinação e pitch classes obrigatórias; o Writer passa `bassPC` a partir de `activeChord.bass`. Regressão coberta em `writer-voicing-inversion.spec.ts`.
 
 **Evidência:** `bassPC`, `chordRoot` e `activeQuality` afetam filtragem/pontuação, mas não entram na cache key. O chamador atual sempre passa `bassPC=null`, mesmo quando `activeChord.bass` existe.
 
