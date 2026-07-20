@@ -98,8 +98,9 @@ MuseScore {
             if (requestInFlight) return;
 
             requestInFlight = true;
-            checkPendingEvents();
-            timeoutTimer.start();
+            if (checkPendingEvents()) {
+                timeoutTimer.start();
+            }
         }
     }
 
@@ -163,7 +164,7 @@ MuseScore {
         if (bridgePluginToken.length === 0) {
             requestPluginSession();
             requestInFlight = false;
-            return;
+            return false;
         }
 
         var r = new XMLHttpRequest();
@@ -193,8 +194,11 @@ MuseScore {
             r.open("GET", "http://localhost:9000/api/v1/consume", true);
             r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
             r.send();
+            return true;
         } catch (e) {
             requestInFlight = false;
+            timeoutTimer.stop();
+            return false;
         }
     }
 

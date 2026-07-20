@@ -74,6 +74,15 @@ describe("MuseScore chord insertion safety", () => {
     expect(transport).toContain("session.wsEndpoint");
   });
 
+  it("nao arma timeout de polling quando ainda esta apenas pareando sessao", () => {
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+
+    expect(plugin).toContain("if (checkPendingEvents())");
+    expect(plugin).toContain("return false;");
+    expect(plugin).toContain("return true;");
+    expect(plugin).toContain("timeoutTimer.stop();");
+  });
+
   it("confirma mutacoes com commandId, expiracao e ACK do plugin", () => {
     const protocol = readFileSync("src/utils/music/bridge/Protocol.ts", "utf8");
     const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
