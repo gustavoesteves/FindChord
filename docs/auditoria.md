@@ -134,6 +134,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [useApplyProposalToWriter.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useApplyProposalToWriter.ts:5>), [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:61>), `progressionChords`/`setProgressionChords`.
 
+**Progresso:** propostas aplicadas ao Writer agora viram uma sessão explícita de progressão com compasso, índice, ordem e cifra. O Writer carrega automaticamente uma abertura tocável do primeiro acorde e exibe uma faixa navegável de harmonia aplicada para alternar entre os acordes. Regressão coberta em `apply-proposal-to-writer.spec.ts`.
+
 **Evidência:** a proposta perde `measureIndex`, vira `string[]`, é gravada e a aplicação navega. Nenhuma tela carrega, exibe ou percorre essa progressão. O único leitor tenta ajustar enarmonia durante um recálculo futuro; o setter não recalcula. Esse leitor ainda usa `startsWith(root)`, fazendo C encontrar C# antes de C.
 
 **Cenário:** clicar “Usar harmonia” ou “Usar trecho”.

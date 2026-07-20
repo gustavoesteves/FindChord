@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { useChordStore } from "../../../store/useChordStore";
+import { useChordStore, type WriterProgressionChord } from "../../../store/useChordStore";
 import type { ChordCandidate } from "../../../utils/music/models/ChordCandidate";
 import { getPitchClass } from "../../../utils/music/core/pitch";
 import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
@@ -29,6 +29,8 @@ interface WriterState {
   activeChord: DetectedChord | null;
   voicingResults: VoicingShape[];
   notationStyle: "International" | "Brazilian" | "Academic";
+  progressionItems: WriterProgressionChord[];
+  activeProgressionIndex: number | null;
 }
 
 interface WriterActions {
@@ -40,6 +42,7 @@ interface WriterActions {
   clearFretboard: () => void;
   setSelectedChordIndex: (idx: number | null) => void;
   loadVoicing: (voicing: VoicingShape) => void;
+  selectProgressionItem: (index: number) => void;
 }
 
 interface WriterContextProps {
@@ -65,7 +68,10 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     muteString,
     clearFretboard,
     setSelectedChordIndex,
-    setSelectedVoicing
+    setSelectedVoicing,
+    progressionItems,
+    activeProgressionIndex,
+    selectProgressionItem
   } = useChordStore();
 
   // Map stores ChordCandidate to internal Domain DetectedChord
@@ -149,7 +155,9 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     selectedChordIndex,
     activeChord,
     voicingResults,
-    notationStyle
+    notationStyle,
+    progressionItems,
+    activeProgressionIndex
   };
 
   const actions: WriterActions = {
@@ -162,7 +170,8 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSelectedChordIndex,
     loadVoicing: (voicing) => {
       setSelectedVoicing(voicing);
-    }
+    },
+    selectProgressionItem
   };
 
   return (

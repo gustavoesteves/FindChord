@@ -7,7 +7,16 @@ import type { ChordCandidate } from "../utils/music/models/ChordCandidate";
 import type { FretPosition } from "../utils/music/models/FretPosition";
 import type { VoicingShape } from "../utils/music/models/VoicingShape";
 import { INSTRUMENTS } from "../utils/music/models/InstrumentTuning";
-import { clearVoicingCache } from "../utils/music/generation/voicingGenerator";
+import { clearVoicingCache, generateVoicings } from "../utils/music/generation/voicingGenerator";
+import { parseChord } from "../utils/music/theory/chordParser";
+
+export interface WriterProgressionChord {
+  id: string;
+  measureIndex: number;
+  chordIndex: number;
+  order: number;
+  chord: string;
+}
 
 interface ChordStore {
   // --- ESTADO ---
@@ -20,6 +29,8 @@ interface ChordStore {
   notationStyle: "International" | "Brazilian" | "Academic"; // Estilo de notação ativo
   
   progressionChords: string[];
+  progressionItems: WriterProgressionChord[];
+  activeProgressionIndex: number | null;
 
   // --- AÇÕES ---
   setInstrument: (name: string) => void;
@@ -33,6 +44,8 @@ interface ChordStore {
   setNotationStyle: (style: "International" | "Brazilian" | "Academic") => void;
   
   setProgressionChords: (chords: string[]) => void;
+  setProgressionItems: (items: WriterProgressionChord[]) => void;
+  selectProgressionItem: (index: number) => void;
   
 }
 
@@ -64,6 +77,32 @@ export const useChordStore = create<ChordStore>((set, get) => {
     });
   };
 
+  const loadChordSymbol = (symbol: string): boolean => {
+    const parsed = parseChord(symbol);
+    if (parsed.empty || !parsed.root || parsed.notes.length === 0) return false;
+
+    const targetPitchClasses = Array.from(new Set(parsed.notes.map(getPitchClass)));
+    const bassPC = parsed.bass ? getPitchClass(parsed.bass) : null;
+    const voicings = generateVoicings(
+      parsed.symbol,
+      parsed.root,
+      targetPitchClasses,
+      get().tuning,
+      parsed.quality,
+      bassPC
+    );
+    const voicing = voicings[0];
+    if (!voicing) return false;
+
+    set({ selectedFrets: [...voicing.frets] });
+    const chords = recalculateChords(voicing.frets, get().tuning);
+    set({
+      detectedChords: chords,
+      selectedChordIndex: chords.length > 0 ? 0 : null
+    });
+    return true;
+  };
+
   return {
     // --- ESTADO INICIAL ---
     activeInstrument: "Violão",
@@ -75,6 +114,8 @@ export const useChordStore = create<ChordStore>((set, get) => {
     notationStyle: "International",
     
     progressionChords: [],
+    progressionItems: [],
+    activeProgressionIndex: null,
 
     // --- AÇÕES ---
     setInstrument: (name) => {
@@ -197,7 +238,37 @@ export const useChordStore = create<ChordStore>((set, get) => {
     },
 
     setProgressionChords: (chords) => {
-      set({ progressionChords: [...chords] });
+      get().setProgressionItems(chords.map((chord, index) => ({
+        id: `legacy-${index}`,
+        measureIndex: index + 1,
+        chordIndex: 0,
+        order: index,
+        chord
+      })));
+    },
+
+    setProgressionItems: (items) => {
+      const normalizedItems = items.map((item, index) => ({
+        ...item,
+        order: index
+      }));
+      set({
+        progressionChords: normalizedItems.map(item => item.chord),
+        progressionItems: normalizedItems,
+        activeProgressionIndex: normalizedItems.length > 0 ? 0 : null
+      });
+
+      if (normalizedItems.length > 0) {
+        loadChordSymbol(normalizedItems[0].chord);
+      }
+    },
+
+    selectProgressionItem: (index) => {
+      const item = get().progressionItems[index];
+      if (!item) return;
+      if (loadChordSymbol(item.chord)) {
+        set({ activeProgressionIndex: index });
+      }
     }
   };
 });
