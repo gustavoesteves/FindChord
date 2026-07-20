@@ -87,11 +87,11 @@ describe("score timeline context", () => {
     expect(measureNumberAtTick(measureTicks, 4320)).toBe(4);
   });
 
-  it("only promotes measure ticks automatically for non-common meter contexts", () => {
+  it("promotes reliable measure ticks even in common meter contexts", () => {
     const snapshot = snapshotWithTimeline();
     expect(measureTicksForMetricContext(snapshot)).toBe(snapshot.metadata.measureTicks);
 
-    expect(measureTicksForMetricContext({
+    const commonMeterSnapshot: ScoreSnapshot = {
       ...snapshot,
       metadata: {
         ...snapshot.metadata,
@@ -100,7 +100,8 @@ describe("score timeline context", () => {
           { measure: 1, tick: 0, beats: 4, beatType: 4, timeSignature: "4/4" }
         ]
       }
-    })).toBeUndefined();
+    };
+    expect(measureTicksForMetricContext(commonMeterSnapshot)).toBe(commonMeterSnapshot.metadata.measureTicks);
 
     expect(measureTicksForMetricContext({
       ...snapshot,

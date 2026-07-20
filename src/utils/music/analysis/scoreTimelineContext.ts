@@ -112,11 +112,17 @@ export function measureTicksForMetricContext(
   snapshot: ScoreSnapshot | null | undefined
 ): ScoreMeasureTickRange[] | undefined {
   const measureTicks = snapshot?.metadata?.measureTicks;
-  const hasNonCommonMeter = snapshot?.metadata?.timeTimeline?.some(entry => entry.timeSignature !== "4/4")
-    || Boolean(snapshot?.metadata?.timeSignature && snapshot.metadata.timeSignature !== "4/4");
-  const hasResolverCompatibleResolution = measureTicks?.some(measure => (
-    measure.endTick - measure.startTick >= 480
-  ));
+  if (!measureTicks || measureTicks.length === 0) return undefined;
 
-  return hasNonCommonMeter && hasResolverCompatibleResolution ? measureTicks : undefined;
+  const orderedTicks = [...measureTicks].sort((a, b) => a.startTick - b.startTick);
+  const hasReliableMeasureMap = orderedTicks.every((measure, index) => {
+    const duration = measure.endTick - measure.startTick;
+    const previous = orderedTicks[index - 1];
+    return Number.isFinite(measure.startTick)
+      && Number.isFinite(measure.endTick)
+      && duration >= 480
+      && (!previous || measure.startTick >= previous.endTick);
+  });
+
+  return hasReliableMeasureMap ? measureTicks : undefined;
 }
