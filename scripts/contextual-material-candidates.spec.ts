@@ -97,4 +97,23 @@ describe("F199 candidatas contextuais de material", () => {
       "G->F#"
     ]));
   });
+
+  it("infere alvo menor quando iiø prepara dominante sem proximo acorde", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A7",
+      previousChord: "Em7b5",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["C#", "G"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "C#->D",
+      "G->F"
+    ]));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).not.toContain("G->F#");
+  });
 });

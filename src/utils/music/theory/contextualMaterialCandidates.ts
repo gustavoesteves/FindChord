@@ -5,6 +5,7 @@ import {
 } from "./contextualMaterialChordContext";
 import { buildContextualMelodicMaterials } from "./contextualMelodicMaterials";
 import {
+  contextualResolutionChord,
   contextualResolutionTarget,
   determineContextualHarmonicFunction,
   guideToneResolutions,
@@ -206,11 +207,12 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
   const chordTones = chordPitchClasses(context.chord);
   const guideTones = guideTonesFor(quality.root, quality.quality);
   const effectiveResolutionTarget = contextualResolutionTarget(context, quality.root);
+  const effectiveResolutionChord = contextualResolutionChord(context, quality.root, effectiveResolutionTarget);
   const materialContext = effectiveResolutionTarget && effectiveResolutionTarget !== context.resolutionTarget
-    ? { ...context, resolutionTarget: effectiveResolutionTarget }
-    : context;
-  const guideToneTargets = nearestGuideToneTargets(guideTones, effectiveResolutionTarget, context.nextChord);
-  const guideToneResolutionPairs = guideToneResolutions(guideTones, effectiveResolutionTarget, context.nextChord);
+    ? { ...context, resolutionTarget: effectiveResolutionTarget, nextChord: context.nextChord ?? effectiveResolutionChord }
+    : { ...context, nextChord: context.nextChord ?? effectiveResolutionChord };
+  const guideToneTargets = nearestGuideToneTargets(guideTones, effectiveResolutionTarget, effectiveResolutionChord);
+  const guideToneResolutionPairs = guideToneResolutions(guideTones, effectiveResolutionTarget, effectiveResolutionChord);
   const weightedMelodyNotes = weightedMelodyNotesFromContext(context.melody);
   const melodyNotes = Array.from(new Set(weightedMelodyNotes.map(note => note.pitch)));
   const harmonicFunction = determineContextualHarmonicFunction(context, quality.root);

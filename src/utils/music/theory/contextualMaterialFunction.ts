@@ -36,6 +36,11 @@ function isMinorPredominantLike(symbol: string | undefined): boolean {
   return ["m", "m6", "m7", "m9", "m11", "m13", "m7b5"].includes(resolved.quality);
 }
 
+function isHalfDiminishedPredominant(symbol: string | undefined): boolean {
+  if (!symbol) return false;
+  return resolveChordSymbol(symbol, "plain").quality === "m7b5";
+}
+
 function chordBass(symbol: string): string | undefined {
   return resolveChordSymbol(symbol, "plain").bass || undefined;
 }
@@ -84,6 +89,22 @@ export function contextualResolutionTarget(context: MaterialContext, root: strin
   const localIiVTarget = impliedIiVResolutionTarget(context, root);
   if (localIiVTarget) return localIiVTarget;
   return impliedRegionalResolutionTarget(context, root);
+}
+
+export function contextualResolutionChord(
+  context: MaterialContext,
+  root: string,
+  targetRoot: string | undefined
+): string | undefined {
+  if (context.nextChord) return context.nextChord;
+  if (!targetRoot) return undefined;
+
+  const localIiVTarget = impliedIiVResolutionTarget(context, root);
+  if (localIiVTarget && rootsEqual(localIiVTarget, targetRoot) && isHalfDiminishedPredominant(context.previousChord)) {
+    return `${targetRoot}m`;
+  }
+
+  return undefined;
 }
 
 export function determineContextualHarmonicFunction(context: MaterialContext, root: string): ContextualHarmonicFunction {

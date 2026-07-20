@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   determineContextualHarmonicFunction,
+  contextualResolutionChord,
   contextualResolutionTarget,
   guideToneResolutions,
   guideTonesFor
@@ -95,6 +96,18 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(preparedDominant, "A")).toBe("dominant");
     expect(contextualResolutionTarget(looseSecondaryDominant, "A")).toBeUndefined();
     expect(determineContextualHarmonicFunction(looseSecondaryDominant, "A")).toBe("color");
+  });
+
+  it("infere qualidade menor para alvo local preparado por iiø", () => {
+    const preparedMinorDominant = {
+      chord: "A7",
+      previousChord: "Em7b5",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedMinorDominant, "A")).toBe("D");
+    expect(contextualResolutionChord(preparedMinorDominant, "A", "D")).toBe("Dm");
+    expect(guideToneResolutions(["C#", "G"], "D", "Dm")).toEqual(["C#->D", "G->F"]);
   });
 
   it("reconhece diminuto resolvido por semitom como dominante auxiliar", () => {
