@@ -5,6 +5,7 @@ import type {
   ScoreNoteEvent
 } from "../../../utils/music/analysis/models/ScoreSnapshot";
 import type {
+  ReharmonizationChordEvent,
   ReharmonizationInputContext,
   ReharmonizationMeasure,
   ReharmonizationPresentationRole,
@@ -35,9 +36,14 @@ export interface MelodicAnchorSelection {
 }
 
 export interface SectionMaterialSuggestion {
+  eventId?: string;
   measure: number;
   endMeasure?: number;
   chord: string;
+  beat?: number;
+  tickStart?: number;
+  tickEnd?: number;
+  durationTicks?: number;
   candidates: ContextualMaterialCandidate[];
   position?: number;
   source: "reference" | "proposal";
@@ -184,6 +190,44 @@ function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): Reharmonizatio
   return Array.from(measuresMap.entries())
     .sort((a, b) => a[0] - b[0])
     .map(([measureIndex, chords]) => ({ measureIndex, chords }));
+}
+
+function chordEventId(harmony: ScoreHarmonyEvent, chordIndex: number, occurrenceInMeasure: number): string {
+  return [
+    "chord",
+    harmony.measure,
+    harmony.tickStart,
+    occurrenceInMeasure,
+    chordIndex
+  ].join("-");
+}
+
+function harmonyEventsToProposalEvents(
+  harmonies: ScoreHarmonyEvent[],
+  originalHarmonies?: ScoreHarmonyEvent[]
+): ReharmonizationChordEvent[] {
+  const occurrenceByMeasure = new Map<number, number>();
+
+  return harmonies
+    .map((harmony, chordIndex) => {
+      const occurrenceInMeasure = occurrenceByMeasure.get(harmony.measure) || 0;
+      occurrenceByMeasure.set(harmony.measure, occurrenceInMeasure + 1);
+      const originalChord = originalHarmonies?.[chordIndex]?.harmony;
+
+      return {
+        id: chordEventId(harmony, chordIndex, occurrenceInMeasure),
+        measureIndex: harmony.measure,
+        beat: harmony.beat,
+        chord: harmony.harmony,
+        chordIndex,
+        occurrenceInMeasure,
+        tickStart: harmony.tickStart,
+        tickEnd: harmony.tickEnd,
+        durationTicks: harmony.durationTicks,
+        originalChord: originalChord && originalChord !== harmony.harmony ? originalChord : undefined
+      };
+    })
+    .sort((a, b) => a.tickStart - b.tickStart || a.chordIndex - b.chordIndex);
 }
 
 function confidenceValue(confidence: "weak" | "medium" | "strong" | undefined): number {
@@ -380,6 +424,7 @@ function buildReferenceContourReharmonizationProposal(
     kind: "controlled-reharmonization",
     name: "Rearmonização — contorno da partitura",
     measures: harmonyEventsToMeasures(substitutedEvents),
+    events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
     explanation: [
       "preserva a rota harmônica indicada pela partitura",
       "simplifica cores locais quando a melodia permite a leitura",
@@ -422,6 +467,7 @@ function buildReferenceRhythmReharmonizationProposal(
     kind: "controlled-reharmonization",
     name: "Rearmonização — ritmo harmônico da partitura",
     measures: harmonyEventsToMeasures(substitutedEvents),
+    events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
     explanation: [
       "preserva o ritmo harmônico escrito na partitura",
       structurallyChanged
@@ -570,21 +616,36 @@ export function buildProposalMaterialSuggestions(
 ): SectionMaterialSuggestion[] {
   if (!proposal || !phraseContext) return [];
 
-  const chords = proposal.measures.flatMap(measure => measure.chords.map(chord => ({
-    measure: measure.measureIndex,
-    chord
-  })));
+  const chords = proposal.events && proposal.events.length > 0
+    ? proposal.events.map(event => ({
+      eventId: event.id,
+      measure: event.measureIndex,
+      beat: event.beat,
+      chord: event.chord,
+      tickStart: event.tickStart,
+      tickEnd: event.tickEnd,
+      durationTicks: event.durationTicks
+    }))
+    : proposal.measures.flatMap(measure => measure.chords.map(chord => ({
+      eventId: undefined,
+      measure: measure.measureIndex,
+      beat: 1,
+      chord,
+      tickStart: 0,
+      tickEnd: 0,
+      durationTicks: 0
+    })));
 
   return chords.flatMap((item, index) => {
     const nextChord = chords[index + 1]?.chord;
     const nextMeasure = chords[index + 1]?.measure;
     const harmonyLikeEvent: ScoreHarmonyEvent = {
       measure: item.measure,
-      beat: 1,
+      beat: item.beat,
       harmony: item.chord,
-      tickStart: 0,
-      tickEnd: 0,
-      durationTicks: 0
+      tickStart: item.tickStart,
+      tickEnd: item.tickEnd,
+      durationTicks: item.durationTicks
     };
     const candidates = buildContextualMaterialCandidates({
       chord: item.chord,
@@ -600,6 +661,11 @@ export function buildProposalMaterialSuggestions(
         measure: item.measure,
         endMeasure: nextMeasure && nextMeasure > item.measure ? nextMeasure - 1 : item.measure,
         chord: item.chord,
+        eventId: item.eventId,
+        beat: item.beat,
+        tickStart: item.tickStart,
+        tickEnd: item.tickEnd,
+        durationTicks: item.durationTicks,
         candidates,
         position: index,
         source: "proposal"
@@ -801,6 +867,7 @@ export function buildExistingHarmonyProposal(
     kind: "reference",
     name: "Referência — Harmonia da partitura",
     measures: harmonyEventsToMeasures(sectionHarmonies),
+    events: harmonyEventsToProposalEvents(sectionHarmonies),
     explanation: referenceAnalysis.explanation,
     inputContext: inputContext || undefined,
     harmonicIdiom: referenceAnalysis.idiom?.idiom,
@@ -847,6 +914,7 @@ export function buildControlledReharmonizationProposals(
       kind: "controlled-reharmonization",
       name: "Rearmonização — substituição funcional",
       measures: harmonyEventsToMeasures(substitutedEvents),
+      events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
       explanation: controlled.explanation,
       bassLine: substitutedEvents.map(harmony => chordBass(harmony.harmony))
     };
@@ -888,6 +956,7 @@ export function buildHarmonyOnlyAnalysisProposals(
     kind: "controlled-reharmonization",
     name: "Leitura — Função da progressão",
     measures: harmonyEventsToMeasures(sectionHarmonies),
+    events: harmonyEventsToProposalEvents(sectionHarmonies),
     explanation: [
       `centro inferido pela harmonia: ${phraseContext.selectedCenter.tonic} ${phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}`,
       `percurso funcional: ${functionRoute}`,

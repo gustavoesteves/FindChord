@@ -5,6 +5,19 @@ export interface ReharmonizationMeasure {
   chords: string[];
 }
 
+export interface ReharmonizationChordEvent {
+  id: string;
+  measureIndex: number;
+  beat: number;
+  chord: string;
+  chordIndex: number;
+  occurrenceInMeasure: number;
+  tickStart: number;
+  tickEnd: number;
+  durationTicks: number;
+  originalChord?: string;
+}
+
 export type ReharmonizationProposalKind =
   | "reference"
   | "validated-harmonization"
@@ -48,6 +61,7 @@ export interface ReharmonizationProposal {
   kind: ReharmonizationProposalKind;
   name: string;
   measures: ReharmonizationMeasure[];
+  events?: ReharmonizationChordEvent[];
   explanation: string[];
   bassLine: string[];
   voiceLeadingScore?: number;

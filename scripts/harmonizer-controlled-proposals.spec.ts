@@ -111,5 +111,23 @@ describe("Harmonizer controlled proposals", () => {
       "F#m7(b5)",
       "Fmaj7"
     ]);
+    expect(controlled?.events?.filter(event => event.measureIndex === 2)).toEqual([
+      expect.objectContaining({
+        beat: 1,
+        chord: "F#m7(b5)",
+        originalChord: "Fmaj7",
+        tickStart: 1920,
+        tickEnd: 2400,
+        occurrenceInMeasure: 0
+      }),
+      expect.objectContaining({
+        beat: 3,
+        chord: "Fmaj7",
+        originalChord: undefined,
+        tickStart: 2880,
+        tickEnd: 3360,
+        occurrenceInMeasure: 1
+      })
+    ]);
   });
 });

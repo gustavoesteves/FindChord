@@ -3,6 +3,7 @@ import { PhraseAnalysisEngine, type PhraseContext } from "../src/utils/music/ana
 import {
   buildMaterialLinearRoutes,
   buildMaterialReadingRegions,
+  buildExistingHarmonyProposal,
   buildProposalMaterialSuggestionSets,
   buildProposalMaterialSuggestions,
   selectMelodicAnchors,
@@ -432,6 +433,110 @@ describe("F119 janela temporal da melodia", () => {
       ["existing-harmony-reference", "reference"]
     ]);
     expect(sets[0]?.suggestions.map(suggestion => suggestion.chord)).toEqual(["C", "F", "G7", "C"]);
+  });
+
+  it("preserva eventos temporizados na proposta de harmonia escrita", () => {
+    const proposal = buildExistingHarmonyProposal([
+      { measure: 1, beat: 1, harmony: "C", tickStart: 0, tickEnd: 960, durationTicks: 960 },
+      { measure: 1, beat: 3, harmony: "G7", tickStart: 960, tickEnd: 1920, durationTicks: 960 }
+    ]);
+
+    expect(proposal?.measures).toEqual([
+      { measureIndex: 1, chords: ["C", "G7"] }
+    ]);
+    expect(proposal?.events).toEqual([
+      expect.objectContaining({
+        id: "chord-1-0-0-0",
+        measureIndex: 1,
+        beat: 1,
+        chord: "C",
+        chordIndex: 0,
+        occurrenceInMeasure: 0,
+        tickStart: 0,
+        tickEnd: 960,
+        durationTicks: 960
+      }),
+      expect.objectContaining({
+        id: "chord-1-960-1-1",
+        measureIndex: 1,
+        beat: 3,
+        chord: "G7",
+        chordIndex: 1,
+        occurrenceInMeasure: 1,
+        tickStart: 960,
+        tickEnd: 1920,
+        durationTicks: 960
+      })
+    ]);
+  });
+
+  it("usa a janela temporal do evento da proposta para sugerir materiais", () => {
+    const anchors = [
+      { measureIndex: 1, pitch: "E", startTick: 0, endTick: 480, duration: 480 },
+      { measureIndex: 1, pitch: "B", startTick: 960, endTick: 1200, duration: 240 },
+      { measureIndex: 1, pitch: "F", startTick: 1200, endTick: 1440, duration: 240 },
+      { measureIndex: 2, pitch: "C", startTick: 1920, endTick: 2400, duration: 480 }
+    ];
+    const phraseContext = {
+      ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
+      selectedCenter: { tonic: "C", mode: "major" }
+    } as PhraseContext;
+    const suggestions = buildProposalMaterialSuggestions({
+      id: "timed-reference",
+      kind: "reference",
+      name: "Referencia temporizada",
+      measures: [
+        { measureIndex: 1, chords: ["C", "G7"] },
+        { measureIndex: 2, chords: ["C"] }
+      ],
+      events: [
+        {
+          id: "c-early",
+          measureIndex: 1,
+          beat: 1,
+          chord: "C",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 960,
+          durationTicks: 960
+        },
+        {
+          id: "g-late",
+          measureIndex: 1,
+          beat: 3,
+          chord: "G7",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 960,
+          tickEnd: 1920,
+          durationTicks: 960
+        },
+        {
+          id: "c-resolution",
+          measureIndex: 2,
+          beat: 1,
+          chord: "C",
+          chordIndex: 2,
+          occurrenceInMeasure: 0,
+          tickStart: 1920,
+          tickEnd: 2880,
+          durationTicks: 960
+        }
+      ],
+      explanation: [],
+      bassLine: ["C", "G", "C"]
+    }, anchors, phraseContext);
+
+    expect(suggestions.find(suggestion => suggestion.chord === "C")?.candidates[0]?.melodyNotes).toEqual(["E"]);
+    expect(suggestions.find(suggestion => suggestion.chord === "G7")?.candidates[0]?.melodyNotes).toEqual(["B", "F"]);
+    expect(suggestions.find(suggestion => suggestion.chord === "G7")).toMatchObject({
+      eventId: "g-late",
+      beat: 3,
+      tickStart: 960,
+      tickEnd: 1920,
+      durationTicks: 960
+    });
   });
 
   it("inclui variantes aplicaveis como leituras de material independentes", () => {
