@@ -58,6 +58,20 @@ describe("F202 funcao contextual de material", () => {
     }, "D")).toBe("color");
   });
 
+  it("reconhece diminuto resolvido por semitom como dominante auxiliar", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "G#dim7",
+      nextChord: "Am",
+      tonalCenter: { tonic: "A", mode: "minor" }
+    }, "G#")).toBe("dominant");
+
+    expect(determineContextualHarmonicFunction({
+      chord: "Cdim7",
+      nextChord: "Am",
+      tonalCenter: { tonic: "A", mode: "minor" }
+    }, "C")).toBe("color");
+  });
+
   it("calcula notas-guia e resolucoes proximas", () => {
     const guideTones = guideTonesFor("G", "dominant7th");
 

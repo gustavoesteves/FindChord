@@ -25,6 +25,11 @@ function isDominantLike(symbol: string): boolean {
   return ["7", "9", "11", "13", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
 }
 
+function isDiminishedLike(symbol: string): boolean {
+  const resolved = resolveChordSymbol(symbol, "plain");
+  return resolved.quality === "dim" || resolved.quality === "dim7";
+}
+
 function directedSemitones(from: string | undefined, to: string | undefined): number | null {
   if (!from || !to) return null;
   const fromChroma = Note.chroma(from);
@@ -43,8 +48,13 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
   const nextRoot = chordRoot(context.nextChord);
   const resolutionRoot = context.resolutionTarget ? Note.pitchClass(context.resolutionTarget) : undefined;
   const dominantLike = isDominantLike(context.chord);
+  const diminishedLike = isDiminishedLike(context.chord);
 
   if (center && rootsEqual(root, center.tonic)) return "tonic";
+  if (diminishedLike && (
+    directedSemitones(root, nextRoot) === 1
+    || directedSemitones(root, resolutionRoot) === 1
+  )) return "dominant";
   if (dominantLike && (
     resolvesAsDominant(root, nextRoot)
     || resolvesAsDominant(root, resolutionRoot)

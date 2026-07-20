@@ -471,6 +471,7 @@ describe("F115 candidatas contextuais de material", () => {
     });
     const wholeHalf = candidates.find(candidate => candidate.type === "whole-half diminished");
 
+    expect(wholeHalf?.harmonicFunction).toBe("dominant");
     expect(wholeHalf?.melodicMaterials).toEqual([
       expect.objectContaining({
         label: "Diminuto resolvido",
