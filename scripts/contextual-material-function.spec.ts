@@ -80,6 +80,23 @@ describe("F202 funcao contextual de material", () => {
     }, "G")).toBeUndefined();
   });
 
+  it("infere alvo regional local quando um ii prepara dominante sem proximo acorde", () => {
+    const preparedDominant = {
+      chord: "A7",
+      previousChord: "Em7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSecondaryDominant = {
+      chord: "A7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedDominant, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(preparedDominant, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSecondaryDominant, "A")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSecondaryDominant, "A")).toBe("color");
+  });
+
   it("reconhece diminuto resolvido por semitom como dominante auxiliar", () => {
     expect(determineContextualHarmonicFunction({
       chord: "G#dim7",

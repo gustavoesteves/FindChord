@@ -30,6 +30,12 @@ function isDiminishedLike(symbol: string): boolean {
   return resolved.quality === "dim" || resolved.quality === "dim7";
 }
 
+function isMinorPredominantLike(symbol: string | undefined): boolean {
+  if (!symbol) return false;
+  const resolved = resolveChordSymbol(symbol, "plain");
+  return ["m", "m6", "m7", "m9", "m11", "m13", "m7b5"].includes(resolved.quality);
+}
+
 function chordBass(symbol: string): string | undefined {
   return resolveChordSymbol(symbol, "plain").bass || undefined;
 }
@@ -45,6 +51,13 @@ function directedSemitones(from: string | undefined, to: string | undefined): nu
 function resolvesAsDominant(root: string, targetRoot: string | undefined): boolean {
   const motion = directedSemitones(root, targetRoot);
   return motion === 5 || motion === 11;
+}
+
+function impliedIiVResolutionTarget(context: MaterialContext, root: string): string | undefined {
+  const previousRoot = chordRoot(context.previousChord);
+  if (!previousRoot || !isMinorPredominantLike(context.previousChord)) return undefined;
+  if (directedSemitones(previousRoot, root) !== 5) return undefined;
+  return transposePitchClass(root, "4P") || undefined;
 }
 
 function resolvesAsLeadingDiminished(
@@ -68,6 +81,8 @@ function impliedRegionalResolutionTarget(context: MaterialContext, root: string)
 export function contextualResolutionTarget(context: MaterialContext, root: string): string | undefined {
   if (context.resolutionTarget) return Note.pitchClass(context.resolutionTarget);
   if (context.nextChord) return undefined;
+  const localIiVTarget = impliedIiVResolutionTarget(context, root);
+  if (localIiVTarget) return localIiVTarget;
   return impliedRegionalResolutionTarget(context, root);
 }
 
