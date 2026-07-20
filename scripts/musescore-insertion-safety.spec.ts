@@ -119,4 +119,20 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("writeScore(score, bridgeScoreUploadPath, \"musicxml\")");
     expect(plugin).not.toContain("/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml");
   });
+
+  it("mantem requestId na sincronizacao e nao encerra spinner por tempo fixo", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
+    const hook = readFileSync("src/domains/harmonizer/hooks/useScoreSync.ts", "utf8");
+
+    expect(bridge).toContain("broadcastScoreSnapshot(snapshot, requestId)");
+    expect(bridge).toContain("broadcastScoreSnapshot(snapshotForFrontend, payload.requestId)");
+    expect(plugin).toContain("extractScoreSnapshot(payload.requestId || \"\")");
+    expect(plugin).toContain("requestId: requestId || \"\"");
+    expect(adapter).toContain("const requestId = crypto.randomUUID();");
+    expect(adapter).toContain("payload.requestId !== requestId");
+    expect(adapter).toContain("return await snapshotReceived");
+    expect(hook).not.toContain("setTimeout(() => setIsSyncing(false)");
+  });
 });

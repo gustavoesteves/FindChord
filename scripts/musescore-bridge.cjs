@@ -126,11 +126,11 @@ function pruneExpiredQueue() {
   eventsDropped += before - eventQueue.length;
 }
 
-function broadcastScoreSnapshot(snapshot) {
+function broadcastScoreSnapshot(snapshot, requestId) {
   const scoreMessage = {
     protocolVersion: "1.0",
     messageType: "SESSION",
-    payload: { type: "SCORE_SNAPSHOT", data: snapshot }
+    payload: { type: "SCORE_SNAPSHOT", requestId, data: snapshot }
   };
 
   const messageStr = JSON.stringify(scoreMessage);
@@ -415,7 +415,7 @@ const server = http.createServer((req, res) => {
             notes: parsedScore.notes
           };
 
-          broadcastScoreSnapshot(snapshotForFrontend);
+          broadcastScoreSnapshot(snapshotForFrontend, payload.requestId);
 
           writeJson(res, 200, { status: 'success', parsedChords: parsedScore.harmonies.length, parsedNotes: parsedScore.notes.length });
           return;
@@ -423,7 +423,7 @@ const server = http.createServer((req, res) => {
 
         console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML via HTTP (${payload.harmonies?.length || 0} acordes).`);
         
-        broadcastScoreSnapshot(payload);
+        broadcastScoreSnapshot(payload, payload.requestId);
         
         writeJson(res, 200, { status: 'success', broadcastedTo: wss.clients.size });
       } catch (e) {

@@ -19,7 +19,7 @@ export function useScoreSync() {
   const syncScore = async () => {
     setIsSyncing(true);
     await musescoreAdapter.requestScoreSync();
-    setTimeout(() => setIsSyncing(false), 800);
+    setIsSyncing(false);
   };
 
   return {
@@ -29,4 +29,3 @@ export function useScoreSync() {
     syncScore
   };
 }
-

@@ -233,7 +233,7 @@ MuseScore {
             sendCommandAck(payload.commandId, result.accepted, result.reason);
 
         } else if (type === "request_score") {
-            extractScoreSnapshot();
+            extractScoreSnapshot(payload.requestId || "");
 
         } else if (type === "RENDER_ONTOLOGY") {
             renderOntology(payload.regions || []);
@@ -247,7 +247,7 @@ MuseScore {
     // SNAPSHOT (MS4 SAFE)
     // =========================
 
-    function extractScoreSnapshot() {
+    function extractScoreSnapshot(requestId) {
         if (isProcessingSnapshot) return;
         isProcessingSnapshot = true;
 
@@ -269,6 +269,7 @@ MuseScore {
 
             var payload = {
                 action: "PARSE_XML",
+                requestId: requestId || "",
                 path: bridgeScoreUploadPath
             };
 

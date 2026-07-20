@@ -10,7 +10,7 @@ export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 type StatusListener = (status: ConnectionStatus) => void;
 
 type ScoreSessionPayload =
-  | { type: "SCORE_SNAPSHOT"; data: ScoreSnapshot }
+  | { type: "SCORE_SNAPSHOT"; requestId?: string; data: ScoreSnapshot }
   | { type: "CURSOR_CHANGED"; cursorTick: number };
 
 /**
@@ -107,18 +107,44 @@ class MuseScoreAdapter {
   }
 
   public async requestScoreSync(): Promise<boolean> {
+    const requestId = crypto.randomUUID();
+    let unsubscribe = () => {};
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    const snapshotReceived = new Promise<boolean>((resolve) => {
+      timeout = setTimeout(() => {
+        unsubscribe();
+        resolve(false);
+      }, 10000);
+
+      unsubscribe = this.transport.onMessage((msg) => {
+        if (msg.messageType !== "SESSION") return;
+        const payload = msg.payload;
+        if (!isScoreSessionPayload(payload)) return;
+        if (payload.type !== "SCORE_SNAPSHOT") return;
+        if (payload.requestId !== requestId) return;
+
+        if (timeout) clearTimeout(timeout);
+        unsubscribe();
+        resolve(true);
+      });
+    });
+
     const msg: BridgeMessage = {
       protocolVersion: '1.0',
       messageType: 'SESSION',
       payload: {
         type: 'request_score',
+        requestId,
         data: {}
       }
     };
     try {
       await this.transport.send(msg);
-      return true;
+      return await snapshotReceived;
     } catch (e) {
+      if (timeout) clearTimeout(timeout);
+      unsubscribe();
       console.warn("MuseScore bridge offline", e);
       return false;
     }
