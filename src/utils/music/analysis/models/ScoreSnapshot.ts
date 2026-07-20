@@ -26,6 +26,22 @@ export interface ScoreMeasureTickRange {
   timeSignature?: string;
 }
 
+export interface ScoreKeyTimelineEntry {
+  measure: number;
+  tick: number;
+  fifths: number;
+  mode?: "major" | "minor" | string;
+  keySignature?: string;
+}
+
+export interface ScoreTimeTimelineEntry {
+  measure: number;
+  tick: number;
+  beats: number;
+  beatType: number;
+  timeSignature: string;
+}
+
 export interface ScoreNoteEvent {
   id: string;
   step: string;
@@ -51,6 +67,8 @@ export interface ScoreSnapshot {
     keySignature?: string;
     timeSignature?: string;
     measureTicks?: ScoreMeasureTickRange[];
+    keyTimeline?: ScoreKeyTimelineEntry[];
+    timeTimeline?: ScoreTimeTimelineEntry[];
     tempo?: number;
   };
 }

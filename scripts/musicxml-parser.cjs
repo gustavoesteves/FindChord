@@ -19,6 +19,31 @@ const MAJOR_KEY_BY_FIFTHS = {
   '7': 'C#'
 };
 
+const MINOR_KEY_BY_FIFTHS = {
+  '-7': 'Ab',
+  '-6': 'Eb',
+  '-5': 'Bb',
+  '-4': 'F',
+  '-3': 'C',
+  '-2': 'G',
+  '-1': 'D',
+  '0': 'A',
+  '1': 'E',
+  '2': 'B',
+  '3': 'F#',
+  '4': 'C#',
+  '5': 'G#',
+  '6': 'D#',
+  '7': 'A#'
+};
+
+function keySignatureFor(fifths, mode) {
+  const normalizedMode = String(mode || 'major').toLowerCase();
+  return normalizedMode === 'minor'
+    ? MINOR_KEY_BY_FIFTHS[fifths]
+    : MAJOR_KEY_BY_FIFTHS[fifths];
+}
+
 function getFirstTag(obj, tagName) {
   if (!obj || !Array.isArray(obj)) return null;
   for (let item of obj) {
@@ -63,7 +88,7 @@ function parseMusicXML(xmlData) {
     harmonies: [],
     notes: [],
     sections: [],
-    metadata: { title: "Imported Score", composer: "", measures: 0, measureTicks: [] }
+    metadata: { title: "Imported Score", composer: "", measures: 0, measureTicks: [], keyTimeline: [], timeTimeline: [] }
   };
 
   const scorePartwise = getFirstTag(xmlArr, 'score-partwise');
@@ -127,8 +152,19 @@ function parseMusicXML(xmlData) {
 
         const key = getFirstTag(el.attributes, 'key');
         const fifths = getText(key, 'fifths');
-        if (fifths !== null && fifths !== undefined && !snapshot.metadata.keySignature) {
-          snapshot.metadata.keySignature = MAJOR_KEY_BY_FIFTHS[fifths] || undefined;
+        if (fifths !== null && fifths !== undefined) {
+          const mode = String(getText(key, 'mode') || 'major').toLowerCase();
+          const keySignature = keySignatureFor(fifths, mode);
+          if (!snapshot.metadata.keySignature) {
+            snapshot.metadata.keySignature = keySignature || undefined;
+          }
+          snapshot.metadata.keyTimeline.push({
+            measure: mNumber,
+            tick: measureCursor,
+            fifths: parseInt(fifths),
+            mode,
+            keySignature
+          });
         }
 
         const time = getFirstTag(el.attributes, 'time');
@@ -139,6 +175,13 @@ function parseMusicXML(xmlData) {
           if (!snapshot.metadata.timeSignature) {
             snapshot.metadata.timeSignature = currentTimeSignature;
           }
+          snapshot.metadata.timeTimeline.push({
+            measure: mNumber,
+            tick: measureCursor,
+            beats: parseInt(beats),
+            beatType: parseInt(beatType),
+            timeSignature: currentTimeSignature
+          });
         }
       }
 

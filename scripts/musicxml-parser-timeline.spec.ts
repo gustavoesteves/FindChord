@@ -130,4 +130,45 @@ describe("MusicXML parser timeline", () => {
       [4320, 5760]
     ]);
   });
+
+  it("preserva timeline de armadura, modo e mudanca de metrica", () => {
+    const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
+      <score-partwise version="4.0">
+        <part-list>
+          <score-part id="P1"><part-name>Music</part-name></score-part>
+        </part-list>
+        <part id="P1">
+          <measure number="1">
+            <attributes>
+              <divisions>480</divisions>
+              <key><fifths>-3</fifths><mode>minor</mode></key>
+              <time><beats>4</beats><beat-type>4</beat-type></time>
+            </attributes>
+            <note><pitch><step>C</step><octave>4</octave></pitch><duration>1920</duration></note>
+          </measure>
+          <measure number="2">
+            <attributes>
+              <key><fifths>2</fifths><mode>major</mode></key>
+              <time><beats>3</beats><beat-type>4</beat-type></time>
+            </attributes>
+            <note><pitch><step>D</step><octave>4</octave></pitch><duration>1440</duration></note>
+          </measure>
+        </part>
+      </score-partwise>`);
+
+    expect(snapshot.metadata.keySignature).toBe("C");
+    expect(snapshot.metadata.timeSignature).toBe("4/4");
+    expect(snapshot.metadata.keyTimeline).toEqual([
+      { measure: 1, tick: 0, fifths: -3, mode: "minor", keySignature: "C" },
+      { measure: 2, tick: 1920, fifths: 2, mode: "major", keySignature: "D" }
+    ]);
+    expect(snapshot.metadata.timeTimeline).toEqual([
+      { measure: 1, tick: 0, beats: 4, beatType: 4, timeSignature: "4/4" },
+      { measure: 2, tick: 1920, beats: 3, beatType: 4, timeSignature: "3/4" }
+    ]);
+    expect(snapshot.metadata.measureTicks).toEqual([
+      { measure: 1, startTick: 0, endTick: 1920, timeSignature: "4/4" },
+      { measure: 2, startTick: 1920, endTick: 3360, timeSignature: "3/4" }
+    ]);
+  });
 });
