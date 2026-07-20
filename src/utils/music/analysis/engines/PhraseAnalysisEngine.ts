@@ -1,5 +1,6 @@
 import { Scale, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
+import type { ScoreMeasureTickRange } from "../models/ScoreSnapshot";
 
 export type CadenceType = 
   | "AUTHENTIC"
@@ -31,6 +32,10 @@ export interface PhraseContext {
   cadentialTarget: CadentialTarget;
 }
 
+interface PhraseAnalysisOptions {
+  measureTicks?: ScoreMeasureTickRange[];
+}
+
 const TONAL_CENTER_ROOTS = [
   "C",
   "G",
@@ -51,7 +56,11 @@ const TONAL_CENTER_ROOTS = [
 
 export class PhraseAnalysisEngine {
   
-  public static analyzePhrase(anchors: MelodicAnchor[], keySignature?: string): PhraseContext {
+  public static analyzePhrase(
+    anchors: MelodicAnchor[],
+    keySignature?: string,
+    options: PhraseAnalysisOptions = {}
+  ): PhraseContext {
     if (anchors.length === 0) {
       const defaultCenter: TonalCenterCandidate = { tonic: "C", mode: "major", confidence: 0.1 };
       return {
@@ -62,7 +71,7 @@ export class PhraseAnalysisEngine {
       };
     }
 
-    const cadentialTarget = this.inferCadentialTarget(anchors);
+    const cadentialTarget = this.inferCadentialTarget(anchors, options);
     const candidates = this.evaluateTonalCenters(anchors, cadentialTarget, keySignature);
     
     // Fallback if no candidate
@@ -78,7 +87,10 @@ export class PhraseAnalysisEngine {
     };
   }
 
-  private static inferCadentialTarget(anchors: MelodicAnchor[]): CadentialTarget {
+  private static inferCadentialTarget(
+    anchors: MelodicAnchor[],
+    options: PhraseAnalysisOptions
+  ): CadentialTarget {
     const lastAnchor = anchors[anchors.length - 1];
     const targetPitch = Note.pitchClass(lastAnchor.pitch) || "C";
     
@@ -89,7 +101,8 @@ export class PhraseAnalysisEngine {
         ? lastAnchor.endTick - lastAnchor.startTick
         : 480
     );
-    const durationRatio = Math.max(0, Math.min(1, durationTicks / 1920));
+    const expectedMeasureDuration = this.measureDurationForAnchor(lastAnchor, options.measureTicks) ?? 1920;
+    const durationRatio = Math.max(0, Math.min(1, durationTicks / expectedMeasureDuration));
     const confidence = Math.min(0.9, 0.4 + (durationRatio * 0.5));
 
     return {
@@ -97,6 +110,26 @@ export class PhraseAnalysisEngine {
       cadenceType: "OPEN", // We will refine this after we know the Tonal Center
       confidence
     };
+  }
+
+  private static measureDurationForAnchor(
+    anchor: MelodicAnchor,
+    measureTicks: ScoreMeasureTickRange[] | undefined
+  ): number | undefined {
+    if (!measureTicks || measureTicks.length === 0) return undefined;
+
+    const matchingMeasure = measureTicks.find(measure => (
+      measure.measure === anchor.measureIndex
+      || (
+        anchor.startTick !== undefined
+        && anchor.startTick >= measure.startTick
+        && anchor.startTick < measure.endTick
+      )
+    ));
+    if (!matchingMeasure) return undefined;
+
+    const duration = matchingMeasure.endTick - matchingMeasure.startTick;
+    return duration > 0 ? duration : undefined;
   }
 
   private static evaluateTonalCenters(

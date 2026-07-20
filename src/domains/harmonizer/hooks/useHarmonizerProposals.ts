@@ -102,7 +102,8 @@ export function useHarmonizerProposals({
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         melodyAnchorsData.anchors,
-        timelineContext.keySignature
+        timelineContext.keySignature,
+        { measureTicks: metricMeasureTicks }
       ),
       sectionHarmonies
     );

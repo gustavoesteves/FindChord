@@ -247,6 +247,20 @@ describe("F119 janela temporal da melodia", () => {
     expect(longCadence.cadentialTarget.confidence).toBe(0.9);
   });
 
+  it("calibra confianca cadencial pela duracao real do compasso", () => {
+    const threeFourCadence = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "D", duration: 720, startTick: 0, endTick: 720 },
+      { measureIndex: 2, pitch: "C", duration: 1440, startTick: 1440, endTick: 2880 }
+    ], "C", {
+      measureTicks: [
+        { measure: 1, startTick: 0, endTick: 1440, timeSignature: "3/4" },
+        { measure: 2, startTick: 1440, endTick: 2880, timeSignature: "3/4" }
+      ]
+    });
+
+    expect(threeFourCadence.cadentialTarget.confidence).toBe(0.9);
+  });
+
   it("nao nomeia cadencia somente pelo grau final da melodia", () => {
     const endingOnTonic = PhraseAnalysisEngine.analyzePhrase([
       { measureIndex: 1, pitch: "E", duration: 960 },
