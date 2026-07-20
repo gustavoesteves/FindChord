@@ -29,4 +29,12 @@ describe("Cadential goal presentation", () => {
     expect(tonalSeed.explanation[0]).toBe("Progressão orientada por ciclos de 4as/5as até o destino cadencial em G");
     expect(chromaticSeed.explanation[0]).toBe("Cromatismo ascendente rumo ao repouso em G");
   });
+
+  it("does not call a deceptive cadence target a rest", () => {
+    const tonalSeed = new TonalGravityField().generateArchetypeSeeds(phraseContext("DECEPTIVE"))[0];
+    const chromaticSeed = new ChromaticGravityField().generateArchetypeSeeds(phraseContext("DECEPTIVE"))[0];
+
+    expect(tonalSeed.explanation[0]).toBe("Progressão orientada por ciclos de 4as/5as até o alvo cadencial evitado em G");
+    expect(chromaticSeed.explanation[0]).toBe("Cromatismo ascendente rumo ao alvo evitado em G");
+  });
 });

@@ -2496,7 +2496,7 @@ export class StrategyGuidedHarmonizer {
     if (
       cadentialTarget
       && phraseContext.cadentialTarget.confidence >= 0.5
-      && phraseContext.cadentialTarget.cadenceType !== "HALF"
+      && !["HALF", "DECEPTIVE"].includes(phraseContext.cadentialTarget.cadenceType)
     ) {
       candidates.add(cadentialTarget);
     }

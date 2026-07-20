@@ -161,6 +161,25 @@ describe("F26.8b ii-V Local Region Generation", () => {
     expect(proposal?.explanation).toContain("usa preparação meio-diminuta antes da dominante local");
   });
 
+  it("does not treat a deceptive cadence as permission for local ii-V rest", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 3, pitch: "G", duration: 960 },
+      { measureIndex: 4, pitch: "A", duration: 1920 }
+    ];
+    const phraseContext: PhraseContext = {
+      selectedCenter: { tonic: "C", mode: "major", confidence: 0.8 },
+      tonalCenterCandidates: [{ tonic: "C", mode: "major", confidence: 0.8 }],
+      cadentialTarget: { targetPitch: "A", cadenceType: "DECEPTIVE", confidence: 0.8 }
+    };
+
+    const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .filter(candidate => candidate.name === "Estratégia — Gramática funcional ii-V");
+
+    expect(proposals.some(proposal => proposal.cadentialTarget === "A")).toBe(false);
+  });
+
   it("does not add local ii-V grammar to a simple melody resolving in its global center", () => {
     const anchors: MelodicAnchor[] = [
       { measureIndex: 1, pitch: "C" },
