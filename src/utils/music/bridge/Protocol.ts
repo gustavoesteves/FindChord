@@ -8,7 +8,7 @@ export interface MutationCommand {
   type: 'MUTATION';
   commandId: string;
   expiresAt: number;
-  action: 'INSERT_CHORD' | 'REPLACE_CHORD' | 'DELETE_CHORD';
+  action: 'INSERT_CHORD';
   targetTick: number;
   chordSymbol?: string;
   data?: unknown;
@@ -19,4 +19,11 @@ export interface CommandAck {
   commandId: string;
   status: 'accepted' | 'rejected';
   reason?: string;
+}
+
+export function isBridgeMessage(candidate: unknown): candidate is BridgeMessage {
+  if (!candidate || typeof candidate !== 'object') return false;
+  const message = candidate as Partial<BridgeMessage>;
+  return message.protocolVersion === '1.0'
+    && (message.messageType === 'SESSION' || message.messageType === 'MUTATION' || message.messageType === 'ACK');
 }

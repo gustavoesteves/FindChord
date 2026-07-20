@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { isBridgeMessage } from "../src/utils/music/bridge/Protocol";
 import { toMuseScoreChordSymbol } from "../src/utils/musescoreAdapter";
 
 describe("MuseScore chord insertion safety", () => {
@@ -93,13 +94,20 @@ describe("MuseScore chord insertion safety", () => {
     expect(protocol).toContain("messageType: 'SESSION' | 'MUTATION' | 'ACK'");
     expect(protocol).toContain("commandId: string;");
     expect(protocol).toContain("expiresAt: number;");
+    expect(protocol).toContain("action: 'INSERT_CHORD';");
+    expect(protocol).not.toContain("REPLACE_CHORD");
+    expect(protocol).not.toContain("DELETE_CHORD");
+    expect(protocol).toContain("export function isBridgeMessage");
     expect(protocol).toContain("export interface CommandAck");
 
     expect(bridge).toContain("'/api/v1/ack'");
     expect(bridge).toContain("isExpiredBridgeMessage");
+    expect(bridge).toContain("isSupportedQueuedMessage");
+    expect(bridge).toContain("payload.action === 'INSERT_CHORD'");
     expect(bridge).toContain("payload.type !== 'COMMAND_ACK'");
 
     expect(plugin).toContain("sendCommandAck");
+    expect(plugin).toContain("payload.action !== \"INSERT_CHORD\"");
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 
     expect(adapter).toContain("const commandId = crypto.randomUUID();");
@@ -107,8 +115,29 @@ describe("MuseScore chord insertion safety", () => {
     expect(adapter).toContain("sendWithAck(msg, commandId, 8000)");
 
     expect(transport).toContain("private pendingAcks");
+    expect(transport).toContain("isBridgeMessage(payload)");
     expect(transport).toContain("resolveAck(payload)");
     expect(transport).toContain("public async sendWithAck");
+  });
+
+  it("rejeita mensagens fora da versao e do tipo de protocolo suportados", () => {
+    expect(isBridgeMessage({
+      protocolVersion: "1.0",
+      messageType: "MUTATION",
+      payload: { type: "MUTATION", action: "INSERT_CHORD" }
+    })).toBe(true);
+
+    expect(isBridgeMessage({
+      protocolVersion: "2.0",
+      messageType: "MUTATION",
+      payload: { type: "MUTATION", action: "INSERT_CHORD" }
+    })).toBe(false);
+
+    expect(isBridgeMessage({
+      protocolVersion: "1.0",
+      messageType: "RENDER",
+      payload: { type: "RENDER_ONTOLOGY" }
+    })).toBe(false);
   });
 
   it("restringe MusicXML sincronizado a caminho temporario controlado pelo bridge", () => {

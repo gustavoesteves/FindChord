@@ -1,4 +1,4 @@
-import type { BridgeMessage, CommandAck } from './Protocol';
+import { isBridgeMessage, type BridgeMessage, type CommandAck } from './Protocol';
 
 interface PendingAck {
   resolve: (ack: CommandAck) => void;
@@ -71,8 +71,8 @@ export class WebSocketTransport {
             currentSocket.onmessage = (event) => {
               if (this.socket !== currentSocket) return;
               try {
-                const payload = JSON.parse(event.data) as BridgeMessage;
-                if (payload.protocolVersion) {
+                const payload = JSON.parse(event.data);
+                if (isBridgeMessage(payload)) {
                   this.resolveAck(payload);
                   this.messageListeners.forEach(l => l(payload));
                 }
@@ -152,6 +152,9 @@ export class WebSocketTransport {
   }
 
   public async send(message: BridgeMessage): Promise<void> {
+    if (!isBridgeMessage(message)) {
+      return Promise.reject(new Error("Invalid bridge message"));
+    }
     if (this.status === "connected" && this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
       return Promise.resolve();

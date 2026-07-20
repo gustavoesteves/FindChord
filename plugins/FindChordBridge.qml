@@ -232,9 +232,18 @@ MuseScore {
 
         if (!type) return;
 
-        if (type === "chord" || type === "MUTATION") {
+        if (type === "chord") {
             var result = transcribeChord(payload.data || payload);
             sendCommandAck(payload.commandId, result.accepted, result.reason);
+
+        } else if (type === "MUTATION") {
+            if (payload.action !== "INSERT_CHORD") {
+                sendCommandAck(payload.commandId, false, "Ação de mutação não suportada pelo plugin.");
+                return;
+            }
+
+            var mutationResult = transcribeChord(payload.data || payload);
+            sendCommandAck(payload.commandId, mutationResult.accepted, mutationResult.reason);
 
         } else if (type === "request_score") {
             extractScoreSnapshot(payload.requestId || "");

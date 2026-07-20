@@ -120,6 +120,16 @@ function isExpiredBridgeMessage(message) {
   return typeof expiresAt === 'number' && expiresAt <= Date.now();
 }
 
+function isSupportedQueuedMessage(message) {
+  if (!message || typeof message !== 'object') return false;
+  if (message.protocolVersion && message.protocolVersion !== '1.0') return false;
+  if (message.messageType === 'MUTATION') {
+    const payload = message.payload || {};
+    return payload.type === 'MUTATION' && payload.action === 'INSERT_CHORD';
+  }
+  return true;
+}
+
 function pruneExpiredQueue() {
   const before = eventQueue.length;
   eventQueue = eventQueue.filter(message => !isExpiredBridgeMessage(message));
@@ -308,7 +318,11 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        handleNewEvent(payload);
+        const accepted = handleNewEvent(payload);
+        if (!accepted) {
+          writeJson(res, 400, { error: 'Evento rejeitado por protocolo ou acao nao suportada.' });
+          return;
+        }
         writeJson(res, 200, { status: 'success', queued: eventQueue.length });
       } catch (e) {
         eventsRejected++;
@@ -480,6 +494,12 @@ function handleNewEvent(payload) {
     payload: payload.payload || payload
   };
 
+  if (!isSupportedQueuedMessage(bridgeMessage)) {
+    eventsRejected++;
+    console.warn('[Find Chord Bridge] Evento rejeitado por protocolo/acao nao suportada.');
+    return false;
+  }
+
   eventsAccepted++;
   eventQueue.push(bridgeMessage);
   console.log(`[Find Chord Bridge] HTTP Evento enfileirado [${bridgeMessage.messageType}]`);
@@ -491,6 +511,7 @@ function handleNewEvent(payload) {
   }
 
   broadcastMessage(bridgeMessage);
+  return true;
 }
 
 function broadcastMessage(message) {
@@ -552,6 +573,11 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data.toString());
+      if (!isSupportedQueuedMessage(message)) {
+        eventsRejected++;
+        console.warn('[Find Chord Bridge] WS message rejeitada por protocolo/acao nao suportada.');
+        return;
+      }
       const messageStr = JSON.stringify(message);
       if (!isPlugin) {
         if (isExpiredBridgeMessage(message)) return;
