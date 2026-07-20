@@ -112,6 +112,18 @@ function spellScoreNotePitch(note: ScoreNoteEvent): string {
   return note.step;
 }
 
+function selectStructuralAnchors(anchors: MelodicAnchor[], limit: number): MelodicAnchor[] {
+  if (anchors.length <= limit) return anchors;
+  const finalAnchor = anchors[anchors.length - 1];
+  const firstWindow = anchors.slice(0, limit);
+  if (firstWindow.includes(finalAnchor)) return firstWindow;
+  const windowEnd = firstWindow[firstWindow.length - 1];
+  if (windowEnd && finalAnchor.measureIndex > windowEnd.measureIndex + 1) {
+    return firstWindow;
+  }
+  return [...anchors.slice(0, Math.max(0, limit - 1)), finalAnchor];
+}
+
 function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {
   const measuresMap = new Map<number, string[]>();
   for (const harmony of harmonies) {
@@ -359,7 +371,7 @@ export function selectMelodicAnchors(
     }));
 
   return {
-    anchors: anchors.slice(0, limit),
+    anchors: selectStructuralAnchors(anchors, limit),
     allAnchors: anchors,
     isTruncated: anchors.length > limit
   };

@@ -82,10 +82,15 @@ export class PhraseAnalysisEngine {
     const lastAnchor = anchors[anchors.length - 1];
     const targetPitch = Note.pitchClass(lastAnchor.pitch) || "C";
     
-    // Confidence based on length/weight of the final note
-    // If it's a long note (e.g. whole note), high confidence.
-    const duration = lastAnchor.duration || 4; // default to 4 beats
-    const confidence = Math.min(0.9, 0.4 + (duration * 0.1));
+    // Confidence based on the final note duration in ticks. A whole-note-ish
+    // arrival is strong; a short pickup should not saturate the cadence.
+    const durationTicks = lastAnchor.duration || (
+      lastAnchor.startTick !== undefined && lastAnchor.endTick !== undefined
+        ? lastAnchor.endTick - lastAnchor.startTick
+        : 480
+    );
+    const durationRatio = Math.max(0, Math.min(1, durationTicks / 1920));
+    const confidence = Math.min(0.9, 0.4 + (durationRatio * 0.5));
 
     return {
       targetPitch,

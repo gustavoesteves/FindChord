@@ -68,6 +68,57 @@ describe("F119 janela temporal da melodia", () => {
     expect(selection.anchors.map(anchor => anchor.measureIndex)).toEqual([5, 6]);
   });
 
+  it("preserva a cadencia final quando a melodia excede o limite de anchors", () => {
+    const notes = Array.from({ length: 32 }, (_, index) => ({
+      id: `short-${index + 1}`,
+      step: index === 31 ? "G" : "D",
+      alter: 0,
+      octave: 4,
+      voice: 1,
+      staff: 1,
+      measure: Math.floor(index / 4) + 1,
+      tickStart: index * 120,
+      tickEnd: index * 120 + 120,
+      durationTicks: 120
+    }));
+    notes.push({
+      id: "final-c",
+      step: "C",
+      alter: 0,
+      octave: 4,
+      voice: 1,
+      staff: 1,
+      measure: 9,
+      tickStart: 7680,
+      tickEnd: 9600,
+      durationTicks: 1920
+    });
+
+    const selection = selectMelodicAnchors(notes, undefined, 32);
+
+    expect(selection.isTruncated).toBe(true);
+    expect(selection.anchors.at(-1)).toMatchObject({
+      pitch: "C",
+      measureIndex: 9,
+      startTick: 7680,
+      endTick: 9600
+    });
+  });
+
+  it("nao satura confianca cadencial com nota final curta em ticks", () => {
+    const shortCadence = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "D", duration: 960, startTick: 0, endTick: 960 },
+      { measureIndex: 2, pitch: "G", duration: 120, startTick: 1920, endTick: 2040 }
+    ], "C");
+    const longCadence = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "D", duration: 960, startTick: 0, endTick: 960 },
+      { measureIndex: 2, pitch: "C", duration: 1920, startTick: 1920, endTick: 3840 }
+    ], "C");
+
+    expect(shortCadence.cadentialTarget.confidence).toBeLessThan(0.5);
+    expect(longCadence.cadentialTarget.confidence).toBe(0.9);
+  });
+
   it("prioriza notas que se sobrepoem ao intervalo da cifra", () => {
     const harmony = {
       measure: 2,
