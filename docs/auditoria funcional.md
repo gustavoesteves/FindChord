@@ -11,11 +11,11 @@ Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 | Área | Feito | Ainda aberto |
 |---|---|---|
 | Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
-| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score. | Regras contextuais e Improviso ainda precisam refinamento funcional. |
+| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score; função contextual e resoluções de notas-guia respeitam alvo real. | Improviso ainda precisa deduplicar referência/variantes e escolher default aplicável. |
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: `FC-HZ-12`, corrigir regras contextuais que ainda ensinam função, dominante e resolução de forma simplificada demais.
+Próximo bloco recomendado: `FC-HZ-09`, deduplicar as leituras de Improviso e escolher por padrão a referência/fundação aplicável.
 
 ## Parecer executivo
 
@@ -365,22 +365,18 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Improviso / C-D.
 - **Esperado:** reconhecer dominantes pelo alvo real e produzir notas-guia da qualidade/alvo.
-- **Observado:**
-  - dominantes alteradas e secundárias podem virar `color`;
-  - D7→C pode virar dominante sem relação V/SubV;
-  - toda qualidade recebe terça+sétima;
-  - todo alvo recebe terça maior.
+- **Observado:** resolvido parcialmente. Dominantes secundárias/SubV agora dependem de alvo real; D7→C não vira dominante funcional; notas-guia vêm da fórmula do acorde; resoluções usam a qualidade do acorde de chegada. Ainda falta ampliar casos de diminutos e acordes sem alvo explícito.
 - **Evidência:** [contextualMaterialFunction.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/theory/contextualMaterialFunction.ts:23>).
 - **Reprodução:**
-  - `A7→Dm` e `E7→Am` em C = `color`;
-  - `D7→C` = `dominant`;
-  - C, C6, Cadd9 → guide tones E/Bb;
-  - Csus/F#5 recebem terceiras;
-  - E7→Am sugere D→C#; G7→Cm sugere F→E.
+  - `A7→Dm`, `E7→Am` e `Db7→C` são `dominant`;
+  - `D7→C` fica `color`;
+  - C, C6, Cadd9 produzem apenas a terça; Csus/F#5 não fabricam terça+sétima;
+  - E7→Am sugere D→C; G7→Cm sugere F→Eb.
 - **Impacto:** músico — recebe resolução melódica objetivamente errada; produto — ranking, região e rota linear usam a classificação defeituosa.
 - **Causa provável:** predicados incompletos e alvo representado apenas pela raiz.
-- **Correção recomendada:** qualidade dominante canônica; validar quinta/SubV/alvo local; derivar guide tones da fórmula do acorde-alvo.
-- **Testes necessários:** V–I, V–i, dominantes secundárias, SubV, sus, power, tríades e diminutos.
+- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem `nextChord`.
+- **Correção recomendada:** aprofundar diminutos, dominantes sem próximo acorde e alvo por região quando não houver `nextChord`.
+- **Testes necessários:** diminutos auxiliares/de passagem e dominantes cadenciais sem acorde seguinte explícito.
 - **Confiança:** alta.
 
 ## MuseScore, concorrência e segurança

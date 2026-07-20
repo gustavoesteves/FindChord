@@ -1,6 +1,6 @@
 import { Note } from "tonal";
-import type { ChordQuality } from "../constants/chordRegistry";
-import { resolveChordSymbol } from "./ChordSymbolResolver";
+import { CHORD_REGISTRY, type ChordQuality } from "../constants/chordRegistry";
+import { chordPitchClasses, resolveChordSymbol } from "./ChordSymbolResolver";
 import type {
   ContextualHarmonicFunction,
   MaterialContext
@@ -25,12 +25,30 @@ function isDominantLike(symbol: string): boolean {
   return ["7", "9", "11", "13", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
 }
 
+function directedSemitones(from: string | undefined, to: string | undefined): number | null {
+  if (!from || !to) return null;
+  const fromChroma = Note.chroma(from);
+  const toChroma = Note.chroma(to);
+  if (fromChroma === undefined || toChroma === undefined) return null;
+  return (toChroma - fromChroma + 12) % 12;
+}
+
+function resolvesAsDominant(root: string, targetRoot: string | undefined): boolean {
+  const motion = directedSemitones(root, targetRoot);
+  return motion === 5 || motion === 11;
+}
+
 export function determineContextualHarmonicFunction(context: MaterialContext, root: string): ContextualHarmonicFunction {
   const center = context.tonalCenter;
   const nextRoot = chordRoot(context.nextChord);
+  const dominantLike = isDominantLike(context.chord);
 
   if (center && rootsEqual(root, center.tonic)) return "tonic";
-  if (isDominantLike(context.chord) && nextRoot && center && rootsEqual(nextRoot, center.tonic)) return "dominant";
+  if (dominantLike && (
+    resolvesAsDominant(root, nextRoot)
+    || (!!center && resolvesAsDominant(root, center.tonic))
+  )) return "dominant";
+  if (dominantLike) return "color";
   if (center && center.mode === "major" && (
     rootsEqual(root, Note.transpose(center.tonic, "2M"))
     || rootsEqual(root, Note.transpose(center.tonic, "4P"))
@@ -46,26 +64,35 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
 }
 
 export function guideTonesFor(root: string, quality: ChordQuality): string[] {
-  const thirdInterval = quality.startsWith("minor") || quality === "halfDiminished" || quality === "diminished" || quality === "diminished7th"
-    ? "3m"
-    : "3M";
-  const seventhInterval = quality === "major7th" || quality === "major9th" || quality === "major13th" || quality === "major7#11" || quality === "minorMajor7th"
-    ? "7M"
-    : quality === "diminished7th"
-      ? "6M"
-      : "7m";
-  return [transposePitchClass(root, thirdInterval), transposePitchClass(root, seventhInterval)]
+  const intervals = CHORD_REGISTRY[quality]?.intervals || [];
+  const guideIntervals = intervals.filter(interval => ["3M", "3m", "7M", "7m"].includes(interval));
+  return guideIntervals
+    .map(interval => transposePitchClass(root, interval))
     .filter((note): note is string => note !== null);
 }
 
-export function nearestGuideToneTargets(notes: string[], targetRoot: string | undefined): string[] {
+function targetNotesFor(targetRoot: string | undefined, targetChord?: string): string[] {
   if (!targetRoot) return [];
   const root = Note.pitchClass(targetRoot);
   if (!root) return [];
-  const targetThird = transposePitchClass(root, "3M");
-  const targetFifth = transposePitchClass(root, "5P");
-  const targetTonic = root;
-  return Array.from(new Set([targetTonic, targetThird, targetFifth].filter((note): note is string => !!note)))
+
+  const chordNotes = targetChord ? chordPitchClasses(targetChord) : [];
+  if (chordNotes.length > 0) {
+    return Array.from(new Set([
+      root,
+      ...chordNotes.map(note => Note.pitchClass(note)).filter((note): note is string => !!note)
+    ]));
+  }
+
+  return Array.from(new Set([
+    root,
+    transposePitchClass(root, "3M"),
+    transposePitchClass(root, "5P")
+  ].filter((note): note is string => !!note)));
+}
+
+export function nearestGuideToneTargets(notes: string[], targetRoot: string | undefined, targetChord?: string): string[] {
+  return targetNotesFor(targetRoot, targetChord)
     .filter(target => notes.some(note => {
       const left = Note.chroma(note);
       const right = Note.chroma(target);
@@ -84,15 +111,8 @@ function semitoneDistance(from: string, to: string): number {
   return Math.min(up, down);
 }
 
-export function guideToneResolutions(notes: string[], targetRoot: string | undefined): string[] {
-  if (!targetRoot) return [];
-  const root = Note.pitchClass(targetRoot);
-  if (!root) return [];
-  const targetNotes = Array.from(new Set([
-    root,
-    transposePitchClass(root, "3M"),
-    transposePitchClass(root, "5P")
-  ].filter((note): note is string => !!note)));
+export function guideToneResolutions(notes: string[], targetRoot: string | undefined, targetChord?: string): string[] {
+  const targetNotes = targetNotesFor(targetRoot, targetChord);
 
   return notes.flatMap(note => {
     const target = targetNotes

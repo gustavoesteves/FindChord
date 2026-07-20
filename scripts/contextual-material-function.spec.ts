@@ -14,10 +14,53 @@ describe("F202 funcao contextual de material", () => {
     }, "G")).toBe("dominant");
   });
 
+  it("reconhece dominantes secundarias pelo alvo real", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "A7",
+      nextChord: "Dm",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "A")).toBe("dominant");
+
+    expect(determineContextualHarmonicFunction({
+      chord: "E7",
+      nextChord: "Am",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "E")).toBe("dominant");
+  });
+
+  it("nao chama dominante sem relacao V ou SubV de funcao dominante", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "D7",
+      nextChord: "C",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "D")).toBe("color");
+  });
+
+  it("reconhece SubV pelo alvo cromatico descendente", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "Db7",
+      nextChord: "C",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "Db")).toBe("dominant");
+  });
+
   it("calcula notas-guia e resolucoes proximas", () => {
     const guideTones = guideTonesFor("G", "dominant7th");
 
     expect(guideTones).toEqual(["B", "F"]);
     expect(guideToneResolutions(guideTones, "C")).toEqual(["B->C", "F->E"]);
+  });
+
+  it("deriva notas-guia apenas dos graus presentes na qualidade", () => {
+    expect(guideTonesFor("C", "major")).toEqual(["E"]);
+    expect(guideTonesFor("C", "major6th")).toEqual(["E"]);
+    expect(guideTonesFor("C", "add9")).toEqual(["E"]);
+    expect(guideTonesFor("C", "sus4")).toEqual([]);
+    expect(guideTonesFor("C", "power")).toEqual([]);
+  });
+
+  it("resolve notas-guia para a qualidade real do acorde de chegada", () => {
+    expect(guideToneResolutions(["G#", "D"], "A", "Am")).toEqual(["G#->A", "D->C"]);
+    expect(guideToneResolutions(["B", "F"], "C", "Cm")).toEqual(["B->C", "F->Eb"]);
   });
 });

@@ -204,8 +204,8 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
   const sources = getMaterialSourceMapsForQuality(quality.root, quality.quality);
   const chordTones = chordPitchClasses(context.chord);
   const guideTones = guideTonesFor(quality.root, quality.quality);
-  const guideToneTargets = nearestGuideToneTargets(guideTones, context.resolutionTarget);
-  const guideToneResolutionPairs = guideToneResolutions(guideTones, context.resolutionTarget);
+  const guideToneTargets = nearestGuideToneTargets(guideTones, context.resolutionTarget, context.nextChord);
+  const guideToneResolutionPairs = guideToneResolutions(guideTones, context.resolutionTarget, context.nextChord);
   const weightedMelodyNotes = weightedMelodyNotesFromContext(context.melody);
   const melodyNotes = Array.from(new Set(weightedMelodyNotes.map(note => note.pitch)));
   const harmonicFunction = determineContextualHarmonicFunction(context, quality.root);
