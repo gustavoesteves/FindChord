@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useWriter } from "../context/WriterContext";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
+import { evaluateVoicingErgonomics } from "../../../utils/music/scoring/voicingErgonomics";
 import { Layers } from "lucide-react";
 
 type FilterTab = "todos" | "drops" | "abertos" | "fechados" | "ergonomicos" | "distancia";
@@ -11,37 +12,7 @@ export const VoicingSearchLayer: React.FC = () => {
 
   const { voicingResults, selectedFrets, tuning, activeChord } = state;
 
-  // 1. Calcular Score Ergonômico Explicável
-  const getErgonomicScore = (shape: VoicingShape) => {
-    const fretted = shape.frets.filter(f => f !== null && f > 0) as number[];
-    if (fretted.length === 0) return 100;
-    
-    const minFret = Math.min(...fretted);
-    const maxFret = Math.max(...fretted);
-    
-    // Span (menor é mais ergonômico)
-    const span = maxFret - minFret;
-    const spanPenalty = span > 4 ? (span - 4) * 20 : 0;
-    
-    // Quantidade de dedos no braço (menos é mais ergonômico)
-    const countPenalty = fretted.length * 6;
-    
-    // Pestanas (barré)
-    const fretFrequencies: Record<number, number> = {};
-    fretted.forEach(f => {
-      fretFrequencies[f] = (fretFrequencies[f] || 0) + 1;
-    });
-    const hasBarre = Object.values(fretFrequencies).some(count => count >= 3);
-    const barrePenalty = hasBarre ? 12 : 0;
-
-    // Casas muito baixas que exigem mais força
-    const lowFretPenalty = minFret <= 2 ? 8 : 0;
-
-    const score = 100 - (spanPenalty + countPenalty + barrePenalty + lowFretPenalty);
-    return Math.max(0, score);
-  };
-
-  // 2. Calcular Distância Absoluta (Movimento Mínimo)
+  // 1. Calcular Distância Absoluta (Movimento Mínimo)
   const getFretboardDistance = (shape: VoicingShape, currentFrets: (number | null)[]) => {
     let distance = 0;
     for (let i = 0; i < currentFrets.length; i++) {
@@ -57,12 +28,6 @@ export const VoicingSearchLayer: React.FC = () => {
     return distance;
   };
 
-  const ergonomicLabel = (score: number) => {
-    if (score >= 78) return "confortável";
-    if (score >= 55) return "tocável";
-    return "exige abertura";
-  };
-
   const movementLabel = (distance: number) => {
     if (distance === 0) return "mesma posição";
     if (distance <= 4) return "movimento curto";
@@ -70,7 +35,7 @@ export const VoicingSearchLayer: React.FC = () => {
     return "nova região";
   };
 
-  // 3. Filtragem e Ordenação com base na Aba Ativa
+  // 2. Filtragem e Ordenação com base na Aba Ativa
   const processedVoicings = useMemo(() => {
     let list = [...voicingResults];
 
@@ -118,7 +83,7 @@ export const VoicingSearchLayer: React.FC = () => {
 
     // Aplicar Ordenações Específicas
     if (activeTab === "ergonomicos") {
-      list.sort((a, b) => getErgonomicScore(b) - getErgonomicScore(a));
+      list.sort((a, b) => evaluateVoicingErgonomics(b.frets).score - evaluateVoicingErgonomics(a.frets).score);
     } else if (activeTab === "distancia") {
       list.sort((a, b) => getFretboardDistance(a, selectedFrets) - getFretboardDistance(b, selectedFrets));
     } else {
@@ -129,7 +94,7 @@ export const VoicingSearchLayer: React.FC = () => {
     return list.slice(0, 35); // Limitar a 35 resultados para manter performance fluida
   }, [voicingResults, activeTab, selectedFrets]);
 
-  // 4. Renderizador do Mini Diagrama SVG Adaptável
+  // 3. Renderizador do Mini Diagrama SVG Adaptável
   const renderMiniDiagram = (frets: (number | null)[], stringCount: number) => {
     // Calcular a altura dinamicamente baseada no stretch máximo do acorde
     const fretted = frets.filter(f => f !== null && f > 0) as number[];
@@ -242,7 +207,7 @@ export const VoicingSearchLayer: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 gap-4 overflow-y-auto pr-1 scrollbar-thin select-none py-1">
             {processedVoicings.map((voicing, idx) => {
               const isSelected = selectedFrets.every((f, index) => f === voicing.frets[index]);
-              const ergScore = getErgonomicScore(voicing);
+              const ergonomics = evaluateVoicingErgonomics(voicing.frets);
               const dist = getFretboardDistance(voicing, selectedFrets);
 
               return (
@@ -272,7 +237,7 @@ export const VoicingSearchLayer: React.FC = () => {
 
                     <div className="flex gap-1.5 mt-2 flex-wrap justify-center">
                       <span className="text-[8px] px-1 py-0.5 rounded font-black bg-emerald-950/40 border border-emerald-900/40 text-emerald-400">
-                        {ergonomicLabel(ergScore)}
+                        {ergonomics.label}
                       </span>
                       <span className="text-[8px] px-1 py-0.5 rounded font-black bg-amber-950/40 border border-amber-900/40 text-amber-400">
                         {movementLabel(dist)}

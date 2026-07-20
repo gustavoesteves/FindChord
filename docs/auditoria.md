@@ -400,6 +400,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [VoicingSearchLayer.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VoicingSearchLayer.tsx:14>), [voicingScorer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/scoring/voicingScorer.ts:93>), [voicingClassifier.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/voicingClassifier.ts:175>).
 
+**Progresso:** a leitura de ergonomia visível no Writer passou a consumir uma política central em `voicingErgonomics.ts`; pestanas compactas deixam de ser penalizadas categoricamente pela UI e o filtro “Confortáveis” usa a mesma função. Regressão coberta em `voicing-ergonomics-policy.spec.ts`. Ainda falta carregar o breakdown completo do motor no `VoicingShape`.
+
 **Evidência:** a UI penaliza pestana em `-12`; o motor dá bônus `+10`. A UI aceita stretch até 4; o motor até 3. As penalidades por notas pressionadas também divergem.
 
 **Cenário:** alternar entre “Todos” e “Confortáveis”.
