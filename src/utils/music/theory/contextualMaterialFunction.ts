@@ -30,6 +30,10 @@ function isDiminishedLike(symbol: string): boolean {
   return resolved.quality === "dim" || resolved.quality === "dim7";
 }
 
+function chordBass(symbol: string): string | undefined {
+  return resolveChordSymbol(symbol, "plain").bass || undefined;
+}
+
 function directedSemitones(from: string | undefined, to: string | undefined): number | null {
   if (!from || !to) return null;
   const fromChroma = Note.chroma(from);
@@ -43,9 +47,21 @@ function resolvesAsDominant(root: string, targetRoot: string | undefined): boole
   return motion === 5 || motion === 11;
 }
 
+function resolvesAsLeadingDiminished(
+  symbol: string,
+  root: string,
+  targetRoot: string | undefined
+): boolean {
+  if (!targetRoot || !isDiminishedLike(symbol)) return false;
+  const bass = chordBass(symbol);
+  return directedSemitones(root, targetRoot) === 1
+    || directedSemitones(bass, targetRoot) === 1;
+}
+
 function impliedRegionalResolutionTarget(context: MaterialContext, root: string): string | undefined {
   const center = context.tonalCenter?.tonic;
   if (!center) return undefined;
+  if (resolvesAsLeadingDiminished(context.chord, root, center)) return center;
   return resolvesAsDominant(root, center) ? center : undefined;
 }
 
@@ -64,8 +80,8 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
 
   if (center && rootsEqual(root, center.tonic)) return "tonic";
   if (diminishedLike && (
-    directedSemitones(root, nextRoot) === 1
-    || directedSemitones(root, resolutionRoot) === 1
+    resolvesAsLeadingDiminished(context.chord, root, nextRoot)
+    || resolvesAsLeadingDiminished(context.chord, root, resolutionRoot)
   )) return "dominant";
   if (dominantLike && (
     resolvesAsDominant(root, nextRoot)

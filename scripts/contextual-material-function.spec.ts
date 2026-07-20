@@ -94,6 +94,19 @@ describe("F202 funcao contextual de material", () => {
     }, "C")).toBe("color");
   });
 
+  it("reconhece diminuto invertido quando o baixo conduz ao alvo por semitom", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "Edim7/C#",
+      nextChord: "Dm",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "E")).toBe("dominant");
+
+    expect(contextualResolutionTarget({
+      chord: "Bdim7",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "B")).toBe("C");
+  });
+
   it("calcula notas-guia e resolucoes proximas", () => {
     const guideTones = guideTonesFor("G", "dominant7th");
 
