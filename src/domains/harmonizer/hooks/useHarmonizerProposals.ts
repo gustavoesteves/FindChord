@@ -7,7 +7,7 @@ import {
   diagnosticsForMode,
   type HarmonicDiagnostic
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
-import type { FormalSection } from "../../../store/useScoreSessionStore";
+import type { FormalSection } from "../../../utils/music/analysis/models/FormalSection";
 import { rankReharmonizationProposalsByVoiceLeading } from "../../../utils/music/analysis/strategies/VoiceLeadingProposalRanker";
 import {
   annotateProposalPresentationRoles,

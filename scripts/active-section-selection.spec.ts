@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { effectiveSectionId } from "../src/domains/harmonizer/hooks/useActiveSection";
-import type { FormalSection } from "../src/store/useScoreSessionStore";
+import type { FormalSection } from "../src/utils/music/analysis/models/FormalSection";
 
 const sections: FormalSection[] = [
   { id: "sec_a", label: "A", source: "score", startMeasure: 1, endMeasure: 8 },

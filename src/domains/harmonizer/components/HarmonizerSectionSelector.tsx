@@ -1,5 +1,5 @@
 import { Music2 } from "lucide-react";
-import type { FormalSection } from "../../../store/useScoreSessionStore";
+import type { FormalSection } from "../../../utils/music/analysis/models/FormalSection";
 
 interface HarmonizerSectionSelectorProps {
   sections: FormalSection[];

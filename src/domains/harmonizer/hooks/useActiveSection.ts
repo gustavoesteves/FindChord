@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { FormalSection } from "../../../store/useScoreSessionStore";
+import type { FormalSection } from "../../../utils/music/analysis/models/FormalSection";
 
 export function effectiveSectionId(sections: FormalSection[], selectedSectionId: string | null): string | null {
   if (sections.length === 0) return null;

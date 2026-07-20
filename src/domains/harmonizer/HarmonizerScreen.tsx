@@ -12,7 +12,7 @@ import { useScoreSync } from "./hooks/useScoreSync";
 import { useActiveSection } from "./hooks/useActiveSection";
 import { useHarmonizerProposals } from "./hooks/useHarmonizerProposals";
 import { useApplyProposalToWriter } from "./hooks/useApplyProposalToWriter";
-import type { FormalSection } from "../../store/useScoreSessionStore";
+import type { FormalSection } from "../../utils/music/analysis/models/FormalSection";
 
 interface HarmonizerScreenProps {
   onNavigateToWriter?: () => void;

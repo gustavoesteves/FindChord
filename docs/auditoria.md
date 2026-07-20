@@ -388,6 +388,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [SuiteDomainOutlet.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/SuiteDomainOutlet.tsx:1>), [WriterTabSurface.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/WriterTabSurface.tsx:7>), [HarmonizerScreen.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/HarmonizerScreen.tsx:4>), [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:45>).
 
+**Progresso:** `FormalSection` saiu da implementação do store e passou para um modelo neutro em `utils/music/analysis/models/FormalSection.ts`; consumidores do Harmonizer e testes importam o contrato do modelo, não do store. Regressão estrutural coberta em `formal-section-model-boundary.spec.ts`. Ainda falta separar layout de `suite` e injetar a porta de sessão no adapter.
+
 **Evidência:** `suite` importa Writer/Harmonizer, enquanto ambos importam layout de `suite`; o header depende diretamente do store do Writer; o adapter de infraestrutura muta diretamente o store de sessão; `FormalSection` é definido dentro da implementação do store.
 
 **Impacto:** features, transporte e composição não podem ser testados ou reutilizados isoladamente; alterações atravessam fronteiras em ambas as direções.

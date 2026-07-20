@@ -1,17 +1,6 @@
 import { create } from "zustand";
 import type { ScoreSnapshot } from "../utils/music/analysis/models/ScoreSnapshot";
-
-export interface FormalSection {
-  id: string;
-  label: string;
-  source: "score" | "inferred-phrase-window";
-  startMeasure: number;
-  endMeasure: number;
-  startTick?: number;
-  endTick?: number;
-  startChordIndex?: number;
-  endChordIndex?: number;
-}
+import type { FormalSection } from "../utils/music/analysis/models/FormalSection";
 
 interface AnalysisIndexes {
   formalSections: FormalSection[];
