@@ -38,6 +38,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:28>), `validateOrigin`, `/api/v1/send`, `handleNewEvent`, `server.listen`; [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:163>), `processEvent`.
 
+**Progresso:** o plugin não expõe mais `EVAL`/`eval(`, o bridge escuta explicitamente em `127.0.0.1`, e há tokens efêmeros separados para dashboard e plugin. Regressão coberta em `musescore-insertion-safety.spec.ts`.
+
 **Evidência:** requisições sem `Origin` são aceitas, não existe autenticação e `/send` exige apenas `type` ou `protocolVersion`. Um evento `EVAL` chega à fila e o QML executa `eval(payload.code)`. O servidor escuta em `*:9000`, não apenas loopback.
 
 **Cenário:** com bridge e plugin ativos, um cliente local ou da LAN envia `{"type":"EVAL","code":"..."}` sem `Origin`.
@@ -51,6 +53,8 @@ Pontos de entrada e fluxos principais:
 ## P1-2 — Bypass de Origin no WebSocket permite injeção e exposição de snapshots
 
 **Arquivos/símbolos:** [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:333>), handler WebSocket; [TransportLayer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/TransportLayer.ts:57>), `onmessage`; [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:39>), `isScoreSessionPayload`.
+
+**Progresso:** rotas WebSocket passaram a validar pathname exato (`/plugin` e `/dashboard`) e mensagens recebidas passam por schema/runtime guard. O pareamento por sessão/token reduz o risco de cliente não autorizado. Ainda falta teste comportamental HTTP/WS em porta efêmera.
 
 **Evidência:** qualquer Origin é aceito quando a URL contém `/plugin`; o teste usa `includes`, não pathname exato. Todo JSON recebido é retransmitido a todos os clientes. O frontend só verifica `protocolVersion` truthy, `SESSION` e `payload.type`.
 
@@ -66,6 +70,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivo/símbolo:** [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:176>), rota `/api/v1/score`, ação `PARSE_XML`.
 
+**Progresso:** a sincronização passou a usar caminho temporário controlado pelo bridge, com `realpath`, `stat`, limite de tamanho e rejeição de caminhos fora do local permitido. Regressão coberta em `musescore-insertion-safety.spec.ts`.
+
 **Evidência:** `payload.path` passa diretamente para `existsSync` e `readFileSync`, sem `realpath`, allowlist, `stat`, verificação de arquivo regular ou limite de tamanho. O limite de 512 KiB cobre somente o JSON da requisição.
 
 **Cenário:** cliente não autenticado aponta para um MusicXML local conhecido ou para arquivo/dispositivo muito grande.
@@ -79,6 +85,8 @@ Pontos de entrada e fluxos principais:
 ## P1-4 — Fila pode aplicar mutações antigas na partitura errada ou perdê-las
 
 **Arquivos/símbolos:** [TransportLayer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/TransportLayer.ts:105>), `send`; [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:79>), `sendChord`; [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:78>), `/consume`; [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:127>), polling/inserção.
+
+**Progresso:** mutações passaram a carregar `commandId`, `expiresAt` e ACK do plugin; o transporte aguarda `sendWithAck`, e o protocolo remove actions não suportadas (`REPLACE/DELETE`). Ainda falta validação real dentro do MuseScore.
 
 **Evidência:** `sendChord` retorna sucesso assim que `WebSocket.send` aceita os bytes. A fila é global, não possui sessão, score ID, TTL, idempotência ou ACK. `/consume` limpa antes do processamento; acima de 50 itens, o mais antigo é descartado. Erros QML são engolidos.
 
@@ -94,6 +102,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:197>), `extractScoreSnapshot`; [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>); [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:106>).
 
+**Progresso:** o caminho fixo em `dist/findchord_sync.musicxml` foi removido; o bridge fornece `scoreUploadPath` temporário. A sincronização usa `requestId`, ignora respostas antigas e não encerra spinner por timeout fixo. Regressão coberta em `musescore-insertion-safety.spec.ts`.
+
 **Evidência:** o plugin grava exclusivamente em `/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml`. `dist` é ignorado e `npm run dev` não o cria. A UI ignora o retorno booleano e encerra o spinner após 800 ms. O QML reutiliza o mesmo arquivo e libera a flag antes da resposta HTTP.
 
 **Cenário:** clone em outro caminho/SO, clone sem build anterior, plugin fechado, parse lento ou duas sincronizações próximas.
@@ -107,6 +117,8 @@ Pontos de entrada e fluxos principais:
 ## P1-6 — A ingestão descarta os ticks necessários aos motores temporais
 
 **Arquivos/símbolos:** [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:327>), `selectMelodicAnchors`; [HarmonicRegionResolver.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/HarmonicRegionResolver.ts:16>); [TemporalSlotAllocator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/TemporalSlotAllocator.ts:24>).
+
+**Progresso:** anchors agora preservam `startTick/endTick`; seleção estrutural usa a frase inteira; `measureTicks` é consumido por seleção de anchors e por geração temporal quando a métrica/resolução são compatíveis. Regressões cobertas em `temporal-melody-window.spec.ts`, `score-timeline-context.spec.ts` e auditorias F359.
 
 **Evidência:** `ScoreNoteEvent.tickStart/tickEnd` existem, mas o mapper cria anchors apenas com compasso, pitch e duração. Os consumidores usam zero, `anchors.length * 1920` ou non-null assertions sobre os ticks ausentes.
 
@@ -166,7 +178,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:97>), [ScoreSnapshot.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/models/ScoreSnapshot.ts:40>), [HarmonicRegionResolver.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/HarmonicRegionResolver.ts:19>).
 
-**Progresso:** F358 preservou `keyTimeline` e `timeTimeline` no snapshot. F359 iniciou o consumo dessas timelines pelo Harmonizar, resolvendo tonalidade e métrica pelo início da seção ativa e mantendo fallback para `metadata.keySignature/timeSignature`. Ainda falta migrar scripts de auditoria, comparadores e motores temporais que assumem tonalidade global ou 4/4 fixo.
+**Progresso:** F358 preservou `keyTimeline` e `timeTimeline` no snapshot. F359 iniciou o consumo dessas timelines pelo Harmonizar, por auditorias/calibrações reais, por chamadas diretas de `PhraseAnalysisEngine` com snapshot e por parte da geração temporal via `measureTicks` conservador. Ainda falta remover fallbacks 4/4 onde o motor não recebe `divisions/PPQ` explícito.
 
 **Evidência:** após `<backup>`, o parser guarda apenas o cursor final, não o maior cursor alcançado. Fixture válida com voz 1 até tick 1920, backup e voz 2 até 480 fez o compasso seguinte começar em 480. Só a primeira armadura é preservada; fórmula de compasso/modo não entram no snapshot; vários motores fixam 1920 ticks por compasso.
 
@@ -182,6 +194,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:150>), [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:334>).
 
+**Progresso:** `selectMelodicAnchors` seleciona linha melódica primária por staff/voz em vez de misturar tudo, e `spellScoreNotePitch` preserva alterações múltiplas como `Bbb`. Regressão coberta em `temporal-melody-window.spec.ts`.
+
 **Evidência:** o parser preserva `voice`, `staff` e `alter`, mas `selectMelodicAnchors` mistura todos os eventos e só converte `alter` igual a `1` ou `-1`.
 
 **Cenário real:** `african flower.musicxml` contém 119 notas da voz 1, 46 da voz 2 e `alter=-2`; Bbb se torna B natural.
@@ -195,6 +209,8 @@ Pontos de entrada e fluxos principais:
 ## P2-3 — O limite de 32 notas cria um falso final de frase com confiança máxima
 
 **Arquivos:** [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:344>), [PhraseAnalysisEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/PhraseAnalysisEngine.ts:81>).
+
+**Progresso:** a seleção estrutural passou a amostrar a seção inteira e preservar a cadência final; a confiança cadencial usa duração em ticks sem saturar notas curtas. Regressões cobertas em `temporal-melody-window.spec.ts`.
 
 **Evidência:** as primeiras 32 notas são cortadas antes de seleção estrutural. `duration`, documentada e alimentada em ticks, é multiplicada como se estivesse em beats; poucos ticks já saturam a confiança em `0.9`.
 
@@ -210,6 +226,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [ControlledSubstitutionProposals.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/ControlledSubstitutionProposals.ts:30>), [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:683>).
 
+**Progresso:** propostas controladas carregam `targetTickStart` e a aplicação exige `measure + chord + tick`, evitando trocar ocorrências idênticas no mesmo compasso. Regressão coberta em `controlled-substitution-proposals.spec.ts`.
+
 **Evidência:** o alvo é identificado apenas por `measureIndex + chordSymbol`, e a aplicação usa o mesmo predicado.
 
 **Reprodução:** dois `Fmaj7` no compasso 2 foram ambos trocados por `F#m7(b5)` por uma única proposta.
@@ -224,6 +242,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [ChordSymbolResolver.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/theory/ChordSymbolResolver.ts:133>), [chordParser.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/theory/chordParser.ts:60>), [HarmonicStrategyValidator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/HarmonicStrategyValidator.ts:165>).
 
+**Progresso:** parser legado e helpers funcionais preservam `6/9` como qualidade, sem criar baixo falso. Regressão coberta em `chord-parser-slash-quality.spec.ts`.
+
 **Evidência:** o resolver canônico entende `C6/9`; parsers e validadores paralelos usam `split("/")`.
 
 **Reprodução:** resolver → qualidade `6_9`, notas C–E–G–A–D; parser legado → `major6th`, sem D. `C6` gerou substituição Am, mas `C6/9` gerou zero. `D6/9 → G6` recebeu direção oposta a `D6 → G6`.
@@ -237,6 +257,8 @@ Pontos de entrada e fluxos principais:
 ## P2-6 — Contrato TypeScript diverge do protocolo executado
 
 **Arquivos:** [Protocol.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/Protocol.ts:1>), [TransportLayer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/TransportLayer.ts:57>), [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:163>).
+
+**Progresso:** o protocolo agora rejeita versões/tipos não suportados, restringe mutations a `INSERT_CHORD`, remove `REPLACE/DELETE` não implementados e inclui ACK. Regressão coberta em `musescore-insertion-safety.spec.ts`.
 
 **Evidência:** TS declara apenas versão `1.0`, `SESSION/MUTATION` e `INSERT/REPLACE/DELETE`; o servidor também gera `RENDER`; a recepção aceita qualquer versão truthy. QML trata toda `MUTATION` como inserção e ignora `action` e `targetTick`.
 
@@ -266,6 +288,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [useActiveSection.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useActiveSection.ts:4>), [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:108>), [useScoreSessionStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useScoreSessionStore.ts:119>).
 
+**Progresso:** seção efetiva é calculada sincronicamente por `effectiveSectionId`, evitando render transitório sem seção válida. IDs de seção sincronizados são determinísticos o bastante para preservar `sec_b` entre resyncs. Regressão coberta em `active-section-selection.spec.ts`.
+
 **Evidência:** IDs de seção incluem `Math.random`; toda sincronização os altera. `selectedSectionId` começa/invalida como `null` e só é corrigido em `useEffect`; nesse render a pipeline recebe todas as notas/harmonias.
 
 **Cenário:** usuário está na seção B e sincroniza novamente.
@@ -279,6 +303,8 @@ Pontos de entrada e fluxos principais:
 ## P2-9 — “Ver mais” não pode voltar a “Ver menos”
 
 **Arquivo:** [HarmonizerProposalList.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/HarmonizerProposalList.tsx:171>).
+
+**Progresso:** o toggle agora depende do overflow colapsado total (`collapsedHiddenCount > 0`), separado da contagem atualmente escondida; portanto continua visível em modo expandido e mostra “Ver menos”. Regressão coberta em `harmonizer-proposal-list-curation.spec.ts`.
 
 **Evidência:** quando `isExpanded=true`, `hiddenCount` é forçado a zero; o botão só é renderizado quando `hiddenCount > 0`. Portanto desaparece após expandir e o texto “Ver menos” é inalcançável.
 
@@ -306,6 +332,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>), [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).
 
+**Progresso:** o workflow agora executa `npm run lint` e `npm run test:curated`; a suíte curada atual passa localmente com 126 arquivos aprovados, 2 ignorados, 662 testes aprovados e 6 ignorados. Ainda falta cobertura comportamental real de HTTP/WS, DOM e execução dentro do MuseScore.
+
 **Evidência:** a suíte completa expirou duas vezes em 20 s; o teste levou 22–23 s, embora isolado passe em 12 s. O CI executa apenas build, não lint/testes. Não há cobertura configurada nem testes DOM; nenhuma spec exerce o servidor bridge. O teste QML verifica strings/ordem, não comportamento. ESLint aplica `rules:{}` ao CJS e ignora QML.
 
 **Impacto:** o gate local é instável e regressões de autenticação, fila, ACK, UI e sincronização podem chegar ao deploy com build verde.
@@ -317,6 +345,8 @@ Pontos de entrada e fluxos principais:
 ## P2-12 — Vite bloqueado no lockfile possui advisories atuais
 
 **Arquivos:** [package.json](</Volumes/Documents/Development/Find Chord/package.json:44>), [package-lock.json](</Volumes/Documents/Development/Find Chord/package-lock.json:3662>).
+
+**Progresso:** `vite` foi atualizado para `^8.0.16`, e o lockfile aponta `node_modules/vite` para `8.0.16`.
 
 **Evidência:** está instalado Vite 8.0.14. O audit online reportou uma dependência direta com severidade agregada alta: bypass de `server.fs.deny` e exposição de arquivos em cenários Windows/network, além de vazamento de hash NTLMv2 pelo endpoint de editor. A versão corrigida é 8.0.16. [GHSA-fx2h-pf6j-xcff](https://github.com/advisories/GHSA-fx2h-pf6j-xcff), [GHSA-v6wh-96g9-6wx3](https://github.com/advisories/GHSA-v6wh-96g9-6wx3).
 
