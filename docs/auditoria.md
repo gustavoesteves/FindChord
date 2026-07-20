@@ -374,6 +374,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [SuiteDomainOutlet.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/SuiteDomainOutlet.tsx:1>), [vite.config.ts](</Volumes/Documents/Development/Find Chord/vite.config.ts:6>).
 
+**Progresso:** Writer e Harmonizer passaram a ser carregados com `React.lazy`/`Suspense` no outlet da suíte, criando chunks por domínio e evitando import estático dos dois motores na primeira tela. Regressão estrutural coberta em `suite-domain-code-splitting.spec.ts`.
+
 **Evidência:** Writer e Harmonizer são imports estáticos. O único chunk JS tem 593,39 kB minificado e gera aviso do Vite.
 
 **Impacto:** custo de download/parse do motor Harmonic inteiro mesmo para usuários que abrem somente Writer.
