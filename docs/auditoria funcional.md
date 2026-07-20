@@ -400,15 +400,15 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-MS-02 — P1 — interface confunde bridge com MuseScore e o deploy publicado é incompatível
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
-- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A UI agora chama o WebSocket de `Bridge Conectado/Offline` e mostra erro visível quando o plugin não responde ao sync. A separação técnica completa plugin/score continua pendente.
+- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A UI agora chama o WebSocket de `Bridge Conectado/Offline`, consulta `/api/v1/status` com token da sessão, mostra `Plugin ativo/Aguardando plugin` e exibe erro visível quando o plugin não responde ao sync. A separação por score continua pendente.
 - **Esperado:** estados separados para bridge, plugin e score; erro visível; ambiente publicado compatível.
-- **Observado:** resolvido parcialmente. O badge não promete mais disponibilidade do MuseScore quando só o bridge está conectado; `pluginLastSeen` ainda não é consumido; export só faz `console.warn`.
+- **Observado:** resolvido parcialmente. O badge não promete mais disponibilidade do MuseScore quando só o bridge está conectado e já consome `pluginLastSeen`; export ainda só faz `console.warn` e não há vínculo com score específico.
 - **Evidência:** [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>), [MuseScoreConnectionBadge.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/MuseScoreConnectionBadge.tsx:4>), [VirtualFretboard.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VirtualFretboard.tsx:41>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:1>).
 - **Reprodução:** bridge ativo e plugin fechado: interface pode dizer “MuseScore Conectado”; sync espera e termina sem mensagem. Na origem Pages, o bridge rejeita a sessão.
 - **Impacto:** músico — não sabe se a operação funcionou; produto — integração indisponível no deploy oficial.
 - **Causa provável:** conexão técnica usada como proxy de disponibilidade funcional; topologia de deploy não foi alinhada ao allowlist.
-- **Correção recomendada:** status técnico `bridge/plugin/score`, resultado tipado também para export e pareamento seguro compatível.
-- **Testes necessários:** plugin offline, score ausente e origem de produção em runtime real.
+- **Correção recomendada:** status técnico com `scoreId/scoreName`, resultado tipado também para export e pareamento seguro compatível.
+- **Testes necessários:** score ausente/trocado e origem de produção em runtime real.
 - **Confiança:** alta.
 
 ### FC-MS-03 — P2 — mutações não são idempotentes e o protocolo promete ações inexistentes

@@ -2,7 +2,8 @@ import { Link, Link2Off, RefreshCw } from "lucide-react";
 import { useMuseScoreConnection } from "../useMuseScoreConnection";
 
 export default function MuseScoreConnectionBadge() {
-  const { status, reconnect } = useMuseScoreConnection();
+  const { status, operationalStatus, reconnect } = useMuseScoreConnection();
+  const pluginOnline = operationalStatus?.pluginOnline === true;
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950/60 rounded-xl border border-zinc-850 text-xs font-semibold text-zinc-300">
@@ -10,7 +11,12 @@ export default function MuseScoreConnectionBadge() {
         <>
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <Link className="h-3.5 w-3.5 text-emerald-400" />
-          <span className="text-[10px] uppercase font-black text-emerald-400 tracking-wider">Bridge Conectado</span>
+          <div className="flex flex-col leading-none">
+            <span className="text-[10px] uppercase font-black text-emerald-400 tracking-wider">Bridge Conectado</span>
+            <span className={`text-[9px] uppercase font-black tracking-wider ${pluginOnline ? "text-emerald-300" : "text-amber-300"}`}>
+              {pluginOnline ? "Plugin ativo" : "Aguardando plugin"}
+            </span>
+          </div>
         </>
       )}
       {status === "connecting" && (

@@ -9,6 +9,21 @@ export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
 type StatusListener = (status: ConnectionStatus) => void;
 
+export interface BridgeOperationalStatus {
+  bridgeOnline: boolean;
+  pluginOnline: boolean;
+  pluginLastSeen: string | null;
+  frontendLastSeen: string | null;
+  queueSize: number;
+}
+
+interface BridgeStatusResponse {
+  bridgeOnline?: boolean;
+  pluginLastSeen?: string | null;
+  frontendLastSeen?: string | null;
+  queueSize?: number;
+}
+
 type ScoreSessionPayload =
   | { type: "SCORE_SNAPSHOT"; requestId?: string; data: ScoreSnapshot }
   | { type: "CURSOR_CHANGED"; cursorTick: number };
@@ -75,6 +90,20 @@ class MuseScoreAdapter {
 
   public subscribe(listener: StatusListener) {
     return this.transport.subscribeStatus(listener);
+  }
+
+  public async getOperationalStatus(): Promise<BridgeOperationalStatus> {
+    const status = await this.transport.fetchJson<BridgeStatusResponse>("/api/v1/status");
+    const pluginLastSeenTime = status.pluginLastSeen ? Date.parse(status.pluginLastSeen) : 0;
+    const pluginOnline = Number.isFinite(pluginLastSeenTime) && Date.now() - pluginLastSeenTime < 8000;
+
+    return {
+      bridgeOnline: Boolean(status.bridgeOnline),
+      pluginOnline,
+      pluginLastSeen: status.pluginLastSeen || null,
+      frontendLastSeen: status.frontendLastSeen || null,
+      queueSize: status.queueSize || 0
+    };
   }
 
   public connect() {

@@ -15,6 +15,7 @@ export class WebSocketTransport {
   private pendingAcks: Map<string, PendingAck> = new Map();
   private endpoint: string;
   private sessionEndpoint: string;
+  private dashboardToken: string | null = null;
 
   constructor(endpoint: string = "ws://localhost:9000/dashboard") {
     this.endpoint = endpoint;
@@ -99,7 +100,7 @@ export class WebSocketTransport {
     });
   }
 
-  private async resolveSessionEndpoint(): Promise<string> {
+  private async resolveSession(): Promise<{ wsEndpoint?: string; dashboardToken?: string }> {
     const response = await fetch(this.sessionEndpoint, {
       headers: {
         "X-FindChord-Client": "compose-suite"
@@ -110,8 +111,34 @@ export class WebSocketTransport {
       throw new Error(`Bridge session failed: ${response.status}`);
     }
 
-    const session = await response.json() as { wsEndpoint?: string };
+    const session = await response.json() as { wsEndpoint?: string; dashboardToken?: string };
+    this.dashboardToken = session.dashboardToken || this.dashboardToken;
+    return session;
+  }
+
+  private async resolveSessionEndpoint(): Promise<string> {
+    const session = await this.resolveSession();
     return session.wsEndpoint || this.endpoint;
+  }
+
+  public async fetchJson<T>(path: string): Promise<T> {
+    if (!this.dashboardToken) {
+      await this.resolveSession();
+    }
+
+    const baseUrl = this.sessionEndpoint.replace(/\/api\/v1\/session$/, "");
+    const response = await fetch(`${baseUrl}${path}`, {
+      headers: {
+        "X-FindChord-Client": "compose-suite",
+        ...(this.dashboardToken ? { "X-FindChord-Session": this.dashboardToken } : {})
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bridge request failed: ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
   }
 
   public disconnect() {

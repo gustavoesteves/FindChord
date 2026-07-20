@@ -7,7 +7,22 @@ describe("MuseScore status UI", () => {
 
     expect(badge).toContain("Bridge Conectado");
     expect(badge).toContain("Bridge Offline");
+    expect(badge).toContain("Plugin ativo");
+    expect(badge).toContain("Aguardando plugin");
     expect(badge).not.toContain("MuseScore Conectado");
+  });
+
+  it("polls authenticated bridge status to distinguish plugin activity", () => {
+    const transport = readFileSync("src/utils/music/bridge/TransportLayer.ts", "utf8");
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
+    const hook = readFileSync("src/domains/suite/useMuseScoreConnection.ts", "utf8");
+
+    expect(transport).toContain("public async fetchJson");
+    expect(transport).toContain("\"X-FindChord-Session\": this.dashboardToken");
+    expect(adapter).toContain("getOperationalStatus");
+    expect(adapter).toContain("Date.now() - pluginLastSeenTime < 8000");
+    expect(hook).toContain("setInterval(refresh, 3000)");
+    expect(hook).toContain("operationalStatus");
   });
 
   it("surfaces plugin timeout as a visible sync error", () => {
