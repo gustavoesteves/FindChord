@@ -5,6 +5,7 @@ export type ContextualMaterialRole = "primary" | "color" | "resolution";
 export type ContextualHarmonicFunction = "tonic" | "predominant" | "dominant" | "modal" | "color";
 export type ContextualMaterialIntent = "inside" | "functional" | "tension" | "outside";
 export type ContextualMelodicFit = "aligned" | "neutral" | "caution";
+export type ContextualMaterialOrigin = "source-map" | "curated-catalog";
 export type MelodySupportRole = "guide-tone" | "resolution-target" | "passing-tone" | "linear-fragment";
 
 export interface MaterialContext {
@@ -42,6 +43,7 @@ export interface ContextualMelodicMaterial {
 
 export interface ContextualMaterialCandidate extends MaterialSourceMap {
   chord: string;
+  materialOrigin: ContextualMaterialOrigin;
   role: ContextualMaterialRole;
   intent: ContextualMaterialIntent;
   harmonicFunction: ContextualHarmonicFunction;

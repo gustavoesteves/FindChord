@@ -10,6 +10,8 @@ Esta auditoria mede os materiais melodicos que aparecem nas cifras da referencia
 - Leituras da proposta primaria gerada: 1892
 - Material no candidato principal: 6924 (74%)
 - Material disponivel apenas em candidato secundario: 2399 (26%)
+- Principal vindo do catalogo curado: 107 (1%)
+- Catalogo curado disponivel: 9129 (98%)
 - Sem material melodico: 0 (0%)
 - Sem candidato de material: 0
 

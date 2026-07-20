@@ -32,12 +32,14 @@ export interface MelodicMaterialAuditRow {
   measure: number;
   chord: string;
   primarySource?: string;
+  primaryOrigin?: string;
   primaryFunction?: string;
   primaryFit?: string;
   primaryMaterials: string[];
   availableMaterials: string[];
   cells: string[];
   status: MelodicMaterialAuditStatus;
+  availableOrigins: string[];
 }
 
 export interface MelodicMaterialAuditReport {
@@ -98,10 +100,12 @@ function rowsFromSuggestions(
       measure: suggestion.measure,
       chord: suggestion.chord,
       primarySource: primary?.name,
+      primaryOrigin: primary?.materialOrigin,
       primaryFunction: primary?.harmonicFunction,
       primaryFit: primary?.melodicFit,
       primaryMaterials: unique(primaryMaterials.map(material => material.label)),
       availableMaterials: unique(availableMaterials.map(material => material.label)),
+      availableOrigins: unique(suggestion.candidates.map(candidate => candidate.materialOrigin)),
       cells: materialCells(primaryMaterials.length > 0 ? primaryMaterials : availableMaterials),
       status: rowStatus(suggestion.candidates.length > 0, primaryMaterials, availableMaterials)
     };
@@ -198,7 +202,7 @@ export function auditMelodicMaterialsLibrary(files = musicXmlFiles(realMusicDir)
     availableNonPrimaryRows: rows.filter(row => row.status === "available-nonprimary").length,
     noMaterialRows: rows.filter(row => row.status === "no-material").length,
     noCandidateRows: rows.filter(row => row.status === "no-candidate").length,
-    materialCounts: materialCounts(rows)
+  materialCounts: materialCounts(rows)
   };
 }
 
@@ -213,8 +217,8 @@ function csvEscape(value: string | number | undefined): string {
 
 export function renderMelodicMaterialsAuditCsv(report: MelodicMaterialAuditReport): string {
   const header = [
-    "file", "source", "proposal", "measure", "chord", "primarySource", "primaryFunction",
-    "primaryFit", "primaryMaterials", "availableMaterials", "cells", "status"
+    "file", "source", "proposal", "measure", "chord", "primarySource", "primaryOrigin", "primaryFunction",
+    "primaryFit", "primaryMaterials", "availableMaterials", "availableOrigins", "cells", "status"
   ];
   const rows = report.rows.map(row => [
     row.file,
@@ -223,10 +227,12 @@ export function renderMelodicMaterialsAuditCsv(report: MelodicMaterialAuditRepor
     row.measure,
     row.chord,
     row.primarySource,
+    row.primaryOrigin,
     row.primaryFunction,
     row.primaryFit,
     row.primaryMaterials.join(" | "),
     row.availableMaterials.join(" | "),
+    row.availableOrigins.join(" | "),
     row.cells.join(" | "),
     row.status
   ].map(csvEscape).join(","));
@@ -237,6 +243,8 @@ export function renderMelodicMaterialsAuditMarkdown(report: MelodicMaterialAudit
   const rowsWithMaterial = report.rows.filter(row => row.availableMaterials.length > 0);
   const nonPrimary = report.rows.filter(row => row.status === "available-nonprimary");
   const noMaterialExamples = report.rows.filter(row => row.status === "no-material").slice(0, 40);
+  const primaryCuratedRows = report.rows.filter(row => row.primaryOrigin === "curated-catalog").length;
+  const availableCuratedRows = report.rows.filter(row => row.availableOrigins.includes("curated-catalog")).length;
   const lines = [
     "# F184 - Auditoria de materiais melodicos no catalogo real",
     "",
@@ -250,6 +258,8 @@ export function renderMelodicMaterialsAuditMarkdown(report: MelodicMaterialAudit
     `- Leituras da proposta primaria gerada: ${report.generatedRows}`,
     `- Material no candidato principal: ${report.primaryMaterialRows} (${pct(report.primaryMaterialRows, report.rows.length)})`,
     `- Material disponivel apenas em candidato secundario: ${report.availableNonPrimaryRows} (${pct(report.availableNonPrimaryRows, report.rows.length)})`,
+    `- Principal vindo do catalogo curado: ${primaryCuratedRows} (${pct(primaryCuratedRows, report.rows.length)})`,
+    `- Catalogo curado disponivel: ${availableCuratedRows} (${pct(availableCuratedRows, report.rows.length)})`,
     `- Sem material melodico: ${report.noMaterialRows} (${pct(report.noMaterialRows, report.rows.length)})`,
     `- Sem candidato de material: ${report.noCandidateRows}`,
     "",

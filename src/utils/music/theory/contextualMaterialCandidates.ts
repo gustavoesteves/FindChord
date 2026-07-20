@@ -28,6 +28,7 @@ import type {
   ContextualHarmonicFunction,
   ContextualMaterialCandidate,
   ContextualMaterialIntent,
+  ContextualMaterialOrigin,
   ContextualMelodicMaterial,
   MaterialContext
 } from "./contextualMaterialTypes";
@@ -39,6 +40,7 @@ export type {
   ContextualHarmonicFunction,
   ContextualMaterialCandidate,
   ContextualMaterialIntent,
+  ContextualMaterialOrigin,
   ContextualMaterialRole,
   ContextualMelodicFit,
   ContextualMelodicMaterial,
@@ -117,6 +119,7 @@ function buildRankedMaterialCandidate(input: {
   melodyNotes: string[];
   harmonicFunction: ContextualHarmonicFunction;
   index: number;
+  materialOrigin?: ContextualMaterialOrigin;
   intent?: ContextualMaterialIntent;
   melodicMaterials?: ContextualMelodicMaterial[];
   confidenceOffset?: number;
@@ -162,6 +165,7 @@ function buildRankedMaterialCandidate(input: {
   const candidate: ContextualMaterialCandidate = {
     ...input.source,
     chord: input.context.chord,
+    materialOrigin: input.materialOrigin ?? "source-map",
     role: "color",
     intent: input.intent ?? determineIntent(input.source, input.harmonicFunction),
     harmonicFunction: input.harmonicFunction,
@@ -217,7 +221,8 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
     weightedMelodyNotes,
     melodyNotes,
     harmonicFunction,
-    index
+    index,
+    materialOrigin: "source-map"
   }));
   const catalogCandidates = buildLocalChordVampSupplementalCandidates(
     chordCandidateForContext(context.chord, quality.root, quality.quality, chordTones)
@@ -234,6 +239,7 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
     melodyNotes,
     harmonicFunction,
     index: sources.length + index,
+    materialOrigin: "curated-catalog",
     intent: source.intent,
     melodicMaterials: source.melodicMaterials,
     confidenceOffset: -0.04

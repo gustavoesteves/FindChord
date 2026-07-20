@@ -43,6 +43,16 @@ const SUPPORT_ROLE_LABELS: Record<MelodySupportRole, string> = {
   "linear-fragment": "fragmento"
 };
 
+const MATERIAL_ORIGIN_LABELS: Record<ContextualMaterialCandidate["materialOrigin"], string> = {
+  "source-map": "Mapa",
+  "curated-catalog": "Vocabulário"
+};
+
+const MATERIAL_ORIGIN_CLASSNAMES: Record<ContextualMaterialCandidate["materialOrigin"], string> = {
+  "source-map": "border-sky-500/25 bg-sky-500/10 text-sky-200",
+  "curated-catalog": "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-200"
+};
+
 function melodyCoverageLabel(candidate: ContextualMaterialCandidate): string {
   if (candidate.melodicFit === "aligned") return "melodia apoia";
   if (candidate.melodicFit === "caution") return "revisar com a melodia";
@@ -56,6 +66,14 @@ function MaterialIntentBadge({ intent }: { intent: ContextualMaterialCandidate["
   return (
     <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${presentation.className}`}>
       {presentation.harmonizerLabel}
+    </span>
+  );
+}
+
+function MaterialOriginBadge({ origin }: { origin: ContextualMaterialCandidate["materialOrigin"] }) {
+  return (
+    <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${MATERIAL_ORIGIN_CLASSNAMES[origin]}`}>
+      {MATERIAL_ORIGIN_LABELS[origin]}
     </span>
   );
 }
@@ -93,6 +111,7 @@ function MaterialReading({ candidate, compact = false }: { candidate: Contextual
     <div className={`flex flex-col gap-2 border-l-2 border-sky-500/40 pl-3 ${compact ? "min-w-0" : ""}`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="text-sm font-bold text-white">{primaryMaterial?.label || candidate.name}</span>
+        <MaterialOriginBadge origin={candidate.materialOrigin} />
         {primaryMaterial && (
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
             Fonte: {candidate.name}
@@ -207,9 +226,12 @@ function AlternativeMaterialReading({ candidate }: { candidate: ContextualMateri
         {intentPresentation.harmonizerLabel} / {material?.label || candidate.name}
       </span>
       {material && (
-        <span className="text-[9px] font-black text-zinc-400">
-          Fonte: {candidate.name}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <MaterialOriginBadge origin={candidate.materialOrigin} />
+          <span className="text-[9px] font-black text-zinc-400">
+            Fonte: {candidate.name}
+          </span>
+        </div>
       )}
       {material && (
         <div className="flex flex-col gap-1 normal-case tracking-normal">
@@ -353,6 +375,7 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
                         Comp. {region.startMeasure === region.endMeasure ? region.startMeasure : `${region.startMeasure}-${region.endMeasure}`}
                       </span>
                       <MaterialIntentBadge intent={region.intent} />
+                      <MaterialOriginBadge origin={region.materialOrigin} />
                     </div>
                     <span className="text-sm font-bold text-zinc-100">{region.materialLabel || "Mapa contextual"}</span>
                     <span className="text-xs font-semibold text-zinc-500">
@@ -380,6 +403,7 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
                         Comp. {route.startMeasure === route.endMeasure ? route.startMeasure : `${route.startMeasure}-${route.endMeasure}`}
                       </span>
                       <MaterialIntentBadge intent={route.intent} />
+                      <MaterialOriginBadge origin={route.materialOrigin} />
                       <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${MELODIC_FIT_CLASSNAMES[route.melodicFit]}`}>
                         {MELODIC_FIT_LABELS[route.melodicFit]}
                       </span>

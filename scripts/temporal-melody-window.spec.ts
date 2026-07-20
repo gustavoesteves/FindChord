@@ -139,6 +139,7 @@ describe("F119 janela temporal da melodia", () => {
     expect(sets[0]?.linearRoutes[0]).toMatchObject({
       startMeasure: 3,
       endMeasure: 3,
+      materialOrigin: "source-map",
       chords: ["G7"],
       fragments: ["B->C", "F->E"],
       melodyNotes: ["E"],
@@ -177,6 +178,7 @@ describe("F119 janela temporal da melodia", () => {
     expect(regions[0]).toMatchObject({
       startMeasure: 1,
       endMeasure: 4,
+      materialOrigin: "source-map",
       sourceType: "major",
       chordCount: 1
     });
@@ -237,6 +239,7 @@ describe("F119 janela temporal da melodia", () => {
     expect(routes[0]).toMatchObject({
       startMeasure: 3,
       endMeasure: 3,
+      materialOrigin: "source-map",
       chords: ["G7"],
       fragments: ["B->C", "F->E"],
       melodyNotes: ["B"],

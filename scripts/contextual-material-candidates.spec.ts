@@ -28,7 +28,9 @@ describe("F199 candidatas contextuais de material", () => {
     const upperTriads = candidates.find(candidate => candidate.type === "dominant upper triad colors");
     const diminishedAxis = candidates.find(candidate => candidate.type === "dominant diminished axis");
 
+    expect(candidates.find(candidate => candidate.type === "mixolydian")?.materialOrigin).toBe("source-map");
     expect(upperTriads).toEqual(expect.objectContaining({
+      materialOrigin: "curated-catalog",
       harmonicFunction: "dominant",
       intent: "functional",
       resolutionTarget: "C"
@@ -37,6 +39,9 @@ describe("F199 candidatas contextuais de material", () => {
       label: "7 / tríades superiores naturais",
       cells: ["G-B-D-F", "D-F-A", "F-A-C", "A-C-E"]
     }));
-    expect(diminishedAxis?.intent).toBe("tension");
+    expect(diminishedAxis).toEqual(expect.objectContaining({
+      materialOrigin: "curated-catalog",
+      intent: "tension"
+    }));
   });
 });

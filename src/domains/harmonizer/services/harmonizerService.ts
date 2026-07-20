@@ -46,6 +46,7 @@ export interface SectionMaterialReadingRegion {
   startMeasure: number;
   endMeasure: number;
   materialLabel?: string;
+  materialOrigin: ContextualMaterialCandidate["materialOrigin"];
   sourceName: string;
   sourceType: string;
   intent: ContextualMaterialCandidate["intent"];
@@ -58,6 +59,7 @@ export interface SectionLinearRoute {
   id: string;
   startMeasure: number;
   endMeasure: number;
+  materialOrigin: ContextualMaterialCandidate["materialOrigin"];
   chords: string[];
   fragments: string[];
   melodyNotes: string[];
@@ -491,6 +493,7 @@ function regionKey(suggestion: SectionMaterialSuggestion): string {
     primary?.melodicMaterials[0]?.label,
     primary?.name,
     primary?.type,
+    primary?.materialOrigin,
     primary?.intent,
     primary?.harmonicFunction
   ].join("|");
@@ -519,6 +522,7 @@ export function buildMaterialReadingRegions(suggestions: SectionMaterialSuggesti
       && previous.materialLabel === materialLabel
       && previous.sourceName === primary.name
       && previous.sourceType === primary.type
+      && previous.materialOrigin === primary.materialOrigin
       && previous.intent === primary.intent
       && previous.harmonicFunction === primary.harmonicFunction
       && startMeasure <= previous.endMeasure + 1;
@@ -535,6 +539,7 @@ export function buildMaterialReadingRegions(suggestions: SectionMaterialSuggesti
       startMeasure,
       endMeasure,
       materialLabel,
+      materialOrigin: primary.materialOrigin,
       sourceName: primary.name,
       sourceType: primary.type,
       intent: primary.intent,
@@ -580,6 +585,7 @@ export function buildMaterialLinearRoutes(suggestions: SectionMaterialSuggestion
     const canExtend = previous
       && startMeasure <= previous.endMeasure + 1
       && previous.intent === primary.intent
+      && previous.materialOrigin === primary.materialOrigin
       && previous.target === primary.resolutionTarget;
 
     if (canExtend) {
@@ -602,6 +608,7 @@ export function buildMaterialLinearRoutes(suggestions: SectionMaterialSuggestion
       id: `${startMeasure}-${endMeasure}-${suggestion.chord}-linear-route`,
       startMeasure,
       endMeasure,
+      materialOrigin: primary.materialOrigin,
       chords: [suggestion.chord],
       fragments: primaryLinearFragments(suggestion),
       melodyNotes: primary.melodyNotes,
