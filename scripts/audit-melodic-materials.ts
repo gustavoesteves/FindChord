@@ -13,7 +13,8 @@ import {
 import type { ContextualMelodicMaterial } from "../src/utils/music/theory/contextualMaterialCandidates";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
-import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 import { realMusicDir, findHarmonizableWindow, toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -121,9 +122,9 @@ function referenceHarmoniesForAnchors(
 }
 
 function primaryGeneratedProposal(
+  snapshot: ScoreSnapshot,
   harmonies: ScoreHarmonyEvent[],
-  anchors: MelodicAnchor[],
-  keySignature?: string
+  anchors: MelodicAnchor[]
 ): { proposal: ReharmonizationProposal; anchors: MelodicAnchor[]; phraseContext: NonNullable<ReturnType<typeof PhraseAnalysisEngine.analyzePhrase>> } | null {
   const harmonizable = findHarmonizableWindow(anchors.map(anchor => ({
     measure: anchor.measureIndex,
@@ -132,7 +133,7 @@ function primaryGeneratedProposal(
     durationTicks: anchor.duration,
     tickStart: anchor.startTick,
     tickEnd: anchor.endTick
-  })), keySignature, harmonies);
+  })), { snapshot }, harmonies);
 
   if (!harmonizable) return null;
 
@@ -155,7 +156,10 @@ function auditFile(file: string): MelodicMaterialAuditRow[] {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(realMusicDir, file), "utf8"));
   const anchors = toAnchors(snapshot.notes);
   const phraseContext = applyReferenceCenterToPhraseContext(
-    PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature),
+    PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    ),
     snapshot.harmonies
   );
   const referenceRows = rowsFromSuggestions(
@@ -163,7 +167,7 @@ function auditFile(file: string): MelodicMaterialAuditRow[] {
     "reference",
     buildSectionMaterialSuggestions(snapshot.harmonies, anchors, phraseContext)
   );
-  const generated = primaryGeneratedProposal(snapshot.harmonies, anchors, snapshot.metadata.keySignature);
+  const generated = primaryGeneratedProposal(snapshot, snapshot.harmonies, anchors);
   const generatedRows = generated
     ? rowsFromSuggestions(
       file,

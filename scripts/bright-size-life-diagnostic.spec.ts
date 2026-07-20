@@ -7,6 +7,7 @@ import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/Phrase
 import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 import { firstMelodicWindow, toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -82,7 +83,10 @@ describe("Bright Size Life diagnostic", () => {
   it("generates a primary melody-only harmonization while ignoring the existing chord layer", () => {
     const snapshot = loadBrightSizeLife();
     const anchors = toAnchors(firstMelodicWindow(snapshot.notes));
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
     const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, anchors);
     const presented = annotateProposalPresentationRoles(ranked, "balanced", phraseContext);

@@ -7,6 +7,7 @@ import { GravityFieldManager } from "../src/utils/music/analysis/engines/Gravity
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 import { toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -209,7 +210,10 @@ function renderChordList(chords: string[]): string {
 function generatedProposalRows(): GeneratedAlmadaProposal[] {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(process.cwd(), "docs/musics/exemplo.musicxml"), "utf8"));
   const anchors = toAnchors(snapshot.notes);
-  const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature || "C");
+  const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+    anchors,
+    timelineContextForAnchors(snapshot, anchors).keySignature || "C"
+  );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
   const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, anchors);
   return annotateProposalPresentationRoles(ranked, "balanced", phraseContext)

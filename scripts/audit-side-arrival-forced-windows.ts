@@ -14,6 +14,7 @@ import {
   proposalSummary
 } from "./audit-side-arrival-generation-gap";
 import { toAnchors } from "./real-music-audit";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -83,7 +84,10 @@ export function analyzeForcedSideArrivalWindow(
     anchors.some(anchor => anchor.measureIndex === harmony.measure)
   ));
   const phraseContext = applyReferenceCenterToPhraseContext(
-    PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature),
+    PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    ),
     referenceHarmonies
   );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);

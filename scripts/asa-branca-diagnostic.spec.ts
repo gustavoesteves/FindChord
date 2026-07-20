@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -18,7 +19,10 @@ describe("Asa Branca diagnostic", () => {
       startTick: note.tickStart,
       endTick: note.tickEnd
     }));
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     const attempts = (["I_IV_V", "EXPANSAO_FUNCIONAL_DIATONICA", "DOMINANTES_SECUNDARIAS", "DIMINUTO_PASSAGEM"] as const)
       .map(strategy => {
@@ -76,7 +80,10 @@ describe("Asa Branca diagnostic", () => {
         endTick: note.tickEnd
       }));
 
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const attempt = StrategyGuidedHarmonizer.tryStrategy("I_IV_V", anchors, phraseContext);
     const chordsByMeasure = new Map(attempt.candidate.measures.map(measure => [measure.measureIndex, measure.chords[0]]));
 

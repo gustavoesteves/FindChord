@@ -5,6 +5,7 @@ import { analyzeReferenceHarmony } from "../src/utils/music/analysis/strategies/
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -68,8 +69,12 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
   it("keeps A1 in the score key before generating tonal proposals", () => {
     const snapshot = loadDepoisDeMuitoDiscutir();
     const anchors = anchorsForSection(snapshot, "A1");
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors.slice(0, 32), snapshot.metadata.keySignature);
-    const proposals = GravityFieldManager.generateProposals(anchors.slice(0, 32), phraseContext);
+    const selectedAnchors = anchors.slice(0, 32);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      selectedAnchors,
+      timelineContextForAnchors(snapshot, selectedAnchors).keySignature
+    );
+    const proposals = GravityFieldManager.generateProposals(selectedAnchors, phraseContext);
     const tonalProposal = proposals.find((proposal) => proposal.name === "Estratégia — Tonal Clássico");
     const firstTonalChord = tonalProposal?.measures[0]?.chords[0];
 
@@ -80,7 +85,10 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
   it("does not surface gravity-field proposals whose opening chord misses the melodic territory", () => {
     const snapshot = loadDepoisDeMuitoDiscutir();
     const anchors = anchorsForSection(snapshot, "A1").slice(0, 32);
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
     const proposals = generation.proposals;
     const firstChords = proposals.map((proposal) => proposal.measures[0]?.chords[0]).filter(Boolean);

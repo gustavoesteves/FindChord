@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -49,7 +50,10 @@ describeIfFixtureExists("Palhaco diagnostic", () => {
     const snapshot = parseMusicXML(fs.readFileSync(findPalhacoPath(), "utf8"));
     const notes = snapshot.notes.filter((note: any) => note.measure >= 1 && note.measure <= 8);
     const anchors = toAnchors(notes);
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const attempt = StrategyGuidedHarmonizer.tryStrategy("I_IV_V", anchors, phraseContext);
     const chords = attempt.candidate.measures.map(measure => measure.chords[0]);
 

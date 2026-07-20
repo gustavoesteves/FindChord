@@ -5,6 +5,7 @@ import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/Phrase
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import { detectIiVFunctionalCells } from "../src/utils/music/analysis/strategies/IiVFunctionalGrammar";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -30,7 +31,10 @@ describe("Autumn Leaves diagnostic", () => {
       endTick: note.tickEnd
     }));
 
-    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, snapshot.metadata.keySignature);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(
+      anchors,
+      timelineContextForAnchors(snapshot, anchors).keySignature
+    );
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     const realChords = snapshot.harmonies
       .filter((harmony: any) => harmony.measure >= sectionA.startMeasure && harmony.measure <= sectionA.endMeasure)

@@ -24,6 +24,8 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 - A auditoria real (`findHarmonizableWindow`) agora aceita o snapshot completo e resolve a tonalidade pelo início de cada janela melódica.
 - Auditorias e calibrações derivadas passaram a chamar `findHarmonizableWindow` com o snapshot completo quando disponível.
 - A auditoria de janelas apresentáveis passou a resolver a tonalidade de cada janela candidata pelos anchors.
+- Diagnósticos e relatórios que chamavam `PhraseAnalysisEngine.analyzePhrase` diretamente passaram a resolver a tonalidade pelos anchors quando usam snapshot real.
+- Fallbacks de comparação sem proposta agora usam o contexto temporal inicial em vez de ler a armadura global diretamente.
 - Adicionado teste de regressão para:
   - C menor vindo da timeline ser entregue ao motor como `Cm`;
   - mudança posterior para D maior em 3/4;

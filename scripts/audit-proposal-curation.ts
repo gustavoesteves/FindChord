@@ -27,6 +27,10 @@ import {
   proposalDisplayNameCounts,
   proposalVisibleSignature
 } from "../src/domains/harmonizer/services/proposalDisplayContext";
+import {
+  timelineContextAtTick,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -140,14 +144,15 @@ export function analyzeProposalCurationForFile(
         status: "sem-ideia",
         visibleIdeaNames: ""
       },
-      center: snapshot.metadata.keySignature || "C",
+      center: timelineContextAtTick(snapshot).keySignature || "C",
       classificationMode: "major-functional",
       visibleIdeas: []
     };
   }
 
+  const timelineContext = timelineContextForAnchors(snapshot, melody.anchors);
   const phraseContext = applyReferenceCenterToPhraseContext(
-    PhraseAnalysisEngine.analyzePhrase(melody.anchors, snapshot.metadata.keySignature),
+    PhraseAnalysisEngine.analyzePhrase(melody.anchors, timelineContext.keySignature),
     harmonies
   );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(melody.anchors, phraseContext);

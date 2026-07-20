@@ -234,6 +234,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
   const anchors = toAnchors(firstMelodicWindow(snapshot.notes));
 
   if (anchors.length === 0) {
+    const referenceCenter = timelineContextAtTick(snapshot).keySignature || "C";
     return {
       ...base,
       status: "reference-only",
@@ -243,13 +244,14 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
       functionalColors: emptyFunctionalColorSummary(),
       modalBorrowingReferenceColors: emptyModalBorrowingReferenceSummary(),
       dualPathComparison: emptyDualPathComparison(),
-      referenceComparison: compareProposalToReferenceHarmony(undefined, snapshot.harmonies, snapshot.metadata.keySignature || "C"),
+      referenceComparison: compareProposalToReferenceHarmony(undefined, snapshot.harmonies, referenceCenter),
       diagnostics: []
     };
   }
 
   const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
   if (!harmonizable) {
+    const referenceCenter = timelineContextAtTick(snapshot).keySignature || "C";
     return {
       ...base,
       status: "no-proposal",
@@ -259,7 +261,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
       functionalColors: emptyFunctionalColorSummary(),
       modalBorrowingReferenceColors: emptyModalBorrowingReferenceSummary(),
       dualPathComparison: compareHarmonizationPaths(null, null, snapshot.harmonies.length > 0),
-      referenceComparison: compareProposalToReferenceHarmony(undefined, snapshot.harmonies, snapshot.metadata.keySignature || "C"),
+      referenceComparison: compareProposalToReferenceHarmony(undefined, snapshot.harmonies, referenceCenter),
       diagnostics: []
     };
   }
