@@ -9,6 +9,8 @@ import {
   routeProfileLabel,
   voiceLeadingLabel
 } from "../src/domains/harmonizer/components/HarmonizationProposalCard";
+import { preferredMaterialSuggestionSet } from "../src/domains/harmonizer/components/ContextualMaterialSuggestionsPanel";
+import type { SectionMaterialSuggestionSet } from "../src/domains/harmonizer/services/harmonizerService";
 import { evaluateVoiceLeadingTransition } from "../src/utils/music/analysis/strategies/VoiceLeadingTransitionEvaluator";
 import type {
   ReharmonizationInputContext,
@@ -66,6 +68,31 @@ describe("Harmonization proposal card labels", () => {
       "Mais distante"
     ]);
     expect(labels.join(" ")).not.toMatch(/conservadora|radical/i);
+  });
+
+  it("prefers reference and foundation material readings before the primary proposal", () => {
+    const set = (
+      id: string,
+      label: string,
+      source: SectionMaterialSuggestionSet["source"],
+      presentationRole?: SectionMaterialSuggestionSet["presentationRole"]
+    ): SectionMaterialSuggestionSet => ({
+      id,
+      label,
+      source,
+      presentationRole,
+      suggestions: [],
+      regions: [],
+      linearRoutes: []
+    });
+
+    const primary = set("dominants", "Estratégia — Dominantes secundárias", "proposal", "primary");
+    const foundation = set("basic", "Estratégia — Harmonia básica I-IV-V", "proposal", "alternative");
+    const reference = set("existing-harmony-reference", "Referência — Harmonia da partitura", "reference");
+
+    expect(preferredMaterialSuggestionSet([primary, foundation])?.id).toBe("basic");
+    expect(preferredMaterialSuggestionSet([primary, foundation, reference])?.id).toBe("existing-harmony-reference");
+    expect(preferredMaterialSuggestionSet([primary])?.id).toBe("dominants");
   });
 
   it("maps higher voice-leading scores to stronger composer-facing labels", () => {

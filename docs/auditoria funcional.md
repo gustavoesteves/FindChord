@@ -11,11 +11,11 @@ Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 | Área | Feito | Ainda aberto |
 |---|---|---|
 | Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
-| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score; função contextual e resoluções de notas-guia respeitam alvo real. | Improviso ainda precisa deduplicar referência/variantes e escolher default aplicável. |
+| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score; função contextual e resoluções de notas-guia respeitam alvo real; Improviso usa sets canônicos com referência/variantes aplicáveis. | Modelo temporal completo de proposta ainda precisa preservar evento/duração como domínio, não só apresentação. |
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: `FC-HZ-09`, deduplicar as leituras de Improviso e escolher por padrão a referência/fundação aplicável.
+Próximo bloco recomendado: `FC-HZ-10`, avançar o modelo temporizado de proposta para preservar identidade, tick e duração dos acordes.
 
 ## Parecer executivo
 
@@ -321,16 +321,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Improviso / C-D.
 - **Esperado:** uma leitura por harmonia aplicável; referência escrita como default quando existir.
-- **Observado:**
-  - referência vira dois sets;
-  - `colorVariants` aplicáveis não recebem material;
-  - effect seleciona a proposta `primary`, frequentemente cromática, em vez da referência/fundação.
+- **Observado:** resolvido. A referência escrita agora vem do set canônico da proposta `existing-harmony-reference`, variantes aplicáveis geram seus próprios materiais, e a seleção inicial segue `reference > foundation > primary`.
 - **Evidência:** [useHarmonizerProposals.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useHarmonizerProposals.ts:159>), [ProposalConsequenceSimilarity.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/ProposalConsequenceSimilarity.ts:59>) e [ContextualMaterialSuggestionsPanel.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/ContextualMaterialSuggestionsPanel.tsx:281>).
-- **Reprodução:** C–F–G7–C cria `reference-harmony` e `existing-harmony-reference`; abre em “Dominantes secundárias”.
+- **Reprodução:** C–F–G7–C cria apenas `existing-harmony-reference` para a partitura; sem referência, a tela abre em “Harmonia básica I-IV-V” antes de alternativas primary mais cromáticas; `colorVariants` aparecem como leituras aplicáveis.
 - **Impacto:** músico — opções duplicadas ou sem consequência melódica; produto — tab não corresponde à opção efetivamente aplicável.
 - **Causa provável:** dois pipelines independentes constroem sets e não compartilham seleção.
-- **Correção recomendada:** set canônico; incluir variantes; prioridade `reference > foundation > primary`.
-- **Testes necessários:** unicidade e invariant “toda opção aplicável tem material”.
+- **Progresso:** `buildProposalMaterialSuggestionSets` expande propostas e variantes deduplicadas; referência preserva `source=reference`; painel usa `preferredMaterialSuggestionSet`.
+- **Correção recomendada:** quando `FC-HZ-10` trouxer eventos temporizados, fazer esses sets herdarem `eventId/tick/duration`.
+- **Testes necessários:** seleção com várias seções reais e variantes com mesmo ID vindas de agrupamentos distintos.
 - **Confiança:** alta.
 
 ### FC-HZ-10 — P2 — modelo de proposta elimina ritmo e identidade dos eventos

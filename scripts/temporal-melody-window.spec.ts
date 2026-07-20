@@ -401,6 +401,85 @@ describe("F119 janela temporal da melodia", () => {
     });
   });
 
+  it("cria uma unica leitura de material para a referencia escrita", () => {
+    const anchors = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 3, pitch: "B", duration: 960 },
+      { measureIndex: 4, pitch: "C", duration: 960 }
+    ];
+    const phraseContext = {
+      ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
+      selectedCenter: { tonic: "C", mode: "major" }
+    } as PhraseContext;
+    const sets = buildProposalMaterialSuggestionSets([
+      {
+        id: "existing-harmony-reference",
+        kind: "reference",
+        name: "Referência — Harmonia da partitura",
+        measures: [
+          { measureIndex: 1, chords: ["C"] },
+          { measureIndex: 2, chords: ["F"] },
+          { measureIndex: 3, chords: ["G7"] },
+          { measureIndex: 4, chords: ["C"] }
+        ],
+        explanation: [],
+        bassLine: ["C", "F", "G", "C"]
+      }
+    ], anchors, phraseContext);
+
+    expect(sets.map(set => [set.id, set.source])).toEqual([
+      ["existing-harmony-reference", "reference"]
+    ]);
+    expect(sets[0]?.suggestions.map(suggestion => suggestion.chord)).toEqual(["C", "F", "G7", "C"]);
+  });
+
+  it("inclui variantes aplicaveis como leituras de material independentes", () => {
+    const anchors = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 3, pitch: "B", duration: 960 },
+      { measureIndex: 4, pitch: "C", duration: 960 }
+    ];
+    const phraseContext = {
+      ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
+      selectedCenter: { tonic: "C", mode: "major" }
+    } as PhraseContext;
+    const sets = buildProposalMaterialSuggestionSets([
+      {
+        id: "basic",
+        kind: "validated-harmonization",
+        name: "Estratégia — Harmonia básica I-IV-V",
+        presentationRole: "primary",
+        measures: [
+          { measureIndex: 1, chords: ["C"] },
+          { measureIndex: 2, chords: ["F"] },
+          { measureIndex: 3, chords: ["G7"] },
+          { measureIndex: 4, chords: ["C"] }
+        ],
+        explanation: [],
+        bassLine: ["C", "F", "G", "C"],
+        colorVariants: [{
+          id: "basic-color",
+          kind: "controlled-reharmonization",
+          name: "Variação — SubV final",
+          measures: [
+            { measureIndex: 1, chords: ["C"] },
+            { measureIndex: 2, chords: ["F"] },
+            { measureIndex: 3, chords: ["Db7"] },
+            { measureIndex: 4, chords: ["C"] }
+          ],
+          explanation: [],
+          bassLine: ["C", "F", "Db", "C"]
+        }]
+      }
+    ], anchors, phraseContext);
+
+    expect(sets.map(set => set.id)).toEqual(["basic", "basic-color"]);
+    expect(sets.find(set => set.id === "basic-color")?.presentationRole).toBe("primary");
+    expect(sets.find(set => set.id === "basic-color")?.suggestions.find(suggestion => suggestion.chord === "Db7")?.candidates[0]).toBeTruthy();
+  });
+
   it("identifica leitura regional quando um acorde sustenta varios compassos", () => {
     const anchors = [
       { measureIndex: 1, pitch: "E", duration: 960 },

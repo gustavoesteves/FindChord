@@ -277,9 +277,22 @@ function visibleAlternativeCandidates(
   return selected;
 }
 
+function isFoundationSet(set: SectionMaterialSuggestionSet): boolean {
+  return /Harmonia básica I-IV-V/i.test(set.label);
+}
+
+export function preferredMaterialSuggestionSet(
+  suggestionSets: SectionMaterialSuggestionSet[]
+): SectionMaterialSuggestionSet | undefined {
+  return suggestionSets.find(set => set.source === "reference")
+    || suggestionSets.find(isFoundationSet)
+    || suggestionSets.find(set => set.presentationRole === "primary")
+    || suggestionSets[0];
+}
+
 export default function ContextualMaterialSuggestionsPanel({ suggestionSets, hasMelodicContext }: ContextualMaterialSuggestionsPanelProps) {
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
-  const selectedSet = suggestionSets.find(set => set.id === selectedSetId) || suggestionSets[0];
+  const selectedSet = suggestionSets.find(set => set.id === selectedSetId) || preferredMaterialSuggestionSet(suggestionSets);
   const suggestions = selectedSet?.suggestions || [];
   const regions = selectedSet?.regions || [];
   const linearRoutes = selectedSet?.linearRoutes || [];
@@ -292,8 +305,8 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
       return;
     }
     if (!selectedSetId || !suggestionSets.some(set => set.id === selectedSetId)) {
-      const primarySet = suggestionSets.find(set => set.presentationRole === "primary") || suggestionSets[0];
-      setSelectedSetId(primarySet.id);
+      const preferredSet = preferredMaterialSuggestionSet(suggestionSets);
+      setSelectedSetId(preferredSet?.id || null);
     }
   }, [selectedSetId, suggestionSets]);
 

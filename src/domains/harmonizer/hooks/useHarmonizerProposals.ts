@@ -18,10 +18,7 @@ import {
   buildExistingHarmonyProposal,
   buildHarmonyOnlyAnalysisProposals,
   buildHarmonyOnlyPhraseContext,
-  buildMaterialLinearRoutes,
-  buildMaterialReadingRegions,
   buildProposalMaterialSuggestionSets,
-  buildSectionMaterialSuggestions,
   selectMelodicAnchors,
   selectSectionHarmonies
 } from "../services/harmonizerService";
@@ -180,29 +177,9 @@ export function useHarmonizerProposals({
   ]);
 
   const contextualMaterialSuggestionSets = useMemo(() => {
-    const referenceSuggestions = buildSectionMaterialSuggestions(
-      sectionHarmonies,
-      melodyAnchorsData.allAnchors,
-      phraseContext
-    );
-    const referenceSet = referenceSuggestions.length > 0
-      ? [{
-        id: "reference-harmony",
-        label: "Harmonia da partitura",
-        source: "reference" as const,
-        suggestions: referenceSuggestions,
-        regions: buildMaterialReadingRegions(referenceSuggestions),
-        linearRoutes: buildMaterialLinearRoutes(referenceSuggestions)
-      }]
-      : [];
-
-    return [
-      ...referenceSet,
-      ...buildProposalMaterialSuggestionSets(displayedProposals, melodyAnchorsData.allAnchors, phraseContext)
-    ];
+    return buildProposalMaterialSuggestionSets(displayedProposals, melodyAnchorsData.allAnchors, phraseContext);
   }, [
     displayedProposals,
-    sectionHarmonies,
     melodyAnchorsData.allAnchors,
     phraseContext
   ]);

@@ -760,13 +760,25 @@ export function buildProposalMaterialSuggestionSets(
   melodyAnchors: MelodicAnchor[],
   phraseContext: PhraseContext | null
 ): SectionMaterialSuggestionSet[] {
-  return proposals.flatMap(proposal => {
+  const applicableProposals = proposals.flatMap(proposal => [
+    proposal,
+    ...(proposal.colorVariants || []).map(variant => ({
+      ...variant,
+      presentationRole: variant.presentationRole || proposal.presentationRole
+    }))
+  ]);
+  const seenIds = new Set<string>();
+
+  return applicableProposals.flatMap(proposal => {
+    if (seenIds.has(proposal.id)) return [];
+    seenIds.add(proposal.id);
+
     const suggestions = buildProposalMaterialSuggestions(proposal, melodyAnchors, phraseContext);
     return suggestions.length > 0
       ? [{
         id: proposal.id,
         label: proposal.name,
-        source: "proposal" as const,
+        source: proposal.kind === "reference" ? "reference" as const : "proposal" as const,
         presentationRole: proposal.presentationRole,
         suggestions,
         regions: buildMaterialReadingRegions(suggestions),
