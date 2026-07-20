@@ -7,9 +7,14 @@ export class WebSocketTransport {
   private messageListeners: Set<(message: BridgeMessage) => void> = new Set();
   private reconnectInterval: ReturnType<typeof setInterval> | null = null;
   private endpoint: string;
+  private sessionEndpoint: string;
 
   constructor(endpoint: string = "ws://localhost:9000/dashboard") {
     this.endpoint = endpoint;
+    this.sessionEndpoint = endpoint
+      .replace(/^ws:/, "http:")
+      .replace(/^wss:/, "https:")
+      .replace(/\/dashboard(?:\?.*)?$/, "/api/v1/session");
   }
 
   public getStatus() {
@@ -35,47 +40,70 @@ export class WebSocketTransport {
     this.setStatus("connecting");
     return new Promise((resolve) => {
       try {
-        const currentSocket = new WebSocket(this.endpoint);
-        this.socket = currentSocket;
+        this.resolveSessionEndpoint()
+          .then((socketEndpoint) => {
+            const currentSocket = new WebSocket(socketEndpoint);
+            this.socket = currentSocket;
 
-        currentSocket.onopen = () => {
-          if (this.socket !== currentSocket) return;
-          this.setStatus("connected");
-          if (this.reconnectInterval) {
-            clearInterval(this.reconnectInterval);
-            this.reconnectInterval = null;
-          }
-          resolve();
-        };
+            currentSocket.onopen = () => {
+              if (this.socket !== currentSocket) return;
+              this.setStatus("connected");
+              if (this.reconnectInterval) {
+                clearInterval(this.reconnectInterval);
+                this.reconnectInterval = null;
+              }
+              resolve();
+            };
 
-        currentSocket.onclose = () => {
-          if (this.socket !== currentSocket) return;
-          this.setStatus("disconnected");
-          this.triggerAutoReconnect();
-        };
+            currentSocket.onclose = () => {
+              if (this.socket !== currentSocket) return;
+              this.setStatus("disconnected");
+              this.triggerAutoReconnect();
+            };
 
-        currentSocket.onmessage = (event) => {
-          if (this.socket !== currentSocket) return;
-          try {
-            const payload = JSON.parse(event.data) as BridgeMessage;
-            if (payload.protocolVersion) {
-              this.messageListeners.forEach(l => l(payload));
-            }
-          } catch (e) {
-            console.warn("WebSocketTransport received invalid JSON:", e);
-          }
-        };
+            currentSocket.onmessage = (event) => {
+              if (this.socket !== currentSocket) return;
+              try {
+                const payload = JSON.parse(event.data) as BridgeMessage;
+                if (payload.protocolVersion) {
+                  this.messageListeners.forEach(l => l(payload));
+                }
+              } catch (e) {
+                console.warn("WebSocketTransport received invalid JSON:", e);
+              }
+            };
 
-        currentSocket.onerror = () => {
-          if (this.socket !== currentSocket) return;
-          this.setStatus("disconnected");
-        };
+            currentSocket.onerror = () => {
+              if (this.socket !== currentSocket) return;
+              this.setStatus("disconnected");
+            };
+          })
+          .catch(() => {
+            this.setStatus("disconnected");
+            this.triggerAutoReconnect();
+            resolve();
+          });
       } catch {
         this.setStatus("disconnected");
         this.triggerAutoReconnect();
         resolve(); // resolve to not block forever
       }
     });
+  }
+
+  private async resolveSessionEndpoint(): Promise<string> {
+    const response = await fetch(this.sessionEndpoint, {
+      headers: {
+        "X-FindChord-Client": "compose-suite"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bridge session failed: ${response.status}`);
+    }
+
+    const session = await response.json() as { wsEndpoint?: string };
+    return session.wsEndpoint || this.endpoint;
   }
 
   public disconnect() {

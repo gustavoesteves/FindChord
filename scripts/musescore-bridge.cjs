@@ -10,10 +10,14 @@ const MAX_WS_PAYLOAD_BYTES = 65536;
 const DASHBOARD_PATH = '/dashboard';
 const PLUGIN_PATH = '/plugin';
 const PLUGIN_HTTP_PATHS = new Set([
+  '/api/v1/plugin-session',
   '/api/v1/consume',
   '/api/v1/log',
   '/api/v1/score'
 ]);
+const sessionId = crypto.randomUUID();
+const dashboardToken = crypto.randomBytes(24).toString('hex');
+const pluginToken = crypto.randomBytes(24).toString('hex');
 let eventQueue = [];
 
 // Telemetria Operacional (Sprint B.5)
@@ -30,7 +34,7 @@ function writeJson(res, status, data) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-FindChord-Client'
+    'Access-Control-Allow-Headers': 'Content-Type, X-FindChord-Client, X-FindChord-Session, X-FindChord-Plugin-Token'
   });
   res.end(JSON.stringify(data));
 }
@@ -74,6 +78,37 @@ function validateOrigin(req, res, url) {
   return true;
 }
 
+function timingSafeEqualString(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function validatePluginToken(req, res) {
+  const token = req.headers['x-findchord-plugin-token'] || new URL(req.url, `http://localhost:${PORT}`).searchParams.get('token');
+  if (!timingSafeEqualString(token, pluginToken)) {
+    eventsRejected++;
+    writeJson(res, 403, { error: 'Token do plugin ausente ou invalido.' });
+    return false;
+  }
+  return true;
+}
+
+function validateDashboardToken(req, res, url) {
+  if (url.pathname === '/api/v1/session') return true;
+  if (PLUGIN_HTTP_PATHS.has(url.pathname) || url.pathname === '/api/v1/health') return true;
+
+  const token = req.headers['x-findchord-session'] || url.searchParams.get('token');
+  if (!timingSafeEqualString(token, dashboardToken)) {
+    eventsRejected++;
+    writeJson(res, 403, { error: 'Sessao de dashboard ausente ou invalida.' });
+    return false;
+  }
+  return true;
+}
+
 // Create HTTP Server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -83,7 +118,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-FindChord-Client'
+      'Access-Control-Allow-Headers': 'Content-Type, X-FindChord-Client, X-FindChord-Session, X-FindChord-Plugin-Token'
     });
     res.end();
     return;
@@ -91,6 +126,33 @@ const server = http.createServer((req, res) => {
 
   // Validação de segurança de origem
   if (!validateOrigin(req, res, url)) {
+    return;
+  }
+
+  if (!validateDashboardToken(req, res, url)) {
+    return;
+  }
+
+  if (PLUGIN_HTTP_PATHS.has(url.pathname) && url.pathname !== '/api/v1/plugin-session' && !validatePluginToken(req, res)) {
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/v1/session') {
+    frontendLastSeen = new Date().toISOString();
+    writeJson(res, 200, {
+      sessionId,
+      dashboardToken,
+      wsEndpoint: `ws://${HOST}:${PORT}${DASHBOARD_PATH}?session=${sessionId}&token=${dashboardToken}`
+    });
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/v1/plugin-session') {
+    pluginLastSeen = new Date().toISOString();
+    writeJson(res, 200, {
+      sessionId,
+      pluginToken
+    });
     return;
   }
 
@@ -295,6 +357,7 @@ const server = http.createServer((req, res) => {
       apiVersion: '1.0',
       bridgeVersion: '1.0',
       bridgeOnline: true,
+      sessionId,
       queueSize: eventQueue.length,
       eventsReceived,
       eventsAccepted,
@@ -376,6 +439,19 @@ wss.on('connection', (ws, req) => {
   }
   if (isPlugin && origin && !isValidDashboardOrigin(origin)) {
     ws.close(1008, 'Origem não autorizada');
+    return;
+  }
+
+  if (url.searchParams.get('session') !== sessionId) {
+    ws.close(1008, 'Sessao invalida');
+    return;
+  }
+  if (isDashboard && !timingSafeEqualString(url.searchParams.get('token'), dashboardToken)) {
+    ws.close(1008, 'Token de dashboard invalido');
+    return;
+  }
+  if (isPlugin && !timingSafeEqualString(url.searchParams.get('token'), pluginToken)) {
+    ws.close(1008, 'Token de plugin invalido');
     return;
   }
 

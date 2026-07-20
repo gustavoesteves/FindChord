@@ -51,4 +51,26 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("url.pathname === DASHBOARD_PATH");
     expect(bridge).not.toContain("req.url.includes('/plugin')");
   });
+
+  it("pareia dashboard e plugin com sessao e tokens efemeros", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+    const transport = readFileSync("src/utils/music/bridge/TransportLayer.ts", "utf8");
+
+    expect(bridge).toContain("const sessionId = crypto.randomUUID();");
+    expect(bridge).toContain("const dashboardToken = crypto.randomBytes(24).toString('hex');");
+    expect(bridge).toContain("const pluginToken = crypto.randomBytes(24).toString('hex');");
+    expect(bridge).toContain("url.pathname === '/api/v1/session'");
+    expect(bridge).toContain("url.pathname === '/api/v1/plugin-session'");
+    expect(bridge).toContain("validatePluginToken(req, res)");
+    expect(bridge).toContain("validateDashboardToken(req, res, url)");
+
+    expect(plugin).toContain("property string bridgePluginToken");
+    expect(plugin).toContain("requestPluginSession()");
+    expect(plugin).toContain("X-FindChord-Plugin-Token");
+
+    expect(transport).toContain("/api/v1/session");
+    expect(transport).toContain("X-FindChord-Client");
+    expect(transport).toContain("session.wsEndpoint");
+  });
 });

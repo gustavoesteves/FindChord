@@ -72,11 +72,14 @@ MuseScore {
     property bool isPolling: false
     property bool requestInFlight: false
     property bool isProcessingSnapshot: false
+    property string bridgeSessionId: ""
+    property string bridgePluginToken: ""
 
     property int safetyLimit: 5000
 
     onRun: {
         console.log("[Bridge MS4] Started");
+        requestPluginSession();
         pollTimer.start();
     }
 
@@ -120,11 +123,47 @@ MuseScore {
             var r = new XMLHttpRequest();
             r.open("POST", "http://localhost:9000/api/v1/log", true);
             r.setRequestHeader("Content-Type", "application/json");
+            if (bridgePluginToken.length > 0)
+                r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
             r.send(JSON.stringify({ message: msg }));
         } catch (e) {}
     }
 
+    function requestPluginSession() {
+        var r = new XMLHttpRequest();
+
+        r.onreadystatechange = function() {
+            if (r.readyState !== XMLHttpRequest.DONE)
+                return;
+
+            if (r.status !== 200) {
+                logText.text = "Bridge sem sessao de plugin.";
+                return;
+            }
+
+            try {
+                var session = JSON.parse(r.responseText);
+                bridgeSessionId = session.sessionId || "";
+                bridgePluginToken = session.pluginToken || "";
+                statusText.text = "Status: Bridge pareado.";
+            } catch (e) {
+                logText.text = "Sessao de bridge invalida.";
+            }
+        };
+
+        try {
+            r.open("GET", "http://localhost:9000/api/v1/plugin-session", true);
+            r.send();
+        } catch (e) {}
+    }
+
     function checkPendingEvents() {
+        if (bridgePluginToken.length === 0) {
+            requestPluginSession();
+            requestInFlight = false;
+            return;
+        }
+
         var r = new XMLHttpRequest();
 
         r.onreadystatechange = function() {
@@ -150,6 +189,7 @@ MuseScore {
 
         try {
             r.open("GET", "http://localhost:9000/api/v1/consume", true);
+            r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
             r.send();
         } catch (e) {
             requestInFlight = false;
@@ -208,6 +248,7 @@ MuseScore {
             var req = new XMLHttpRequest();
             req.open("POST", "http://localhost:9000/api/v1/score", true);
             req.setRequestHeader("Content-Type", "application/json");
+            req.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
             req.send(JSON.stringify(payload));
 
             logText.text = "Enviado XML para processamento no Node Bridge.";
