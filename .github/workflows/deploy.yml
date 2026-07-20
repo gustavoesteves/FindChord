@@ -37,6 +37,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Test curated suite
+        run: npm run test:curated
+
       - name: Build
         run: npm run build
 

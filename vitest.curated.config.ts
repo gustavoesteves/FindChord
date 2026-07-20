@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     include: [
       "scripts/after-you-calibration.spec.ts",
+      "scripts/active-section-selection.spec.ts",
       "scripts/almada-example-comparison.spec.ts",
       "scripts/altered-dominant-strategy.spec.ts",
       "scripts/material-source-maps.spec.ts",
@@ -76,6 +77,7 @@ export default defineConfig({
       "scripts/modal-center-strategy.spec.ts",
       "scripts/modal-borrowing-strategy.spec.ts",
       "scripts/musicxml-chord-symbol-mapper.spec.ts",
+      "scripts/musicxml-parser-timeline.spec.ts",
       "scripts/omitted-strategy-diagnostics.spec.ts",
       "scripts/palhaco-diagnostic.spec.ts",
       "scripts/proposal-presentation-planner.spec.ts",
@@ -85,7 +87,6 @@ export default defineConfig({
       "scripts/proposal-curation-audit.spec.ts",
       "scripts/local-route-repetition-audit.spec.ts",
       "scripts/harmonization-density-audit.spec.ts",
-      "scripts/local-route-repetition-audit.spec.ts",
       "scripts/proposal-consequence-similarity.spec.ts",
       "scripts/proposal-consequence-audit.spec.ts",
       "scripts/presentable-window-selector.spec.ts",
