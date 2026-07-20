@@ -1,4 +1,3 @@
-import { Note } from "tonal";
 import type { ChordQuality } from "../constants/chordRegistry";
 import type { ChordCandidate } from "../models/ChordCandidate";
 import { simplifyNote } from "../core/pitch";
@@ -10,6 +9,7 @@ import type {
 } from "./contextualMaterialTypes";
 import { guideTonesFor } from "./contextualMaterialFunction";
 import { getMaterialSourceMaps, type MaterialSourceMap } from "./musicTheory";
+import { buildLocalChordVampSupplementalCandidates } from "./localChordVampMaterialCatalog";
 
 export interface LocalChordVampMaterialCandidate extends MaterialSourceMap {
   chord: string;
@@ -52,25 +52,6 @@ const DOMINANT_QUALITIES = new Set<ChordQuality>([
   "dominant7b13"
 ]);
 
-const MINOR_VAMP_QUALITIES = new Set<ChordQuality>([
-  "minor",
-  "minor6th",
-  "minor7th",
-  "minor9th",
-  "minor11th",
-  "minor13th",
-  "minorAdd9"
-]);
-
-function pitch(root: string, interval: string): string | null {
-  const transposed = Note.transpose(root, interval);
-  return transposed ? simplifyNote(transposed) : null;
-}
-
-function uniqueNotes(notes: string[]): string[] {
-  return Array.from(new Set(notes.map(note => simplifyNote(note))));
-}
-
 function localVampFunctionForQuality(quality: ChordQuality): ContextualHarmonicFunction {
   if (DOMINANT_QUALITIES.has(quality)) return "dominant";
   if (quality.startsWith("major") || quality === "69" || quality === "add9") return "tonic";
@@ -101,149 +82,6 @@ function localVampPracticeHint(candidate: LocalChordVampMaterialCandidate): stri
   return "Use como cor local sobre o vamp, mantendo algum apoio do acorde em vista.";
 }
 
-function minorSeventhCell(root: string): string {
-  return [
-    simplifyNote(root),
-    pitch(root, "3m"),
-    pitch(root, "5P"),
-    pitch(root, "7m")
-  ].filter((note): note is string => !!note).join("-");
-}
-
-function minorPentatonicCell(root: string): string {
-  return [
-    simplifyNote(root),
-    pitch(root, "3m"),
-    pitch(root, "4P"),
-    pitch(root, "5P"),
-    pitch(root, "7m")
-  ].filter((note): note is string => !!note).join("-");
-}
-
-function dominantDiminishedAxisCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
-  if (!DOMINANT_QUALITIES.has(chord.quality)) return null;
-
-  const axisRoots = [
-    chord.root,
-    pitch(chord.root, "3m"),
-    pitch(chord.root, "5d"),
-    pitch(chord.root, "6M")
-  ].filter((note): note is string => !!note);
-  const relatedTwoRoots = axisRoots
-    .map(root => pitch(root, "5P"))
-    .filter((note): note is string => !!note);
-  const cells = relatedTwoRoots.map(root => minorSeventhCell(root));
-  if (cells.length === 0) return null;
-
-  const notes = uniqueNotes(cells.flatMap(cell => cell.split("-")));
-  const source: MaterialSourceMap = {
-    name: `${chord.root} eixo diminuto dominante`,
-    type: "dominant diminished axis",
-    intervals: [],
-    notes
-  };
-
-  return {
-    ...source,
-    chord: chord.notationInternational,
-    chordTones: chord.notes.map(note => simplifyNote(note)),
-    guideTones: guideTonesFor(chord.root, chord.quality),
-    intent: "tension",
-    confidence: 0.72,
-    melodicMaterials: [{
-      label: "eixo diminuto / ii menores",
-      source: "arpeggio",
-      sourceScale: source.name,
-      cells,
-      tensionProfile: ["dominantes por terça menor", "ii menor relacionado", "outside controlado"],
-      resolutionTargets: [],
-      practiceHint: `Use vocabulário menor em ${relatedTwoRoots.join(", ")} e volte para ${chord.root} quando quiser estabilizar.`
-    }],
-    practiceHint: `Use vocabulário menor em ${relatedTwoRoots.join(", ")} e volte para ${chord.root} quando quiser estabilizar.`
-  };
-}
-
-function dominantSideSlipCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
-  if (!DOMINANT_QUALITIES.has(chord.quality)) return null;
-
-  const relatedTwoRoot = pitch(chord.root, "5P");
-  if (!relatedTwoRoot) return null;
-  const insideCell = minorPentatonicCell(relatedTwoRoot);
-  const lowerSlipRoot = pitch(relatedTwoRoot, "-2m");
-  const upperSlipRoot = pitch(relatedTwoRoot, "2m");
-  const lowerSlipCell = lowerSlipRoot ? minorPentatonicCell(lowerSlipRoot) : "";
-  const upperSlipCell = upperSlipRoot ? minorPentatonicCell(upperSlipRoot) : "";
-  const cells = [insideCell, lowerSlipCell, upperSlipCell].filter(Boolean);
-  if (cells.length === 0) return null;
-
-  const notes = uniqueNotes(cells.flatMap(cell => cell.split("-")));
-  const source: MaterialSourceMap = {
-    name: `${chord.root} side slip pentatonico`,
-    type: "side slip minor pentatonic",
-    intervals: [],
-    notes
-  };
-
-  return {
-    ...source,
-    chord: chord.notationInternational,
-    chordTones: chord.notes.map(note => simplifyNote(note)),
-    guideTones: guideTonesFor(chord.root, chord.quality),
-    intent: "outside",
-    confidence: 0.58,
-    melodicMaterials: [{
-      label: "side slip pentatônico",
-      source: "pentatonic",
-      sourceScale: source.name,
-      cells,
-      tensionProfile: ["pentatônica interna", "meio tom abaixo", "meio tom acima"],
-      resolutionTargets: [],
-      practiceHint: `Desloque a pentatonica menor de ${relatedTwoRoot} meio tom para fora e retorne aos apoios de ${chord.root}.`
-    }],
-    practiceHint: `Desloque a pentatonica menor de ${relatedTwoRoot} meio tom para fora e retorne aos apoios de ${chord.root}.`
-  };
-}
-
-function minorDorianPentatonicStackCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
-  if (!MINOR_VAMP_QUALITIES.has(chord.quality)) return null;
-
-  const fifthRoot = pitch(chord.root, "5P");
-  const secondRoot = pitch(chord.root, "2M");
-  const cells = [
-    minorPentatonicCell(chord.root),
-    fifthRoot ? minorPentatonicCell(fifthRoot) : "",
-    secondRoot ? minorPentatonicCell(secondRoot) : ""
-  ].filter(Boolean);
-  if (cells.length === 0) return null;
-
-  const notes = uniqueNotes(cells.flatMap(cell => cell.split("-")));
-  const source: MaterialSourceMap = {
-    name: `${chord.root} pilha pentatonica dorica`,
-    type: "minor dorian pentatonic stack",
-    intervals: [],
-    notes
-  };
-
-  return {
-    ...source,
-    chord: chord.notationInternational,
-    chordTones: chord.notes.map(note => simplifyNote(note)),
-    guideTones: guideTonesFor(chord.root, chord.quality),
-    intent: "functional",
-    confidence: 0.66,
-    melodicMaterials: [{
-      label: "pilha pentatônica dórica",
-      source: "pentatonic",
-      sourceScale: source.name,
-      cells,
-      tensionProfile: ["pentatônica menor da tônica", "pentatônica menor da quinta", "pentatônica menor do 2º grau"],
-      resolutionTargets: [],
-      practiceHint: `Alterne pentatonicas menores de ${chord.root}${fifthRoot ? `, ${fifthRoot}` : ""}${secondRoot ? ` e ${secondRoot}` : ""} para abrir 9, 11 e 13 sem abandonar o menor.`
-    }],
-    practiceHint: `Alterne pentatonicas menores de ${chord.root}${fifthRoot ? `, ${fifthRoot}` : ""}${secondRoot ? ` e ${secondRoot}` : ""} para abrir 9, 11 e 13 sem abandonar o menor.`
-  };
-}
-
 export function buildLocalChordVampMaterialCandidates(chord: ChordCandidate): LocalChordVampMaterialCandidate[] {
   const harmonicFunction = localVampFunctionForQuality(chord.quality);
   const chordTones = chord.notes.map(note => simplifyNote(note));
@@ -270,13 +108,9 @@ export function buildLocalChordVampMaterialCandidates(chord: ChordCandidate): Lo
     candidate.practiceHint = localVampPracticeHint(candidate);
     return candidate;
   });
-  const axisCandidate = dominantDiminishedAxisCandidate(chord);
-  const sideSlipCandidate = dominantSideSlipCandidate(chord);
-  const minorPentatonicStackCandidate = minorDorianPentatonicStackCandidate(chord);
 
   return [
     ...sourceCandidates,
-    ...[axisCandidate, sideSlipCandidate, minorPentatonicStackCandidate]
-      .filter((candidate): candidate is LocalChordVampMaterialCandidate => !!candidate)
+    ...buildLocalChordVampSupplementalCandidates(chord)
   ];
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, CircleDot, Target } from "lucide-react";
 import type { SectionMaterialSuggestion, SectionMaterialSuggestionSet } from "../services/harmonizerService";
 import type { ContextualMaterialCandidate, MelodySupportRole } from "../../../utils/music/theory/contextualMaterialCandidates";
+import { materialIntentPresentation } from "../../../utils/music/theory/materialIntentPresentation";
 
 interface ContextualMaterialSuggestionsPanelProps {
   suggestionSets: SectionMaterialSuggestionSet[];
@@ -14,20 +15,6 @@ const FUNCTION_LABELS: Record<ContextualMaterialCandidate["harmonicFunction"], s
   dominant: "Dominante",
   modal: "Modal",
   color: "Cor"
-};
-
-const INTENT_LABELS: Record<ContextualMaterialCandidate["intent"], string> = {
-  inside: "Estável",
-  functional: "Direção",
-  tension: "Tensão",
-  outside: "Exterior"
-};
-
-const INTENT_CLASSNAMES: Record<ContextualMaterialCandidate["intent"], string> = {
-  inside: "text-emerald-200 bg-emerald-500/10 border-emerald-500/20",
-  functional: "text-sky-200 bg-sky-500/10 border-sky-500/20",
-  tension: "text-amber-200 bg-amber-500/10 border-amber-500/20",
-  outside: "text-rose-200 bg-rose-500/10 border-rose-500/20"
 };
 
 const ROLE_LABELS: Record<NonNullable<SectionMaterialSuggestionSet["presentationRole"]>, string> = {
@@ -61,6 +48,16 @@ function melodyCoverageLabel(candidate: ContextualMaterialCandidate): string {
   if (candidate.melodicFit === "caution") return "revisar com a melodia";
   if (candidate.melodyCoverage >= 0.65) return "apoio parcial";
   return "apoio discreto";
+}
+
+function MaterialIntentBadge({ intent }: { intent: ContextualMaterialCandidate["intent"] }) {
+  const presentation = materialIntentPresentation(intent);
+
+  return (
+    <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${presentation.className}`}>
+      {presentation.harmonizerLabel}
+    </span>
+  );
 }
 
 function groupSuggestionsByMeasure(suggestions: SectionMaterialSuggestion[]): Array<{
@@ -104,9 +101,7 @@ function MaterialReading({ candidate, compact = false }: { candidate: Contextual
         <span className="text-[10px] font-black uppercase tracking-widest text-sky-300">
           {FUNCTION_LABELS[candidate.harmonicFunction]}
         </span>
-        <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${INTENT_CLASSNAMES[candidate.intent]}`}>
-          {INTENT_LABELS[candidate.intent]}
-        </span>
+        <MaterialIntentBadge intent={candidate.intent} />
         <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${MELODIC_FIT_CLASSNAMES[candidate.melodicFit]}`}>
           {MELODIC_FIT_LABELS[candidate.melodicFit]}
         </span>
@@ -204,11 +199,12 @@ function MaterialReading({ candidate, compact = false }: { candidate: Contextual
 
 function AlternativeMaterialReading({ candidate }: { candidate: ContextualMaterialCandidate }) {
   const material = candidate.melodicMaterials[0];
+  const intentPresentation = materialIntentPresentation(candidate.intent);
 
   return (
-    <div className={`flex min-w-[10rem] max-w-full flex-col gap-1 rounded border px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest ${INTENT_CLASSNAMES[candidate.intent]}`}>
+    <div className={`flex min-w-[10rem] max-w-full flex-col gap-1 rounded border px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest ${intentPresentation.className}`}>
       <span>
-        {INTENT_LABELS[candidate.intent]} / {material?.label || candidate.name}
+        {intentPresentation.harmonizerLabel} / {material?.label || candidate.name}
       </span>
       {material && (
         <span className="text-[9px] font-black text-zinc-400">
@@ -231,6 +227,32 @@ function AlternativeMaterialReading({ candidate }: { candidate: ContextualMateri
       )}
     </div>
   );
+}
+
+function visibleAlternativeCandidates(
+  candidates: ContextualMaterialCandidate[],
+  limit = 3
+): ContextualMaterialCandidate[] {
+  const selected: ContextualMaterialCandidate[] = [];
+  const seenTypes = new Set<string>();
+  const primary = candidates[0];
+
+  for (const candidate of candidates.slice(1)) {
+    if (seenTypes.has(candidate.type)) continue;
+    if (primary && candidate.intent === primary.intent && selected.some(item => item.intent === candidate.intent)) continue;
+    selected.push(candidate);
+    seenTypes.add(candidate.type);
+    if (selected.length >= limit) return selected;
+  }
+
+  for (const candidate of candidates.slice(1)) {
+    if (seenTypes.has(candidate.type)) continue;
+    selected.push(candidate);
+    seenTypes.add(candidate.type);
+    if (selected.length >= limit) return selected;
+  }
+
+  return selected;
 }
 
 export default function ContextualMaterialSuggestionsPanel({ suggestionSets, hasMelodicContext }: ContextualMaterialSuggestionsPanelProps) {
@@ -330,9 +352,7 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
                       <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                         Comp. {region.startMeasure === region.endMeasure ? region.startMeasure : `${region.startMeasure}-${region.endMeasure}`}
                       </span>
-                      <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${INTENT_CLASSNAMES[region.intent]}`}>
-                        {INTENT_LABELS[region.intent]}
-                      </span>
+                      <MaterialIntentBadge intent={region.intent} />
                     </div>
                     <span className="text-sm font-bold text-zinc-100">{region.materialLabel || "Mapa contextual"}</span>
                     <span className="text-xs font-semibold text-zinc-500">
@@ -359,9 +379,7 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
                       <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                         Comp. {route.startMeasure === route.endMeasure ? route.startMeasure : `${route.startMeasure}-${route.endMeasure}`}
                       </span>
-                      <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${INTENT_CLASSNAMES[route.intent]}`}>
-                        {INTENT_LABELS[route.intent]}
-                      </span>
+                      <MaterialIntentBadge intent={route.intent} />
                       <span className={`rounded border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${MELODIC_FIT_CLASSNAMES[route.melodicFit]}`}>
                         {MELODIC_FIT_LABELS[route.melodicFit]}
                       </span>
@@ -402,28 +420,31 @@ export default function ContextualMaterialSuggestionsPanel({ suggestionSets, has
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {group.suggestions.map(suggestion => (
-                    <div key={`${suggestion.measure}-${suggestion.position ?? 0}-${suggestion.chord}`} className="grid gap-3 md:grid-cols-[6rem_1fr]">
-                      <div className="flex min-w-0 items-center">
-                        <span className="rounded border border-zinc-700/70 bg-zinc-900 px-2 py-1 text-sm font-bold text-zinc-100">
-                          {suggestion.chord}
-                        </span>
+                  {group.suggestions.map(suggestion => {
+                    const alternatives = visibleAlternativeCandidates(suggestion.candidates);
+                    return (
+                      <div key={`${suggestion.measure}-${suggestion.position ?? 0}-${suggestion.chord}`} className="grid gap-3 md:grid-cols-[6rem_1fr]">
+                        <div className="flex min-w-0 items-center">
+                          <span className="rounded border border-zinc-700/70 bg-zinc-900 px-2 py-1 text-sm font-bold text-zinc-100">
+                            {suggestion.chord}
+                          </span>
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <MaterialReading candidate={suggestion.candidates[0]} compact />
+                          {alternatives.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pl-3">
+                              {alternatives.map(candidate => (
+                                <AlternativeMaterialReading
+                                  key={`${suggestion.measure}-${suggestion.position ?? 0}-${candidate.type}`}
+                                  candidate={candidate}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex min-w-0 flex-col gap-2">
-                        <MaterialReading candidate={suggestion.candidates[0]} compact />
-                        {suggestion.candidates.slice(1, 3).length > 0 && (
-                          <div className="flex flex-wrap gap-2 pl-3">
-                            {suggestion.candidates.slice(1, 3).map(candidate => (
-                              <AlternativeMaterialReading
-                                key={`${suggestion.measure}-${suggestion.position ?? 0}-${candidate.type}`}
-                                candidate={candidate}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}

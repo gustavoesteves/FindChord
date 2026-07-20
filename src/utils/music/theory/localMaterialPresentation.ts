@@ -123,6 +123,46 @@ const SOURCE_DESCRIPTIONS: Record<string, LocalMaterialSourceDescription> = {
     desc: "Pilha pentatônica dórica — Pentatônicas menores da tônica, quinta e segundo grau para abrir 9, 11 e 13.",
     mood: "Menor modal, fluido e expansivo sem perder repouso.",
     tip: "Comece na pentatônica menor da tônica; use as outras como abertura de cor e retorne à terça menor."
+  },
+  "sus quartal pentatonic": {
+    desc: "Sus quartal/pentatônico — Empilhamento de quartas e pentatônica sus para manter a suspensão como centro.",
+    mood: "Aberto, modal, suspenso e estável sem terça definida.",
+    tip: "Use a quarta como identidade. A b7 e a 9 podem colorir o vamp sem forçar resolução para maior ou menor."
+  },
+  "half diminished upper structures": {
+    desc: "Estruturas meio-diminutas — Arpejo ø7 com 9 natural e extensões da coleção lócria #2.",
+    mood: "Instável, refinado e sombrio, mas tocável como cor local.",
+    tip: "Apoie b3, b5 e b7; abra a 9 natural quando quiser sofisticação sem escolher ainda um acorde de chegada."
+  },
+  "diminished symmetric cycle": {
+    desc: "Ciclo diminuto simétrico — O mesmo arpejo dim7 repetido por terças menores.",
+    mood: "Simétrico, suspenso e instável com tensão controlada.",
+    tip: "Explore o deslocamento por terças menores. Cada ponto de partida preserva a mesma coleção de notas."
+  },
+  "augmented whole tone cycle": {
+    desc: "Ciclo aumentado/tom inteiro — Tríades aumentadas e fragmentos de tons inteiros dentro da mesma coleção simétrica.",
+    mood: "Flutuante, brilhante e instável, com tensão sem gravidade tonal forte.",
+    tip: "Use como cor breve ou vamp suspenso. A força do material está na simetria, não em uma resolução obrigatória."
+  },
+  "major upper triad colors": {
+    desc: "Tríades superiores maiores — Arpejo da tônica com tríades do II e V grau para abrir 9, #11, 13 e 7M.",
+    mood: "Luminoso, lídio e estável, com cor moderna sem perder repouso.",
+    tip: "Use a tríade do II grau para brilho #11 e a do V grau para reforçar repouso sem tocar apenas o acorde básico."
+  },
+  "dominant upper triad colors": {
+    desc: "Tríades superiores dominantes — Arpejo 7 com tríades naturais para colorir 9, 11, 13 e b7.",
+    mood: "Dominante aberto, blues/modal e direcional sem alteração pesada.",
+    tip: "Use as tríades sobre 5, b7 e 9 para criar movimento sem sair do dominante natural."
+  },
+  "minor major melodic colors": {
+    desc: "Cores menor-maior melódicas — Arpejo m(maj7) com tríades do II menor e V maior.",
+    mood: "Menor sofisticado, cinematográfico e suspenso pela sétima maior.",
+    tip: "Preserve a tensão entre b3 e 7M. Abra 9, 11 e 13 como cor melódica sem transformar o acorde em menor dórico."
+  },
+  "power riff pentatonic axis": {
+    desc: "Eixo pentatônico power — Tônica e quinta como âncora, com pentatônicas maior e menor como escolhas expressivas.",
+    mood: "Direto, físico e ambíguo entre maior e menor.",
+    tip: "Mantenha 1 e 5 como centro. Use b3 ou 3 como cor de frase, não como definição obrigatória do acorde."
   }
 };
 
@@ -176,6 +216,46 @@ const SUGGESTED_LINES: Record<string, LocalMaterialSuggestedLine> = {
     name: "Pentatônicas dóricas",
     theoryDesc: "Abre o menor por pentatônicas relacionadas e volta para a terça menor como identidade do acorde.",
     intervals: ["1P", "3m", "4P", "5P", "7m", "9M", "11P", "13M", "5P", "3m"]
+  },
+  "sus quartal pentatonic": {
+    name: "Quartas sobre sus",
+    theoryDesc: "Sustenta a quarta e move por células quartais para preservar a abertura do acorde.",
+    intervals: ["1P", "4P", "7m", "9M", "5P", "8P", "5P", "4P", "1P"]
+  },
+  "half diminished upper structures": {
+    name: "ø7 com 9 natural",
+    theoryDesc: "Afirma o arpejo meio-diminuto e abre a 9 natural como cor antes de voltar para b5 e b3.",
+    intervals: ["1P", "3m", "5d", "7m", "9M", "11P", "6m", "5d", "3m"]
+  },
+  "diminished symmetric cycle": {
+    name: "Ciclo por terças menores",
+    theoryDesc: "Repete o arpejo diminuto por terças menores para mostrar a simetria do acorde.",
+    intervals: ["1P", "3m", "5d", "7d", "10m", "12d", "13M", "15P"]
+  },
+  "augmented whole tone cycle": {
+    name: "Tríades aumentadas",
+    theoryDesc: "Alterna a tríade aumentada do acorde com a tríade um tom acima e percorre tons inteiros.",
+    intervals: ["1P", "3M", "5A", "9M", "11A", "7m", "5A", "3M", "1P"]
+  },
+  "major upper triad colors": {
+    name: "Tríades superiores maiores",
+    theoryDesc: "Sai do arpejo maior para a tríade do II grau e retorna pela tríade do V.",
+    intervals: ["1P", "3M", "5P", "7M", "9M", "11A", "13M", "5P", "7M", "9M", "8P"]
+  },
+  "dominant upper triad colors": {
+    name: "Tríades naturais do dominante",
+    theoryDesc: "Afirma o acorde 7 e abre cores naturais por tríades sobre 5, b7 e 9.",
+    intervals: ["1P", "3M", "5P", "7m", "9M", "11P", "13M", "7m", "5P", "3M", "1P"]
+  },
+  "minor major melodic colors": {
+    name: "Menor-maior melódico",
+    theoryDesc: "Mostra a tensão b3/7M e abre a cor por tríades de II menor e V maior.",
+    intervals: ["1P", "3m", "5P", "7M", "9M", "11P", "13M", "5P", "7M", "9M", "8P"]
+  },
+  "power riff pentatonic axis": {
+    name: "Riff pentatônico power",
+    theoryDesc: "Afirma tônica e quinta, toca a cor menor e responde com a cor maior sem fechar a terça do acorde.",
+    intervals: ["1P", "5P", "8P", "7m", "5P", "3m", "1P", "2M", "3M", "5P", "1P"]
   }
 };
 

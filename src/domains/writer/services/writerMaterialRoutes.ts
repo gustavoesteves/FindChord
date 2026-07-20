@@ -2,6 +2,7 @@ import type {
   WriterMaterialIntentLabel,
   WriterMaterialPaletteItem
 } from "./writerMaterialPalette";
+import type { ContextualMaterialIntent } from "../../../utils/music/theory/contextualMaterialTypes";
 
 export type WriterMaterialRouteId = "inside" | "color" | "tension" | "outside";
 
@@ -52,11 +53,19 @@ const ROUTE_BY_INTENT_LABEL: Record<WriterMaterialIntentLabel, WriterMaterialRou
   Fora: "outside"
 };
 
+const ROUTE_BY_INTENT: Record<ContextualMaterialIntent, WriterMaterialRouteId> = {
+  inside: "inside",
+  functional: "color",
+  tension: "tension",
+  outside: "outside"
+};
+
 export function routeForWriterMaterialIntent(intentLabel: WriterMaterialIntentLabel): WriterMaterialRouteId {
   return ROUTE_BY_INTENT_LABEL[intentLabel];
 }
 
 export function routeForWriterMaterialItem(item: WriterMaterialPaletteItem): WriterMaterialRouteId {
+  if (item.intent) return ROUTE_BY_INTENT[item.intent];
   return routeForWriterMaterialIntent(item.intentLabel);
 }
 

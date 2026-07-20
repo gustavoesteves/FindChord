@@ -177,9 +177,11 @@ describe("F119 janela temporal da melodia", () => {
     expect(regions[0]).toMatchObject({
       startMeasure: 1,
       endMeasure: 4,
-      scaleType: "major",
+      sourceType: "major",
       chordCount: 1
     });
+    expect(regions[0]).not.toHaveProperty("scaleName");
+    expect(regions[0]).not.toHaveProperty("scaleType");
   });
 
   it("mantem dominantes e substitutos cromaticos como leituras locais", () => {

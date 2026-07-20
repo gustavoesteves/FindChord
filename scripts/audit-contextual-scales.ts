@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 const MUSIC_DIR = path.resolve(process.cwd(), "docs/musics");
 
-export interface ContextualScaleAuditRow {
+export interface ContextualMaterialAuditRow {
   file: string;
   measure: number;
   chord: string;
@@ -21,10 +21,10 @@ export interface ContextualScaleAuditRow {
   status: "ok" | "no-candidate" | "low-melody-coverage" | "generic-altered-fallback";
 }
 
-export interface ContextualScaleAuditReport {
+export interface ContextualMaterialAuditReport {
   files: number;
   harmonyEvents: number;
-  rows: ContextualScaleAuditRow[];
+  rows: ContextualMaterialAuditRow[];
   noCandidateCount: number;
   lowMelodyCoverageCount: number;
   genericAlteredFallbackCount: number;
@@ -57,8 +57,8 @@ function isGenericFallback(candidate: ContextualMaterialCandidate | undefined): 
   return candidate?.type === "major" || candidate?.type === "minor pentatonic";
 }
 
-export function auditContextualScaleLibrary(): ContextualScaleAuditReport {
-  const rows: ContextualScaleAuditRow[] = [];
+export function auditContextualMaterialLibrary(): ContextualMaterialAuditReport {
+  const rows: ContextualMaterialAuditRow[] = [];
   let harmonyEvents = 0;
 
   for (const file of musicXmlFiles(MUSIC_DIR)) {
@@ -81,7 +81,7 @@ export function auditContextualScaleLibrary(): ContextualScaleAuditReport {
         resolutionTarget: snapshot.harmonies[index + 1]?.harmony.match(/^[A-G](?:#|b)?/)?.[0]
       });
       const primary = candidates[0];
-      const status: ContextualScaleAuditRow["status"] = candidates.length === 0
+      const status: ContextualMaterialAuditRow["status"] = candidates.length === 0
         ? "no-candidate"
         : isAlteredChord(harmony.harmony) && isGenericFallback(primary)
           ? "generic-altered-fallback"
@@ -111,10 +111,10 @@ export function auditContextualScaleLibrary(): ContextualScaleAuditReport {
   };
 }
 
-export function renderContextualScaleAuditMarkdown(report: ContextualScaleAuditReport): string {
+export function renderContextualMaterialAuditMarkdown(report: ContextualMaterialAuditReport): string {
   const issues = report.rows.filter(row => row.status !== "ok");
   const lines = [
-    "# F119 - Auditoria temporal de escalas contextuais no catalogo real",
+    "# F119 - Auditoria temporal de materiais contextuais no catalogo real",
     "",
     "## Resumo",
     "",
@@ -135,3 +135,9 @@ export function renderContextualScaleAuditMarkdown(report: ContextualScaleAuditR
   ];
   return `${lines.join("\n")}\n`;
 }
+
+// Compatibilidade com a nomenclatura antiga de "escala contextual".
+export type ContextualScaleAuditRow = ContextualMaterialAuditRow;
+export type ContextualScaleAuditReport = ContextualMaterialAuditReport;
+export const auditContextualScaleLibrary = auditContextualMaterialLibrary;
+export const renderContextualScaleAuditMarkdown = renderContextualMaterialAuditMarkdown;

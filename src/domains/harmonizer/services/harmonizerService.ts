@@ -48,8 +48,6 @@ export interface SectionMaterialReadingRegion {
   materialLabel?: string;
   sourceName: string;
   sourceType: string;
-  scaleName: string;
-  scaleType: string;
   intent: ContextualMaterialCandidate["intent"];
   harmonicFunction: ContextualMaterialCandidate["harmonicFunction"];
   chordCount: number;
@@ -78,10 +76,6 @@ export interface SectionMaterialSuggestionSet {
   regions: SectionMaterialReadingRegion[];
   linearRoutes: SectionLinearRoute[];
 }
-
-export type SectionScaleSuggestion = SectionMaterialSuggestion;
-export type SectionScaleReadingRegion = SectionMaterialReadingRegion;
-export type SectionScaleSuggestionSet = SectionMaterialSuggestionSet;
 
 interface SectionRange {
   startMeasure: number;
@@ -446,8 +440,6 @@ export function buildSectionMaterialSuggestions(
   });
 }
 
-export const buildSectionScaleSuggestions = buildSectionMaterialSuggestions;
-
 export function buildProposalMaterialSuggestions(
   proposal: ReharmonizationProposal | undefined,
   melodyAnchors: MelodicAnchor[],
@@ -492,8 +484,6 @@ export function buildProposalMaterialSuggestions(
       : [];
   });
 }
-
-export const buildProposalScaleSuggestions = buildProposalMaterialSuggestions;
 
 function regionKey(suggestion: SectionMaterialSuggestion): string {
   const primary = suggestion.candidates[0];
@@ -547,8 +537,6 @@ export function buildMaterialReadingRegions(suggestions: SectionMaterialSuggesti
       materialLabel,
       sourceName: primary.name,
       sourceType: primary.type,
-      scaleName: primary.name,
-      scaleType: primary.type,
       intent: primary.intent,
       harmonicFunction: primary.harmonicFunction,
       chordCount: 1,
@@ -558,8 +546,6 @@ export function buildMaterialReadingRegions(suggestions: SectionMaterialSuggesti
 
   return regions.filter(region => region.endMeasure > region.startMeasure || region.chordCount > 1);
 }
-
-export const buildScaleReadingRegions = buildMaterialReadingRegions;
 
 function primaryLinearFragments(suggestion: SectionMaterialSuggestion): string[] {
   return suggestion.candidates[0]?.linearFragments || [];
@@ -641,8 +627,6 @@ export function buildMaterialLinearRoutes(suggestions: SectionMaterialSuggestion
     ));
 }
 
-export const buildScaleLinearRoutes = buildMaterialLinearRoutes;
-
 export function buildProposalMaterialSuggestionSets(
   proposals: ReharmonizationProposal[],
   melodyAnchors: MelodicAnchor[],
@@ -663,8 +647,6 @@ export function buildProposalMaterialSuggestionSets(
       : [];
   });
 }
-
-export const buildProposalScaleSuggestionSets = buildProposalMaterialSuggestionSets;
 
 export function buildExistingHarmonyProposal(
   sectionHarmonies: ScoreHarmonyEvent[],

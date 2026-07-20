@@ -3,7 +3,7 @@ import { buildContextualMaterialCandidates } from "../src/utils/music/theory/con
 import { buildContextualScaleCandidates } from "../src/utils/music/theory/contextualScaleCandidates";
 
 describe("F199 candidatas contextuais de material", () => {
-  it("expoe a fachada material-first equivalente ao motor legado", () => {
+  it("mantem buildContextualScaleCandidates como alias legado do motor material-first", () => {
     const context = {
       chord: "G7",
       nextChord: "C",
@@ -11,8 +11,32 @@ describe("F199 candidatas contextuais de material", () => {
       melody: ["B", "D", "F"]
     };
 
+    expect(buildContextualScaleCandidates).toBe(buildContextualMaterialCandidates);
     expect(buildContextualMaterialCandidates(context)).toEqual(
       buildContextualScaleCandidates(context)
     );
+  });
+
+  it("inclui vocabulario curado do catalogo local quando ha contexto harmonico", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "G7",
+      nextChord: "Cmaj7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["B", "F"],
+      resolutionTarget: "C"
+    });
+    const upperTriads = candidates.find(candidate => candidate.type === "dominant upper triad colors");
+    const diminishedAxis = candidates.find(candidate => candidate.type === "dominant diminished axis");
+
+    expect(upperTriads).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      intent: "functional",
+      resolutionTarget: "C"
+    }));
+    expect(upperTriads?.melodicMaterials[0]).toEqual(expect.objectContaining({
+      label: "7 / tríades superiores naturais",
+      cells: ["G-B-D-F", "D-F-A", "F-A-C", "A-C-E"]
+    }));
+    expect(diminishedAxis?.intent).toBe("tension");
   });
 });

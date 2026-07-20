@@ -31,7 +31,7 @@ export interface MelodicMaterialAuditRow {
   proposal?: string;
   measure: number;
   chord: string;
-  primaryScale?: string;
+  primarySource?: string;
   primaryFunction?: string;
   primaryFit?: string;
   primaryMaterials: string[];
@@ -97,7 +97,7 @@ function rowsFromSuggestions(
       proposal,
       measure: suggestion.measure,
       chord: suggestion.chord,
-      primaryScale: primary?.name,
+      primarySource: primary?.name,
       primaryFunction: primary?.harmonicFunction,
       primaryFit: primary?.melodicFit,
       primaryMaterials: unique(primaryMaterials.map(material => material.label)),
@@ -213,7 +213,7 @@ function csvEscape(value: string | number | undefined): string {
 
 export function renderMelodicMaterialsAuditCsv(report: MelodicMaterialAuditReport): string {
   const header = [
-    "file", "source", "proposal", "measure", "chord", "primaryScale", "primaryFunction",
+    "file", "source", "proposal", "measure", "chord", "primarySource", "primaryFunction",
     "primaryFit", "primaryMaterials", "availableMaterials", "cells", "status"
   ];
   const rows = report.rows.map(row => [
@@ -222,7 +222,7 @@ export function renderMelodicMaterialsAuditCsv(report: MelodicMaterialAuditRepor
     row.proposal,
     row.measure,
     row.chord,
-    row.primaryScale,
+    row.primarySource,
     row.primaryFunction,
     row.primaryFit,
     row.primaryMaterials.join(" | "),
@@ -251,7 +251,7 @@ export function renderMelodicMaterialsAuditMarkdown(report: MelodicMaterialAudit
     `- Material no candidato principal: ${report.primaryMaterialRows} (${pct(report.primaryMaterialRows, report.rows.length)})`,
     `- Material disponivel apenas em candidato secundario: ${report.availableNonPrimaryRows} (${pct(report.availableNonPrimaryRows, report.rows.length)})`,
     `- Sem material melodico: ${report.noMaterialRows} (${pct(report.noMaterialRows, report.rows.length)})`,
-    `- Sem candidata de escala: ${report.noCandidateRows}`,
+    `- Sem candidato de material: ${report.noCandidateRows}`,
     "",
     "## Materiais encontrados",
     "",
@@ -264,22 +264,22 @@ export function renderMelodicMaterialsAuditMarkdown(report: MelodicMaterialAudit
     "",
     rowsWithMaterial.length === 0
       ? "Nenhum exemplo com material."
-      : "| Fonte | Arquivo | Comp. | Cifra | Escala principal | Materiais | Celulas |\n| --- | --- | ---: | --- | --- | --- | --- |\n"
-        + rowsWithMaterial.slice(0, 60).map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primaryScale || "-"} | ${row.availableMaterials.join(", ")} | ${row.cells.slice(0, 6).join(", ")} |`).join("\n"),
+      : "| Fonte | Arquivo | Comp. | Cifra | Fonte principal | Materiais | Celulas |\n| --- | --- | ---: | --- | --- | --- | --- |\n"
+        + rowsWithMaterial.slice(0, 60).map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primarySource || "-"} | ${row.availableMaterials.join(", ")} | ${row.cells.slice(0, 6).join(", ")} |`).join("\n"),
     "",
     "## Materiais secundarios",
     "",
     nonPrimary.length === 0
       ? "Nenhum caso em que o material apareceu apenas em candidato secundario."
       : "| Fonte | Arquivo | Comp. | Cifra | Principal | Material secundario |\n| --- | --- | ---: | --- | --- | --- |\n"
-        + nonPrimary.slice(0, 50).map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primaryScale || "-"} | ${row.availableMaterials.join(", ")} |`).join("\n"),
+        + nonPrimary.slice(0, 50).map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primarySource || "-"} | ${row.availableMaterials.join(", ")} |`).join("\n"),
     "",
     "## Amostras sem material",
     "",
     noMaterialExamples.length === 0
       ? "Nenhuma amostra sem material."
-      : "| Fonte | Arquivo | Comp. | Cifra | Escala principal | Funcao |\n| --- | --- | ---: | --- | --- | --- |\n"
-        + noMaterialExamples.map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primaryScale || "-"} | ${row.primaryFunction || "-"} |`).join("\n"),
+      : "| Fonte | Arquivo | Comp. | Cifra | Fonte principal | Funcao |\n| --- | --- | ---: | --- | --- | --- |\n"
+        + noMaterialExamples.map(row => `| ${row.source} | ${row.file} | ${row.measure} | ${row.chord} | ${row.primarySource || "-"} | ${row.primaryFunction || "-"} |`).join("\n"),
     "",
     "## Leitura",
     "",

@@ -28,9 +28,12 @@ import type {
   ContextualHarmonicFunction,
   ContextualMaterialCandidate,
   ContextualMaterialIntent,
+  ContextualMelodicMaterial,
   MaterialContext
 } from "./contextualMaterialTypes";
 import { getMaterialSourceMapsForQuality, type MaterialSourceMap } from "./musicTheory";
+import { buildLocalChordVampSupplementalCandidates } from "./localChordVampMaterialCatalog";
+import type { ChordCandidate } from "../models/ChordCandidate";
 
 export type {
   ContextualHarmonicFunction,
@@ -78,6 +81,118 @@ function determineIntent(source: MaterialSourceMap, harmonicFunction: Contextual
   return "functional";
 }
 
+function chordCandidateForContext(
+  chord: string,
+  root: string,
+  quality: ChordCandidate["quality"],
+  chordTones: string[]
+): ChordCandidate {
+  return {
+    root,
+    quality,
+    intervals: [],
+    notes: chordTones,
+    drawnNotes: chordTones,
+    score: 1,
+    confidence: 1,
+    omissions: [],
+    additions: [],
+    notationInternational: chord,
+    notationBrazilian: chord,
+    notationAcademic: chord,
+    isIncomplete: false
+  };
+}
+
+function buildRankedMaterialCandidate(input: {
+  source: MaterialSourceMap;
+  context: MaterialContext;
+  root: string;
+  quality: ChordCandidate["quality"];
+  chordTones: string[];
+  guideTones: string[];
+  guideToneTargets: string[];
+  guideToneResolutionPairs: string[];
+  weightedMelodyNotes: ReturnType<typeof weightedMelodyNotesFromContext>;
+  melodyNotes: string[];
+  harmonicFunction: ContextualHarmonicFunction;
+  index: number;
+  intent?: ContextualMaterialIntent;
+  melodicMaterials?: ContextualMelodicMaterial[];
+  confidenceOffset?: number;
+}): ContextualMaterialCandidate {
+  const scored = scoreMaterialCandidate(
+    input.source,
+    input.root,
+    input.chordTones,
+    input.weightedMelodyNotes,
+    input.harmonicFunction,
+    input.context.resolutionTarget,
+    input.index
+  );
+  const linearFragments = [
+    ...input.guideToneResolutionPairs,
+    ...passingNoteFragmentsFor(input.source, input.root, scored.passingNotes)
+  ];
+  const melodicMaterials = input.melodicMaterials ?? buildContextualMelodicMaterials(
+    input.source,
+    input.root,
+    input.quality,
+    input.harmonicFunction,
+    input.context.resolutionTarget,
+    input.context.nextChord
+  );
+  const melodicFit = melodicFitFor({
+    avoidNotes: scored.avoidNotes,
+    linearFragments,
+    melodyCoverage: scored.melodyCoverage,
+    melodyNotes: input.melodyNotes
+  });
+  const melodyMatches = melodyMatchesFor(input.melodyNotes, linearFragments);
+  const melodySupportRoles = melodySupportRolesFor({
+    guideTones: input.guideTones,
+    linearFragments,
+    melodyMatches,
+    passingNotes: scored.passingNotes,
+    resolutionTarget: input.context.resolutionTarget
+  });
+  const fitAdjustment = melodicFit === "aligned"
+    ? supportRoleAdjustment(melodySupportRoles)
+    : melodicFitAdjustment(melodicFit);
+  const candidate: ContextualMaterialCandidate = {
+    ...input.source,
+    chord: input.context.chord,
+    role: "color",
+    intent: input.intent ?? determineIntent(input.source, input.harmonicFunction),
+    harmonicFunction: input.harmonicFunction,
+    chordTones: input.chordTones,
+    supportedTensions: scored.supportedTensions,
+    passingNotes: scored.passingNotes,
+    avoidNotes: scored.avoidNotes,
+    melodyNotes: input.melodyNotes,
+    melodyMatches,
+    melodySupportRoles,
+    melodyCoverage: scored.melodyCoverage,
+    resolutionTarget: input.context.resolutionTarget,
+    rankingEvidence: {
+      ...scored.rankingEvidence,
+      melodicFitAdjustment: fitAdjustment
+    },
+    confidence: Math.min(0.99, Math.max(0, scored.confidence + fitAdjustment + (input.confidenceOffset ?? 0))),
+    explanation: "",
+    practiceHint: "",
+    guideTones: input.guideTones,
+    guideToneTargets: input.guideToneTargets,
+    guideToneResolutions: input.guideToneResolutionPairs,
+    linearFragments,
+    melodicMaterials,
+    melodicFit
+  };
+  candidate.explanation = describeMaterialCandidate(candidate);
+  candidate.practiceHint = practiceHintForMaterialCandidate(candidate);
+  return candidate;
+}
+
 export function buildContextualMaterialCandidates(context: MaterialContext): ContextualMaterialCandidate[] {
   const quality = resolveMaterialChordQuality(context.chord);
   if (!quality) return [];
@@ -90,80 +205,41 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
   const weightedMelodyNotes = weightedMelodyNotesFromContext(context.melody);
   const melodyNotes = Array.from(new Set(weightedMelodyNotes.map(note => note.pitch)));
   const harmonicFunction = determineContextualHarmonicFunction(context, quality.root);
-  const ranked = sources.map((source, index) => {
-    const scored = scoreMaterialCandidate(
-      source,
-      quality.root,
-      chordTones,
-      weightedMelodyNotes,
-      harmonicFunction,
-      context.resolutionTarget,
-      index
-    );
-    const linearFragments = [
-      ...guideToneResolutionPairs,
-      ...passingNoteFragmentsFor(source, quality.root, scored.passingNotes)
-    ];
-    const melodicMaterials = buildContextualMelodicMaterials(
-      source,
-      quality.root,
-      quality.quality,
-      harmonicFunction,
-      context.resolutionTarget,
-      context.nextChord
-    );
-    const melodicFit = melodicFitFor({
-      avoidNotes: scored.avoidNotes,
-      linearFragments,
-      melodyCoverage: scored.melodyCoverage,
-      melodyNotes
-    });
-    const melodyMatches = melodyMatchesFor(melodyNotes, linearFragments);
-    const melodySupportRoles = melodySupportRolesFor({
-      guideTones,
-      linearFragments,
-      melodyMatches,
-      passingNotes: scored.passingNotes,
-      resolutionTarget: context.resolutionTarget
-    });
-    const fitAdjustment = melodicFit === "aligned"
-      ? supportRoleAdjustment(melodySupportRoles)
-      : melodicFitAdjustment(melodicFit);
-    const candidate: ContextualMaterialCandidate = {
-      ...source,
-      chord: context.chord,
-      role: "color",
-      intent: determineIntent(source, harmonicFunction),
-      harmonicFunction,
-      chordTones,
-      supportedTensions: scored.supportedTensions,
-      passingNotes: scored.passingNotes,
-      avoidNotes: scored.avoidNotes,
-      melodyNotes,
-      melodyMatches,
-      melodySupportRoles,
-      melodyCoverage: scored.melodyCoverage,
-      resolutionTarget: context.resolutionTarget,
-      rankingEvidence: {
-        ...scored.rankingEvidence,
-        melodicFitAdjustment: fitAdjustment
-      },
-      confidence: Math.min(0.99, Math.max(0, scored.confidence + fitAdjustment)),
-      explanation: "",
-      practiceHint: "",
-      guideTones,
-      guideToneTargets,
-      guideToneResolutions: guideToneResolutionPairs,
-      linearFragments,
-      melodicMaterials,
-      melodicFit
-    };
-    candidate.explanation = describeMaterialCandidate(candidate);
-    candidate.practiceHint = practiceHintForMaterialCandidate(candidate);
-    return candidate;
-  });
+  const ranked = sources.map((source, index) => buildRankedMaterialCandidate({
+    source,
+    context,
+    root: quality.root,
+    quality: quality.quality,
+    chordTones,
+    guideTones,
+    guideToneTargets,
+    guideToneResolutionPairs,
+    weightedMelodyNotes,
+    melodyNotes,
+    harmonicFunction,
+    index
+  }));
+  const catalogCandidates = buildLocalChordVampSupplementalCandidates(
+    chordCandidateForContext(context.chord, quality.root, quality.quality, chordTones)
+  ).map((source, index) => buildRankedMaterialCandidate({
+    source,
+    context,
+    root: quality.root,
+    quality: quality.quality,
+    chordTones,
+    guideTones,
+    guideToneTargets,
+    guideToneResolutionPairs,
+    weightedMelodyNotes,
+    melodyNotes,
+    harmonicFunction,
+    index: sources.length + index,
+    intent: source.intent,
+    melodicMaterials: source.melodicMaterials,
+    confidenceOffset: -0.04
+  }));
 
-  return ranked
+  return [...ranked, ...catalogCandidates]
     .sort((a, b) => b.confidence - a.confidence)
     .map((candidate, index) => ({
       ...candidate,

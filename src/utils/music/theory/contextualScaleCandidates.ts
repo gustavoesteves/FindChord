@@ -7,6 +7,8 @@ import type {
   MaterialRankingEvidence
 } from "./contextualMaterialTypes";
 
+// Adaptador legado: a engine contextual agora e material-first.
+// Mantenha este arquivo apenas para chamadas antigas que ainda importam "Scale".
 export type ContextualScaleRole = ContextualMaterialRole;
 export type ContextualScaleIntent = ContextualMaterialIntent;
 export type ScaleContext = MaterialContext;

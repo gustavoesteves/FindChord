@@ -14,5 +14,8 @@ describe("F184 auditoria de materiais melodicos", () => {
     expect(report.materialCounts.length).toBeGreaterThan(0);
     expect(markdown).toContain("# F184 - Auditoria de materiais melodicos no catalogo real");
     expect(markdown).toContain("Materiais encontrados");
+    expect(markdown).toContain("Fonte principal");
+    expect(markdown).not.toContain("Escala principal");
+    expect(markdown).not.toContain("Sem candidata de escala");
   }, 30000);
 });

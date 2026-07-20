@@ -3,6 +3,7 @@ import {
   shortHintForWriterMaterialCard,
   type WriterMaterialPaletteItem
 } from "../services/writerMaterialPalette";
+import { materialIntentPresentation } from "../../../utils/music/theory/materialIntentPresentation";
 
 export interface WriterMaterialIdeaCardProps {
   item: WriterMaterialPaletteItem;
@@ -18,6 +19,7 @@ export function WriterMaterialIdeaCard({
   onSelect
 }: WriterMaterialIdeaCardProps) {
   const shortHint = shortHintForWriterMaterialCard(item.subtitle);
+  const intentPresentation = item.intent ? materialIntentPresentation(item.intent) : null;
 
   return (
     <button
@@ -39,8 +41,10 @@ export function WriterMaterialIdeaCard({
             {item.title}
           </span>
         </div>
-        <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider transition-colors ${
-          isActive ? "bg-sky-300 text-zinc-950" : "bg-zinc-850 text-zinc-400"
+        <span className={`text-[8px] px-1.5 py-0.5 rounded-full border font-black uppercase tracking-wider transition-colors ${
+          isActive
+            ? intentPresentation?.activeClassName || "bg-sky-300 text-zinc-950 border-transparent"
+            : intentPresentation?.className || "bg-zinc-850 text-zinc-400 border-transparent"
         }`}>
           {isActive ? "Em foco" : item.intentLabel}
         </span>
