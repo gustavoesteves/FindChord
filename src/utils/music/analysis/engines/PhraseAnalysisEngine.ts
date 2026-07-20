@@ -195,22 +195,7 @@ export class PhraseAnalysisEngine {
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 3);
 
-    // Refine cadence type based on the best candidate
-    if (finalCandidates.length > 0) {
-      const best = finalCandidates[0];
-      const scale = Scale.get(`${best.tonic} ${best.mode}`).notes;
-      if (cadentialTarget.targetPitch === best.tonic) {
-        cadentialTarget.cadenceType = "AUTHENTIC";
-      } else if (cadentialTarget.targetPitch === scale[4]) { // 5th degree
-        cadentialTarget.cadenceType = "HALF";
-      } else if (cadentialTarget.targetPitch === scale[5]) { // 6th degree
-        cadentialTarget.cadenceType = "DECEPTIVE";
-      } else if (cadentialTarget.targetPitch === scale[3]) { // 4th degree
-        cadentialTarget.cadenceType = "PLAGAL";
-      } else {
-        cadentialTarget.cadenceType = "OPEN";
-      }
-    }
+    cadentialTarget.cadenceType = "OPEN";
 
     return finalCandidates;
   }

@@ -247,6 +247,34 @@ describe("F119 janela temporal da melodia", () => {
     expect(longCadence.cadentialTarget.confidence).toBe(0.9);
   });
 
+  it("nao nomeia cadencia somente pelo grau final da melodia", () => {
+    const endingOnTonic = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "C", duration: 1920 }
+    ], "C");
+    const endingOnDominant = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "G", duration: 1920 }
+    ], "C");
+    const endingOnSubdominant = PhraseAnalysisEngine.analyzePhrase([
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 1920 }
+    ], "C");
+
+    expect(endingOnTonic.cadentialTarget).toMatchObject({
+      targetPitch: "C",
+      cadenceType: "OPEN"
+    });
+    expect(endingOnDominant.cadentialTarget).toMatchObject({
+      targetPitch: "G",
+      cadenceType: "OPEN"
+    });
+    expect(endingOnSubdominant.cadentialTarget).toMatchObject({
+      targetPitch: "F",
+      cadenceType: "OPEN"
+    });
+  });
+
   it("prioriza notas que se sobrepoem ao intervalo da cifra", () => {
     const harmony = {
       measure: 2,

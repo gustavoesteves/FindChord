@@ -348,15 +348,15 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-11 — P2 — parser e inferência cadencial simplificam demais o contexto tonal
 
 - **Módulo/tab/jornada:** Harmonizar / Importação-Harmonizações / C-D.
-- **Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; auditorias e parte da geração temporal já consomem essas timelines. Ainda falta eliminar fallbacks e refinar inferência cadencial negativa.
+- **Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; auditorias e parte da geração temporal já consomem essas timelines. A melodia isolada deixou de nomear `AUTHENTIC/HALF/DECEPTIVE/PLAGAL` só pelo grau final: ela mantém o alvo melódico, mas a cadência fica `OPEN` até haver evidência harmônica.
 - **Esperado:** preservar `<mode>`, mudanças de armadura e só nomear cadência quando houver evidência.
-- **Observado:** parser lê apenas o primeiro `<fifths>`, converte para nome maior e ignora `<mode>`; `PhraseAnalysisEngine` nomeia cadência apenas pela última nota.
+- **Observado:** parcialmente resolvido. Parser/timelines já preservam mudanças de armadura/modo em metadados; `PhraseAnalysisEngine` não inventa mais tipo cadencial pela última nota. Ainda há fallbacks e leitores que precisam consumir timeline/mode de forma mais completa.
 - **Evidência:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:4>) e [PhraseAnalysisEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/PhraseAnalysisEngine.ts:143>).
-- **Reprodução:** `fifths=-3, mode=minor` retorna Eb; tônica final vira AUTHENTIC, quinta HALF, sexta DECEPTIVE e quarta PLAGAL sem harmonia.
+- **Reprodução:** final em tônica, quinta ou quarta preserva `targetPitch`, mas retorna `cadenceType=OPEN` sem harmonia; Blue in Green mantém chegada melódica em F sem promover ii-V-I local como resposta principal.
 - **Impacto:** músico — centro/cadência falsos; produto — estratégias e Improviso são ativados por metadados incorretos.
 - **Causa provável:** armadura e grau final usados como aproximações definitivas.
-- **Correção recomendada:** timeline de key/mode e estado `UNKNOWN/OPEN`; separar grau de chegada de cadência.
-- **Testes necessários:** MusicXML menor, modulação e casos negativos de cadência.
+- **Correção recomendada:** eliminar fallbacks restantes para consumidores que ainda não consultam timeline/mode e expandir cadência confirmada por harmonia além de autênticas locais.
+- **Testes necessários:** MusicXML menor, modulação, casos negativos adicionais e cadências harmônicas não autênticas.
 - **Confiança:** muito alta.
 
 ### FC-HZ-12 — P2 — regras contextuais ensinam função e resoluções erradas
