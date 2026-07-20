@@ -41,6 +41,7 @@ function hasExplicitReferenceCadence(evidence: string[]): boolean {
     || /^ii-V-I local aponta /.test(item)
     || /^V-I local aponta /.test(item)
     || /^V-i local aponta /.test(item)
+    || /^cadência deceptiva V-(?:vi|VI) aponta /.test(item)
     || /^meia cadência em /.test(item)
     || /^(?:IV|iv)-I plagal aponta /.test(item)
   );
@@ -49,6 +50,7 @@ function hasExplicitReferenceCadence(evidence: string[]): boolean {
 function cadenceTypeFromReferenceEvidence(evidence: string[]): CadenceType {
   if (evidence.some(item => /^meia cadência em /.test(item))) return "HALF";
   if (evidence.some(item => /^(?:IV|iv)-I plagal aponta /.test(item))) return "PLAGAL";
+  if (evidence.some(item => /^cadência deceptiva V-(?:vi|VI) aponta /.test(item))) return "DECEPTIVE";
   return hasExplicitReferenceCadence(evidence) ? "AUTHENTIC" : "OPEN";
 }
 
@@ -85,6 +87,12 @@ export function formatReferenceCenterEvidence(evidence: string): string {
 
   const localDominantMinor = evidence.match(/^V-i local aponta (.+) menor$/);
   if (localDominantMinor) return `cadência V-i confirma ${localDominantMinor[1]} menor`;
+
+  const deceptiveMajor = evidence.match(/^cadência deceptiva V-vi aponta (.+) maior$/);
+  if (deceptiveMajor) return `cadência deceptiva V-vi confirma ${deceptiveMajor[1]} maior`;
+
+  const deceptiveMinor = evidence.match(/^cadência deceptiva V-VI aponta (.+) menor$/);
+  if (deceptiveMinor) return `cadência deceptiva V-VI confirma ${deceptiveMinor[1]} menor`;
 
   const halfCadence = evidence.match(/^meia cadência em (.+) (maior|menor)$/);
   if (halfCadence) return `meia cadência confirma chegada dominante em ${halfCadence[1]} ${halfCadence[2]}`;

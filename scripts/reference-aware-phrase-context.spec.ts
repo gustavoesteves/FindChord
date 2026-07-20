@@ -108,6 +108,47 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("promotes written deceptive cadence evidence without changing the target center to vi", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["C", "F", "G7", "Am"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major"
+    }));
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).toContain("cadência deceptiva V-vi confirma C maior");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "C",
+      cadenceType: "DECEPTIVE",
+      confidence: 0.8
+    });
+  });
+
+  it("promotes written minor deceptive cadence evidence as V-VI toward the minor center", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      {
+        ...phraseContext("A"),
+        selectedCenter: { tonic: "A", mode: "minor", confidence: 0.72 },
+        tonalCenterCandidates: [{ tonic: "A", mode: "minor", confidence: 0.72 }]
+      },
+      harmonies(["Am", "Dm", "E7", "F"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      mode: "minor"
+    }));
+    expect(refined.selectedCenterEvidence).toContain("cadência deceptiva V-VI confirma A menor");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "A",
+      cadenceType: "DECEPTIVE",
+      confidence: 0.8
+    });
+  });
+
   it("keeps the melodic phrase center when reference evidence is weak", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),
@@ -148,6 +189,8 @@ describe("F48 reference-aware phrase context", () => {
     expect(formatReferenceCenterEvidence("ii-V-I local aponta G maior")).toBe("cadência ii-V-I confirma G maior");
     expect(formatReferenceCenterEvidence("V-I local aponta Bb maior")).toBe("cadência V-I confirma Bb maior");
     expect(formatReferenceCenterEvidence("V-i local aponta A menor")).toBe("cadência V-i confirma A menor");
+    expect(formatReferenceCenterEvidence("cadência deceptiva V-vi aponta C maior")).toBe("cadência deceptiva V-vi confirma C maior");
+    expect(formatReferenceCenterEvidence("cadência deceptiva V-VI aponta A menor")).toBe("cadência deceptiva V-VI confirma A menor");
     expect(formatReferenceCenterEvidence("meia cadência em C maior")).toBe("meia cadência confirma chegada dominante em C maior");
     expect(formatReferenceCenterEvidence("iv-I plagal aponta C maior")).toBe("cadência plagal iv-I confirma C maior");
     expect(formatReferenceCenterEvidence("repouso menor recorrente em D")).toBe("repousos recorrentes sustentam D menor");

@@ -249,6 +249,7 @@ function referenceCadenceType(evidence: string[] | undefined): PhraseContext["ca
   }
   if (evidence.some(item => /^meia cadência em /.test(item))) return "HALF";
   if (evidence.some(item => /^(?:IV|iv)-I plagal aponta /.test(item))) return "PLAGAL";
+  if (evidence.some(item => /^cadência deceptiva V-(?:vi|VI) aponta /.test(item))) return "DECEPTIVE";
   return "OPEN";
 }
 

@@ -175,6 +175,17 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
     if (isDominantResolution && isMinorQuality(nextResolved.quality)) {
       addScore(nextRoot, "minor", 3, `V-i local aponta ${nextRoot} menor`);
     }
+
+    if (isDominantQuality(currentResolved.quality) && currentRoot && nextRoot) {
+      const expectedTarget = dominantTarget(currentRoot);
+      const deceptiveDegree = expectedTarget ? chromaticDistance(nextRoot, expectedTarget) : null;
+      if (expectedTarget && deceptiveDegree === 9 && isMinorQuality(nextResolved.quality)) {
+        addScore(expectedTarget, "major", 3.2, `cadência deceptiva V-vi aponta ${expectedTarget} maior`);
+      }
+      if (expectedTarget && deceptiveDegree === 8 && isMajorQuality(nextResolved.quality)) {
+        addScore(expectedTarget, "minor", 3.2, `cadência deceptiva V-VI aponta ${expectedTarget} menor`);
+      }
+    }
   }
 
   for (const harmony of ordered) {
