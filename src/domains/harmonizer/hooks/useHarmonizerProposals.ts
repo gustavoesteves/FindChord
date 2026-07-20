@@ -16,6 +16,8 @@ import {
 import {
   buildControlledReharmonizationProposals,
   buildExistingHarmonyProposal,
+  buildHarmonyOnlyAnalysisProposals,
+  buildHarmonyOnlyPhraseContext,
   buildMaterialLinearRoutes,
   buildMaterialReadingRegions,
   buildProposalMaterialSuggestionSets,
@@ -91,9 +93,10 @@ export function useHarmonizerProposals({
 
   const { proposals, phraseContext, rejectedExperimentalCount, omittedStrategyDiagnostics } = useMemo(() => {
     if (melodyAnchorsData.anchors.length === 0) {
+      const phraseContext = buildHarmonyOnlyPhraseContext(sectionHarmonies);
       return {
-        proposals: [],
-        phraseContext: null,
+        proposals: buildHarmonyOnlyAnalysisProposals(sectionHarmonies, phraseContext),
+        phraseContext,
         rejectedExperimentalCount: 0,
         omittedStrategyDiagnostics: []
       };

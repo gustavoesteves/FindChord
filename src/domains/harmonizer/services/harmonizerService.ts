@@ -186,6 +186,48 @@ function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): Reharmonizatio
     .map(([measureIndex, chords]) => ({ measureIndex, chords }));
 }
 
+function confidenceValue(confidence: "weak" | "medium" | "strong" | undefined): number {
+  if (confidence === "strong") return 0.88;
+  if (confidence === "medium") return 0.76;
+  if (confidence === "weak") return 0.52;
+  return 0.45;
+}
+
+function referenceCadenceType(evidence: string[] | undefined): PhraseContext["cadentialTarget"]["cadenceType"] {
+  if (!evidence) return "OPEN";
+  return evidence.some(item => (
+    /^iiø-V-i local aponta /.test(item)
+    || /^ii-V-I local aponta /.test(item)
+    || /^V-I local aponta /.test(item)
+    || /^V-i local aponta /.test(item)
+  )) ? "AUTHENTIC" : "OPEN";
+}
+
+export function buildHarmonyOnlyPhraseContext(sectionHarmonies: ScoreHarmonyEvent[]): PhraseContext | null {
+  if (sectionHarmonies.length === 0) return null;
+
+  const referenceAnalysis = analyzeReferenceHarmony(sectionHarmonies);
+  const referenceCenter = referenceAnalysis.referenceCenter;
+  const fallbackRoot = chordRoot(sectionHarmonies[0]?.harmony) || "C";
+  const selectedCenter = {
+    tonic: referenceCenter?.tonic || fallbackRoot,
+    mode: referenceCenter?.mode || "major",
+    confidence: confidenceValue(referenceCenter?.confidence)
+  };
+
+  return {
+    selectedCenter,
+    selectedCenterSource: referenceCenter ? "reference" : "melody",
+    selectedCenterEvidence: referenceCenter?.evidence || referenceAnalysis.explanation,
+    tonalCenterCandidates: [selectedCenter],
+    cadentialTarget: {
+      targetPitch: selectedCenter.tonic,
+      cadenceType: referenceCadenceType(referenceCenter?.evidence),
+      confidence: selectedCenter.confidence
+    }
+  };
+}
+
 function chordFromRoman(center: string, roman: string, mode: "major" | "minor"): string {
   const majorIntervals: Record<string, string> = {
     I: "1P",
@@ -814,6 +856,42 @@ export function buildControlledReharmonizationProposals(
     ...(referenceContourProposal ? [referenceContourProposal] : []),
     ...(referenceRhythmProposal ? [referenceRhythmProposal] : [])
   ];
+}
+
+export function buildHarmonyOnlyAnalysisProposals(
+  sectionHarmonies: ScoreHarmonyEvent[],
+  phraseContext: PhraseContext | null
+): ReharmonizationProposal[] {
+  if (sectionHarmonies.length === 0 || !phraseContext) return [];
+
+  const referenceAnalysis = analyzeReferenceHarmony(sectionHarmonies);
+  const mode = phraseContext.selectedCenter.mode === "minor" ? "minor-functional" : "major-functional";
+  const functionSummary = sectionHarmonies.map(harmony => (
+    classifyFunctionInMode(harmony.harmony, phraseContext.selectedCenter.tonic, mode)
+  ));
+  const functionRoute = functionSummary.join(" -> ");
+
+  return [{
+    id: "harmony-only-functional-reading",
+    kind: "controlled-reharmonization",
+    name: "Leitura — Função da progressão",
+    measures: harmonyEventsToMeasures(sectionHarmonies),
+    explanation: [
+      `centro inferido pela harmonia: ${phraseContext.selectedCenter.tonic} ${phraseContext.selectedCenter.mode === "minor" ? "menor" : "maior"}`,
+      `percurso funcional: ${functionRoute}`,
+      "leitura construída somente pelas cifras; sem validação melódica"
+    ],
+    bassLine: referenceAnalysis.bassTrajectory.length > 0
+      ? referenceAnalysis.bassTrajectory
+      : sectionHarmonies.map(harmony => chordBass(harmony.harmony)),
+    inputContext: "harmony-only-analysis",
+    referenceRelation: "harmony-only-reading",
+    harmonicIdiom: referenceAnalysis.idiom?.idiom,
+    harmonicBoundary: referenceAnalysis.minorModalBoundary?.boundary === "undetermined"
+      ? undefined
+      : referenceAnalysis.minorModalBoundary?.boundary,
+    cadentialTarget: phraseContext.cadentialTarget.targetPitch
+  }];
 }
 
 export function flattenProposalChords(proposal: ReharmonizationProposal): string[] {

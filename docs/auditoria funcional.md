@@ -15,7 +15,7 @@ Atualizado após os commits até `050d15b`.
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-05` e `FC-MS-01/MS-02`.
+Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto operacional: `FC-MS-01/MS-02`.
 
 ## Parecer executivo
 
@@ -23,7 +23,7 @@ Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musica
    Parcialmente, com avanço importante. Seleção no braço, detecção básica, escolha explícita de interpretação ambígua, atualização das tabs, aberturas com baixo preservado, filtros de abertura, materiais locais e exportação canônica funcionam melhor. Ainda restam leitura semântica completa, distinção pedagógica fina em Materiais e validação QML real.
 
 2. **O módulo Harmonizar cumpre sua proposta?**  
-   Parcialmente para somente melodia e melodia+cifras. O handoff para o Writer já cria uma progressão navegável e o modo menor tem guardrail. O modo somente cifras continua praticamente ausente.
+   Parcialmente para somente melodia, melodia+cifras e somente cifras. O handoff para o Writer já cria uma progressão navegável, o modo menor tem guardrail, e somente cifras agora gera leitura funcional e materiais sem validação melódica.
 
 3. **Quais tabs estão completas?**  
    Nenhuma cumpre integralmente o contrato descrito. “Materiais do acorde” é a mais próxima para acordes completos e isolados.
@@ -106,7 +106,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 | B — acorde ambíguo | Progrediu: alternativas aparecem e podem ser selecionadas; falta propagar identidade canônica até exportação |
 | C — somente melodia | Parcial: gera propostas e Improviso; menor, truncamento e handoff tiveram correções; cadência/contexto ainda pedem refinamento |
 | D — melodia e cifras | Parcial: referência e transformações existem; comparação/timing/Improviso têm inconsistências |
-| E — somente cifras | Quebrada: mostra a referência, sem transformação, ranking ou Improviso |
+| E — somente cifras | Parcial: mostra referência, leitura funcional e materiais; transformações ainda são conservadoras |
 | F — falha de integração | Parcial: segurança/ACK/origin melhoraram; status bridge/plugin/score e fila por instância ainda faltam |
 
 # Achados confirmados
@@ -265,13 +265,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações e Improviso / E.
 - **Esperado:** analisar centro, função, trajetória e cadência; propor transformações sem alegar validação melódica.
-- **Observado:** somente cartão da referência; zero proposta, primary, transformação e material.
+- **Observado:** resolvido parcialmente. Sem notas, o Harmonizar agora constrói contexto harmônico, leitura funcional e materiais derivados da referência, explicitando ausência de validação melódica.
 - **Evidência:** [useHarmonizerProposals.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useHarmonizerProposals.ts:76>) e [ContextualMaterialSuggestionsPanel.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/ContextualMaterialSuggestionsPanel.tsx:280>).
 - **Reprodução:** C–Am–Dm7–G7–C sem notas: `harmony-only-analysis`, uma referência, zero materiais e painel nulo.
 - **Impacto:** músico — Jornada E não existe; produto — um dos três modos prometidos não é entregue.
 - **Causa provável:** pipeline depende obrigatoriamente de `melodicAnchors`.
-- **Correção recomendada:** `HarmonyOnlyAnalysisContext`, análise funcional própria e materiais derivados da referência.
-- **Testes necessários:** corpus e UI sem notas, com critérios melódicos explicitamente indisponíveis.
+- **Progresso:** `buildHarmonyOnlyPhraseContext` infere centro/cadência pela referência; `buildHarmonyOnlyAnalysisProposals` cria a proposta `Leitura — Função da progressão`; materiais contextuais passam a usar a harmonia mesmo com `melody=[]`. Regressão coberta em `harmony-only-analysis.spec.ts` e incluída na suíte curada.
+- **Correção recomendada:** evoluir para transformações harmony-only mais musicais, sem usar critérios de cobertura melódica.
+- **Testes necessários:** UI sem notas, corpus real somente cifras e transformações que preservem função/baixo/cadência.
 - **Confiança:** muito alta.
 
 ### FC-HZ-06 — P2 — limite de 32 notas corta seções no meio

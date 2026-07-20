@@ -54,6 +54,7 @@ export default defineConfig({
       "scripts/harmonic-idiom-classifier.spec.ts",
       "scripts/harmonic-route-distance.spec.ts",
       "scripts/harmonic-strategy-properties.spec.ts",
+      "scripts/harmony-only-analysis.spec.ts",
       "scripts/harmonizer-controlled-proposals.spec.ts",
       "scripts/harmonizer-diagnostics.spec.ts",
       "scripts/harmonizer-header-labels.spec.ts",
