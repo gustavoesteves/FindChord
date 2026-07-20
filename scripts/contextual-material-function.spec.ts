@@ -44,6 +44,20 @@ describe("F202 funcao contextual de material", () => {
     }, "Db")).toBe("dominant");
   });
 
+  it("usa alvo de resolucao quando nao ha proximo acorde explicito", () => {
+    expect(determineContextualHarmonicFunction({
+      chord: "A7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      resolutionTarget: "D"
+    }, "A")).toBe("dominant");
+
+    expect(determineContextualHarmonicFunction({
+      chord: "D7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      resolutionTarget: "C"
+    }, "D")).toBe("color");
+  });
+
   it("calcula notas-guia e resolucoes proximas", () => {
     const guideTones = guideTonesFor("G", "dominant7th");
 

@@ -41,11 +41,13 @@ function resolvesAsDominant(root: string, targetRoot: string | undefined): boole
 export function determineContextualHarmonicFunction(context: MaterialContext, root: string): ContextualHarmonicFunction {
   const center = context.tonalCenter;
   const nextRoot = chordRoot(context.nextChord);
+  const resolutionRoot = context.resolutionTarget ? Note.pitchClass(context.resolutionTarget) : undefined;
   const dominantLike = isDominantLike(context.chord);
 
   if (center && rootsEqual(root, center.tonic)) return "tonic";
   if (dominantLike && (
     resolvesAsDominant(root, nextRoot)
+    || resolvesAsDominant(root, resolutionRoot)
     || (!!center && resolvesAsDominant(root, center.tonic))
   )) return "dominant";
   if (dominantLike) return "color";

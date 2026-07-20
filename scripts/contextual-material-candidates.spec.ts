@@ -44,4 +44,22 @@ describe("F199 candidatas contextuais de material", () => {
       intent: "tension"
     }));
   });
+
+  it("trata dominante final com alvo de resolucao como material funcional", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["C#", "G"],
+      resolutionTarget: "D"
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "C#->D",
+      "G->F#"
+    ]));
+  });
 });

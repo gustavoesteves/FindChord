@@ -368,13 +368,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 - **Reprodução:**
   - `A7→Dm`, `E7→Am` e `Db7→C` são `dominant`;
   - `D7→C` fica `color`;
+  - `A7` sem próximo acorde, mas com `resolutionTarget=D`, é `dominant`;
   - C, C6, Cadd9 produzem apenas a terça; Csus/F#5 não fabricam terça+sétima;
   - E7→Am sugere D→C; G7→Cm sugere F→Eb.
 - **Impacto:** músico — recebe resolução melódica objetivamente errada; produto — ranking, região e rota linear usam a classificação defeituosa.
 - **Causa provável:** predicados incompletos e alvo representado apenas pela raiz.
-- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem `nextChord`.
-- **Correção recomendada:** aprofundar diminutos, dominantes sem próximo acorde e alvo por região quando não houver `nextChord`.
-- **Testes necessários:** diminutos auxiliares/de passagem e dominantes cadenciais sem acorde seguinte explícito.
+- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem `nextChord`; dominantes sem próximo acorde explícito agora usam `resolutionTarget` para classificar função e resoluções.
+- **Correção recomendada:** aprofundar diminutos auxiliares/de passagem e alvo por região quando não houver `nextChord` nem `resolutionTarget`.
+- **Testes necessários:** diminutos auxiliares/de passagem e dominantes com alvo regional inferido.
 - **Confiança:** alta.
 
 ## MuseScore, concorrência e segurança
