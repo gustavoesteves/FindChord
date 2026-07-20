@@ -177,6 +177,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-06 — P2 — filtros “Abertos/Fechados” usam critério incorreto
 
 - **Módulo/tab/jornada:** Escrever / Aberturas / A.
+- **Progresso:** os filtros da aba Aberturas agora usam `voicingShapeFilters.ts`: corda solta ou gap interno classificam a forma como aberta, enquanto “Fechados” exige ausência de cordas soltas e de gaps internos. Regressão coberta em `writer-voicing-shape-filters.spec.ts`.
 - **Esperado:** shape com corda solta deve aparecer em “Abertos”.
 - **Observado:** a implementação procura gaps `null` entre cordas tocadas, não `fret === 0`.
 - **Evidência:** [VoicingSearchLayer.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VoicingSearchLayer.tsx:83>).

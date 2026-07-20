@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useWriter } from "../context/WriterContext";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
 import { evaluateVoicingErgonomics } from "../../../utils/music/scoring/voicingErgonomics";
+import { isClosedVoicingShape, isOpenVoicingShape } from "../services/voicingShapeFilters";
 import { Layers } from "lucide-react";
 
 type FilterTab = "todos" | "drops" | "abertos" | "fechados" | "ergonomicos" | "distancia";
@@ -46,39 +47,9 @@ export const VoicingSearchLayer: React.FC = () => {
         return family.toLowerCase().includes("drop 2") || family.toLowerCase().includes("drop 3");
       });
     } else if (activeTab === "abertos") {
-      list = list.filter(v => {
-        // Um voicing é considerado aberto se tiver cordas mutadas ou soltas entre as notas tocadas
-        const playedIndexes = v.frets
-          .map((f, idx) => (f !== null ? idx : null))
-          .filter((idx): idx is number => idx !== null);
-        if (playedIndexes.length < 2) return false;
-        
-        let hasGaps = false;
-        for (let i = playedIndexes[0] + 1; i < playedIndexes[playedIndexes.length - 1]; i++) {
-          if (v.frets[i] === null) {
-            hasGaps = true;
-            break;
-          }
-        }
-        return hasGaps || v.shapeFamily === "Drop 3";
-      });
+      list = list.filter(isOpenVoicingShape);
     } else if (activeTab === "fechados") {
-      list = list.filter(v => {
-        // Sem cordas mutadas no meio das notas tocadas
-        const playedIndexes = v.frets
-          .map((f, idx) => (f !== null ? idx : null))
-          .filter((idx): idx is number => idx !== null);
-        if (playedIndexes.length < 2) return true;
-
-        let hasGaps = false;
-        for (let i = playedIndexes[0] + 1; i < playedIndexes[playedIndexes.length - 1]; i++) {
-          if (v.frets[i] === null) {
-            hasGaps = true;
-            break;
-          }
-        }
-        return !hasGaps;
-      });
+      list = list.filter(isClosedVoicingShape);
     }
 
     // Aplicar Ordenações Específicas
