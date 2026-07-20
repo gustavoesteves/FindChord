@@ -1,6 +1,10 @@
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { PhraseContext } from "./PhraseAnalysisEngine";
-import type { ReharmonizationProposal, ReharmonizationMeasure } from "../models/ReharmonizationProposal";
+import type {
+  ReharmonizationChordEvent,
+  ReharmonizationProposal,
+  ReharmonizationMeasure
+} from "../models/ReharmonizationProposal";
 import { diagnostic, type HarmonicDiagnostic } from "../models/HarmonicDiagnostic";
 import { Note } from "tonal";
 import { ChordRealizationEngine } from "./ChordRealizationEngine";
@@ -48,7 +52,8 @@ export class GravityFieldManager {
     phraseContext: PhraseContext,
     options: GravityProposalGenerationOptions = {}
   ): GravityProposalGenerationResult {
-    const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
+    const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .map(proposal => this.withGeneratedEvents(proposal, options.measureTicks));
     let pIdx = 1;
     let rejectedExperimentalCount = 0;
 
@@ -122,6 +127,7 @@ export class GravityFieldManager {
               kind: "experimental-exploration",
               name: `Estratégia — ${field.name}`,
               measures,
+              events: this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks),
               explanation: seed.explanation, 
               bassLine: bestPath.bassLine
             });
@@ -146,6 +152,51 @@ export class GravityFieldManager {
         ...this.melodicCompatibilityDiagnostics(anchors, allProposals)
       ]
     };
+  }
+
+  private static withGeneratedEvents(
+    proposal: ReharmonizationProposal,
+    measureTicks?: ScoreMeasureTickRange[]
+  ): ReharmonizationProposal {
+    if (proposal.events && proposal.events.length > 0) return proposal;
+    return {
+      ...proposal,
+      events: this.proposalEventsFromMeasures(proposal.id, proposal.measures, measureTicks)
+    };
+  }
+
+  private static proposalEventsFromMeasures(
+    proposalId: string,
+    measures: ReharmonizationMeasure[],
+    measureTicks?: ScoreMeasureTickRange[]
+  ): ReharmonizationChordEvent[] {
+    const orderedTicks = measureTicks ? [...measureTicks].sort((a, b) => a.measure - b.measure) : [];
+    return measures.flatMap(measure => {
+      const measureRange = orderedTicks.find(item => item.measure === measure.measureIndex);
+      const tickStart = measureRange?.startTick ?? (measure.measureIndex - 1) * 1920;
+      const tickEnd = measureRange?.endTick ?? measure.measureIndex * 1920;
+      const measureDuration = Math.max(1, tickEnd - tickStart);
+      const chordCount = Math.max(1, measure.chords.length);
+      const eventDuration = Math.max(1, Math.floor(measureDuration / chordCount));
+
+      return measure.chords.map((chord, chordIndex) => {
+        const eventStart = tickStart + eventDuration * chordIndex;
+        const isLast = chordIndex === measure.chords.length - 1;
+        const eventEnd = isLast ? tickEnd : Math.min(tickEnd, eventStart + eventDuration);
+        const beat = 1 + (measureDuration > 0 ? ((eventStart - tickStart) / measureDuration) * 4 : 0);
+        return {
+          id: `${proposalId}-m${measure.measureIndex}-c${chordIndex}`,
+          measureIndex: measure.measureIndex,
+          beat: Math.round(beat * 100) / 100,
+          chord,
+          chordIndex,
+          occurrenceInMeasure: chordIndex,
+          tickStart: eventStart,
+          tickEnd: eventEnd,
+          durationTicks: Math.max(1, eventEnd - eventStart)
+        };
+      });
+    });
   }
 
   private static passesModeCompatibilityGate(
