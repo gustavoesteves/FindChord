@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { useChordStore } from "../../../store/useChordStore";
 import { INSTRUMENTS } from "../../../utils/music/models/InstrumentTuning";
+import { TUNING_NOTE_OPTIONS } from "../services/tuningNoteOptions";
 import { Sparkles, Sliders } from "lucide-react";
-
-const NOTE_CLASSES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const OCTAVES = [1, 2, 3, 4, 5];
 
 export default function TuningSettings() {
   const {
@@ -121,14 +119,9 @@ export default function TuningSettings() {
                         onChange={(e) => updateCustomStringTuning(index, e.target.value)}
                         className="bg-zinc-950 border border-zinc-850 rounded-md text-[10px] py-1 px-0.5 text-center font-bold text-zinc-350 cursor-pointer focus:outline-none focus:border-purple-500"
                       >
-                        {OCTAVES.flatMap(oct => 
-                          NOTE_CLASSES.map(n => {
-                            const val = `${n}${oct}`;
-                            return (
-                              <option key={val} value={val}>{val}</option>
-                            );
-                          })
-                        )}
+                        {TUNING_NOTE_OPTIONS.map(val => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
                       </select>
                     </div>
                   );

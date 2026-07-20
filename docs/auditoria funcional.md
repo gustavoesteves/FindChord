@@ -164,6 +164,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-05 — P2 — seletor de afinação não cobre afinações do próprio catálogo
 
 - **Módulo/tab/jornada:** Escrever / Braço / A-B.
+- **Progresso:** o seletor de nota por corda agora usa `tuningNoteOptions.ts`, com cromatismo em sustenidos e bemóis, oitava 0 e inclusão automática das notas presentes nos presets do catálogo. Regressão coberta em `tuning-note-options.spec.ts`.
 - **Esperado:** toda nota de preset deve ser representável no seletor controlado.
 - **Observado:** opções só usam sustenidos e oitavas 1–5.
 - **Evidência:** [TuningSettings.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/TuningSettings.tsx:6>) e [InstrumentTuning.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/models/InstrumentTuning.ts:19>).
