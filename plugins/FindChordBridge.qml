@@ -74,6 +74,7 @@ MuseScore {
     property bool isProcessingSnapshot: false
     property string bridgeSessionId: ""
     property string bridgePluginToken: ""
+    property string bridgeScoreUploadPath: ""
 
     property int safetyLimit: 5000
 
@@ -145,6 +146,7 @@ MuseScore {
                 var session = JSON.parse(r.responseText);
                 bridgeSessionId = session.sessionId || "";
                 bridgePluginToken = session.pluginToken || "";
+                bridgeScoreUploadPath = session.scoreUploadPath || "";
                 statusText.text = "Status: Bridge pareado.";
             } catch (e) {
                 logText.text = "Sessao de bridge invalida.";
@@ -256,12 +258,18 @@ MuseScore {
         }
 
         try {
-            var path = "/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml";
-            writeScore(score, path, "musicxml");
+            if (bridgeScoreUploadPath.length === 0) {
+                requestPluginSession();
+                logText.text = "Bridge sem caminho temporario para MusicXML.";
+                isProcessingSnapshot = false;
+                return;
+            }
+
+            writeScore(score, bridgeScoreUploadPath, "musicxml");
 
             var payload = {
                 action: "PARSE_XML",
-                path: path
+                path: bridgeScoreUploadPath
             };
 
             var req = new XMLHttpRequest();

@@ -1,5 +1,8 @@
 const http = require('http');
 const crypto = require('crypto');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT = 9000;
@@ -19,6 +22,8 @@ const PLUGIN_HTTP_PATHS = new Set([
 const sessionId = crypto.randomUUID();
 const dashboardToken = crypto.randomBytes(24).toString('hex');
 const pluginToken = crypto.randomBytes(24).toString('hex');
+const scoreUploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'findchord-bridge-'));
+const scoreUploadPath = path.join(scoreUploadDir, `score-${sessionId}.musicxml`);
 let eventQueue = [];
 
 // Telemetria Operacional (Sprint B.5)
@@ -121,6 +126,43 @@ function pruneExpiredQueue() {
   eventsDropped += before - eventQueue.length;
 }
 
+function broadcastScoreSnapshot(snapshot) {
+  const scoreMessage = {
+    protocolVersion: "1.0",
+    messageType: "SESSION",
+    payload: { type: "SCORE_SNAPSHOT", data: snapshot }
+  };
+
+  const messageStr = JSON.stringify(scoreMessage);
+  wss.clients.forEach((client) => {
+    if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+}
+
+function readAllowedScoreXml(candidatePath) {
+  if (typeof candidatePath !== 'string') {
+    throw Object.assign(new Error('Caminho do MusicXML ausente.'), { statusCode: 400 });
+  }
+
+  const resolvedCandidate = fs.realpathSync(candidatePath);
+  const resolvedAllowed = fs.realpathSync(scoreUploadDir);
+  if (resolvedCandidate !== path.join(resolvedAllowed, path.basename(scoreUploadPath))) {
+    throw Object.assign(new Error('Caminho do MusicXML nao autorizado.'), { statusCode: 403 });
+  }
+
+  const stats = fs.statSync(resolvedCandidate);
+  if (!stats.isFile()) {
+    throw Object.assign(new Error('MusicXML nao e um arquivo regular.'), { statusCode: 400 });
+  }
+  if (stats.size > MAX_SCORE_BODY_BYTES) {
+    throw Object.assign(new Error('MusicXML muito grande.'), { statusCode: 413 });
+  }
+
+  return fs.readFileSync(resolvedCandidate, 'utf8');
+}
+
 // Create HTTP Server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -163,7 +205,8 @@ const server = http.createServer((req, res) => {
     pluginLastSeen = new Date().toISOString();
     writeJson(res, 200, {
       sessionId,
-      pluginToken
+      pluginToken,
+      scoreUploadPath
     });
     return;
   }
@@ -343,15 +386,18 @@ const server = http.createServer((req, res) => {
       try {
         const payload = JSON.parse(body);
 
-        // --- FILE BRIDGE INTERCEPTION ---
-        if (payload.action === "PARSE_XML" && payload.path) {
-          const fs = require('fs');
-          if (!fs.existsSync(payload.path)) {
-            writeJson(res, 404, { error: 'Arquivo XML temporário não encontrado.' });
+        if (payload.action === "PARSE_XML") {
+          let xmlData;
+          try {
+            xmlData = typeof payload.xml === 'string'
+              ? payload.xml
+              : readAllowedScoreXml(payload.path);
+          } catch (err) {
+            eventsRejected++;
+            writeJson(res, err.statusCode || 400, { error: err.message });
             return;
           }
 
-          const xmlData = fs.readFileSync(payload.path, 'utf8');
           const { parseMusicXML } = require('./musicxml-parser.cjs');
           
           let parsedScore;
@@ -362,45 +408,22 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          console.log(`[Find Chord Bridge] File Bridge: parsed ${parsedScore.harmonies.length} chords and ${parsedScore.notes.length} notes from MusicXML.`);
+          console.log(`[Find Chord Bridge] MusicXML Bridge: parsed ${parsedScore.harmonies.length} chords and ${parsedScore.notes.length} notes from uploaded XML.`);
           
           const snapshotForFrontend = {
             ...parsedScore,
             notes: parsedScore.notes
           };
 
-          const scoreMessage = {
-            protocolVersion: "1.0",
-            messageType: "SESSION",
-            payload: { type: "SCORE_SNAPSHOT", data: snapshotForFrontend }
-          };
-
-          const messageStr = JSON.stringify(scoreMessage);
-          wss.clients.forEach((client) => {
-            if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
-              client.send(messageStr);
-            }
-          });
+          broadcastScoreSnapshot(snapshotForFrontend);
 
           writeJson(res, 200, { status: 'success', parsedChords: parsedScore.harmonies.length, parsedNotes: parsedScore.notes.length });
           return;
         }
-        // --- END FILE BRIDGE ---
 
         console.log(`[Find Chord Bridge] Recebido ScoreSnapshot do QML via HTTP (${payload.harmonies?.length || 0} acordes).`);
         
-        const scoreMessage = {
-          protocolVersion: "1.0",
-          messageType: "SESSION",
-          payload: { type: "SCORE_SNAPSHOT", data: payload }
-        };
-
-        const messageStr = JSON.stringify(scoreMessage);
-        wss.clients.forEach((client) => {
-          if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
-            client.send(messageStr);
-          }
-        });
+        broadcastScoreSnapshot(payload);
         
         writeJson(res, 200, { status: 'success', broadcastedTo: wss.clients.size });
       } catch (e) {

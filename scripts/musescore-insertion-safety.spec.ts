@@ -101,4 +101,22 @@ describe("MuseScore chord insertion safety", () => {
     expect(transport).toContain("resolveAck(payload)");
     expect(transport).toContain("public async sendWithAck");
   });
+
+  it("restringe MusicXML sincronizado a caminho temporario controlado pelo bridge", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+
+    expect(bridge).toContain("fs.mkdtempSync(path.join(os.tmpdir(), 'findchord-bridge-'))");
+    expect(bridge).toContain("scoreUploadPath");
+    expect(bridge).toContain("readAllowedScoreXml");
+    expect(bridge).toContain("fs.realpathSync(candidatePath)");
+    expect(bridge).toContain("stats.isFile()");
+    expect(bridge).toContain("stats.size > MAX_SCORE_BODY_BYTES");
+    expect(bridge).not.toContain("readFileSync(payload.path");
+
+    expect(plugin).toContain("property string bridgeScoreUploadPath");
+    expect(plugin).toContain("bridgeScoreUploadPath = session.scoreUploadPath");
+    expect(plugin).toContain("writeScore(score, bridgeScoreUploadPath, \"musicxml\")");
+    expect(plugin).not.toContain("/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml");
+  });
 });
