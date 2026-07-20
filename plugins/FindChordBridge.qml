@@ -179,14 +179,6 @@ MuseScore {
 
         } else if (type === "CLEAR_ONTOLOGY") {
             clearOntology();
-            
-        } else if (type === "EVAL") {
-            try {
-                  var result = eval(payload.code);
-                  postLog("[EVAL] Success: " + String(result));
-            } catch (err) {
-                  postLog("[EVAL] Error: " + err.message);
-            }
         }
     }
 

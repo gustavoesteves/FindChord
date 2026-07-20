@@ -3,6 +3,17 @@ const crypto = require('crypto');
 const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT = 9000;
+const HOST = '127.0.0.1';
+const MAX_HTTP_BODY_BYTES = 131072;
+const MAX_SCORE_BODY_BYTES = 524288;
+const MAX_WS_PAYLOAD_BYTES = 65536;
+const DASHBOARD_PATH = '/dashboard';
+const PLUGIN_PATH = '/plugin';
+const PLUGIN_HTTP_PATHS = new Set([
+  '/api/v1/consume',
+  '/api/v1/log',
+  '/api/v1/score'
+]);
 let eventQueue = [];
 
 // Telemetria Operacional (Sprint B.5)
@@ -25,11 +36,25 @@ function writeJson(res, status, data) {
 }
 
 // Validação de Origem e Cabeçalho do Cliente (Sprint A)
-function validateOrigin(req, res) {
+function isValidDashboardOrigin(origin) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/.test(origin);
+}
+
+function validateOrigin(req, res, url) {
   const origin = req.headers['origin'];
+  if (!origin) {
+    if (PLUGIN_HTTP_PATHS.has(url.pathname) || url.pathname === '/api/v1/health') {
+      return true;
+    }
+
+    eventsRejected++;
+    writeJson(res, 403, { error: 'Origem ausente para endpoint de dashboard.' });
+    return false;
+  }
+
   if (origin) {
     // Permite portas do dev server (5173/5174) de localhost ou loopback
-    const isValidOrigin = /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/.test(origin);
+    const isValidOrigin = isValidDashboardOrigin(origin);
     if (!isValidOrigin) {
       eventsRejected++;
       writeJson(res, 403, { error: 'Origem não autorizada.' });
@@ -51,6 +76,8 @@ function validateOrigin(req, res) {
 
 // Create HTTP Server
 const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+
   // CORS Preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -63,11 +90,9 @@ const server = http.createServer((req, res) => {
   }
 
   // Validação de segurança de origem
-  if (!validateOrigin(req, res)) {
+  if (!validateOrigin(req, res, url)) {
     return;
   }
-
-  const url = new URL(req.url, `http://localhost:${PORT}`);
 
   // 1. Endpoint: GET /api/v1/pending -> Retorna os eventos pendentes na fila
   if (req.method === 'GET' && url.pathname === '/api/v1/pending') {
@@ -100,7 +125,7 @@ const server = http.createServer((req, res) => {
       if (exceeded) return;
       body += chunk.toString();
       // Limite de payload de 128KB (Sprint A)
-      if (body.length > 131072) {
+      if (body.length > MAX_HTTP_BODY_BYTES) {
         exceeded = true;
         eventsRejected++;
         writeJson(res, 413, { error: 'Payload muito grande. Máximo de 128KB permitido.' });
@@ -146,7 +171,7 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => {
       if (exceeded) return;
       body += chunk.toString();
-      if (body.length > 131072) {
+      if (body.length > MAX_HTTP_BODY_BYTES) {
         exceeded = true;
         eventsRejected++;
         writeJson(res, 413, { error: 'Payload de log muito grande.' });
@@ -183,7 +208,7 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => {
       if (exceeded) return;
       body += chunk.toString();
-      if (body.length > 524288) { // 512KB for path/payload
+      if (body.length > MAX_SCORE_BODY_BYTES) {
         exceeded = true;
         eventsRejected++;
         writeJson(res, 413, { error: 'Payload de score muito grande.' });
@@ -230,7 +255,7 @@ const server = http.createServer((req, res) => {
 
           const messageStr = JSON.stringify(scoreMessage);
           wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
+            if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
               client.send(messageStr);
             }
           });
@@ -250,7 +275,7 @@ const server = http.createServer((req, res) => {
 
         const messageStr = JSON.stringify(scoreMessage);
         wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
+          if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
             client.send(messageStr);
           }
         });
@@ -324,32 +349,42 @@ function handleNewEvent(payload) {
 function broadcastMessage(message) {
   const messageStr = JSON.stringify(message);
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.role === 'plugin' && client.readyState === WebSocket.OPEN) {
       client.send(messageStr);
     }
   });
 }
 
 // WebSocket Server integrado ao HTTP
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: MAX_WS_PAYLOAD_BYTES });
 
 wss.on('connection', (ws, req) => {
-  // Validação do Origin
-  const origin = req.headers['origin'];
-  if (origin) {
-    const isValidOrigin = /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/.test(origin);
-    if (!isValidOrigin && !req.url.includes('/plugin')) {
-      // Se não for o origin válido e não for a rota do plugin (que pode não ter origin)
-      ws.close(1008, 'Origem não autorizada');
-      return;
-    }
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const isPlugin = url.pathname === PLUGIN_PATH;
+  const isDashboard = url.pathname === DASHBOARD_PATH;
+
+  if (!isPlugin && !isDashboard) {
+    ws.close(1008, 'Caminho WebSocket não autorizado');
+    return;
   }
 
-  const isPlugin = req.url.includes('/plugin');
+  // Validação do Origin
+  const origin = req.headers['origin'];
+  if (isDashboard && (!origin || !isValidDashboardOrigin(origin))) {
+    ws.close(1008, 'Origem não autorizada');
+    return;
+  }
+  if (isPlugin && origin && !isValidDashboardOrigin(origin)) {
+    ws.close(1008, 'Origem não autorizada');
+    return;
+  }
+
   if (isPlugin) {
+    ws.role = 'plugin';
     pluginLastSeen = new Date().toISOString();
     console.log(`[Find Chord Bridge] Plugin WS conectado. Total: ${wss.clients.size}`);
   } else {
+    ws.role = 'dashboard';
     frontendLastSeen = new Date().toISOString();
     console.log(`[Find Chord Bridge] Dashboard WS conectado. Total: ${wss.clients.size}`);
   }
@@ -357,17 +392,21 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data.toString());
-      // Re-broadcast (Fan-out) para os outros clientes, exceto o sender
       const messageStr = JSON.stringify(message);
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(messageStr);
-        }
-      });
-      // Também adiciona à fila HTTP fallback se for direcionado ao plugin
       if (!isPlugin) {
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.role === 'plugin' && client.readyState === WebSocket.OPEN) {
+            client.send(messageStr);
+          }
+        });
         eventQueue.push(message);
         if (eventQueue.length > 50) eventQueue.shift();
+      } else {
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
+            client.send(messageStr);
+          }
+        });
       }
     } catch (e) {
       console.warn('[Find Chord Bridge] WS message parse error:', e.message);
@@ -381,12 +420,12 @@ wss.on('connection', (ws, req) => {
 
 
 // Inicializa o Servidor
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log(`====================================================`);
   console.log(` 📡 FIND CHORD LOCAL INTEGRATION BRIDGE SERVER      `);
   console.log(`====================================================`);
-  console.log(`➜  Porta: http://localhost:${PORT}`);
-  console.log(`➜  WebSocket: ws://localhost:${PORT}`);
+  console.log(`➜  Porta: http://${HOST}:${PORT}`);
+  console.log(`➜  WebSocket: ws://${HOST}:${PORT}`);
   console.log(`➜  Endpoints de Polling (v1):`);
   console.log(`   - GET  /api/v1/pending  (Exibe fila atual)`);
   console.log(`   - GET  /api/v1/consume  (Consome e limpa a fila)`);

@@ -34,4 +34,21 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("cursor.tick < targetTick");
     expect(plugin).toContain("cursor.rewind(1)");
   });
+
+  it("nao expoe execucao dinamica de codigo no plugin", () => {
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+
+    expect(plugin).not.toContain("type === \"EVAL\"");
+    expect(plugin).not.toContain("eval(");
+  });
+
+  it("mantem o bridge local em loopback e com rotas WebSocket explicitas", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+
+    expect(bridge).toContain("const HOST = '127.0.0.1';");
+    expect(bridge).toContain("server.listen(PORT, HOST");
+    expect(bridge).toContain("url.pathname === PLUGIN_PATH");
+    expect(bridge).toContain("url.pathname === DASHBOARD_PATH");
+    expect(bridge).not.toContain("req.url.includes('/plugin')");
+  });
 });
