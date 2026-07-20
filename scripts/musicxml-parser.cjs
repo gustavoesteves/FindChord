@@ -37,6 +37,17 @@ function getText(obj, tagName) {
   return null;
 }
 
+function stableSlug(value) {
+  return String(value || 'section')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    || 'section';
+}
+
 function parseMusicXML(xmlData) {
   const options = {
     ignoreAttributes: false,
@@ -74,6 +85,20 @@ function parseMusicXML(xmlData) {
   let currentDivisions = 240; // Default
   let currentTimeSignature = undefined;
   const getTickScale = () => 480 / currentDivisions;
+  const sectionIdCounts = new Map();
+  let noteIndex = 0;
+
+  const createSection = (label, measure, tick) => {
+    const baseId = `sec_${measure}_${tick}_${stableSlug(label)}`;
+    const count = sectionIdCounts.get(baseId) || 0;
+    sectionIdCounts.set(baseId, count + 1);
+    return {
+      id: count === 0 ? baseId : `${baseId}_${count + 1}`,
+      label,
+      startMeasure: measure,
+      startTick: tick
+    };
+  };
 
   let measureCount = 0;
 
@@ -122,21 +147,11 @@ function parseMusicXML(xmlData) {
         if (dirType) {
           const rehearsal = getText(dirType, 'rehearsal');
           if (rehearsal) {
-            snapshot.sections.push({
-              id: "sec_" + mNumber + "_" + Math.random().toString(36).substr(2, 5),
-              label: rehearsal,
-              startMeasure: mNumber,
-              startTick: measureCursor
-            });
+            snapshot.sections.push(createSection(rehearsal, mNumber, measureCursor));
           }
           const words = getText(dirType, 'words');
           if (words && words.length <= 4 && words.toUpperCase() === words && !rehearsal) {
-            snapshot.sections.push({
-              id: "sec_" + mNumber + "_" + Math.random().toString(36).substr(2, 5),
-              label: words,
-              startMeasure: mNumber,
-              startTick: measureCursor
-            });
+            snapshot.sections.push(createSection(words, mNumber, measureCursor));
           }
         }
       }
@@ -185,7 +200,7 @@ function parseMusicXML(xmlData) {
           const staff = staffStr ? parseInt(staffStr) : 1;
           
           snapshot.notes.push({
-            id: 'n_' + Math.random().toString(36).substr(2, 9),
+            id: `n_${mNumber}_${noteTickStart}_${voice}_${staff}_${step}${alter}_${octave}_${noteIndex++}`,
             step, alter, octave,
             voice, staff,
             measure: mNumber,

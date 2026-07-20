@@ -5,6 +5,40 @@ const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 describe("MusicXML parser timeline", () => {
+  it("gera ids deterministicos para secoes e notas", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <score-partwise version="4.0">
+        <part-list>
+          <score-part id="P1"><part-name>Music</part-name></score-part>
+        </part-list>
+        <part id="P1">
+          <measure number="1">
+            <attributes><divisions>480</divisions></attributes>
+            <direction>
+              <direction-type><rehearsal>A</rehearsal></direction-type>
+            </direction>
+            <note>
+              <pitch><step>C</step><octave>4</octave></pitch>
+              <duration>480</duration>
+              <voice>1</voice>
+              <staff>1</staff>
+            </note>
+          </measure>
+        </part>
+      </score-partwise>`;
+    const first = parseMusicXML(xml);
+    const second = parseMusicXML(xml);
+
+    expect(first.sections.map((section: { id: string }) => section.id)).toEqual(
+      second.sections.map((section: { id: string }) => section.id)
+    );
+    expect(first.notes.map((note: { id: string }) => note.id)).toEqual(
+      second.notes.map((note: { id: string }) => note.id)
+    );
+    expect(first.sections[0]?.id).toBe("sec_1_0_a");
+    expect(first.notes[0]?.id).toBe("n_1_0_1_1_C0_4_0");
+  });
+
   it("avanca o proximo compasso pelo maior cursor alcancado apos backup multivoz", () => {
     const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
       <score-partwise version="4.0">
