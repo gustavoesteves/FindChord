@@ -74,6 +74,25 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("promotes written half-cadence evidence without inventing tonic resolution", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["C", "F", "G7"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major"
+    }));
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).toContain("meia cadência confirma chegada dominante em C maior");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "C",
+      cadenceType: "HALF",
+      confidence: 0.76
+    });
+  });
+
   it("keeps the melodic phrase center when reference evidence is weak", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),
@@ -114,6 +133,7 @@ describe("F48 reference-aware phrase context", () => {
     expect(formatReferenceCenterEvidence("ii-V-I local aponta G maior")).toBe("cadência ii-V-I confirma G maior");
     expect(formatReferenceCenterEvidence("V-I local aponta Bb maior")).toBe("cadência V-I confirma Bb maior");
     expect(formatReferenceCenterEvidence("V-i local aponta A menor")).toBe("cadência V-i confirma A menor");
+    expect(formatReferenceCenterEvidence("meia cadência em C maior")).toBe("meia cadência confirma chegada dominante em C maior");
     expect(formatReferenceCenterEvidence("repouso menor recorrente em D")).toBe("repousos recorrentes sustentam D menor");
     expect(formatReferenceCenterEvidence("acorde final sugere repouso em Eb")).toBe("acorde final repousa em Eb");
     expect(formatReferenceCenterEvidence("primeiro acorde sugere Bb maior")).toBe("primeiro acorde apresenta Bb maior");

@@ -41,10 +41,12 @@ function hasExplicitReferenceCadence(evidence: string[]): boolean {
     || /^ii-V-I local aponta /.test(item)
     || /^V-I local aponta /.test(item)
     || /^V-i local aponta /.test(item)
+    || /^meia cadência em /.test(item)
   );
 }
 
 function cadenceTypeFromReferenceEvidence(evidence: string[]): CadenceType {
+  if (evidence.some(item => /^meia cadência em /.test(item))) return "HALF";
   return hasExplicitReferenceCadence(evidence) ? "AUTHENTIC" : "OPEN";
 }
 
@@ -81,6 +83,9 @@ export function formatReferenceCenterEvidence(evidence: string): string {
 
   const localDominantMinor = evidence.match(/^V-i local aponta (.+) menor$/);
   if (localDominantMinor) return `cadência V-i confirma ${localDominantMinor[1]} menor`;
+
+  const halfCadence = evidence.match(/^meia cadência em (.+) (maior|menor)$/);
+  if (halfCadence) return `meia cadência confirma chegada dominante em ${halfCadence[1]} ${halfCadence[2]}`;
 
   const recurringMajor = evidence.match(/^repouso maior recorrente em (.+)$/);
   if (recurringMajor) return `repousos recorrentes sustentam ${recurringMajor[1]} maior`;

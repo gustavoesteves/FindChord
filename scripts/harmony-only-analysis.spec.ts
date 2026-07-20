@@ -56,4 +56,23 @@ describe("Harmony-only analysis", () => {
     }));
     expect(suggestions.flatMap(suggestion => suggestion.candidates).length).toBeGreaterThan(0);
   });
+
+  it("keeps a harmony-only final dominant as a half cadence", () => {
+    const phraseContext = buildHarmonyOnlyPhraseContext(harmonies(["C", "F", "G7"]));
+    const proposals = buildHarmonyOnlyAnalysisProposals(harmonies(["C", "F", "G7"]), phraseContext);
+
+    expect(phraseContext).toEqual(expect.objectContaining({
+      selectedCenter: expect.objectContaining({
+        tonic: "C",
+        mode: "major"
+      }),
+      selectedCenterSource: "reference",
+      cadentialTarget: {
+        targetPitch: "C",
+        cadenceType: "HALF",
+        confidence: 0.76
+      }
+    }));
+    expect(proposals[0]?.cadentialTarget).toBe("C");
+  });
 });

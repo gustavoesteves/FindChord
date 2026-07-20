@@ -89,6 +89,27 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
     }));
   });
 
+  it("infers a half cadence target from a final dominant chord", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["C", "F", "G7"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major",
+      confidence: "medium"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("meia cadência em C maior");
+  });
+
+  it("uses previous tonic quality to infer a minor half cadence target", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["Am", "Dm", "E7"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      mode: "minor"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("meia cadência em A menor");
+  });
+
   it("reports blues as an existing harmonic idiom instead of dominant errors", () => {
     const analysis = analyzeReferenceHarmony(harmonies(["C7", "F7", "C7", "G7", "F7", "C7"]));
 

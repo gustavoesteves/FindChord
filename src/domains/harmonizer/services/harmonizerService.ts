@@ -239,12 +239,16 @@ function confidenceValue(confidence: "weak" | "medium" | "strong" | undefined): 
 
 function referenceCadenceType(evidence: string[] | undefined): PhraseContext["cadentialTarget"]["cadenceType"] {
   if (!evidence) return "OPEN";
-  return evidence.some(item => (
+  if (evidence.some(item => (
     /^iiø-V-i local aponta /.test(item)
     || /^ii-V-I local aponta /.test(item)
     || /^V-I local aponta /.test(item)
     || /^V-i local aponta /.test(item)
-  )) ? "AUTHENTIC" : "OPEN";
+  ))) {
+    return "AUTHENTIC";
+  }
+  if (evidence.some(item => /^meia cadência em /.test(item))) return "HALF";
+  return "OPEN";
 }
 
 export function buildHarmonyOnlyPhraseContext(sectionHarmonies: ScoreHarmonyEvent[]): PhraseContext | null {

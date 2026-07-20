@@ -106,6 +106,29 @@ function normalizeRoot(chord: string): string | null {
   return root ? Note.pitchClass(root) || root : null;
 }
 
+function dominantTarget(root: string | null): string | null {
+  if (!root) return null;
+  return Note.pitchClass(Note.transpose(`${root}4`, "4P"));
+}
+
+function targetModeFromExistingQualities(
+  ordered: ScoreHarmonyEvent[],
+  targetRoot: string
+): "major" | "minor" | null {
+  let majorSupport = 0;
+  let minorSupport = 0;
+
+  for (const harmony of ordered) {
+    if (normalizeRoot(harmony.harmony) !== targetRoot) continue;
+    const quality = resolveChordSymbol(harmony.harmony).quality;
+    if (isMajorQuality(quality)) majorSupport += 1;
+    if (isMinorQuality(quality)) minorSupport += 1;
+  }
+
+  if (majorSupport === 0 && minorSupport === 0) return null;
+  return minorSupport > majorSupport ? "minor" : "major";
+}
+
 function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceTonalCenterInference | null {
   if (harmonies.length === 0) return null;
 
@@ -170,6 +193,13 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
 
   if (isMajorQuality(lastResolved.quality)) addScore(lastRoot, "major", 2, `acorde final sugere repouso em ${lastRoot}`);
   if (isMinorQuality(lastResolved.quality)) addScore(lastRoot, "minor", 2, `acorde final sugere repouso em ${lastRoot}`);
+  if (isDominantQuality(lastResolved.quality)) {
+    const target = dominantTarget(lastRoot);
+    const mode = target ? targetModeFromExistingQualities(ordered.slice(0, -1), target) : null;
+    if (target && mode) {
+      addScore(target, mode, 2.2, `meia cadência em ${target} ${mode === "minor" ? "menor" : "maior"}`);
+    }
+  }
   if (isMajorQuality(firstResolved.quality)) addScore(firstRoot, "major", 0.4, `primeiro acorde sugere ${firstRoot} maior`);
   if (isMinorQuality(firstResolved.quality)) addScore(firstRoot, "minor", 0.4, `primeiro acorde sugere ${firstRoot} menor`);
 
