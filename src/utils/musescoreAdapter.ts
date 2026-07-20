@@ -76,6 +76,7 @@ function isScoreSessionPayload(payload: unknown): payload is ScoreSessionPayload
 
 class MuseScoreAdapter {
   private transport: WebSocketTransport;
+  private activeScoreSyncRequestId: string | null = null;
 
   constructor() {
     this.transport = new WebSocketTransport("ws://localhost:9000/dashboard");
@@ -84,7 +85,9 @@ class MuseScoreAdapter {
         const sessionCmd = msg.payload;
         if (!isScoreSessionPayload(sessionCmd)) return;
         if (sessionCmd.type === 'SCORE_SNAPSHOT' && sessionCmd.data) {
+          if (sessionCmd.requestId && sessionCmd.requestId !== this.activeScoreSyncRequestId) return;
           useScoreSessionStore.getState().loadScore(sessionCmd.data);
+          if (sessionCmd.requestId) this.activeScoreSyncRequestId = null;
         } else if (sessionCmd.type === 'CURSOR_CHANGED' && sessionCmd.cursorTick !== undefined) {
           useScoreSessionStore.getState().updateCursor(sessionCmd.cursorTick);
         }
@@ -156,11 +159,13 @@ class MuseScoreAdapter {
 
   public async requestScoreSync(): Promise<boolean> {
     const requestId = crypto.randomUUID();
+    this.activeScoreSyncRequestId = requestId;
     let unsubscribe = () => {};
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
     const snapshotReceived = new Promise<boolean>((resolve) => {
       timeout = setTimeout(() => {
+        if (this.activeScoreSyncRequestId === requestId) this.activeScoreSyncRequestId = null;
         unsubscribe();
         resolve(false);
       }, 10000);
@@ -192,6 +197,7 @@ class MuseScoreAdapter {
       await this.transport.send(msg);
       return await snapshotReceived;
     } catch (e) {
+      if (this.activeScoreSyncRequestId === requestId) this.activeScoreSyncRequestId = null;
       if (timeout) clearTimeout(timeout);
       unsubscribe();
       console.warn("MuseScore bridge offline", e);
