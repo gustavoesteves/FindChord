@@ -10,7 +10,7 @@ const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 function presentedFor(file: string) {
   const snapshot = parseMusicXML(fs.readFileSync(`./docs/musics/imported-real-book/${file}`, "utf8"));
-  const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+  const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
   expect(harmonizable).toBeTruthy();
 
   const ranked = rankReharmonizationProposalsByVoiceLeading(

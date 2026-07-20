@@ -16,7 +16,7 @@ function loadAfterYou() {
 describe("After You calibration", () => {
   it("uses the reference dominant chain to center the first window in Bb", () => {
     const snapshot = loadAfterYou();
-    const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+    const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
     expect(harmonizable).toBeTruthy();
 
     const referenceForWindow = snapshot.harmonies.filter((harmony: any) => (

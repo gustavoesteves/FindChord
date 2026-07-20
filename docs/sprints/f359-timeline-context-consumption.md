@@ -22,6 +22,8 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
   - análise de frase;
   - geração de segmentos locais.
 - A auditoria real (`findHarmonizableWindow`) agora aceita o snapshot completo e resolve a tonalidade pelo início de cada janela melódica.
+- Auditorias e calibrações derivadas passaram a chamar `findHarmonizableWindow` com o snapshot completo quando disponível.
+- A auditoria de janelas apresentáveis passou a resolver a tonalidade de cada janela candidata pelos anchors.
 - Adicionado teste de regressão para:
   - C menor vindo da timeline ser entregue ao motor como `Cm`;
   - mudança posterior para D maior em 3/4;
@@ -30,7 +32,6 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 
 ## Próximos consumidores
 
-- Scripts derivados da auditoria real devem passar o snapshot completo quando disponível.
 - Comparadores de referência devem usar a tonalidade do trecho avaliado.
 - Seletores de janelas e motores temporais devem consumir `measureTicks/timeTimeline` para evitar pressupor 4/4 fixo.
 - O painel de Improviso pode herdar o mesmo resolvedor quando comparar materiais por região.

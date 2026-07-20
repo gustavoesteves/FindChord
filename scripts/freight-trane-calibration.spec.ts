@@ -15,7 +15,7 @@ function loadFreightTrane() {
 describe("Freight Trane calibration", () => {
   it("treats the opening as a dominant sus vamp instead of plain C major", () => {
     const snapshot = loadFreightTrane();
-    const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+    const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
     expect(harmonizable).toBeTruthy();
 
     const vamp = harmonizable!.generation.proposals

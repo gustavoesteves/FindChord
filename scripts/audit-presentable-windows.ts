@@ -18,6 +18,7 @@ import {
   type UnresolvedDominantMelodyCase
 } from "./audit-unresolved-dominant-melody";
 import { toAnchors, findHarmonizableWindow } from "./real-music-audit";
+import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -67,7 +68,7 @@ function reasonLabels(reasons: Set<PresentableWindowReason>): string {
 function primaryWindowMeasures(snapshot: any): number[] {
   const primary = findHarmonizableWindow(
     snapshot.notes || [],
-    snapshot.metadata.keySignature,
+    { snapshot },
     snapshot.harmonies || []
   );
   return primary ? uniqueSorted(primary.anchors.map(anchor => anchor.measureIndex)) : [];
@@ -92,7 +93,10 @@ export function collectPresentableWindowsForFile(
       candidate.measureIndexes.includes(harmony.measure)
     ));
     const phraseContext = applyReferenceCenterToPhraseContext(
-      PhraseAnalysisEngine.analyzePhrase(candidate.anchors, snapshot.metadata.keySignature),
+      PhraseAnalysisEngine.analyzePhrase(
+        candidate.anchors,
+        timelineContextForAnchors(snapshot, candidate.anchors).keySignature
+      ),
       referenceHarmonies
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(candidate.anchors, phraseContext);

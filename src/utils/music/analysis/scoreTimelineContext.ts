@@ -74,3 +74,10 @@ export function timelineContextForSection(
 
   return timelineContextAtTick(snapshot, tick);
 }
+
+export function timelineContextForAnchors(
+  snapshot: ScoreSnapshot | null | undefined,
+  anchors: { startTick?: number }[]
+): ScoreTimelineContext {
+  return timelineContextAtTick(snapshot, anchors[0]?.startTick ?? 0);
+}

@@ -53,7 +53,7 @@ export function auditCalibrationFoundationCase(
 ): CalibrationFoundationAuditResult {
   try {
     const snapshot = parseMusicXML(fs.readFileSync(path.join(dir, item.file), "utf8"));
-    const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+    const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
 
     if (!harmonizable) {
       return {

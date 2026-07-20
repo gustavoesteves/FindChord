@@ -99,7 +99,7 @@ function evidenceSummary(proposal: ReharmonizationProposal): string {
 
 function auditCase(file: string): ChromaticRow[] {
   const snapshot = loadSnapshot(file);
-  const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+  const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
   if (!harmonizable) return [];
 
   const ranked = rankReharmonizationProposalsByVoiceLeading(

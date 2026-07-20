@@ -81,7 +81,7 @@ describe("F38 real music fire audit", () => {
       return;
     }
 
-    const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature);
+    const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot });
     expect(harmonizable).not.toBeNull();
 
     const { phraseContext, generation, anchors: harmonizedAnchors } = harmonizable!;

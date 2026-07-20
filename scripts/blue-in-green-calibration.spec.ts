@@ -15,7 +15,7 @@ function loadBlueInGreen() {
 describe("Blue in Green calibration", () => {
   it("does not promote a half-cadence arrival as a local ii-V-I answer", () => {
     const snapshot = loadBlueInGreen();
-    const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+    const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
     expect(harmonizable).toBeTruthy();
     expect(harmonizable?.phraseContext.selectedCenter.tonic).toBe("Bb");
     expect(harmonizable?.phraseContext.cadentialTarget.targetPitch).toBe("F");
