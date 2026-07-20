@@ -12,7 +12,7 @@ export function cadenceLabel(cadenceType: string): string {
   if (cadenceType === "AUTHENTIC") return "cadência autêntica";
   if (cadenceType === "PLAGAL") return "cadência plagal";
   if (cadenceType === "DECEPTIVE") return "cadência deceptiva";
-  return "cadência em aberto";
+  return "chegada aberta";
 }
 
 export default function HarmonizerHeader({

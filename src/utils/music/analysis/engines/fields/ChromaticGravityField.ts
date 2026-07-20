@@ -1,6 +1,7 @@
 import type { GravityField } from "./GravityField";
 import type { PhraseContext } from "../PhraseAnalysisEngine";
 import type { HarmonicSeed } from "../../models/HarmonicSeed";
+import { cadentialRestLabel } from "./cadentialGoalPresentation";
 
 export class ChromaticGravityField implements GravityField {
   id = "chromatic";
@@ -30,7 +31,7 @@ export class ChromaticGravityField implements GravityField {
         preferTension: 0.8
       },
       explanation: [
-        `Cromatismo ascendente rumo ao repouso em ${phraseContext.cadentialTarget.targetPitch}`,
+        `Cromatismo ascendente rumo ${cadentialRestLabel(phraseContext)}`,
         `Máxima tensão direcional de aproximação cromática`
       ]
     });
@@ -56,7 +57,7 @@ export class ChromaticGravityField implements GravityField {
         preferTension: 0.8
       },
       explanation: [
-        `Cromatismo descendente contínuo (clichê romântico) rumo a ${phraseContext.cadentialTarget.targetPitch}`
+        `Cromatismo descendente contínuo (clichê romântico) rumo ${cadentialRestLabel(phraseContext)}`
       ]
     });
 

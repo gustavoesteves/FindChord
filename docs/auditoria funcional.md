@@ -348,11 +348,11 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-11 — P2 — parser e inferência cadencial simplificam demais o contexto tonal
 
 - **Módulo/tab/jornada:** Harmonizar / Importação-Harmonizações / C-D.
-- **Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; auditorias e parte da geração temporal já consomem essas timelines. A melodia isolada deixou de nomear `AUTHENTIC/HALF/DECEPTIVE/PLAGAL` só pelo grau final: ela mantém o alvo melódico, mas a cadência fica `OPEN` até haver evidência harmônica.
+- **Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; auditorias e parte da geração temporal já consomem essas timelines. A melodia isolada deixou de nomear `AUTHENTIC/HALF/DECEPTIVE/PLAGAL` só pelo grau final: ela mantém o alvo melódico, mas a cadência fica `OPEN` até haver evidência harmônica. UI e campos gravitacionais agora chamam esse caso de chegada melódica/aberta, sem prometer repouso cadencial.
 - **Esperado:** preservar `<mode>`, mudanças de armadura e só nomear cadência quando houver evidência.
 - **Observado:** parcialmente resolvido. Parser/timelines já preservam mudanças de armadura/modo em metadados; `PhraseAnalysisEngine` não inventa mais tipo cadencial pela última nota. Ainda há fallbacks e leitores que precisam consumir timeline/mode de forma mais completa.
 - **Evidência:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:4>) e [PhraseAnalysisEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/PhraseAnalysisEngine.ts:143>).
-- **Reprodução:** final em tônica, quinta ou quarta preserva `targetPitch`, mas retorna `cadenceType=OPEN` sem harmonia; Blue in Green mantém chegada melódica em F sem promover ii-V-I local como resposta principal.
+- **Reprodução:** final em tônica, quinta ou quarta preserva `targetPitch`, mas retorna `cadenceType=OPEN` sem harmonia; Blue in Green mantém chegada melódica em F sem promover ii-V-I local como resposta principal; o cabeçalho exibe "chegada aberta" e os campos gravitacionais dizem "chegada melódica" em vez de repouso/destino cadencial.
 - **Impacto:** músico — centro/cadência falsos; produto — estratégias e Improviso são ativados por metadados incorretos.
 - **Causa provável:** armadura e grau final usados como aproximações definitivas.
 - **Correção recomendada:** eliminar fallbacks restantes para consumidores que ainda não consultam timeline/mode e expandir cadência confirmada por harmonia além de autênticas locais.

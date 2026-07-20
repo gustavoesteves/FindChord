@@ -1,6 +1,7 @@
 import type { GravityField } from "./GravityField";
 import type { PhraseContext } from "../PhraseAnalysisEngine";
 import type { HarmonicSeed } from "../../models/HarmonicSeed";
+import { cadentialGoalLabel } from "./cadentialGoalPresentation";
 
 export class TonalGravityField implements GravityField {
   id = "tonal";
@@ -30,7 +31,7 @@ export class TonalGravityField implements GravityField {
         preferTension: 0.2
       },
       explanation: [
-        `Progressão orientada por ciclos de 4as/5as até o destino ${phraseContext.cadentialTarget.targetPitch}`,
+        `Progressão orientada por ciclos de 4as/5as até ${cadentialGoalLabel(phraseContext)}`,
         `Estabilidade diatônica em ${phraseContext.selectedCenter.tonic}`
       ]
     });

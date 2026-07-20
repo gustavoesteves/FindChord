@@ -7,6 +7,6 @@ describe("Harmonizer header labels", () => {
     expect(cadenceLabel("AUTHENTIC")).toBe("cadência autêntica");
     expect(cadenceLabel("PLAGAL")).toBe("cadência plagal");
     expect(cadenceLabel("DECEPTIVE")).toBe("cadência deceptiva");
-    expect(cadenceLabel("UNKNOWN")).toBe("cadência em aberto");
+    expect(cadenceLabel("UNKNOWN")).toBe("chegada aberta");
   });
 });
