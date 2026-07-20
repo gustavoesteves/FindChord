@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { auditHarmonizationDensityForFile } from "./audit-harmonization-density";
 
 describe("harmonization density audit", () => {
-  it("keeps Asa Branca as a melody-first low-density control", () => {
+  it("keeps Asa Branca as melody-only while allowing full-phrase cadential alternatives", () => {
     const row = auditHarmonizationDensityForFile("asa branca.musicxml");
 
     expect(row.referenceChordCount).toBe(0);
     expect(row.status).toBe("sem-referencia");
     expect(row.melodyDensityStatus).toBe("sem-referencia");
-    expect(row.generatedDenseIdeaCount).toBe(0);
-    expect(row.melodyDerivedDenseIdeaCount).toBe(0);
+    expect(row.generatedDenseIdeaCount).toBeGreaterThan(0);
+    expect(row.melodyDerivedDenseIdeaCount).toBeGreaterThan(0);
   });
 
   it("recognizes the Almada example as a source for dense alternatives", () => {
@@ -33,12 +33,12 @@ describe("harmonization density audit", () => {
     expect(row.melodyDensityStatus).toBe("densidade-gerada-pela-melodia");
   });
 
-  it("separates reference vocabulary from melody-derived density after temporal anchor preservation", () => {
+  it("tracks reference vocabulary and melody-derived density after full-phrase anchor sampling", () => {
     const row = auditHarmonizationDensityForFile("imported-real-book/b-004-Ballin' the jack.musicxml");
 
     expect(row.referenceDenseMeasures).toBeGreaterThan(0);
     expect(row.melodyDerivedDenseIdeaCount).toBeGreaterThan(0);
-    expect(row.referenceDerivedDenseIdeaCount).toBe(0);
+    expect(row.referenceDerivedDenseIdeaCount).toBeGreaterThan(0);
     expect(row.referenceVocabularyLabel).toMatch(/ii-V|dom\.|SubV|dim\.|slash|funcional/);
     expect(row.melodyDensityStatus).toBe("densidade-gerada-pela-melodia");
   });

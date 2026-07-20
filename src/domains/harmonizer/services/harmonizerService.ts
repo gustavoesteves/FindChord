@@ -151,14 +151,24 @@ function selectPrimaryMelodicLine(notes: ScoreNoteEvent[]): ScoreNoteEvent[] {
 
 function selectStructuralAnchors(anchors: MelodicAnchor[], limit: number): MelodicAnchor[] {
   if (anchors.length <= limit) return anchors;
-  const finalAnchor = anchors[anchors.length - 1];
-  const firstWindow = anchors.slice(0, limit);
-  if (firstWindow.includes(finalAnchor)) return firstWindow;
-  const windowEnd = firstWindow[firstWindow.length - 1];
-  if (windowEnd && finalAnchor.measureIndex > windowEnd.measureIndex + 1) {
-    return firstWindow;
+
+  const selectedIndexes = new Set<number>();
+  selectedIndexes.add(0);
+  selectedIndexes.add(anchors.length - 1);
+
+  const interiorSlots = Math.max(0, limit - selectedIndexes.size);
+  for (let slot = 1; slot <= interiorSlots; slot++) {
+    const index = Math.round((slot * (anchors.length - 1)) / (interiorSlots + 1));
+    selectedIndexes.add(index);
   }
-  return [...anchors.slice(0, Math.max(0, limit - 1)), finalAnchor];
+
+  for (let index = 0; selectedIndexes.size < limit && index < anchors.length; index++) {
+    selectedIndexes.add(index);
+  }
+
+  return Array.from(selectedIndexes)
+    .sort((a, b) => a - b)
+    .map(index => anchors[index]);
 }
 
 function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {

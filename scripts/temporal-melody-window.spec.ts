@@ -162,6 +162,48 @@ describe("F119 janela temporal da melodia", () => {
     });
   });
 
+  it("amostra a secao inteira quando a cadencia final esta distante do limite inicial", () => {
+    const notes = Array.from({ length: 64 }, (_, index) => ({
+      id: `long-${index + 1}`,
+      step: index === 31 ? "G" : "D",
+      alter: 0,
+      octave: 4,
+      voice: 1,
+      staff: 1,
+      measure: Math.floor(index / 4) + 1,
+      tickStart: index * 240,
+      tickEnd: index * 240 + 120,
+      durationTicks: 120
+    }));
+    notes.push({
+      id: "final-c",
+      step: "C",
+      alter: 0,
+      octave: 4,
+      voice: 1,
+      staff: 1,
+      measure: 20,
+      tickStart: 38400,
+      tickEnd: 40320,
+      durationTicks: 1920
+    });
+
+    const selection = selectMelodicAnchors(notes, undefined, 32);
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(selection.anchors, "C");
+
+    expect(selection.isTruncated).toBe(true);
+    expect(selection.anchors).toHaveLength(32);
+    expect(selection.anchors[0]).toMatchObject({ pitch: "D", startTick: 0 });
+    expect(selection.anchors.at(-1)).toMatchObject({
+      pitch: "C",
+      measureIndex: 20,
+      startTick: 38400
+    });
+    expect(selection.anchors.some(anchor => anchor.startTick > 7680 && anchor.startTick < 38400)).toBe(true);
+    expect(phraseContext.cadentialTarget.targetPitch).toBe("C");
+    expect(phraseContext.cadentialTarget.confidence).toBe(0.9);
+  });
+
   it("nao satura confianca cadencial com nota final curta em ticks", () => {
     const shortCadence = PhraseAnalysisEngine.analyzePhrase([
       { measureIndex: 1, pitch: "D", duration: 960, startTick: 0, endTick: 960 },
