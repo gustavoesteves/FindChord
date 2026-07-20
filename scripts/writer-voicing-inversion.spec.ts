@@ -25,6 +25,25 @@ function physicalBassPC(shape: VoicingShape): number {
 }
 
 describe("writer voicing inversion search", () => {
+  it("keeps the public result bounded and deduplicated", () => {
+    clearVoicingCache();
+
+    const cMajorPCs = ["C", "E", "G"].map(getPitchClass);
+    const results = generateVoicings(
+      "C",
+      "C",
+      cMajorPCs,
+      standardTuning,
+      "major",
+      null,
+      cMajorPCs
+    );
+    const shapeKeys = results.map(shape => shape.frets.map(fret => fret ?? "x").join("-"));
+
+    expect(results.length).toBeLessThanOrEqual(60);
+    expect(new Set(shapeKeys).size).toBe(shapeKeys.length);
+  });
+
   it("preserves the requested physical bass for alternate voicings", () => {
     clearVoicingCache();
 

@@ -326,6 +326,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:115>), [voicingGenerator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/generation/voicingGenerator.ts:78>).
 
+**Progresso:** mitigação parcial no gerador: deduplicação passou a usar chave por shape e a lista pública é mantida como top-k incremental de 60 voicings, evitando acumular e ordenar todos os candidatos antes do corte final. Regressão de limite/deduplicação coberta em `writer-voicing-inversion.spec.ts`. Ainda falta mover a busca para Worker/cancelamento real para eliminar bloqueio do main thread.
+
 **Evidência:** busca recursiva, deduplicação, scoring e sort são síncronos; somente depois o resultado é cortado para 60. A chamada ocorre em effect após alterações do acorde/afinação.
 
 **Medição:** aproximadamente 250 ms no caminho de UI de sete cordas e 640 ms numa variante permissiva; seis cordas permissivo, aproximadamente 121 ms.

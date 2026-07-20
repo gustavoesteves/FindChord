@@ -13,6 +13,7 @@ import { hasValidMutedGaps } from "./voicingFilters";
 
 // Cache central de Voicings para otimização de performance (Evita recálculos em tempo real)
 const voicingCache = new Map<string, VoicingShape[]>();
+const MAX_VOICING_RESULTS = 60;
 
 export function clearVoicingCache() {
   voicingCache.clear();
@@ -53,6 +54,20 @@ export function identifyShapeFamily(frets: (number | null)[]): string {
     if (span === 4 && frets[activeStringIndexes[0] + 1] === null) return "Drop 3";
   }
   return "Standard Shape";
+}
+
+function compareVoicingShapes(a: VoicingShape, b: VoicingShape): number {
+  const scoreA = a.qualityScore || 0;
+  const scoreB = b.qualityScore || 0;
+  if (scoreA !== scoreB) return scoreB - scoreA;
+  if (a.positionFret !== b.positionFret) return a.positionFret - b.positionFret;
+  const aCount = a.frets.filter(f => f !== null).length;
+  const bCount = b.frets.filter(f => f !== null).length;
+  return bCount - aCount;
+}
+
+function fretShapeKey(frets: (number | null)[]): string {
+  return frets.map(fret => fret ?? "x").join("-");
 }
 
 /**
@@ -98,6 +113,7 @@ export function generateVoicings(
   }
 
   const results: VoicingShape[] = [];
+  const seenShapes = new Set<string>();
   const req = getRequiredPitchClasses(activeQuality || "major", rootPC);
 
   // Instanciar o estado de busca recursiva
@@ -187,19 +203,24 @@ export function generateVoicings(
 
       const positionFret = context.highestFret !== -Infinity ? context.lowestFret : 0;
       const cageShape = classifyCAGED(currentFretting, rootStringIdx);
-      const isDuplicate = results.some(r => r.frets.every((val, index) => val === currentFretting[index]));
-      
-      if (!isDuplicate) {
-        results.push({
-          chordName,
-          frets: currentFretting,
-          rootString: rootStringIdx,
-          cageShape,
-          positionFret,
-          notes: [...currentNotes],
-          qualityScore: breakdown.total,
-          shapeFamily: identifyShapeFamily(currentFretting)
-        });
+      const shapeKey = fretShapeKey(currentFretting);
+      if (seenShapes.has(shapeKey)) return;
+
+      seenShapes.add(shapeKey);
+      results.push({
+        chordName,
+        frets: currentFretting,
+        rootString: rootStringIdx,
+        cageShape,
+        positionFret,
+        notes: [...currentNotes],
+        qualityScore: breakdown.total,
+        shapeFamily: identifyShapeFamily(currentFretting)
+      });
+
+      if (results.length > MAX_VOICING_RESULTS) {
+        results.sort(compareVoicingShapes);
+        results.length = MAX_VOICING_RESULTS;
       }
       return;
     }
@@ -237,16 +258,8 @@ export function generateVoicings(
   search(0, 0);
 
   const finalResults = results
-    .sort((a, b) => {
-      const scoreA = a.qualityScore || 0;
-      const scoreB = b.qualityScore || 0;
-      if (scoreA !== scoreB) return scoreB - scoreA;
-      if (a.positionFret !== b.positionFret) return a.positionFret - b.positionFret;
-      const aCount = a.frets.filter(f => f !== null).length;
-      const bCount = b.frets.filter(f => f !== null).length;
-      return bCount - aCount;
-    })
-    .slice(0, 60);
+    .sort(compareVoicingShapes)
+    .slice(0, MAX_VOICING_RESULTS);
 
   voicingCache.set(cacheKey, finalResults);
   return finalResults;
