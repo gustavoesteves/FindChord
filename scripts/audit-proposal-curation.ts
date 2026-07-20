@@ -123,7 +123,9 @@ export function analyzeProposalCurationForFile(
   options: AnalyzeProposalCurationOptions = {}
 ): ProposalCurationAnalysis {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(MUSIC_DIR, relativeFile), "utf8"));
-  const melody = selectMelodicAnchors(snapshot.notes, undefined);
+  const melody = selectMelodicAnchors(snapshot.notes, undefined, 32, {
+    measureTicks: snapshot.metadata.measureTicks
+  });
   const harmonies = selectSectionHarmonies(snapshot.harmonies, undefined);
 
   if (melody.anchors.length === 0) {

@@ -28,6 +28,7 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 - Fallbacks de comparação sem proposta agora usam o contexto temporal inicial em vez de ler a armadura global diretamente.
 - `GravityFieldManager` e `HarmonicRegionResolver` agora aceitam `measureTicks`, permitindo que regiões experimentais convertam ticks para compassos pelo mapa real da partitura.
 - A UI do Harmonizar, segmentos locais e auditorias reais passaram a repassar `measureTicks` para a geração apenas quando a métrica pede mapa explícito e a resolução em ticks é compatível com o passo temporal atual do resolver.
+- `selectMelodicAnchors` passou a aceitar `measureTicks` para filtrar seções e inferir `measureIndex` sem assumir 1920 ticks por compasso quando a nota não informa `measure`.
 - Adicionado teste de regressão para:
   - C menor vindo da timeline ser entregue ao motor como `Cm`;
   - mudança posterior para D maior em 3/4;

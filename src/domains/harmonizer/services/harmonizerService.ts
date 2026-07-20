@@ -1,6 +1,7 @@
 import type { MelodicAnchor } from "../../../utils/music/analysis/models/ProjectionSet";
 import type {
   ScoreHarmonyEvent,
+  ScoreMeasureTickRange,
   ScoreNoteEvent
 } from "../../../utils/music/analysis/models/ScoreSnapshot";
 import type {
@@ -25,6 +26,7 @@ import {
   type ContextualMelodicFit,
   type ContextualMaterialCandidate
 } from "../../../utils/music/theory/contextualMaterialCandidates";
+import { measureNumberAtTick } from "../../../utils/music/analysis/scoreTimelineContext";
 
 export interface MelodicAnchorSelection {
   anchors: MelodicAnchor[];
@@ -393,7 +395,8 @@ function buildReferenceRhythmReharmonizationProposal(
 export function selectMelodicAnchors(
   notes: ScoreNoteEvent[] | undefined,
   activeSection: SectionRange | undefined,
-  limit = 32
+  limit = 32,
+  options: { measureTicks?: ScoreMeasureTickRange[] } = {}
 ): MelodicAnchorSelection {
   if (!notes) return { anchors: [], allAnchors: [], isTruncated: false };
 
@@ -401,8 +404,12 @@ export function selectMelodicAnchors(
   let relevantNotes = sortedNotes;
   if (activeSection) {
     relevantNotes = sortedNotes.filter(note => {
-      const startTick = activeSection.startTick ?? (activeSection.startMeasure - 1) * 1920;
-      const endTick = activeSection.endTick ?? activeSection.endMeasure * 1920;
+      const startTick = activeSection.startTick
+        ?? options.measureTicks?.find(measure => measure.measure === activeSection.startMeasure)?.startTick
+        ?? (activeSection.startMeasure - 1) * 1920;
+      const endTick = activeSection.endTick
+        ?? options.measureTicks?.find(measure => measure.measure === activeSection.endMeasure)?.endTick
+        ?? activeSection.endMeasure * 1920;
       return note.tickStart >= startTick && note.tickStart < endTick;
     });
   }
@@ -412,7 +419,7 @@ export function selectMelodicAnchors(
   const anchors = melodicLine
     .filter(note => Number.isFinite(note.tickStart) && Number.isFinite(note.tickEnd) && note.tickEnd > note.tickStart)
     .map(note => ({
-      measureIndex: note.measure || Math.floor(note.tickStart / 1920) + 1,
+      measureIndex: note.measure || measureNumberAtTick(options.measureTicks, note.tickStart),
       pitch: spellScoreNotePitch(note),
       duration: note.durationTicks,
       startTick: note.tickStart,

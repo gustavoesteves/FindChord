@@ -63,7 +63,9 @@ export function useHarmonizerProposals({
   activeSection
 }: UseHarmonizerProposalsParams) {
   const melodyAnchorsData = useMemo(
-    () => selectMelodicAnchors(scoreSnapshot?.notes, activeSection),
+    () => selectMelodicAnchors(scoreSnapshot?.notes, activeSection, 32, {
+      measureTicks: scoreSnapshot?.metadata?.measureTicks
+    }),
     [scoreSnapshot, activeSection]
   );
 

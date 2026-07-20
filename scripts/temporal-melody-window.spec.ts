@@ -125,6 +125,34 @@ describe("F119 janela temporal da melodia", () => {
     expect(selection.anchors.map(anchor => anchor.measureIndex)).toEqual([5, 6]);
   });
 
+  it("infere compasso pelo mapa de medidas quando a nota nao traz measure", () => {
+    const selection = selectMelodicAnchors([
+      {
+        id: "m2-d",
+        step: "D",
+        alter: 0,
+        octave: 4,
+        voice: 1,
+        staff: 1,
+        measure: 0,
+        tickStart: 1440,
+        tickEnd: 1920,
+        durationTicks: 480
+      }
+    ], { startMeasure: 2, endMeasure: 2 }, 32, {
+      measureTicks: [
+        { measure: 1, startTick: 0, endTick: 1440, timeSignature: "3/4" },
+        { measure: 2, startTick: 1440, endTick: 2880, timeSignature: "3/4" }
+      ]
+    });
+
+    expect(selection.anchors).toEqual([expect.objectContaining({
+      measureIndex: 2,
+      pitch: "D",
+      startTick: 1440
+    })]);
+  });
+
   it("preserva a cadencia final quando a melodia excede o limite de anchors", () => {
     const notes = Array.from({ length: 32 }, (_, index) => ({
       id: `short-${index + 1}`,
