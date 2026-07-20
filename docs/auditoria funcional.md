@@ -4,13 +4,26 @@ Auditoria concluída sobre o commit `16f346c`, sem modificar o repositório. O w
 
 Não encontrei P0. Encontrei P1 que quebram jornadas centrais e P2 que podem induzir decisões musicais incorretas.
 
+## Estado atual da remediação funcional
+
+Atualizado após os commits até `050d15b`.
+
+| Área | Feito | Ainda aberto |
+|---|---|---|
+| Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada. | Exportação canônica para MuseScore; leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão. |
+| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados. | Somente cifras ainda não tem pipeline próprio; mudança centro↔cadência, referência densa, distância harmônica, rótulos de voice leading e Improviso ainda precisam refinamento funcional. |
+| MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
+| Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
+
+Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-WR-02`, `FC-HZ-02`, `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
+
 ## Parecer executivo
 
 1. **O módulo Escrever cumpre sua proposta?**  
-   Parcialmente. Seleção no braço, detecção básica, atualização das tabs, escolha de aberturas simples e materiais locais funcionam. Porém, acordes ambíguos não podem ser escolhidos, aberturas podem perder inversões, parte da leitura é simulada e a exportação pode rejeitar ou alterar a cifra.
+   Parcialmente, com avanço importante. Seleção no braço, detecção básica, escolha explícita de interpretação ambígua, atualização das tabs, aberturas com baixo preservado, filtros de abertura e materiais locais funcionam melhor. Ainda restam exportação canônica, leitura semântica completa e distinção pedagógica fina em Materiais.
 
 2. **O módulo Harmonizar cumpre sua proposta?**  
-   Parcialmente para somente melodia e melodia+cifras. O modo somente cifras está praticamente ausente. O fluxo termina quebrado porque “Usar harmonia” não carrega uma progressão utilizável no Writer.
+   Parcialmente para somente melodia e melodia+cifras. O handoff para o Writer já cria uma progressão navegável e o modo menor tem guardrail. O modo somente cifras continua praticamente ausente.
 
 3. **Quais tabs estão completas?**  
    Nenhuma cumpre integralmente o contrato descrito. “Materiais do acorde” é a mais próxima para acordes completos e isolados.
@@ -20,13 +33,12 @@ Não encontrei P0. Encontrei P1 que quebram jornadas centrais e P2 que podem ind
 
 5. **O que parece conectado, mas não está?**
 
-   - “Usar harmonia” apenas navega e grava strings ocultas.
+   - Somente cifras ainda não vira análise funcional/Improviso.
    - O payload MuseScore leva shape e afinação, mas o plugin ignora esses dados.
    - Variantes de harmonia podem ser aplicadas sem possuírem leitura de Improviso.
-   - O protocolo declara replace/delete, mas o plugin transforma toda mutação em inserção.
-   - O badge verde mede dashboard↔bridge, não MuseScore/plugin.
+   - O badge verde ainda mede dashboard↔bridge, não necessariamente MuseScore/plugin/score.
 
-6. **Maior risco funcional:** perda de identidade e tempo nas fronteiras. Uma interpretação vira apenas o candidato de índice zero; uma proposta vira lista de strings; eventos harmônicos perdem tick/duração; requisições MuseScore não ficam vinculadas a partitura/instância.
+6. **Maior risco funcional vigente:** perda de identidade e tempo nas fronteiras restantes. A escolha de interpretação e o handoff de progressão melhoraram, mas eventos harmônicos densos, exportação canônica e requisições MuseScore ainda precisam vínculo mais forte.
 
 7. **Maior risco musical:** resultados convincentes, mas incorretos, em modo menor, função dominante, cadências, notas-guia e resoluções.
 
@@ -36,11 +48,11 @@ Não encontrei P0. Encontrei P1 que quebram jornadas centrais e P2 que podem ind
 
 | Verificação | Resultado |
 |---|---|
-| `npm run build` | Aprovado; TypeScript e Vite concluíram. Bundle principal: 596,39 kB minificado, com alerta de chunk >500 kB |
+| `npm run build` | Aprovado. Estado original: bundle principal 596,39 kB minificado. Estado atual: chunks por domínio, com `main` em torno de 282 kB minificado. |
 | `npm run lint` | Aprovado |
 | `npx tsc --noEmit -p tsconfig.app.json` | Aprovado |
-| `npx vitest run` | 122 arquivos aprovados, 2 ignorados; 644 testes aprovados, 6 ignorados |
-| `npm run test:curated` | Uma execução sob carga falhou pelo timeout fixo de 20 s; outra passou. O teste isolado passou em 11,40 s |
+| `npx vitest run` | Estado original: 122 arquivos aprovados, 2 ignorados; 644 testes aprovados, 6 ignorados |
+| `npm run test:curated` | Estado atual: passa localmente; ainda há timeout intermitente sob carga em testes pesados que passam isolados e em repetição |
 | Bridge e parser | `node --check` aprovado; health check local aprovado |
 | Interface | Jornada com C aberto executada no navegador: Braço → Leitura → Aberturas → Materiais |
 | MuseScore real/QML | Não verificável neste ambiente; o caminho foi confirmado por código, protocolo, bridge e probes |
@@ -63,25 +75,25 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 | Módulo | Tab | Capacidade | Estado | Evidência | Impacto |
 |---|---|---|---|---|---|
 | Escrever | Braço | Selecionar/remover notas, afinação padrão e reset | Funciona | C aberto detectado e propagado | Fluxo básico disponível |
-| Escrever | Braço | Acordes ambíguos | Quebrado | Detector retorna alternativas, UI fixa índice zero | Leitura arbitrária |
+| Escrever | Braço | Acordes ambíguos | Progrediu | Detector retorna alternativas e UI permite escolher interpretação | Leitura deixa de ser arbitrária no caso principal |
 | Escrever | Leitura | Cifra, notas, baixo e inversão | Funciona parcialmente | Dados básicos aparecem | Útil em casos simples |
 | Escrever | Leitura | Estrutura e tensão | Simulado | Heurísticas por número de cordas/substrings | Explicação musical enganosa |
 | Escrever | Aberturas | Gerar e carregar shapes simples | Funciona parcialmente | Clique atualiza o braço | Participa do fluxo |
-| Escrever | Aberturas | Preservar baixo/inversão | Quebrado | `bassPC=null` | Intenção harmônica perdida |
-| Escrever | Aberturas | Filtros aberto/fechado | Enganoso para o usuário | C com corda solta é “fechado” | Busca semântica incorreta |
+| Escrever | Aberturas | Preservar baixo/inversão | Progrediu | `bassPC` participa da busca e há regressão de inversões | Intenção harmônica mais estável |
+| Escrever | Aberturas | Filtros aberto/fechado | Corrigido | Corda solta e gap interno classificam abertura | Busca visível ficou coerente |
 | Escrever | Materiais | Acorde completo isolado | Funciona | C maior gera rotas/material | Tab mais madura |
 | Escrever | Materiais | Shells e omissões | Funciona parcialmente | Nota omitida vira tensão | Orientação pedagógica errada |
 | Escrever | MuseScore | Payload | Funciona parcialmente | Symbol/shape/MIDI são produzidos | Base estrutural existe |
 | Escrever | MuseScore | Preservar identidade e fretboard | Quebrado | Reparse de símbolo; QML usa só a cifra | Falha ou acorde diferente |
 | Harmonizar | Importação | Melodia+cifras comuns | Funciona parcialmente | Parser e timeline possuem testes | Casos menores/modulações falham |
-| Harmonizar | Harmonizações | Somente melodia | Funciona parcialmente | Geração/ranking existem | Modo menor, cadência e truncamento incorretos |
+| Harmonizar | Harmonizações | Somente melodia | Funciona parcialmente | Geração/ranking existem; menor e truncamento tiveram guardrails | Cadência/contexto ainda pedem refinamento |
 | Harmonizar | Harmonizações | Melodia+cifras | Funciona parcialmente | Referência e alternativas existem | Comparação densa perde acordes |
 | Harmonizar | Harmonizações | Somente cifras | Quebrado | Só cartão da referência | Jornada E não entregue |
-| Harmonizar | Harmonizações | Aplicar no Writer | Desconectado | Apenas lista oculta de strings | Ação terminal sem efeito visível |
+| Harmonizar | Harmonizações | Aplicar no Writer | Corrigido no fluxo básico | Sessão de progressão navegável no Writer | Ação terminal passa a ter efeito visível |
 | Harmonizar | Improviso | Progressão com melodia | Funciona parcialmente | Materiais/rotas são gerados | Função e resolução podem estar erradas |
 | Harmonizar | Improviso | Somente cifras | Ausente | Painel retorna `null` | Sem estratégia harmônica |
 | Integração | MuseScore | Estado offline/erro/retry | Enganoso para o usuário | Falhas ficam em `console.warn` | Usuário não sabe o resultado |
-| Integração | MuseScore | Publicação GitHub Pages | Quebrado | Origin publicado é rejeitado | Integração indisponível no deploy |
+| Integração | MuseScore | Publicação GitHub Pages | Progrediu | Origin publicado entrou no allowlist do bridge | Deploy deixa de ser bloqueado por Origin padrão |
 | Transversal | Teoria | Regra → fonte → saída | Desconectado | Sem IDs bibliográficos no runtime | Resultado não é auditável |
 | Transversal | Testes | Serviços musicais puros | Funciona parcialmente | Cobertura extensa | Boa regressão local |
 | Transversal | Testes | UI, QML, bridge e jornadas | Ausente | Sem E2E/comportamento real | Falhas de integração escapam |
@@ -91,11 +103,11 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 | Jornada | Resultado |
 |---|---|
 | A — criação e exportação | Parcial: criação, leitura, abertura e materiais funcionam; exportação não é confiável |
-| B — acorde ambíguo | Quebrada: alternativas existem no motor, mas não são exibidas/selecionáveis |
-| C — somente melodia | Parcial: gera propostas e Improviso, mas há erros em menor, cadência e truncamento; handoff quebrado |
+| B — acorde ambíguo | Progrediu: alternativas aparecem e podem ser selecionadas; falta propagar identidade canônica até exportação |
+| C — somente melodia | Parcial: gera propostas e Improviso; menor, truncamento e handoff tiveram correções; cadência/contexto ainda pedem refinamento |
 | D — melodia e cifras | Parcial: referência e transformações existem; comparação/timing/Improviso têm inconsistências |
 | E — somente cifras | Quebrada: mostra a referência, sem transformação, ranking ou Improviso |
-| F — falha de integração | Quebrada: erro não é compreensível; estado tardio e retry não são seguros |
+| F — falha de integração | Parcial: segurança/ACK/origin melhoraram; status bridge/plugin/score e fila por instância ainda faltam |
 
 # Achados confirmados
 
@@ -135,6 +147,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-03 — P1 — escolher uma abertura pode remover a inversão
 
 - **Módulo/tab/jornada:** Escrever / Aberturas / A e B.
+- **Progresso:** o Writer passa `bassPC` para `generateVoicings`, a chave de cache inclui baixo/raiz/qualidade, e a regressão `writer-voicing-inversion.spec.ts` cobre inversão física preservada.
 - **Esperado:** aberturas de `C/E` devem manter E no baixo ou declarar que são apenas formas de C.
 - **Observado:** `generateVoicings` recebe `bassPC=null`; ao carregar uma forma, o store recalcula e escolhe novamente o candidato zero.
 - **Evidência:** [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:121>) e [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:181>).
@@ -194,6 +207,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-01 — P1 — modo menor é ignorado pelo ramo experimental
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações e Improviso / C-D.
+- **Progresso:** realizações experimentais em centro menor passam por gate de compatibilidade modal; abertura/fechamento em tônica maior sobre centro menor vindo da melodia são rejeitados. Regressão coberta em `minor-modal-boundary.spec.ts`.
 - **Esperado:** tônica e modo escolhidos governam interpretação e realização.
 - **Observado:** `MelodicInterpretationEngine` consome apenas a tônica e `ChordRealizationEngine` usa mapeamento maior.
 - **Evidência:** [MelodicInterpretationEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/MelodicInterpretationEngine.ts:7>), [ChordRealizationEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/ChordRealizationEngine.ts:91>) e `ProposalPresentationPlanner`.
@@ -233,6 +247,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-04 — P1 — “Usar harmonia” não aplica a proposta no Writer
 
 - **Módulo/tab/jornada:** Harmonizar→Escrever / C-D-E.
+- **Progresso:** propostas aplicadas ao Writer viram uma sessão explícita de progressão com compasso, índice, ordem e cifra; o Writer carrega uma abertura tocável do primeiro acorde e exibe faixa navegável. Regressão coberta em `apply-proposal-to-writer.spec.ts`.
 - **Esperado:** carregar uma progressão ativa, navegável e realizável.
 - **Observado:** apenas `setProgressionChords(string[])` e navegação. Nenhum componente Writer exibe a lista; ela só influencia uma futura heurística enarmônica.
 - **Evidência:** [useApplyProposalToWriter.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useApplyProposalToWriter.ts:5>) e [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:199>).
@@ -259,6 +274,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-06 — P2 — limite de 32 notas corta seções no meio
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações / C-D.
+- **Progresso:** a seleção estrutural passou a amostrar a seção inteira, preservar cadência final e carregar `startTick/endTick`; regressões cobertas em `temporal-melody-window.spec.ts` e `score-timeline-context.spec.ts`.
 - **Esperado:** reduzir complexidade preservando eventos estruturalmente importantes e fronteiras.
 - **Observado:** são escolhidas as primeiras 32 notas cronológicas.
 - **Evidência:** [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:152>) e `MelodicAnchorLimitNotice`.
@@ -314,6 +330,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-10 — P2 — modelo de proposta elimina ritmo e identidade dos eventos
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações-Improviso / D.
+- **Progresso:** substituições controladas passaram a carregar `targetTickStart` e a aplicação exige `measure + chord + tick`, evitando trocar ocorrências idênticas no mesmo compasso. O modelo completo de proposta temporizada ainda segue pendente.
 - **Esperado:** preservar posição, duração e identidade de cada acorde.
 - **Observado:** proposta guarda apenas `measureIndex + chords`; materiais fabricam ticks zero; substituição identifica `measure+symbol`, trocando todas as ocorrências iguais.
 - **Evidência:** [ReharmonizationProposal.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/models/ReharmonizationProposal.ts:1>), [ControlledSubstitutionProposals.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/ControlledSubstitutionProposals.ts:30>) e [harmonizerService.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/services/harmonizerService.ts:507>).
@@ -327,6 +344,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-HZ-11 — P2 — parser e inferência cadencial simplificam demais o contexto tonal
 
 - **Módulo/tab/jornada:** Harmonizar / Importação-Harmonizações / C-D.
+- **Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; auditorias e parte da geração temporal já consomem essas timelines. Ainda falta eliminar fallbacks e refinar inferência cadencial negativa.
 - **Esperado:** preservar `<mode>`, mudanças de armadura e só nomear cadência quando houver evidência.
 - **Observado:** parser lê apenas o primeiro `<fifths>`, converte para nome maior e ignora `<mode>`; `PhraseAnalysisEngine` nomeia cadência apenas pela última nota.
 - **Evidência:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:4>) e [PhraseAnalysisEngine.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/PhraseAnalysisEngine.ts:143>).
@@ -377,6 +395,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-MS-02 — P1 — interface confunde bridge com MuseScore e o deploy publicado é incompatível
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
+- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A separação visual de status bridge/plugin/score continua pendente.
 - **Esperado:** estados separados para bridge, plugin e score; erro visível; ambiente publicado compatível.
 - **Observado:** badge verde representa apenas websocket do dashboard; `pluginLastSeen` não é consumido; import ignora o booleano; export só faz `console.warn`. GitHub Pages é publicado, mas o bridge aceita apenas origins localhost:5173/5174.
 - **Evidência:** [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>), [MuseScoreConnectionBadge.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/MuseScoreConnectionBadge.tsx:4>), [VirtualFretboard.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VirtualFretboard.tsx:41>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:1>).
@@ -390,6 +409,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-MS-03 — P2 — mutações não são idempotentes e o protocolo promete ações inexistentes
 
 - **Módulo/tab/jornada:** Integração / A-F.
+- **Progresso:** o protocolo tipado restringe mutations a `INSERT_CHORD`, remove `REPLACE/DELETE`, adiciona `commandId`, expiração e ACK. Ledger/idempotência real por score ainda continua pendente.
 - **Esperado:** retry seguro; ações desconhecidas rejeitadas; pareamento não recuperável por qualquer processo local.
 - **Observado:** `/consume` remove antes de processar; QML muta antes do ACK; retry usa novo ID e não há ledger. `REPLACE_CHORD`/`DELETE_CHORD` são aceitos pelo tipo, mas todo `MUTATION` chama `transcribeChord`. `/plugin-session` entrega token sem autenticação para cliente local.
 - **Evidência:** [Protocol.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/Protocol.ts:7>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:221>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:223>).
@@ -421,6 +441,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-TST-01 — P2 — cobertura extensa em funções, mas fraca nas jornadas e no deploy
 
 - **Escopo:** transversal.
+- **Progresso:** o workflow de deploy já executa `npm run lint` e `npm run test:curated`, além do build. Ainda faltam testes React/E2E, bridge real em porta efêmera, fault injection e MuseScore simulado.
 - **Esperado:** lint/build/test e integrações críticas executadas no CI.
 - **Observado:** 124 specs existem; `test:curated` cobre 122 caminhos únicos, duplica uma spec e omite `musicxml-parser-timeline.spec.ts` e `active-section-selection.spec.ts`. Não há teste React/E2E do Harmonizer, handoff, bridge ou QML. O deploy executa somente build.
 - **Evidência:** [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).

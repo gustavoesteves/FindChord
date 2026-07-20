@@ -4,6 +4,25 @@ A árvore original permaneceu intacta e limpa: `main...origin/main`, sem diferen
 
 Resultado: **0 P0, 9 P1, 12 P2 e 3 P3 confirmados**. Questões apenas estéticas foram excluídas.
 
+## Estado atual da remediação
+
+Atualizado após os commits até `050d15b`.
+
+| Grupo | Estado atual |
+|---|---|
+| P1 | Todos os 9 achados possuem remediação implementada ou guardrail operacional. Ainda falta validação real dentro do MuseScore para os fluxos QML/partitura. |
+| P2 | Todos os 12 achados possuem progresso registrado. P2-1 e P2-10 ainda têm pendências técnicas explícitas: remoção completa de fallbacks 4/4 e Worker/cancelamento para busca de voicings. |
+| P3 | Todos os 3 achados possuem progresso. P3-2 permanece parcialmente aberto porque ainda há acoplamentos de layout/adapter entre domínios. |
+
+Validações recentes recorrentes:
+
+- `npm run lint`
+- `npm run build`
+- `npm run test:curated`
+- specs focadas por achado
+
+Observação: a suíte curada já passou repetidas vezes, mas alguns testes pesados ainda podem estourar timeout quando rodam sob carga e passar isolados em seguida. Isso permanece como risco de estabilidade de gate, não como regressão musical conhecida.
+
 ## Escopo e arquitetura observada
 
 Foram examinados 164 arquivos TypeScript/TSX, aproximadamente 24 mil linhas, os scripts Node, o plugin QML, workflows, configuração e 122 specs.
@@ -24,8 +43,8 @@ Pontos de entrada e fluxos principais:
 | `npm run lint` | Passou |
 | `npm run build` (`tsc -b` + Vite) | Passou |
 | TypeScript sem emissão | Passou para app e config Node |
-| Bundle | JS 593,39 kB minificado / 169,62 kB gzip; aviso acima de 500 kB |
-| `npm run test:curated` | Falhou duas vezes: 624 passaram, 6 ignorados, 1 timeout |
+| Bundle | Estado original: JS 593,39 kB minificado / 169,62 kB gzip. Estado atual: chunks por domínio; `main` em torno de 282 kB minificado. |
+| `npm run test:curated` | Estado original: falhas por timeout. Estado atual: passa localmente, com timeout intermitente em testes pesados sob carga. |
 | Teste problemático isolado | Passou em cerca de 12 s |
 | 5 suítes focadas | 36/36 passaram |
 | `npm audit --omit=dev` online | 0 vulnerabilidades de produção |
@@ -423,4 +442,4 @@ Pontos de entrada e fluxos principais:
 - Não foi possível executar o plugin dentro do MuseScore nesta auditoria; os achados QML foram confirmados pelo fluxo completo do código, testes focados e semântica direta das APIs.
 - `StrategyGuidedHarmonizer.ts` concentra 2.791 linhas e muitas responsabilidades. É risco arquitetural relevante, mas tamanho isolado não foi contado como defeito.
 
-Prioridade recomendada: primeiro fechar o bridge (`EVAL`, autenticação, bind, papéis, ACK/sessão); depois reparar o contrato temporal/MusicXML; em seguida tornar Harmonizer→Writer e modo menor funcionais; por fim estabilizar o gate e adicionar testes comportamentais das fronteiras críticas.
+Prioridade recomendada vigente: primeiro fechar a auditoria funcional, começando por identidade canônica de cifra/exportação, harmonia-only e correções musicais de centro/cadência/referência densa; em paralelo, estabilizar timeouts da suíte curada e planejar Worker/cancelamento para voicings.
