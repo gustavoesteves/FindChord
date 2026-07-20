@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   determineContextualHarmonicFunction,
+  contextualResolutionTarget,
   guideToneResolutions,
   guideTonesFor
 } from "../src/utils/music/theory/contextualMaterialFunction";
@@ -56,6 +57,27 @@ describe("F202 funcao contextual de material", () => {
       tonalCenter: { tonic: "C", mode: "major" },
       resolutionTarget: "C"
     }, "D")).toBe("color");
+  });
+
+  it("infere alvo regional apenas para dominante primaria do centro", () => {
+    const primaryDominant = {
+      chord: "G7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSecondaryDominant = {
+      chord: "D7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(primaryDominant, "G")).toBe("C");
+    expect(determineContextualHarmonicFunction(primaryDominant, "G")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSecondaryDominant, "D")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSecondaryDominant, "D")).toBe("color");
+    expect(contextualResolutionTarget({
+      chord: "G7",
+      nextChord: "Cm",
+      tonalCenter: { tonic: "C", mode: "minor" }
+    }, "G")).toBeUndefined();
   });
 
   it("reconhece diminuto resolvido por semitom como dominante auxiliar", () => {

@@ -43,10 +43,22 @@ function resolvesAsDominant(root: string, targetRoot: string | undefined): boole
   return motion === 5 || motion === 11;
 }
 
+function impliedRegionalResolutionTarget(context: MaterialContext, root: string): string | undefined {
+  const center = context.tonalCenter?.tonic;
+  if (!center) return undefined;
+  return resolvesAsDominant(root, center) ? center : undefined;
+}
+
+export function contextualResolutionTarget(context: MaterialContext, root: string): string | undefined {
+  if (context.resolutionTarget) return Note.pitchClass(context.resolutionTarget);
+  if (context.nextChord) return undefined;
+  return impliedRegionalResolutionTarget(context, root);
+}
+
 export function determineContextualHarmonicFunction(context: MaterialContext, root: string): ContextualHarmonicFunction {
   const center = context.tonalCenter;
   const nextRoot = chordRoot(context.nextChord);
-  const resolutionRoot = context.resolutionTarget ? Note.pitchClass(context.resolutionTarget) : undefined;
+  const resolutionRoot = contextualResolutionTarget(context, root);
   const dominantLike = isDominantLike(context.chord);
   const diminishedLike = isDiminishedLike(context.chord);
 

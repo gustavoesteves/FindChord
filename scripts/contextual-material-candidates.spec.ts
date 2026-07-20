@@ -62,4 +62,21 @@ describe("F199 candidatas contextuais de material", () => {
       "G->F#"
     ]));
   });
+
+  it("infere alvo regional para dominante primaria sem proximo acorde", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "G7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["B", "F"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "C"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "B->C",
+      "F->E"
+    ]));
+  });
 });

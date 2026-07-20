@@ -5,6 +5,7 @@ import {
 } from "./contextualMaterialChordContext";
 import { buildContextualMelodicMaterials } from "./contextualMelodicMaterials";
 import {
+  contextualResolutionTarget,
   determineContextualHarmonicFunction,
   guideToneResolutions,
   guideTonesFor,
@@ -204,14 +205,18 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
   const sources = getMaterialSourceMapsForQuality(quality.root, quality.quality);
   const chordTones = chordPitchClasses(context.chord);
   const guideTones = guideTonesFor(quality.root, quality.quality);
-  const guideToneTargets = nearestGuideToneTargets(guideTones, context.resolutionTarget, context.nextChord);
-  const guideToneResolutionPairs = guideToneResolutions(guideTones, context.resolutionTarget, context.nextChord);
+  const effectiveResolutionTarget = contextualResolutionTarget(context, quality.root);
+  const materialContext = effectiveResolutionTarget && effectiveResolutionTarget !== context.resolutionTarget
+    ? { ...context, resolutionTarget: effectiveResolutionTarget }
+    : context;
+  const guideToneTargets = nearestGuideToneTargets(guideTones, effectiveResolutionTarget, context.nextChord);
+  const guideToneResolutionPairs = guideToneResolutions(guideTones, effectiveResolutionTarget, context.nextChord);
   const weightedMelodyNotes = weightedMelodyNotesFromContext(context.melody);
   const melodyNotes = Array.from(new Set(weightedMelodyNotes.map(note => note.pitch)));
   const harmonicFunction = determineContextualHarmonicFunction(context, quality.root);
   const ranked = sources.map((source, index) => buildRankedMaterialCandidate({
     source,
-    context,
+    context: materialContext,
     root: quality.root,
     quality: quality.quality,
     chordTones,
@@ -228,7 +233,7 @@ export function buildContextualMaterialCandidates(context: MaterialContext): Con
     chordCandidateForContext(context.chord, quality.root, quality.quality, chordTones)
   ).map((source, index) => buildRankedMaterialCandidate({
     source,
-    context,
+    context: materialContext,
     root: quality.root,
     quality: quality.quality,
     chordTones,

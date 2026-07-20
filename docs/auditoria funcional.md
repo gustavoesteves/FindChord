@@ -369,14 +369,15 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `A7→Dm`, `E7→Am` e `Db7→C` são `dominant`;
   - `D7→C` fica `color`;
   - `A7` sem próximo acorde, mas com `resolutionTarget=D`, é `dominant`;
+  - `G7` sem próximo acorde em C infere alvo regional C; `D7` solto em C continua `color`;
   - `G#dim7→Am` é dominante auxiliar por resolução semitonal; `Cdim7→Am` permanece `color`;
   - C, C6, Cadd9 produzem apenas a terça; Csus/F#5 não fabricam terça+sétima;
   - E7→Am sugere D→C; G7→Cm sugere F→Eb.
 - **Impacto:** músico — recebe resolução melódica objetivamente errada; produto — ranking, região e rota linear usam a classificação defeituosa.
 - **Causa provável:** predicados incompletos e alvo representado apenas pela raiz.
-- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem `nextChord`; dominantes sem próximo acorde explícito agora usam `resolutionTarget` para classificar função e resoluções; diminutos resolvidos por semitom ascendente são classificados como dominantes auxiliares.
-- **Correção recomendada:** aprofundar diminutos de passagem com baixo dirigido e alvo por região quando não houver `nextChord` nem `resolutionTarget`.
-- **Testes necessários:** diminutos de passagem não vizinhos e dominantes com alvo regional inferido.
+- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem `nextChord`; dominantes sem próximo acorde explícito agora usam `resolutionTarget` para classificar função e resoluções; diminutos resolvidos por semitom ascendente são classificados como dominantes auxiliares; dominante primária sem `nextChord`/`resolutionTarget` infere alvo regional no centro tonal sem capturar dominantes secundárias soltas.
+- **Correção recomendada:** aprofundar diminutos de passagem com baixo dirigido e alvo regional para cadências locais não centradas no centro global.
+- **Testes necessários:** diminutos de passagem não vizinhos e dominantes com alvo regional local inferido por região.
 - **Confiança:** alta.
 
 ## MuseScore, concorrência e segurança
