@@ -101,6 +101,7 @@ export default defineConfig({
       "scripts/real-music-audit-report.spec.ts",
       "scripts/real-music-fire-audit.spec.ts",
       "scripts/score-ingestion-modes.spec.ts",
+      "scripts/score-timeline-context.spec.ts",
       "scripts/select-promoted-import-calibration-set.spec.ts",
       "scripts/side-arrival-generation-gap.spec.ts",
       "scripts/side-arrival-forced-windows.spec.ts",

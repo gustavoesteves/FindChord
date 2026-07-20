@@ -42,6 +42,7 @@ import {
   groupNearEquivalentColorVariants,
   groupNearReferenceVariants
 } from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
+import { timelineContextForSection } from "../../../utils/music/analysis/scoreTimelineContext";
 
 const PRESENTATION_MODE = "balanced" as const;
 
@@ -68,6 +69,11 @@ export function useHarmonizerProposals({
     [scoreSnapshot, activeSection]
   );
 
+  const timelineContext = useMemo(
+    () => timelineContextForSection(scoreSnapshot, activeSection),
+    [scoreSnapshot, activeSection]
+  );
+
   const inputContext = useMemo(() => resolveHarmonizerInputContext({
     melodicAnchorCount: melodyAnchorsData.anchors.length,
     referenceHarmonyCount: sectionHarmonies.length
@@ -86,7 +92,7 @@ export function useHarmonizerProposals({
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         melodyAnchorsData.anchors,
-        scoreSnapshot?.metadata?.keySignature
+        timelineContext.keySignature
       ),
       sectionHarmonies
     );
@@ -99,7 +105,7 @@ export function useHarmonizerProposals({
       rejectedExperimentalCount: generation.rejectedExperimentalCount,
       omittedStrategyDiagnostics: generation.omittedStrategyDiagnostics
     };
-  }, [melodyAnchorsData.anchors, scoreSnapshot?.metadata?.keySignature, sectionHarmonies]);
+  }, [melodyAnchorsData.anchors, timelineContext.keySignature, sectionHarmonies]);
 
   const existingHarmonyProposal = useMemo(
     () => buildExistingHarmonyProposal(sectionHarmonies, inputContext),
@@ -227,7 +233,7 @@ export function useHarmonizerProposals({
   const localSegments = useMemo(() => {
     const segments = buildLocalSegmentHarmonizations({
       anchors: melodyAnchorsData.allAnchors,
-      keySignature: scoreSnapshot?.metadata?.keySignature,
+      keySignature: timelineContext.keySignature,
       referenceHarmonies: sectionHarmonies,
       inputContext,
       primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
@@ -240,7 +246,7 @@ export function useHarmonizerProposals({
     displayedProposals,
     melodyAnchorsData.allAnchors,
     melodyAnchorsData.anchors,
-    scoreSnapshot?.metadata?.keySignature,
+    timelineContext.keySignature,
     sectionHarmonies,
     inputContext
   ]);

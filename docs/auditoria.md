@@ -166,6 +166,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:97>), [ScoreSnapshot.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/models/ScoreSnapshot.ts:40>), [HarmonicRegionResolver.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/HarmonicRegionResolver.ts:19>).
 
+**Progresso:** F358 preservou `keyTimeline` e `timeTimeline` no snapshot. F359 iniciou o consumo dessas timelines pelo Harmonizar, resolvendo tonalidade e métrica pelo início da seção ativa e mantendo fallback para `metadata.keySignature/timeSignature`. Ainda falta migrar scripts de auditoria, comparadores e motores temporais que assumem tonalidade global ou 4/4 fixo.
+
 **Evidência:** após `<backup>`, o parser guarda apenas o cursor final, não o maior cursor alcançado. Fixture válida com voz 1 até tick 1920, backup e voz 2 até 480 fez o compasso seguinte começar em 480. Só a primeira armadura é preservada; fórmula de compasso/modo não entram no snapshot; vários motores fixam 1920 ticks por compasso.
 
 **Corpus/reprodução:** `after you.musicxml` modula nos compassos 15 e 23, mas retorna apenas a tonalidade inicial. Quatro compassos 3/4 foram mapeados como apenas três.
