@@ -89,6 +89,7 @@ function parseMusicXML(xmlData) {
     // O tempo inicial do compasso é o currentTick atual.
     let measureTickStart = currentTick;
     let measureCursor = measureTickStart; // cursor independente para <backup>
+    let measureMaxCursor = measureTickStart;
 
     for (let el of measureNode.measure) {
       const tag = Object.keys(el).find(k => k !== ':@');
@@ -144,6 +145,7 @@ function parseMusicXML(xmlData) {
             tickStart: measureCursor,
             tickEnd: measureCursor // Will calculate after
           });
+          measureMaxCursor = Math.max(measureMaxCursor, measureCursor);
         }
       }
 
@@ -185,6 +187,7 @@ function parseMusicXML(xmlData) {
         if (!isChord) {
           measureCursor += durTicks;
         }
+        measureMaxCursor = Math.max(measureMaxCursor, noteTickStart + durTicks, measureCursor);
       }
 
       if (tag === 'backup') {
@@ -198,6 +201,7 @@ function parseMusicXML(xmlData) {
         const duration = getText(el.forward, 'duration');
         if (duration) {
           measureCursor += parseInt(duration) * getTickScale();
+          measureMaxCursor = Math.max(measureMaxCursor, measureCursor);
         }
       }
     }
@@ -205,7 +209,7 @@ function parseMusicXML(xmlData) {
     // Avança o tick absoluto pro fim desse compasso.
     // Muitas vezes o measureCursor é igual ao tempo total, mas se houve multivozes,
     // o currentTick deve pular a maior duração. Simplificação: usa o maior cursor.
-    currentTick = Math.max(currentTick, measureCursor);
+    currentTick = Math.max(currentTick, measureMaxCursor);
   }
 
   snapshot.metadata.measures = measureCount;
