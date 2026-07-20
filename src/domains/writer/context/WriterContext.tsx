@@ -10,6 +10,8 @@ interface DetectedChord {
   drawnNotes: string[];
   bass: string;
   symbol: string;
+  score: number;
+  confidence: number;
   inversion: string;
   voicingType: string;
   tensionLevel: number;
@@ -17,6 +19,7 @@ interface DetectedChord {
   tensions: string[];
   root: string;
   quality: string;
+  equivalentInterpretations: ChordCandidate["equivalentInterpretations"];
 }
 
 interface WriterState {
@@ -99,13 +102,16 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         drawnNotes: c.drawnNotes || [],
         bass: c.bass || c.root,
         symbol: getDrawnChordName(c),
+        score: c.score,
+        confidence: c.confidence,
         inversion,
         voicingType,
         tensionLevel,
         additions: c.additions || [],
         tensions: c.tensions || [],
         root: c.root,
-        quality: c.quality
+        quality: c.quality,
+        equivalentInterpretations: c.equivalentInterpretations || []
       };
     });
   }, [storeDetectedChords, selectedFrets, notationStyle]);

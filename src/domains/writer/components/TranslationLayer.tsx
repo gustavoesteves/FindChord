@@ -3,9 +3,10 @@ import { useWriter } from "../context/WriterContext";
 import { presentWriterChordReading } from "../services/writerChordReadingPresenter";
 
 export function TranslationLayer() {
-  const { state } = useWriter();
-  const { activeChord } = state;
+  const { state, actions } = useWriter();
+  const { activeChord, detectedChords, selectedChordIndex } = state;
   const reading = activeChord ? presentWriterChordReading(activeChord) : null;
+  const hasAlternatives = detectedChords.length > 1;
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -25,6 +26,35 @@ export function TranslationLayer() {
                   <span className="text-[10px] font-black tracking-wider text-purple-400 uppercase">Acorde:</span>
                   <span className="text-3xl font-black text-white tracking-tight">{activeChord.symbol}</span>
                 </div>
+
+                {hasAlternatives && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase">Interpretação:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {detectedChords.map((candidate, index) => {
+                        const isSelected = selectedChordIndex === index;
+                        return (
+                          <button
+                            key={`${candidate.symbol}-${index}`}
+                            type="button"
+                            onClick={() => actions.setSelectedChordIndex(index)}
+                            className={`px-2.5 py-1.5 rounded-lg border text-left transition ${
+                              isSelected
+                                ? "bg-purple-950/50 border-purple-500/70 text-white"
+                                : "bg-zinc-950/60 border-zinc-850 text-zinc-300 hover:border-zinc-650"
+                            }`}
+                            title={`Confiança ${candidate.confidence}%`}
+                          >
+                            <span className="block text-xs font-black">{candidate.symbol}</span>
+                            <span className="block text-[9px] font-bold text-zinc-500">
+                              score {candidate.score} · {candidate.confidence}%
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[10px] text-zinc-500 font-bold uppercase">Notas tocadas:</span>

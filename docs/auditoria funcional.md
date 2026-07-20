@@ -104,6 +104,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-01 — P1 — interpretações ambíguas não podem ser escolhidas
 
 - **Módulo/tab/jornada:** Escrever / Braço e tabs dependentes / B.
+- **Progresso:** o Writer agora preserva `score`, `confidence` e interpretações equivalentes no DTO da leitura; a tab “Leitura do acorde” mostra alternativas detectadas e chama `setSelectedChordIndex` para trocar a interpretação ativa. Regressão coberta em `writer-ambiguous-chord-selection.spec.ts`.
 - **Esperado:** mostrar alternativas, confiança e permitir que o músico escolha a interpretação.
 - **Observado:** o analisador retorna até oito candidatos, mas o Writer descarta `score`, `confidence` e equivalências; nenhuma UI chama `setSelectedChordIndex`; alterações sempre restauram o índice zero.
 - **Evidência:** [chordAnalyzer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/chordAnalyzer.ts:387>), [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:71>), [TranslationLayer.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/TranslationLayer.tsx:5>) e [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:127>).
