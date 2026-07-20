@@ -35,6 +35,62 @@ describe("F119 janela temporal da melodia", () => {
     }]);
   });
 
+  it("seleciona uma linha melodica primaria em vez de misturar vozes e staves", () => {
+    const selection = selectMelodicAnchors([
+      {
+        id: "melody-c",
+        step: "C",
+        alter: 0,
+        octave: 5,
+        voice: 1,
+        staff: 1,
+        measure: 1,
+        tickStart: 0,
+        tickEnd: 960,
+        durationTicks: 960
+      },
+      {
+        id: "inner-e",
+        step: "E",
+        alter: 0,
+        octave: 4,
+        voice: 2,
+        staff: 1,
+        measure: 1,
+        tickStart: 0,
+        tickEnd: 960,
+        durationTicks: 960
+      },
+      {
+        id: "bass-c",
+        step: "C",
+        alter: 0,
+        octave: 3,
+        voice: 1,
+        staff: 2,
+        measure: 1,
+        tickStart: 0,
+        tickEnd: 1920,
+        durationTicks: 1920
+      },
+      {
+        id: "melody-d",
+        step: "D",
+        alter: 0,
+        octave: 5,
+        voice: 1,
+        staff: 1,
+        measure: 2,
+        tickStart: 1920,
+        tickEnd: 2880,
+        durationTicks: 960
+      }
+    ], undefined);
+
+    expect(selection.anchors.map(anchor => anchor.pitch)).toEqual(["C", "D"]);
+    expect(selection.allAnchors.map(anchor => anchor.pitch)).toEqual(["C", "D"]);
+  });
+
   it("mantem regioes temporais no compasso real quando anchors comecam longe do inicio", () => {
     const selection = selectMelodicAnchors([
       {

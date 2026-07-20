@@ -112,6 +112,43 @@ function spellScoreNotePitch(note: ScoreNoteEvent): string {
   return note.step;
 }
 
+function selectPrimaryMelodicLine(notes: ScoreNoteEvent[]): ScoreNoteEvent[] {
+  if (notes.length === 0) return [];
+
+  const groups = new Map<string, ScoreNoteEvent[]>();
+  for (const note of notes) {
+    const key = `${note.staff || 1}:${note.voice || 1}`;
+    const group = groups.get(key) || [];
+    group.push(note);
+    groups.set(key, group);
+  }
+
+  if (groups.size <= 1) return notes;
+
+  const candidates = Array.from(groups.entries()).map(([key, group]) => {
+    const [staff, voice] = key.split(":").map(value => Number(value));
+    const totalDuration = group.reduce((sum, note) => sum + (note.durationTicks || 0), 0);
+    const measureCount = new Set(group.map(note => note.measure)).size;
+    return {
+      key,
+      group,
+      staff: Number.isFinite(staff) ? staff : 1,
+      voice: Number.isFinite(voice) ? voice : 1,
+      totalDuration,
+      measureCount
+    };
+  });
+
+  const selected = candidates.sort((a, b) => (
+    a.staff - b.staff
+    || a.voice - b.voice
+    || b.measureCount - a.measureCount
+    || b.totalDuration - a.totalDuration
+  ))[0];
+
+  return [...(selected?.group || notes)].sort((a, b) => a.tickStart - b.tickStart);
+}
+
 function selectStructuralAnchors(anchors: MelodicAnchor[], limit: number): MelodicAnchor[] {
   if (anchors.length <= limit) return anchors;
   const finalAnchor = anchors[anchors.length - 1];
@@ -360,7 +397,9 @@ export function selectMelodicAnchors(
     });
   }
 
-  const anchors = relevantNotes
+  const melodicLine = selectPrimaryMelodicLine(relevantNotes);
+
+  const anchors = melodicLine
     .filter(note => Number.isFinite(note.tickStart) && Number.isFinite(note.tickEnd) && note.tickEnd > note.tickStart)
     .map(note => ({
       measureIndex: note.measure || Math.floor(note.tickStart / 1920) + 1,
