@@ -53,6 +53,15 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).not.toContain("req.url.includes('/plugin')");
   });
 
+  it("permite a origem publicada sem abrir o bridge para qualquer dashboard", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+
+    expect(bridge).toContain("'https://gustavoesteves.github.io'");
+    expect(bridge).toContain("process.env.FIND_CHORD_DASHBOARD_ORIGINS");
+    expect(bridge).toContain("DEFAULT_DASHBOARD_ORIGINS.has(origin) || configuredDashboardOrigins.has(origin)");
+    expect(bridge).not.toContain("return /^https?:\\/\\/(localhost|127\\.0\\.0\\.1):(5173|5174)$/.test(origin);");
+  });
+
   it("pareia dashboard e plugin com sessao e tokens efemeros", () => {
     const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
     const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");

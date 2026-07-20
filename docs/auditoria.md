@@ -150,6 +150,8 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>), [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:45>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:336>).
 
+**Progresso:** o bridge agora inclui a origem publicada `https://gustavoesteves.github.io` no allowlist padrão e aceita origens adicionais por `FIND_CHORD_DASHBOARD_ORIGINS`, mantendo validação explícita de Origin e token efêmero de sessão. Regressão coberta em `musescore-insertion-safety.spec.ts`.
+
 **Evidência:** o workflow publica o site; o frontend usa `ws://localhost:9000/dashboard`; o bridge só aceita Origins `http(s)://localhost|127.0.0.1:5173|5174`. O Origin do GitHub Pages é necessariamente rejeitado.
 
 **Cenário:** abrir a aplicação publicada e tentar usar MuseScore.

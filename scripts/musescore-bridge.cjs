@@ -19,6 +19,19 @@ const PLUGIN_HTTP_PATHS = new Set([
   '/api/v1/log',
   '/api/v1/score'
 ]);
+const DEFAULT_DASHBOARD_ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'https://gustavoesteves.github.io'
+]);
+const configuredDashboardOrigins = new Set(
+  (process.env.FIND_CHORD_DASHBOARD_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+);
 const sessionId = crypto.randomUUID();
 const dashboardToken = crypto.randomBytes(24).toString('hex');
 const pluginToken = crypto.randomBytes(24).toString('hex');
@@ -47,7 +60,7 @@ function writeJson(res, status, data) {
 
 // Validação de Origem e Cabeçalho do Cliente (Sprint A)
 function isValidDashboardOrigin(origin) {
-  return /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/.test(origin);
+  return DEFAULT_DASHBOARD_ORIGINS.has(origin) || configuredDashboardOrigins.has(origin);
 }
 
 function validateOrigin(req, res, url) {
@@ -63,7 +76,7 @@ function validateOrigin(req, res, url) {
   }
 
   if (origin) {
-    // Permite portas do dev server (5173/5174) de localhost ou loopback
+    // Permite dev local, GitHub Pages do projeto e origens configuradas explicitamente.
     const isValidOrigin = isValidDashboardOrigin(origin);
     if (!isValidOrigin) {
       eventsRejected++;
