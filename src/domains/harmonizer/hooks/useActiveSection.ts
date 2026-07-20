@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormalSection } from "../../../store/useScoreSessionStore";
 
+export function effectiveSectionId(sections: FormalSection[], selectedSectionId: string | null): string | null {
+  if (sections.length === 0) return null;
+  if (selectedSectionId && sections.some(section => section.id === selectedSectionId)) {
+    return selectedSectionId;
+  }
+  return sections[0].id;
+}
+
 export function useActiveSection(sections: FormalSection[]) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -18,14 +26,18 @@ export function useActiveSection(sections: FormalSection[]) {
     }
   }, [sections, selectedSectionId]);
 
+  const effectiveSelectedSectionId = useMemo(() => {
+    return effectiveSectionId(sections, selectedSectionId);
+  }, [sections, selectedSectionId]);
+
   const activeSection = useMemo(
-    () => sections.find(section => section.id === selectedSectionId),
-    [sections, selectedSectionId]
+    () => sections.find(section => section.id === effectiveSelectedSectionId),
+    [sections, effectiveSelectedSectionId]
   );
 
   return {
     activeSection,
-    selectedSectionId,
+    selectedSectionId: effectiveSelectedSectionId,
     setSelectedSectionId
   };
 }
