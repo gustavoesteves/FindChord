@@ -15,6 +15,13 @@ export interface BridgeOperationalStatus {
   pluginLastSeen: string | null;
   frontendLastSeen: string | null;
   queueSize: number;
+  score: {
+    scoreId: string | null;
+    title: string | null;
+    composer: string | null;
+    measures: number | null;
+    updatedAt: string | null;
+  } | null;
 }
 
 interface BridgeStatusResponse {
@@ -22,6 +29,7 @@ interface BridgeStatusResponse {
   pluginLastSeen?: string | null;
   frontendLastSeen?: string | null;
   queueSize?: number;
+  score?: BridgeOperationalStatus["score"];
 }
 
 type ScoreSessionPayload =
@@ -102,7 +110,8 @@ class MuseScoreAdapter {
       pluginOnline,
       pluginLastSeen: status.pluginLastSeen || null,
       frontendLastSeen: status.frontendLastSeen || null,
-      queueSize: status.queueSize || 0
+      queueSize: status.queueSize || 0,
+      score: status.score || null
     };
   }
 

@@ -1,4 +1,5 @@
 const { XMLParser } = require('fast-xml-parser');
+const crypto = require('crypto');
 const { parseXMLHarmonyBlock } = require('./harmony-normalizer.cjs');
 
 const MAJOR_KEY_BY_FIFTHS = {
@@ -71,6 +72,17 @@ function stableSlug(value) {
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     || 'section';
+}
+
+function stableScoreId(snapshot) {
+  const identity = [
+    snapshot.metadata.title || '',
+    snapshot.metadata.composer || '',
+    snapshot.metadata.measures || 0,
+    snapshot.harmonies.slice(0, 16).map(harmony => `${harmony.measure}:${harmony.beat}:${harmony.harmony}`).join('|'),
+    snapshot.notes.slice(0, 16).map(note => `${note.measure}:${note.tickStart}:${note.step}:${note.alter}:${note.octave}`).join('|')
+  ].join('::');
+  return crypto.createHash('sha1').update(identity).digest('hex').slice(0, 16);
 }
 
 function parseMusicXML(xmlData) {
@@ -311,6 +323,8 @@ function parseMusicXML(xmlData) {
     }
     snapshot.harmonies[i].durationTicks = snapshot.harmonies[i].tickEnd - snapshot.harmonies[i].tickStart;
   }
+
+  snapshot.metadata.scoreId = stableScoreId(snapshot);
 
   return snapshot;
 }

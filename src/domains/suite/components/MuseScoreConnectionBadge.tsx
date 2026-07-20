@@ -4,6 +4,7 @@ import { useMuseScoreConnection } from "../useMuseScoreConnection";
 export default function MuseScoreConnectionBadge() {
   const { status, operationalStatus, reconnect } = useMuseScoreConnection();
   const pluginOnline = operationalStatus?.pluginOnline === true;
+  const scoreTitle = operationalStatus?.score?.title;
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950/60 rounded-xl border border-zinc-850 text-xs font-semibold text-zinc-300">
@@ -16,6 +17,11 @@ export default function MuseScoreConnectionBadge() {
             <span className={`text-[9px] uppercase font-black tracking-wider ${pluginOnline ? "text-emerald-300" : "text-amber-300"}`}>
               {pluginOnline ? "Plugin ativo" : "Aguardando plugin"}
             </span>
+            {scoreTitle && (
+              <span className="max-w-[180px] truncate text-[9px] font-bold text-zinc-400">
+                Partitura: {scoreTitle}
+              </span>
+            )}
           </div>
         </>
       )}

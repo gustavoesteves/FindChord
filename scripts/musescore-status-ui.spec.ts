@@ -9,6 +9,7 @@ describe("MuseScore status UI", () => {
     expect(badge).toContain("Bridge Offline");
     expect(badge).toContain("Plugin ativo");
     expect(badge).toContain("Aguardando plugin");
+    expect(badge).toContain("Partitura:");
     expect(badge).not.toContain("MuseScore Conectado");
   });
 
@@ -21,8 +22,21 @@ describe("MuseScore status UI", () => {
     expect(transport).toContain("\"X-FindChord-Session\": this.dashboardToken");
     expect(adapter).toContain("getOperationalStatus");
     expect(adapter).toContain("Date.now() - pluginLastSeenTime < 8000");
+    expect(adapter).toContain("score: status.score || null");
     expect(hook).toContain("setInterval(refresh, 3000)");
     expect(hook).toContain("operationalStatus");
+  });
+
+  it("propagates score identity from MusicXML parsing to bridge status", () => {
+    const parser = readFileSync("scripts/musicxml-parser.cjs", "utf8");
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const model = readFileSync("src/utils/music/analysis/models/ScoreSnapshot.ts", "utf8");
+
+    expect(parser).toContain("function stableScoreId");
+    expect(parser).toContain("snapshot.metadata.scoreId = stableScoreId(snapshot)");
+    expect(bridge).toContain("currentScoreIdentity");
+    expect(bridge).toContain("score: currentScoreIdentity");
+    expect(model).toContain("scoreId?: string;");
   });
 
   it("surfaces plugin timeout as a visible sync error", () => {

@@ -387,28 +387,28 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
 - **Esperado:** pedido expira e só a instância/partitura destinatária pode consumi-lo.
-- **Observado:** resolvido parcialmente. `request_score` agora carrega `expiresAt` e o bridge já poda mensagens expiradas; listener/fila ainda não são vinculados a `scoreId` ou instância.
+- **Observado:** resolvido parcialmente. `request_score` agora carrega `expiresAt`, o bridge poda mensagens expiradas e o snapshot/status carregam identidade de partitura (`scoreId/title`). Listener/fila ainda não rejeitam respostas fora de ordem por `scoreId`.
 - **Evidência:** [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:109>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:118>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:162>).
 - **Reprodução:** sincronizar com plugin fechado, esperar timeout e abrir o plugin; pedido antigo é consumido e o snapshot substitui o estado. Com duas instâncias, a primeira a consultar `/consume` leva toda a fila.
 - **Impacto:** músico — partitura errada ou obsoleta pode aparecer; produto — estado global parcial e não determinístico.
 - **Causa provável:** fila FIFO global sem `pluginId`, `scoreId` ou lifecycle de request.
-- **Progresso:** sync tardio deixa de permanecer indefinidamente na fila; regressão estática garante `expiresAt: Date.now() + 10000` no pedido de score.
-- **Correção recomendada:** filas por destino, pending/cancelled requests e validação de `scoreId/sessionId`.
-- **Testes necessários:** duas instâncias, troca de score e resposta fora de ordem.
+- **Progresso:** sync tardio deixa de permanecer indefinidamente na fila; parser MusicXML gera `metadata.scoreId`; `/api/v1/status` expõe a identidade da última partitura sincronizada.
+- **Correção recomendada:** filas por destino, pending/cancelled requests e validação efetiva de `scoreId/sessionId` no recebimento do snapshot.
+- **Testes necessários:** duas instâncias, troca de score e resposta fora de ordem rejeitada.
 - **Confiança:** alta; cenário multi-MuseScore não executado externamente.
 
 ### FC-MS-02 — P1 — interface confunde bridge com MuseScore e o deploy publicado é incompatível
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
-- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A UI agora chama o WebSocket de `Bridge Conectado/Offline`, consulta `/api/v1/status` com token da sessão, mostra `Plugin ativo/Aguardando plugin` e exibe erro visível quando o plugin não responde ao sync. A separação por score continua pendente.
+- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A UI agora chama o WebSocket de `Bridge Conectado/Offline`, consulta `/api/v1/status` com token da sessão, mostra `Plugin ativo/Aguardando plugin`, exibe a partitura sincronizada e mostra erro visível quando o plugin não responde ao sync.
 - **Esperado:** estados separados para bridge, plugin e score; erro visível; ambiente publicado compatível.
 - **Observado:** resolvido parcialmente. O badge não promete mais disponibilidade do MuseScore quando só o bridge está conectado e já consome `pluginLastSeen`; export ainda só faz `console.warn` e não há vínculo com score específico.
 - **Evidência:** [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>), [MuseScoreConnectionBadge.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/MuseScoreConnectionBadge.tsx:4>), [VirtualFretboard.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VirtualFretboard.tsx:41>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:1>).
 - **Reprodução:** bridge ativo e plugin fechado: interface pode dizer “MuseScore Conectado”; sync espera e termina sem mensagem. Na origem Pages, o bridge rejeita a sessão.
 - **Impacto:** músico — não sabe se a operação funcionou; produto — integração indisponível no deploy oficial.
 - **Causa provável:** conexão técnica usada como proxy de disponibilidade funcional; topologia de deploy não foi alinhada ao allowlist.
-- **Correção recomendada:** status técnico com `scoreId/scoreName`, resultado tipado também para export e pareamento seguro compatível.
-- **Testes necessários:** score ausente/trocado e origem de produção em runtime real.
+- **Correção recomendada:** resultado tipado também para export, rejeição de snapshot de score trocado e pareamento seguro compatível.
+- **Testes necessários:** score trocado e origem de produção em runtime real.
 - **Confiança:** alta.
 
 ### FC-MS-03 — P2 — mutações não são idempotentes e o protocolo promete ações inexistentes

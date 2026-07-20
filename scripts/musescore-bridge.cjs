@@ -46,6 +46,7 @@ let eventsRejected = 0;
 let pluginPollCount = 0;
 let pluginLastSeen = null;
 let frontendLastSeen = null;
+let currentScoreIdentity = null;
 
 // Helper to write JSON HTTP responses
 function writeJson(res, status, data) {
@@ -150,6 +151,14 @@ function pruneExpiredQueue() {
 }
 
 function broadcastScoreSnapshot(snapshot, requestId) {
+  currentScoreIdentity = {
+    scoreId: snapshot?.metadata?.scoreId || null,
+    title: snapshot?.metadata?.title || null,
+    composer: snapshot?.metadata?.composer || null,
+    measures: snapshot?.metadata?.measures || null,
+    updatedAt: new Date().toISOString()
+  };
+
   const scoreMessage = {
     protocolVersion: "1.0",
     messageType: "SESSION",
@@ -474,7 +483,8 @@ const server = http.createServer((req, res) => {
       eventsRejected,
       pluginPollCount,
       pluginLastSeen,
-      frontendLastSeen
+      frontendLastSeen,
+      score: currentScoreIdentity
     });
     return;
   }

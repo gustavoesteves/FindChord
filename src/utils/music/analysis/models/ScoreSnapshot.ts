@@ -63,6 +63,7 @@ export interface ScoreSnapshot {
   metadata: {
     title?: string;
     composer?: string;
+    scoreId?: string;
     measures?: number;
     keySignature?: string;
     timeSignature?: string;
