@@ -28,7 +28,7 @@ const HARMONIZER_TABS: TabConfig<HarmonizerView>[] = [
 
 export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScreenProps = {}) {
   const { scoreSnapshot, indexes } = useScoreSessionStore();
-  const { canSync, isSyncing, syncScore } = useScoreSync();
+  const { canSync, isSyncing, syncError, syncScore } = useScoreSync();
   const applyProposalToWriter = useApplyProposalToWriter(onNavigateToWriter);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeView, setActiveView] = useState<HarmonizerView>("harmony");
@@ -54,12 +54,19 @@ export default function HarmonizerScreen({ onNavigateToWriter }: HarmonizerScree
       activeTab={activeView}
       onTabChange={setActiveView}
       headerContent={
-        <HarmonizerHeader
-          phraseContext={phraseContext}
-          canSync={canSync}
-          isSyncing={isSyncing}
-          onSync={syncScore}
-        />
+        <>
+          <HarmonizerHeader
+            phraseContext={phraseContext}
+            canSync={canSync}
+            isSyncing={isSyncing}
+            onSync={syncScore}
+          />
+          {syncError && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">
+              {syncError}
+            </div>
+          )}
+        </>
       }
     >
       <div className="flex flex-col gap-10 animate-fade-in pb-10 max-w-4xl mx-auto w-full">

@@ -146,6 +146,7 @@ class MuseScoreAdapter {
       payload: {
         type: 'request_score',
         requestId,
+        expiresAt: Date.now() + 10000,
         data: {}
       }
     };

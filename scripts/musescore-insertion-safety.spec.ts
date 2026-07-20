@@ -187,6 +187,7 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("extractScoreSnapshot(payload.requestId || \"\")");
     expect(plugin).toContain("requestId: requestId || \"\"");
     expect(adapter).toContain("const requestId = crypto.randomUUID();");
+    expect(adapter).toContain("expiresAt: Date.now() + 10000");
     expect(adapter).toContain("payload.requestId !== requestId");
     expect(adapter).toContain("return await snapshotReceived");
     expect(hook).not.toContain("setTimeout(() => setIsSyncing(false)");

@@ -19,6 +19,7 @@ export default defineConfig({
       "scripts/contextual-scale-audit.spec.ts",
       "scripts/temporal-melody-window.spec.ts",
       "scripts/musescore-insertion-safety.spec.ts",
+      "scripts/musescore-status-ui.spec.ts",
       "scripts/apparent-function-analysis.spec.ts",
       "scripts/apparent-function-strategy.spec.ts",
       "scripts/audit-calibration-foundation.spec.ts",

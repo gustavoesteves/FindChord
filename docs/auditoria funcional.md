@@ -387,27 +387,28 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
 - **Esperado:** pedido expira e só a instância/partitura destinatária pode consumi-lo.
-- **Observado:** `request_score` não possui `expiresAt`; após timeout de 10 s continua na fila; listener global aceita qualquer snapshot. Há um token, caminho e fila para todas as instâncias.
+- **Observado:** resolvido parcialmente. `request_score` agora carrega `expiresAt` e o bridge já poda mensagens expiradas; listener/fila ainda não são vinculados a `scoreId` ou instância.
 - **Evidência:** [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:109>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:118>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:162>).
 - **Reprodução:** sincronizar com plugin fechado, esperar timeout e abrir o plugin; pedido antigo é consumido e o snapshot substitui o estado. Com duas instâncias, a primeira a consultar `/consume` leva toda a fila.
 - **Impacto:** músico — partitura errada ou obsoleta pode aparecer; produto — estado global parcial e não determinístico.
 - **Causa provável:** fila FIFO global sem `pluginId`, `scoreId` ou lifecycle de request.
-- **Correção recomendada:** filas por destino, expiração, pending/cancelled requests e validação de `scoreId/sessionId`.
-- **Testes necessários:** timeout tardio, duas instâncias, troca de score e resposta fora de ordem.
+- **Progresso:** sync tardio deixa de permanecer indefinidamente na fila; regressão estática garante `expiresAt: Date.now() + 10000` no pedido de score.
+- **Correção recomendada:** filas por destino, pending/cancelled requests e validação de `scoreId/sessionId`.
+- **Testes necessários:** duas instâncias, troca de score e resposta fora de ordem.
 - **Confiança:** alta; cenário multi-MuseScore não executado externamente.
 
 ### FC-MS-02 — P1 — interface confunde bridge com MuseScore e o deploy publicado é incompatível
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
-- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A separação visual de status bridge/plugin/score continua pendente.
+- **Progresso:** o Origin publicado `https://gustavoesteves.github.io` foi incluído no allowlist padrão do bridge e origens adicionais podem ser configuradas por `FIND_CHORD_DASHBOARD_ORIGINS`. A UI agora chama o WebSocket de `Bridge Conectado/Offline` e mostra erro visível quando o plugin não responde ao sync. A separação técnica completa plugin/score continua pendente.
 - **Esperado:** estados separados para bridge, plugin e score; erro visível; ambiente publicado compatível.
-- **Observado:** badge verde representa apenas websocket do dashboard; `pluginLastSeen` não é consumido; import ignora o booleano; export só faz `console.warn`. GitHub Pages é publicado, mas o bridge aceita apenas origins localhost:5173/5174.
+- **Observado:** resolvido parcialmente. O badge não promete mais disponibilidade do MuseScore quando só o bridge está conectado; `pluginLastSeen` ainda não é consumido; export só faz `console.warn`.
 - **Evidência:** [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>), [MuseScoreConnectionBadge.tsx](</Volumes/Documents/Development/Find Chord/src/domains/suite/components/MuseScoreConnectionBadge.tsx:4>), [VirtualFretboard.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/VirtualFretboard.tsx:41>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:1>).
 - **Reprodução:** bridge ativo e plugin fechado: interface pode dizer “MuseScore Conectado”; sync espera e termina sem mensagem. Na origem Pages, o bridge rejeita a sessão.
 - **Impacto:** músico — não sabe se a operação funcionou; produto — integração indisponível no deploy oficial.
 - **Causa provável:** conexão técnica usada como proxy de disponibilidade funcional; topologia de deploy não foi alinhada ao allowlist.
-- **Correção recomendada:** status `bridge/plugin/score`, resultado tipado, erro/retry visível e UI servida localmente ou pareamento seguro compatível.
-- **Testes necessários:** bridge-only, plugin offline, score ausente e origin de produção.
+- **Correção recomendada:** status técnico `bridge/plugin/score`, resultado tipado também para export e pareamento seguro compatível.
+- **Testes necessários:** plugin offline, score ausente e origem de produção em runtime real.
 - **Confiança:** alta.
 
 ### FC-MS-03 — P2 — mutações não são idempotentes e o protocolo promete ações inexistentes
