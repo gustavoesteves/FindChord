@@ -73,4 +73,32 @@ describe("MuseScore chord insertion safety", () => {
     expect(transport).toContain("X-FindChord-Client");
     expect(transport).toContain("session.wsEndpoint");
   });
+
+  it("confirma mutacoes com commandId, expiracao e ACK do plugin", () => {
+    const protocol = readFileSync("src/utils/music/bridge/Protocol.ts", "utf8");
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
+    const transport = readFileSync("src/utils/music/bridge/TransportLayer.ts", "utf8");
+
+    expect(protocol).toContain("messageType: 'SESSION' | 'MUTATION' | 'ACK'");
+    expect(protocol).toContain("commandId: string;");
+    expect(protocol).toContain("expiresAt: number;");
+    expect(protocol).toContain("export interface CommandAck");
+
+    expect(bridge).toContain("'/api/v1/ack'");
+    expect(bridge).toContain("isExpiredBridgeMessage");
+    expect(bridge).toContain("payload.type !== 'COMMAND_ACK'");
+
+    expect(plugin).toContain("sendCommandAck");
+    expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
+
+    expect(adapter).toContain("const commandId = crypto.randomUUID();");
+    expect(adapter).toContain("expiresAt: Date.now() + 8000");
+    expect(adapter).toContain("sendWithAck(msg, commandId, 8000)");
+
+    expect(transport).toContain("private pendingAcks");
+    expect(transport).toContain("resolveAck(payload)");
+    expect(transport).toContain("public async sendWithAck");
+  });
 });

@@ -12,6 +12,7 @@ const PLUGIN_PATH = '/plugin';
 const PLUGIN_HTTP_PATHS = new Set([
   '/api/v1/plugin-session',
   '/api/v1/consume',
+  '/api/v1/ack',
   '/api/v1/log',
   '/api/v1/score'
 ]);
@@ -109,6 +110,17 @@ function validateDashboardToken(req, res, url) {
   return true;
 }
 
+function isExpiredBridgeMessage(message) {
+  const expiresAt = message && message.payload && message.payload.expiresAt;
+  return typeof expiresAt === 'number' && expiresAt <= Date.now();
+}
+
+function pruneExpiredQueue() {
+  const before = eventQueue.length;
+  eventQueue = eventQueue.filter(message => !isExpiredBridgeMessage(message));
+  eventsDropped += before - eventQueue.length;
+}
+
 // Create HTTP Server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -158,6 +170,7 @@ const server = http.createServer((req, res) => {
 
   // 1. Endpoint: GET /api/v1/pending -> Retorna os eventos pendentes na fila
   if (req.method === 'GET' && url.pathname === '/api/v1/pending') {
+    pruneExpiredQueue();
     writeJson(res, 200, eventQueue);
     return;
   }
@@ -167,13 +180,60 @@ const server = http.createServer((req, res) => {
     pluginPollCount++;
     pluginLastSeen = new Date().toISOString();
 
-    const pending = [...eventQueue];
+    pruneExpiredQueue();
+    const pending = eventQueue.filter(message => !isExpiredBridgeMessage(message));
     eventQueue = [];
     if (pending.length > 0) {
       eventsConsumed += pending.length;
       console.log(`[Find Chord Bridge] Fila consumida por polling. (${pending.length} evento(s) removido(s))`);
     }
     writeJson(res, 200, pending);
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/v1/ack') {
+    pluginLastSeen = new Date().toISOString();
+    let body = '';
+    let exceeded = false;
+
+    req.on('data', chunk => {
+      if (exceeded) return;
+      body += chunk.toString();
+      if (body.length > MAX_HTTP_BODY_BYTES) {
+        exceeded = true;
+        eventsRejected++;
+        writeJson(res, 413, { error: 'Payload de ack muito grande.' });
+        req.destroy();
+      }
+    });
+
+    req.on('end', () => {
+      if (exceeded) return;
+      try {
+        const payload = JSON.parse(body);
+        if (payload.type !== 'COMMAND_ACK' || typeof payload.commandId !== 'string') {
+          eventsRejected++;
+          writeJson(res, 400, { error: 'ACK invalido.' });
+          return;
+        }
+
+        const ackMessage = {
+          protocolVersion: '1.0',
+          messageType: 'ACK',
+          payload
+        };
+        const messageStr = JSON.stringify(ackMessage);
+        wss.clients.forEach((client) => {
+          if (client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {
+            client.send(messageStr);
+          }
+        });
+        writeJson(res, 200, { status: 'success' });
+      } catch (e) {
+        eventsRejected++;
+        writeJson(res, 400, { error: 'JSON malformado.' });
+      }
+    });
     return;
   }
 
@@ -388,6 +448,7 @@ let eventsDropped = 0;
 
 function handleNewEvent(payload) {
   eventsReceived++;
+  pruneExpiredQueue();
 
   // Wrap em BridgeMessage
   const bridgeMessage = {
@@ -470,6 +531,7 @@ wss.on('connection', (ws, req) => {
       const message = JSON.parse(data.toString());
       const messageStr = JSON.stringify(message);
       if (!isPlugin) {
+        if (isExpiredBridgeMessage(message)) return;
         wss.clients.forEach((client) => {
           if (client !== ws && client.role === 'plugin' && client.readyState === WebSocket.OPEN) {
             client.send(messageStr);

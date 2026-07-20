@@ -83,11 +83,14 @@ class MuseScoreAdapter {
       return false;
     }
 
+    const commandId = crypto.randomUUID();
     const msg: BridgeMessage = {
       protocolVersion: '1.0',
       messageType: 'MUTATION',
       payload: {
         type: 'MUTATION',
+        commandId,
+        expiresAt: Date.now() + 8000,
         action: 'INSERT_CHORD',
         targetTick: 0,
         chordSymbol,
@@ -95,8 +98,8 @@ class MuseScoreAdapter {
       } satisfies MutationCommand
     };
     try {
-      await this.transport.send(msg);
-      return true;
+      const ack = await this.transport.sendWithAck(msg, commandId, 8000);
+      return ack.status === "accepted";
     } catch (e) {
       console.warn("MuseScore bridge offline", e);
       return false;

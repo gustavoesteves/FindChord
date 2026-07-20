@@ -196,6 +196,24 @@ MuseScore {
         }
     }
 
+    function sendCommandAck(commandId, accepted, reason) {
+        if (!commandId || bridgePluginToken.length === 0)
+            return;
+
+        try {
+            var r = new XMLHttpRequest();
+            r.open("POST", "http://localhost:9000/api/v1/ack", true);
+            r.setRequestHeader("Content-Type", "application/json");
+            r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
+            r.send(JSON.stringify({
+                type: "COMMAND_ACK",
+                commandId: commandId,
+                status: accepted ? "accepted" : "rejected",
+                reason: reason || ""
+            }));
+        } catch (e) {}
+    }
+
     // =========================
     // EVENT ROUTER
     // =========================
@@ -209,7 +227,8 @@ MuseScore {
         if (!type) return;
 
         if (type === "chord" || type === "MUTATION") {
-            transcribeChord(payload.data || payload);
+            var result = transcribeChord(payload.data || payload);
+            sendCommandAck(payload.commandId, result.accepted, result.reason);
 
         } else if (type === "request_score") {
             extractScoreSnapshot();
@@ -264,14 +283,15 @@ MuseScore {
     // =========================
 
     function transcribeChord(data) {
-        if (!data || !curScore) return;
+        if (!data || !curScore)
+            return { accepted: false, reason: "Sem partitura ativa." };
 
         var score = curScore;
         var symbol = data.symbol || data.chordSymbol || "";
         if (typeof symbol !== "string" || symbol.trim().length === 0 || symbol.length > 80) {
             logText.text = "Cifra rejeitada: formato invalido.";
             postLog("Rejected chord symbol before insertion");
-            return;
+            return { accepted: false, reason: "Cifra invalida." };
         }
 
         try {
@@ -307,7 +327,7 @@ MuseScore {
             var cursor = score.newCursor();
             if (!cursor) {
                 score.endCmd();
-                return;
+                return { accepted: false, reason: "Cursor indisponivel." };
             }
 
             if (targetTrack !== -1) cursor.track = targetTrack;
@@ -339,7 +359,7 @@ MuseScore {
                 (cursor.element.type !== Element.CHORD && cursor.element.type !== Element.REST)) {
                 score.endCmd();
                 logText.text = "Nenhum ponto valido para inserir a cifra.";
-                return;
+                return { accepted: false, reason: "Nenhum ponto valido para inserir a cifra." };
             }
 
             var harmony = newElement(Element.HARMONY);
@@ -351,15 +371,17 @@ MuseScore {
             } else {
                 score.endCmd();
                 logText.text = "Nao foi possivel criar a cifra.";
-                return;
+                return { accepted: false, reason: "Nao foi possivel criar a cifra." };
             }
 
             score.endCmd();
 
             logText.text = "Chord added: " + symbol;
+            return { accepted: true, reason: "" };
 
         } catch (e) {
             try { score.endCmd(); } catch (err) {}
+            return { accepted: false, reason: e.message || "Erro ao inserir cifra." };
         }
     }
 
