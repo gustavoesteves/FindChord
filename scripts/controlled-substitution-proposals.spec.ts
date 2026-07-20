@@ -37,6 +37,8 @@ describe("F26.10c Controlled Substitution Proposals", () => {
       originalChord: "Fmaj7",
       substituteChord: "F#m7(b5)",
       measure: 2,
+      targetTickStart: 1920,
+      targetOccurrenceInMeasure: 0,
       preservedFunction: "PD"
     }));
     expect(proposals[0].validation.accepted).toBe(true);

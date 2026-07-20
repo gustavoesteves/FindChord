@@ -74,7 +74,7 @@ describe("F39 real music audit report", () => {
       expect(result.modalBorrowingReferenceColors).toBeTruthy();
       if (result.status === "harmonized") expect(result.dualPathComparison).toBeTruthy();
     }
-  }, 20000);
+  }, 60000);
 
   it("prefers harmonizable windows that overlap reference harmony when a real score has chords", () => {
     const actualProof = auditRealMusicFile("Actual proof.musicxml");

@@ -15,6 +15,17 @@ function harmony(measure: number, chord: string): ScoreHarmonyEvent {
   };
 }
 
+function harmonyAt(measure: number, beat: number, chord: string, tickStart: number): ScoreHarmonyEvent {
+  return {
+    measure,
+    beat,
+    harmony: chord,
+    tickStart,
+    tickEnd: tickStart + 480,
+    durationTicks: 480
+  };
+}
+
 function anchor(measureIndex: number, pitch: string): MelodicAnchor {
   return {
     measureIndex,
@@ -79,5 +90,26 @@ describe("Harmonizer controlled proposals", () => {
     expect(chords).toContain("D7(#9)");
     expect(chords).not.toContain("Am");
     expect(chords).not.toContain("D7");
+  });
+
+  it("substitutes only the targeted occurrence when a measure repeats the same chord", () => {
+    const proposals = buildControlledReharmonizationProposals(
+      [
+        harmonyAt(1, 1, "Cmaj7", 0),
+        harmonyAt(2, 1, "Fmaj7", 1920),
+        harmonyAt(2, 3, "Fmaj7", 2880),
+        harmonyAt(3, 1, "G7", 3840),
+        harmonyAt(4, 1, "Cmaj7", 5760)
+      ],
+      [anchor(2, "A"), anchor(2, "C")],
+      majorReferenceContext("C")
+    );
+
+    const controlled = proposals.find(proposal => proposal.id === "controlled-substitution-0");
+
+    expect(controlled?.measures.find(measure => measure.measureIndex === 2)?.chords).toEqual([
+      "F#m7(b5)",
+      "Fmaj7"
+    ]);
   });
 });

@@ -755,11 +755,21 @@ export function buildControlledReharmonizationProposals(
     phraseContext.selectedCenter.tonic,
     1
   ).map((controlled, index) => {
-    const substitutedEvents = sectionHarmonies.map(harmony => (
-      harmony.measure === controlled.measure && harmony.harmony === controlled.originalChord
+    let occurrenceInMeasure = -1;
+    const substitutedEvents = sectionHarmonies.map(harmony => {
+      if (harmony.measure === controlled.measure) {
+        occurrenceInMeasure += 1;
+      }
+
+      const isTarget = harmony.measure === controlled.measure
+        && harmony.tickStart === controlled.targetTickStart
+        && occurrenceInMeasure === controlled.targetOccurrenceInMeasure
+        && harmony.harmony === controlled.originalChord;
+
+      return isTarget
         ? { ...harmony, harmony: controlled.substituteChord }
-        : harmony
-    ));
+        : harmony;
+    });
 
     return {
       id: `controlled-substitution-${index}`,

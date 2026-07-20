@@ -17,6 +17,8 @@ interface ControlledSubstitutionProposal {
   originalChord: string;
   substituteChord: string;
   measure: number;
+  targetTickStart: number;
+  targetOccurrenceInMeasure: number;
   preservedFunction: "T" | "PD" | "D";
   substitution: FunctionalSubstitutionCandidate;
   melodyPitches: string[];
@@ -79,6 +81,10 @@ export function generateControlledSubstitutionProposals(
 
     const melodyPitches = uniquePitchesForMeasure(anchors, harmony.measure);
     if (melodyPitches.length === 0) continue;
+    const targetOccurrenceInMeasure = ordered
+      .slice(0, i + 1)
+      .filter(item => item.measure === harmony.measure)
+      .length - 1;
 
     const candidates = functionalSubstitutionsFor(originalFunction, center, effectiveIdiom);
     for (const substitution of candidates) {
@@ -103,6 +109,8 @@ export function generateControlledSubstitutionProposals(
         originalChord: harmony.harmony,
         substituteChord,
         measure: harmony.measure,
+        targetTickStart: harmony.tickStart,
+        targetOccurrenceInMeasure,
         preservedFunction: originalFunction,
         substitution,
         melodyPitches,
