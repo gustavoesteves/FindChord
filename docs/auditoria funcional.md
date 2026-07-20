@@ -11,11 +11,11 @@ Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 | Área | Feito | Ainda aberto |
 |---|---|---|
 | Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
-| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio. | Rótulos de voice leading, regras contextuais e Improviso ainda precisam refinamento funcional. |
+| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score. | Regras contextuais e Improviso ainda precisam refinamento funcional. |
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: `FC-HZ-08`, calibrar rótulos de condução de vozes para que a UI não premie leitura fraca nem desvalorize condução realmente boa.
+Próximo bloco recomendado: `FC-HZ-12`, corrigir regras contextuais que ainda ensinam função, dominante e resolução de forma simplificada demais.
 
 ## Parecer executivo
 
@@ -307,13 +307,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações / C-D.
 - **Esperado:** score melhor deve gerar rótulo melhor.
-- **Observado:** evaluator e ranker tratam score alto como melhor; a UI chama valores baixos de “suave” e altos de “moderado”.
+- **Observado:** resolvido. A UI agora trata score alto como condução forte/boa e score baixo como instável/áspera.
 - **Evidência:** [VoiceLeadingTransitionEvaluator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/VoiceLeadingTransitionEvaluator.ts:289>) e [HarmonizationProposalCard.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/HarmonizationProposalCard.tsx:81>).
-- **Reprodução:** Dm7→G7 e G7→Cmaj7 = 7,5/“moderado”; G7→F#7 = 3,2/“suave”.
+- **Reprodução:** Dm7→G7 e G7→Cmaj7 somados aparecem como “Condução forte”; G7→F#7 fica em faixa instável/áspera.
 - **Impacto:** músico — explicação contradiz o comportamento musical e o ranking; produto — confiança nos cards é reduzida.
 - **Causa provável:** presenter interpretou score de suporte como custo.
-- **Correção recomendada:** inverter/calibrar faixas ou renomear a métrica.
-- **Testes necessários:** transições cadenciais e não resolvidas conhecidas.
+- **Progresso:** `voiceLeadingLabel` foi exportado e calibrado; regressões conectam labels a ii-V-I resolvido e dominante não resolvida.
+- **Correção recomendada:** acompanhar corpus real para ajustar limites numéricos finos, se necessário.
+- **Testes necessários:** exemplos adicionais de condução por nota comum, baixo cromático e SubV.
 - **Confiança:** muito alta.
 
 ### FC-HZ-09 — P2 — Improviso duplica referência, omite variantes e escolhe default inadequado

@@ -6,8 +6,10 @@ import {
   proposalVariantApplyLabel,
   proposalVariantRelationLabel,
   proposalVariantSectionLabel,
-  routeProfileLabel
+  routeProfileLabel,
+  voiceLeadingLabel
 } from "../src/domains/harmonizer/components/HarmonizationProposalCard";
+import { evaluateVoiceLeadingTransition } from "../src/utils/music/analysis/strategies/VoiceLeadingTransitionEvaluator";
 import type {
   ReharmonizationInputContext,
   ReharmonizationProposal,
@@ -64,6 +66,34 @@ describe("Harmonization proposal card labels", () => {
       "Mais distante"
     ]);
     expect(labels.join(" ")).not.toMatch(/conservadora|radical/i);
+  });
+
+  it("maps higher voice-leading scores to stronger composer-facing labels", () => {
+    expect(voiceLeadingLabel(7.5)).toBe("Condução forte");
+    expect(voiceLeadingLabel(4.2)).toBe("Condução boa");
+    expect(voiceLeadingLabel(2.5)).toBe("Condução instável");
+    expect(voiceLeadingLabel(-0.5)).toBe("Condução áspera");
+  });
+
+  it("does not call unresolved dominant motion smoother than ii-V-I resolution", () => {
+    const iiToV = evaluateVoiceLeadingTransition({
+      previousChord: "Dm7",
+      nextChord: "G7",
+      center: "C"
+    });
+    const vToI = evaluateVoiceLeadingTransition({
+      previousChord: "G7",
+      nextChord: "Cmaj7",
+      center: "C"
+    });
+    const unresolved = evaluateVoiceLeadingTransition({
+      previousChord: "G7",
+      nextChord: "F#7",
+      center: "C"
+    });
+
+    expect(voiceLeadingLabel(iiToV.score + vToI.score)).toBe("Condução forte");
+    expect(["Condução instável", "Condução áspera"]).toContain(voiceLeadingLabel(unresolved.score));
   });
 
   it("labels input contexts as composer-facing source material", () => {

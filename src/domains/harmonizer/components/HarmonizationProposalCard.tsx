@@ -78,11 +78,11 @@ const REFERENCE_RELATION_TONE: Record<ReharmonizationReferenceRelation, string> 
   "harmony-only-reading": "text-amber-300"
 };
 
-function voiceLeadingLabel(score: number): string {
-  if (score <= 3) return "Condução muito próxima";
-  if (score <= 6) return "Condução suave";
-  if (score <= 10) return "Movimento moderado";
-  return "Movimento amplo";
+export function voiceLeadingLabel(score: number): string {
+  if (score >= 7) return "Condução forte";
+  if (score >= 4) return "Condução boa";
+  if (score >= 1) return "Condução instável";
+  return "Condução áspera";
 }
 
 export function proposalKindLabel(kind: ReharmonizationProposalKind): string {
