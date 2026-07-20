@@ -42,7 +42,10 @@ import {
   groupNearEquivalentColorVariants,
   groupNearReferenceVariants
 } from "../../../utils/music/analysis/strategies/ProposalConsequenceSimilarity";
-import { timelineContextForSection } from "../../../utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForSection
+} from "../../../utils/music/analysis/scoreTimelineContext";
 
 const PRESENTATION_MODE = "balanced" as const;
 
@@ -74,6 +77,11 @@ export function useHarmonizerProposals({
     [scoreSnapshot, activeSection]
   );
 
+  const metricMeasureTicks = useMemo(
+    () => measureTicksForMetricContext(scoreSnapshot),
+    [scoreSnapshot]
+  );
+
   const inputContext = useMemo(() => resolveHarmonizerInputContext({
     melodicAnchorCount: melodyAnchorsData.anchors.length,
     referenceHarmonyCount: sectionHarmonies.length
@@ -97,7 +105,11 @@ export function useHarmonizerProposals({
       sectionHarmonies
     );
 
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(melodyAnchorsData.anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      melodyAnchorsData.anchors,
+      phraseContext,
+      { measureTicks: metricMeasureTicks }
+    );
 
     return {
       proposals: generation.proposals,
@@ -105,7 +117,7 @@ export function useHarmonizerProposals({
       rejectedExperimentalCount: generation.rejectedExperimentalCount,
       omittedStrategyDiagnostics: generation.omittedStrategyDiagnostics
     };
-  }, [melodyAnchorsData.anchors, timelineContext.keySignature, sectionHarmonies]);
+  }, [melodyAnchorsData.anchors, timelineContext.keySignature, sectionHarmonies, metricMeasureTicks]);
 
   const existingHarmonyProposal = useMemo(
     () => buildExistingHarmonyProposal(sectionHarmonies, inputContext),
@@ -237,7 +249,8 @@ export function useHarmonizerProposals({
       referenceHarmonies: sectionHarmonies,
       inputContext,
       primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
-      boldnessMode: PRESENTATION_MODE
+      boldnessMode: PRESENTATION_MODE,
+      measureTicks: metricMeasureTicks
     });
     return groupRepeatedLocalSegmentRoutes(
       removeRepeatedLocalSegmentIdeas(segments, displayedProposals)
@@ -247,6 +260,7 @@ export function useHarmonizerProposals({
     melodyAnchorsData.allAnchors,
     melodyAnchorsData.anchors,
     timelineContext.keySignature,
+    metricMeasureTicks,
     sectionHarmonies,
     inputContext
   ]);

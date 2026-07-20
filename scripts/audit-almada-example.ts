@@ -7,7 +7,10 @@ import { GravityFieldManager } from "../src/utils/music/analysis/engines/Gravity
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 import { toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -214,7 +217,11 @@ function generatedProposalRows(): GeneratedAlmadaProposal[] {
     anchors,
     timelineContextForAnchors(snapshot, anchors).keySignature || "C"
   );
-  const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+  const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+    anchors,
+    phraseContext,
+    { measureTicks: measureTicksForMetricContext(snapshot) }
+  );
   const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, anchors);
   return annotateProposalPresentationRoles(ranked, "balanced", phraseContext)
     .map((proposal, index) => ({

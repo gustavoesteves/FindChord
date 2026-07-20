@@ -26,6 +26,8 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 - A auditoria de janelas apresentáveis passou a resolver a tonalidade de cada janela candidata pelos anchors.
 - Diagnósticos e relatórios que chamavam `PhraseAnalysisEngine.analyzePhrase` diretamente passaram a resolver a tonalidade pelos anchors quando usam snapshot real.
 - Fallbacks de comparação sem proposta agora usam o contexto temporal inicial em vez de ler a armadura global diretamente.
+- `GravityFieldManager` e `HarmonicRegionResolver` agora aceitam `measureTicks`, permitindo que regiões experimentais convertam ticks para compassos pelo mapa real da partitura.
+- A UI do Harmonizar, segmentos locais e auditorias reais passaram a repassar `measureTicks` para a geração apenas quando a métrica pede mapa explícito e a resolução em ticks é compatível com o passo temporal atual do resolver.
 - Adicionado teste de regressão para:
   - C menor vindo da timeline ser entregue ao motor como `Cm`;
   - mudança posterior para D maior em 3/4;
@@ -35,7 +37,8 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 ## Próximos consumidores
 
 - Comparadores de referência devem usar a tonalidade do trecho avaliado.
-- Seletores de janelas e motores temporais devem consumir `measureTicks/timeTimeline` para evitar pressupor 4/4 fixo.
+- Seletores de janelas que ainda não recebem snapshot devem continuar sendo avaliados antes de remover todos os fallbacks 4/4.
+- O resolver experimental ainda usa passo interno fixo de 480 ticks; partituras importadas com resolução menor não devem ativar `measureTicks` até essa camada receber PPQ/divisions explícito.
 - O painel de Improviso pode herdar o mesmo resolvedor quando comparar materiais por região.
 
 ## Critério musical

@@ -8,6 +8,7 @@ import { BassTrajectoryModel } from "./archetypes/BassTrajectoryModel";
 import { TemporalSlotAllocator } from "./TemporalSlotAllocator";
 import { HarmonicRegionResolver } from "./HarmonicRegionResolver";
 import type { GravityField } from "./fields/GravityField";
+import type { ScoreMeasureTickRange } from "../models/ScoreSnapshot";
 import { TonalGravityField } from "./fields/TonalGravityField";
 import { ChromaticGravityField } from "./fields/ChromaticGravityField";
 import { ContrapuntalGravityField } from "./fields/ContrapuntalGravityField";
@@ -23,6 +24,10 @@ export interface GravityProposalGenerationResult {
   omittedStrategyDiagnostics: HarmonicDiagnostic[];
 }
 
+export interface GravityProposalGenerationOptions {
+  measureTicks?: ScoreMeasureTickRange[];
+}
+
 export class GravityFieldManager {
   private static fields: GravityField[] = [
     new TonalGravityField(),
@@ -32,14 +37,16 @@ export class GravityFieldManager {
 
   public static generateProposals(
     anchors: MelodicAnchor[], 
-    phraseContext: PhraseContext
+    phraseContext: PhraseContext,
+    options: GravityProposalGenerationOptions = {}
   ): ReharmonizationProposal[] {
-    return this.generateProposalsWithDiagnostics(anchors, phraseContext).proposals;
+    return this.generateProposalsWithDiagnostics(anchors, phraseContext, options).proposals;
   }
 
   public static generateProposalsWithDiagnostics(
     anchors: MelodicAnchor[],
-    phraseContext: PhraseContext
+    phraseContext: PhraseContext,
+    options: GravityProposalGenerationOptions = {}
   ): GravityProposalGenerationResult {
     const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     let pIdx = 1;
@@ -66,7 +73,9 @@ export class GravityFieldManager {
             inertia: 0.8 // high inertia = slower harmonic rhythm
           };
 
-          const form = HarmonicRegionResolver.resolve(anchors, seed, gravityMap, initialState);
+          const form = HarmonicRegionResolver.resolve(anchors, seed, gravityMap, initialState, {
+            measureTicks: options.measureTicks
+          });
 
           // 3. Allocate Temporal Slots based on the Resolved Form
           const slots = TemporalSlotAllocator.allocateSlots(form, anchors);

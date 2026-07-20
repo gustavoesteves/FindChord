@@ -6,7 +6,10 @@ import type {
   ReharmonizationInputContext,
   ReharmonizationProposal
 } from "../../../utils/music/analysis/models/ReharmonizationProposal";
-import type { ScoreHarmonyEvent } from "../../../utils/music/analysis/models/ScoreSnapshot";
+import type {
+  ScoreHarmonyEvent,
+  ScoreMeasureTickRange
+} from "../../../utils/music/analysis/models/ScoreSnapshot";
 import { annotateProposalPresentationRoles } from "../../../utils/music/analysis/strategies/ProposalPresentationPlanner";
 import {
   selectPresentableHarmonizationWindows,
@@ -55,6 +58,7 @@ export interface BuildLocalSegmentHarmonizationsOptions {
   boldnessMode?: ReharmonizationBoldnessMode;
   maxSegments?: number;
   maxCandidateWindows?: number;
+  measureTicks?: ScoreMeasureTickRange[];
 }
 
 const DEFAULT_MAX_SEGMENTS = 3;
@@ -69,7 +73,8 @@ export function buildLocalSegmentHarmonizations({
   interestingMeasures = [],
   boldnessMode = "balanced",
   maxSegments = DEFAULT_MAX_SEGMENTS,
-  maxCandidateWindows = DEFAULT_MAX_CANDIDATE_WINDOWS
+  maxCandidateWindows = DEFAULT_MAX_CANDIDATE_WINDOWS,
+  measureTicks
 }: BuildLocalSegmentHarmonizationsOptions): LocalSegmentHarmonization[] {
   if (anchors.length === 0) return [];
 
@@ -94,7 +99,11 @@ export function buildLocalSegmentHarmonizations({
       PhraseAnalysisEngine.analyzePhrase(window.anchors, keySignature),
       referenceForWindow
     );
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(window.anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      window.anchors,
+      phraseContext,
+      { measureTicks }
+    );
     if (generation.proposals.length === 0) continue;
 
     const ranked = rankReharmonizationProposalsByVoiceLeading(

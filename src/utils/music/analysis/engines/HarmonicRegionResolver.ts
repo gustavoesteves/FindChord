@@ -2,14 +2,21 @@ import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { HarmonicSeed, HarmonicFunction } from "../models/HarmonicSeed";
 import type { NarrativePressure } from "../models/NarrativeState";
 import type { HarmonicForm, HarmonicPotentialField, HarmonicRegion, TonalGravityMap } from "../models/HarmonicForm";
+import type { ScoreMeasureTickRange } from "../models/ScoreSnapshot";
+import { measureNumberAtTick } from "../scoreTimelineContext";
 import { NarrativeEngine } from "./NarrativeEngine";
+
+export interface HarmonicRegionResolverOptions {
+  measureTicks?: ScoreMeasureTickRange[];
+}
 
 export class HarmonicRegionResolver {
   public static resolve(
     anchors: MelodicAnchor[],
     seed: HarmonicSeed,
     gravityMap: TonalGravityMap,
-    initialState: NarrativePressure
+    initialState: NarrativePressure,
+    options: HarmonicRegionResolverOptions = {}
   ): HarmonicForm {
     if (anchors.length === 0) return { regions: [] };
 
@@ -17,7 +24,7 @@ export class HarmonicRegionResolver {
     const endTick = anchors[anchors.length - 1].endTick ?? (anchors.length * 1920);
 
     const TICKS_PER_QUARTER = 480;
-    const TICKS_PER_MEASURE = 1920;
+    const measureAt = (tick: number) => measureNumberAtTick(options.measureTicks, tick);
 
     const regions: HarmonicRegion[] = [];
     let currentFunctionIdx = 0;
@@ -33,7 +40,7 @@ export class HarmonicRegionResolver {
     };
 
     let regionStartTick = startTick;
-    let regionStartMeasure = Math.floor(startTick / TICKS_PER_MEASURE) + 1;
+    let regionStartMeasure = measureAt(startTick);
 
     // Predict base perturbation from bass contour
     let bassPerturbation = 0.1;
@@ -98,7 +105,7 @@ export class HarmonicRegionResolver {
         };
 
         regionStartTick = t;
-        regionStartMeasure = Math.floor(t / TICKS_PER_MEASURE) + 1;
+        regionStartMeasure = measureAt(t);
       }
     }
 
@@ -124,7 +131,7 @@ export class HarmonicRegionResolver {
       regions.push({
         startTick: start,
         endTick: start + durationPerRemaining,
-        measureIndex: Math.floor(start / TICKS_PER_MEASURE) + 1,
+        measureIndex: measureAt(start),
         function: lastRegion.function,
         stability: lastRegion.stability
       });
@@ -134,7 +141,7 @@ export class HarmonicRegionResolver {
         regions.push({
           startTick: start,
           endTick: start + durationPerRemaining,
-          measureIndex: Math.floor(start / TICKS_PER_MEASURE) + 1,
+          measureIndex: measureAt(start),
           function: func,
           stability: 0.5
         });

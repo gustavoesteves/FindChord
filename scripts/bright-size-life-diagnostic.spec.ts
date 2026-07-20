@@ -7,7 +7,10 @@ import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/Phrase
 import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import { rankReharmonizationProposalsByVoiceLeading } from "../src/utils/music/analysis/strategies/VoiceLeadingProposalRanker";
 import { annotateProposalPresentationRoles } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 import { firstMelodicWindow, toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -87,7 +90,11 @@ describe("Bright Size Life diagnostic", () => {
       anchors,
       timelineContextForAnchors(snapshot, anchors).keySignature
     );
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      anchors,
+      phraseContext,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
+    );
     const ranked = rankReharmonizationProposalsByVoiceLeading(generation.proposals, phraseContext, anchors);
     const presented = annotateProposalPresentationRoles(ranked, "balanced", phraseContext);
     const primary = presented.find(proposal => proposal.presentationRole === "primary");

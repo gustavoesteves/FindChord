@@ -14,7 +14,10 @@ import {
   proposalSummary
 } from "./audit-side-arrival-generation-gap";
 import { toAnchors } from "./real-music-audit";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -90,7 +93,11 @@ export function analyzeForcedSideArrivalWindow(
     ),
     referenceHarmonies
   );
-  const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+  const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+    anchors,
+    phraseContext,
+    { measureTicks: measureTicksForMetricContext(snapshot) }
+  );
   const matching = generation.proposals.filter(proposal => (
     proposalHasSideArrivalNearMeasure(proposal, item.measure, item.sideArrivalRoot)
   ));

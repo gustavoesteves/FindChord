@@ -28,6 +28,7 @@ import {
   proposalVisibleSignature
 } from "../src/domains/harmonizer/services/proposalDisplayContext";
 import {
+  measureTicksForMetricContext,
   timelineContextAtTick,
   timelineContextForAnchors
 } from "../src/utils/music/analysis/scoreTimelineContext";
@@ -155,7 +156,11 @@ export function analyzeProposalCurationForFile(
     PhraseAnalysisEngine.analyzePhrase(melody.anchors, timelineContext.keySignature),
     harmonies
   );
-  const generation = GravityFieldManager.generateProposalsWithDiagnostics(melody.anchors, phraseContext);
+  const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+    melody.anchors,
+    phraseContext,
+    { measureTicks: measureTicksForMetricContext(snapshot) }
+  );
   const controlled = buildControlledReharmonizationProposals(harmonies, melody.anchors, phraseContext);
   const ranked = rankReharmonizationProposalsByVoiceLeading(
     [...controlled, ...generation.proposals],
@@ -189,10 +194,11 @@ export function analyzeProposalCurationForFile(
   );
   const rawLocal = buildLocalSegmentHarmonizations({
     anchors: melody.allAnchors,
-    keySignature: snapshot.metadata.keySignature,
+    keySignature: timelineContext.keySignature,
     referenceHarmonies: harmonies,
     primaryMeasures: uniqueMeasureIndexes(melody.anchors),
-    boldnessMode: "balanced"
+    boldnessMode: "balanced",
+    measureTicks: measureTicksForMetricContext(snapshot)
   });
   const uniqueLocal = removeRepeatedLocalSegmentIdeas(rawLocal, uniqueMain);
   const exactRepeatedMainIdeas = rawMain.length - exactMain.length;

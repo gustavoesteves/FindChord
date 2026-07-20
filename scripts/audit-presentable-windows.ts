@@ -18,7 +18,10 @@ import {
   type UnresolvedDominantMelodyCase
 } from "./audit-unresolved-dominant-melody";
 import { toAnchors, findHarmonizableWindow } from "./real-music-audit";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -99,7 +102,11 @@ export function collectPresentableWindowsForFile(
       ),
       referenceHarmonies
     );
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(candidate.anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      candidate.anchors,
+      phraseContext,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
+    );
     if (generation.proposals.length === 0) return [];
 
     const presented = annotateProposalPresentationRoles(generation.proposals, "balanced", phraseContext);

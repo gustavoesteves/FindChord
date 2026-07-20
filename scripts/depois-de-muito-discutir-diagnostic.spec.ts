@@ -5,7 +5,10 @@ import { analyzeReferenceHarmony } from "../src/utils/music/analysis/strategies/
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
 import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -74,7 +77,11 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
       selectedAnchors,
       timelineContextForAnchors(snapshot, selectedAnchors).keySignature
     );
-    const proposals = GravityFieldManager.generateProposals(selectedAnchors, phraseContext);
+    const proposals = GravityFieldManager.generateProposals(
+      selectedAnchors,
+      phraseContext,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
+    );
     const tonalProposal = proposals.find((proposal) => proposal.name === "Estratégia — Tonal Clássico");
     const firstTonalChord = tonalProposal?.measures[0]?.chords[0];
 
@@ -89,7 +96,11 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
       anchors,
       timelineContextForAnchors(snapshot, anchors).keySignature
     );
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      anchors,
+      phraseContext,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
+    );
     const proposals = generation.proposals;
     const firstChords = proposals.map((proposal) => proposal.measures[0]?.chords[0]).filter(Boolean);
 

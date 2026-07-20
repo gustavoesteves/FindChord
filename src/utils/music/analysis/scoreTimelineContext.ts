@@ -1,5 +1,6 @@
 import type {
   ScoreKeyTimelineEntry,
+  ScoreMeasureTickRange,
   ScoreSnapshot,
   ScoreTimeTimelineEntry
 } from "./models/ScoreSnapshot";
@@ -80,4 +81,42 @@ export function timelineContextForAnchors(
   anchors: { startTick?: number }[]
 ): ScoreTimelineContext {
   return timelineContextAtTick(snapshot, anchors[0]?.startTick ?? 0);
+}
+
+export function measureNumberAtTick(
+  measureTicks: ScoreMeasureTickRange[] | undefined,
+  tick: number,
+  fallbackTicksPerMeasure = 1920
+): number {
+  if (!measureTicks || measureTicks.length === 0) {
+    return Math.floor(tick / fallbackTicksPerMeasure) + 1;
+  }
+
+  const ordered = [...measureTicks].sort((a, b) => a.startTick - b.startTick);
+  const containing = ordered.find(measure => tick >= measure.startTick && tick < measure.endTick);
+  if (containing) return containing.measure;
+
+  const previous = ordered.filter(measure => measure.startTick <= tick).at(-1);
+  if (previous) {
+    if (tick >= previous.endTick) {
+      const duration = Math.max(1, previous.endTick - previous.startTick);
+      return previous.measure + Math.floor((tick - previous.endTick) / duration) + 1;
+    }
+    return previous.measure;
+  }
+
+  return ordered[0].measure;
+}
+
+export function measureTicksForMetricContext(
+  snapshot: ScoreSnapshot | null | undefined
+): ScoreMeasureTickRange[] | undefined {
+  const measureTicks = snapshot?.metadata?.measureTicks;
+  const hasNonCommonMeter = snapshot?.metadata?.timeTimeline?.some(entry => entry.timeSignature !== "4/4")
+    || Boolean(snapshot?.metadata?.timeSignature && snapshot.metadata.timeSignature !== "4/4");
+  const hasResolverCompatibleResolution = measureTicks?.some(measure => (
+    measure.endTick - measure.startTick >= 480
+  ));
+
+  return hasNonCommonMeter && hasResolverCompatibleResolution ? measureTicks : undefined;
 }

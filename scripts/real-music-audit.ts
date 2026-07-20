@@ -26,7 +26,10 @@ import type { HarmonicDiagnostic } from "../src/utils/music/analysis/models/Harm
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
-import { timelineContextAtTick } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextAtTick
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -181,7 +184,11 @@ export function findHarmonizableWindow(
       PhraseAnalysisEngine.analyzePhrase(anchors, keySignature),
       referenceHarmoniesForWindow
     );
-    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchors, phraseContext);
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(
+      anchors,
+      phraseContext,
+      { measureTicks: measureTicksForMetricContext(contextOptions.snapshot) }
+    );
     if (generation.proposals.length > 0) {
       const referenceOverlapCount = referenceOverlapForPrimaryProposal(
         generation,
