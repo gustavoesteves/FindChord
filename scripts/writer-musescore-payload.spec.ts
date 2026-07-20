@@ -5,6 +5,7 @@ const activeChord = {
   root: "C",
   quality: "major7th",
   symbol: "Cmaj7",
+  canonicalSymbol: "Cmaj7",
   inversion: "Fundamental",
   voicingType: "Fechado",
   tensionLevel: 0.65
@@ -31,6 +32,7 @@ describe("F219 payload MuseScore do Escrever", () => {
     })).toEqual({
       id: "ch_Cmajor7th_123",
       symbol: "Cmaj7",
+      canonicalSymbol: "Cmaj7",
       voicing: {
         notes: [48, 52, 60],
         frets: [8, 7, null, 5]
@@ -43,6 +45,45 @@ describe("F219 payload MuseScore do Escrever", () => {
       voicingType: "Fechado",
       tensionLevel: 0.65,
       voiceLeadingScore: 1.0
+    });
+  });
+
+  it("preserva cifra canonica independente do estilo visual", () => {
+    expect(buildWriterMuseScoreChordEvent({
+      activeChord: {
+        ...activeChord,
+        quality: "major9th",
+        symbol: "C7M(9)",
+        canonicalSymbol: "Cmaj9"
+      },
+      selectedFrets: [8, 7, 9, 5],
+      tuning: ["E2", "A2", "D3", "G3"],
+      activeInstrument: "Violão",
+      now: 456
+    })).toMatchObject({
+      id: "ch_Cmajor9th_456",
+      symbol: "C7M(9)",
+      canonicalSymbol: "Cmaj9"
+    });
+  });
+
+  it("gera cifra canonica a partir de raiz qualidade e baixo quando o campo nao vem pronto", () => {
+    expect(buildWriterMuseScoreChordEvent({
+      activeChord: {
+        ...activeChord,
+        root: "G",
+        quality: "dominant7b9",
+        symbol: "G7(b9)",
+        canonicalSymbol: undefined,
+        bass: "B"
+      },
+      selectedFrets: [3, 2, 3, 4],
+      tuning: ["E2", "A2", "D3", "G3"],
+      activeInstrument: "Violão",
+      now: 789
+    })).toMatchObject({
+      symbol: "G7(b9)",
+      canonicalSymbol: "G7(b9)/B"
     });
   });
 });

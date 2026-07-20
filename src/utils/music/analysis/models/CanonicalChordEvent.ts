@@ -4,6 +4,7 @@
 export interface CanonicalChordEvent {
   id: string;
   symbol: string;                        // Harmonic chord symbol (e.g. "Cm11", "Gmaj7/B")
+  canonicalSymbol?: string;              // Export-safe harmonic identity independent from UI notation style
   voicing: {
     notes: number[];                    // Absolute MIDI note numbers from low to high
     frets?: (number | null)[];          // Fret positions on instrument strings (null for unplayed)

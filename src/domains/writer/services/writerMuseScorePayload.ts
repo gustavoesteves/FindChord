@@ -1,11 +1,14 @@
 import { noteToMidi } from "../../../utils/music/core/midi";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import type { CanonicalChordEvent } from "../../../utils/music/analysis/models/CanonicalChordEvent";
+import { buildWriterCanonicalChordSymbol } from "./writerCanonicalChordSymbol";
 
 interface WriterMuseScoreChordInput {
   root: string;
   quality: string;
   symbol: string;
+  canonicalSymbol?: string;
+  bass?: string;
   inversion: string;
   voicingType: string;
   tensionLevel: number;
@@ -31,6 +34,12 @@ export function buildWriterMuseScoreChordEvent(input: WriterMuseScorePayloadInpu
   return {
     id: `ch_${activeChord.root}${activeChord.quality}_${input.now ?? Date.now()}`,
     symbol: activeChord.symbol,
+    canonicalSymbol: activeChord.canonicalSymbol ?? buildWriterCanonicalChordSymbol({
+      root: activeChord.root,
+      quality: activeChord.quality,
+      bass: activeChord.bass,
+      fallbackSymbol: activeChord.symbol
+    }),
     voicing: {
       notes: midiNotes,
       frets: [...input.selectedFrets]

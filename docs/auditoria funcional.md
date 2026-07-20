@@ -10,17 +10,17 @@ Atualizado após os commits até `050d15b`.
 
 | Área | Feito | Ainda aberto |
 |---|---|---|
-| Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada. | Exportação canônica para MuseScore; leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão. |
+| Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
 | Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados. | Somente cifras ainda não tem pipeline próprio; mudança centro↔cadência, referência densa, distância harmônica, rótulos de voice leading e Improviso ainda precisam refinamento funcional. |
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-WR-02`, `FC-HZ-02`, `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
+Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-02`, `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
 
 ## Parecer executivo
 
 1. **O módulo Escrever cumpre sua proposta?**  
-   Parcialmente, com avanço importante. Seleção no braço, detecção básica, escolha explícita de interpretação ambígua, atualização das tabs, aberturas com baixo preservado, filtros de abertura e materiais locais funcionam melhor. Ainda restam exportação canônica, leitura semântica completa e distinção pedagógica fina em Materiais.
+   Parcialmente, com avanço importante. Seleção no braço, detecção básica, escolha explícita de interpretação ambígua, atualização das tabs, aberturas com baixo preservado, filtros de abertura, materiais locais e exportação canônica funcionam melhor. Ainda restam leitura semântica completa, distinção pedagógica fina em Materiais e validação QML real.
 
 2. **O módulo Harmonizar cumpre sua proposta?**  
    Parcialmente para somente melodia e melodia+cifras. O handoff para o Writer já cria uma progressão navegável e o modo menor tem guardrail. O modo somente cifras continua praticamente ausente.
@@ -84,7 +84,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 | Escrever | Materiais | Acorde completo isolado | Funciona | C maior gera rotas/material | Tab mais madura |
 | Escrever | Materiais | Shells e omissões | Funciona parcialmente | Nota omitida vira tensão | Orientação pedagógica errada |
 | Escrever | MuseScore | Payload | Funciona parcialmente | Symbol/shape/MIDI são produzidos | Base estrutural existe |
-| Escrever | MuseScore | Preservar identidade e fretboard | Quebrado | Reparse de símbolo; QML usa só a cifra | Falha ou acorde diferente |
+| Escrever | MuseScore | Preservar identidade e fretboard | Parcial | `canonicalSymbol` evita reparse do estilo visual; QML ainda usa só a cifra | Identidade melhor preservada; shape ainda não é inserido |
 | Harmonizar | Importação | Melodia+cifras comuns | Funciona parcialmente | Parser e timeline possuem testes | Casos menores/modulações falham |
 | Harmonizar | Harmonizações | Somente melodia | Funciona parcialmente | Geração/ranking existem; menor e truncamento tiveram guardrails | Cadência/contexto ainda pedem refinamento |
 | Harmonizar | Harmonizações | Melodia+cifras | Funciona parcialmente | Referência e alternativas existem | Comparação densa perde acordes |
@@ -131,7 +131,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Escrever / Braço-MuseScore / A e B.
 - **Esperado:** exportar a identidade canônica escolhida, com baixo, extensões e shape real.
-- **Observado:** o Writer envia o símbolo já formatado em Internacional/Brasileiro/Acadêmico; o adapter o reparsa por outro dicionário. O QML usa apenas `symbol` e ignora frets, MIDI, afinação e tipo de voicing.
+- **Observado:** resolvido parcialmente. O Writer ainda mostra o símbolo formatado em Internacional/Brasileiro/Acadêmico, mas a exportação agora transporta uma cifra canônica separada. O QML usa apenas a cifra e ainda ignora frets, MIDI, afinação e tipo de voicing.
 - **Evidência:** [writerMuseScorePayload.ts](</Volumes/Documents/Development/Find Chord/src/domains/writer/services/writerMuseScorePayload.ts:22>), [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:21>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:294>).
 - **Reprodução:**
   - `Cmaj9`: `Cmaj9` e `CΔ9` são rejeitados; `C7M(9)` vira `C7`.
@@ -140,8 +140,9 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `C9`: `C7(9)` vira `C7`.
 - **Impacto:** músico — pode inserir outro acorde ou nada; shape não é associado; produto — preferência visual altera correção funcional.
 - **Causa provável:** integração baseada em reparse de texto de apresentação e contratos divergentes entre `CHORD_REGISTRY` e `ChordSymbolResolver`.
-- **Correção recomendada:** transportar raiz, qualidade, baixo, omissões e tensões canônicas; mapper MuseScore único; enviar fretboard somente se o plugin realmente o suportar.
-- **Testes necessários:** matriz `CHORD_REGISTRY × três estilos`, preservando pitch classes; QML real para cifra+fretboard.
+- **Progresso:** o Writer agora transporta `symbol` como apresentação e `canonicalSymbol` como identidade de exportação; o adapter prefere a cifra canônica confiável e preserva extensões como `Cmaj9`, `Cmaj13`, `CmMaj7` e baixos como `G7(b9)/B`.
+- **Correção recomendada:** ampliar a matriz `CHORD_REGISTRY × três estilos`, preservar pitch classes no mapper canônico e enviar fretboard somente se o plugin realmente o suportar.
+- **Testes necessários:** matriz completa de estilos; QML real para cifra+fretboard.
 - **Confiança:** alta para transformação/contrato; inserção externa não verificada.
 
 ### FC-WR-03 — P1 — escolher uma abertura pode remover a inversão

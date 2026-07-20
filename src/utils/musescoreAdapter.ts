@@ -18,7 +18,12 @@ type ScoreSessionPayload =
  * Omissões como `(no3)` servem ao motor de deteccao, mas nao devem atravessar
  * o parser de cifras do plugin.
  */
-export function toMuseScoreChordSymbol(symbol: string): string | null {
+const SAFE_TRUSTED_CANONICAL_SYMBOL = /^[A-G](?:#|b)?(?:maj13|maj9|maj7(?:\(#11\))?|mMaj7|m13|m11|m9|m7b5|m7|m6|madd9|m|dim7|dim|aug|7alt|7sus4|13|11|9|7(?:\((?:b5|#5|b9|#9|#11|b13)\))?|6\/9|6|sus4|sus2|add9|5)?(?:\/[A-G](?:#|b)?)?$/;
+
+export function toMuseScoreChordSymbol(
+  symbol: string,
+  options: { trustedCanonical?: boolean } = {}
+): string | null {
   if (typeof symbol !== "string") return null;
 
   const withoutOmissions = symbol
@@ -27,6 +32,10 @@ export function toMuseScoreChordSymbol(symbol: string): string | null {
     .replace(/\bno(?:3|5|root)\b/gi, "");
 
   if (!withoutOmissions || /^(N\.?C\.?|nochord)$/i.test(withoutOmissions)) return null;
+
+  if (options.trustedCanonical && SAFE_TRUSTED_CANONICAL_SYMBOL.test(withoutOmissions)) {
+    return withoutOmissions;
+  }
 
   const resolved = resolveChordSymbol(withoutOmissions, "plain");
   if (!resolved.root || resolved.confidence === "ambiguous" || resolved.quality === "N.C.") {
@@ -77,9 +86,10 @@ class MuseScoreAdapter {
   }
 
   public async sendChord(chord: CanonicalChordEvent): Promise<boolean> {
-    const chordSymbol = toMuseScoreChordSymbol(chord.symbol);
+    const sourceSymbol = chord.canonicalSymbol || chord.symbol;
+    const chordSymbol = toMuseScoreChordSymbol(sourceSymbol, { trustedCanonical: Boolean(chord.canonicalSymbol) });
     if (!chordSymbol) {
-      console.warn("Cifra rejeitada antes do envio ao MuseScore:", chord.symbol);
+      console.warn("Cifra rejeitada antes do envio ao MuseScore:", sourceSymbol);
       return false;
     }
 
@@ -94,7 +104,7 @@ class MuseScoreAdapter {
         action: 'INSERT_CHORD',
         targetTick: 0,
         chordSymbol,
-        data: { ...chord, symbol: chordSymbol }
+        data: { ...chord, symbol: chordSymbol, canonicalSymbol: chordSymbol }
       } satisfies MutationCommand
     };
     try {

@@ -4,12 +4,14 @@ import type { ChordCandidate } from "../../../utils/music/models/ChordCandidate"
 import { getPitchClass } from "../../../utils/music/core/pitch";
 import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
+import { buildWriterCanonicalChordSymbol } from "../services/writerCanonicalChordSymbol";
 
 interface DetectedChord {
   notes: string[];
   drawnNotes: string[];
   bass: string;
   symbol: string;
+  canonicalSymbol: string;
   score: number;
   confidence: number;
   inversion: string;
@@ -88,8 +90,8 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const voicingType = identifyShapeFamily(selectedFrets);
 
       // Determine tensionLevel estimate
-      const symbol = c.notationInternational || "";
-      const tensionLevel = (symbol.includes("dim") || symbol.includes("aug") || symbol.includes("7") || symbol.includes("9") || symbol.includes("11") || symbol.includes("13")) ? 0.65 : 0.15;
+      const tensionSource = c.notationInternational || "";
+      const tensionLevel = (tensionSource.includes("dim") || tensionSource.includes("aug") || tensionSource.includes("7") || tensionSource.includes("9") || tensionSource.includes("11") || tensionSource.includes("13")) ? 0.65 : 0.15;
 
       const getDrawnChordName = (chord: ChordCandidate) => {
         if (notationStyle === "Brazilian") return chord.notationBrazilian;
@@ -97,11 +99,21 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return chord.notationInternational;
       };
 
+      const bass = c.bass || c.root;
+      const symbol = getDrawnChordName(c);
+      const canonicalSymbol = buildWriterCanonicalChordSymbol({
+        root: c.root,
+        quality: c.quality,
+        bass,
+        fallbackSymbol: c.notationInternational
+      });
+
       return {
         notes: c.notes,
         drawnNotes: c.drawnNotes || [],
-        bass: c.bass || c.root,
-        symbol: getDrawnChordName(c),
+        bass,
+        symbol,
+        canonicalSymbol,
         score: c.score,
         confidence: c.confidence,
         inversion,

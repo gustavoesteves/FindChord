@@ -14,6 +14,15 @@ describe("MuseScore chord insertion safety", () => {
     expect(toMuseScoreChordSymbol(input)).toBe(expected);
   });
 
+  it.each([
+    ["Cmaj9", "Cmaj9"],
+    ["Cmaj13", "Cmaj13"],
+    ["CmMaj7", "CmMaj7"],
+    ["G7(b9)/B", "G7(b9)/B"]
+  ])("preserva cifra canonica confiavel %s", (input, expected) => {
+    expect(toMuseScoreChordSymbol(input, { trustedCanonical: true })).toBe(expected);
+  });
+
   it.each(["G(#75)", "N.C.", "", "cifra desconhecida"])("recusa cifra insegura %s", input => {
     expect(toMuseScoreChordSymbol(input)).toBeNull();
   });
