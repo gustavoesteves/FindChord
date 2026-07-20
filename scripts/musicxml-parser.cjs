@@ -52,7 +52,7 @@ function parseMusicXML(xmlData) {
     harmonies: [],
     notes: [],
     sections: [],
-    metadata: { title: "Imported Score", composer: "", measures: 0 }
+    metadata: { title: "Imported Score", composer: "", measures: 0, measureTicks: [] }
   };
 
   const scorePartwise = getFirstTag(xmlArr, 'score-partwise');
@@ -72,6 +72,7 @@ function parseMusicXML(xmlData) {
   
   let currentTick = 0;
   let currentDivisions = 240; // Default
+  let currentTimeSignature = undefined;
   const getTickScale = () => 480 / currentDivisions;
 
   let measureCount = 0;
@@ -103,6 +104,16 @@ function parseMusicXML(xmlData) {
         const fifths = getText(key, 'fifths');
         if (fifths !== null && fifths !== undefined && !snapshot.metadata.keySignature) {
           snapshot.metadata.keySignature = MAJOR_KEY_BY_FIFTHS[fifths] || undefined;
+        }
+
+        const time = getFirstTag(el.attributes, 'time');
+        const beats = getText(time, 'beats');
+        const beatType = getText(time, 'beat-type');
+        if (beats && beatType) {
+          currentTimeSignature = `${beats}/${beatType}`;
+          if (!snapshot.metadata.timeSignature) {
+            snapshot.metadata.timeSignature = currentTimeSignature;
+          }
         }
       }
 
@@ -210,6 +221,12 @@ function parseMusicXML(xmlData) {
     // Muitas vezes o measureCursor é igual ao tempo total, mas se houve multivozes,
     // o currentTick deve pular a maior duração. Simplificação: usa o maior cursor.
     currentTick = Math.max(currentTick, measureMaxCursor);
+    snapshot.metadata.measureTicks.push({
+      measure: mNumber,
+      startTick: measureTickStart,
+      endTick: currentTick,
+      timeSignature: currentTimeSignature
+    });
   }
 
   snapshot.metadata.measures = measureCount;

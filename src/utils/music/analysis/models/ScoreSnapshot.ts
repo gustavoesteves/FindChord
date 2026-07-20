@@ -19,6 +19,13 @@ export interface ScoreSection {
   endChordIndex?: number;
 }
 
+export interface ScoreMeasureTickRange {
+  measure: number;
+  startTick: number;
+  endTick: number;
+  timeSignature?: string;
+}
+
 export interface ScoreNoteEvent {
   id: string;
   step: string;
@@ -43,6 +50,7 @@ export interface ScoreSnapshot {
     measures?: number;
     keySignature?: string;
     timeSignature?: string;
+    measureTicks?: ScoreMeasureTickRange[];
     tempo?: number;
   };
 }

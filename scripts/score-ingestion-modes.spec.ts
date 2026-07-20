@@ -99,4 +99,33 @@ describe("Score ingestion modes", () => {
     expect(state.indexes?.formalSections[0].startTick).toBe(0);
     expect(state.indexes?.formalSections[0].endTick).toBeGreaterThan(0);
   });
+
+  it("uses explicit measure tick ranges when inferring section bounds", () => {
+    useScoreSessionStore.getState().loadScore({
+      timestamp: 4,
+      harmonies: [],
+      notes: [
+        { id: "n1", step: "C", alter: 0, octave: 4, voice: 1, staff: 1, measure: 1, tickStart: 0, tickEnd: 1440, durationTicks: 1440 },
+        { id: "n4", step: "F", alter: 0, octave: 4, voice: 1, staff: 1, measure: 4, tickStart: 4320, tickEnd: 5760, durationTicks: 1440 }
+      ],
+      metadata: {
+        measures: 4,
+        timeSignature: "3/4",
+        measureTicks: [
+          { measure: 1, startTick: 0, endTick: 1440, timeSignature: "3/4" },
+          { measure: 2, startTick: 1440, endTick: 2880, timeSignature: "3/4" },
+          { measure: 3, startTick: 2880, endTick: 4320, timeSignature: "3/4" },
+          { measure: 4, startTick: 4320, endTick: 5760, timeSignature: "3/4" }
+        ]
+      }
+    });
+
+    const section = useScoreSessionStore.getState().indexes?.formalSections[0];
+    expect(section).toMatchObject({
+      startMeasure: 1,
+      endMeasure: 4,
+      startTick: 0,
+      endTick: 5760
+    });
+  });
 });

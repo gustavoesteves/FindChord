@@ -31,6 +31,13 @@ interface ScoreSession {
 function buildMeasureBounds(snapshot: ScoreSnapshot) {
   const eventsByMeasure = new Map<number, { start: number; end: number }>();
 
+  for (const measure of snapshot.metadata.measureTicks || []) {
+    eventsByMeasure.set(measure.measure, {
+      start: measure.startTick,
+      end: measure.endTick
+    });
+  }
+
   for (const event of [...(snapshot.notes || []), ...(snapshot.harmonies || [])]) {
     const measure = event.measure || 1;
     const current = eventsByMeasure.get(measure);
