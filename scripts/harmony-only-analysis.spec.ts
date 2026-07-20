@@ -75,4 +75,14 @@ describe("Harmony-only analysis", () => {
     }));
     expect(proposals[0]?.cadentialTarget).toBe("C");
   });
+
+  it("keeps a harmony-only final IV-I as a plagal cadence", () => {
+    const phraseContext = buildHarmonyOnlyPhraseContext(harmonies(["C", "F", "C"]));
+
+    expect(phraseContext?.cadentialTarget).toEqual({
+      targetPitch: "C",
+      cadenceType: "PLAGAL",
+      confidence: 0.88
+    });
+  });
 });

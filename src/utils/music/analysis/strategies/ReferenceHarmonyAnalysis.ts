@@ -190,9 +190,24 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
   const lastResolved = resolveChordSymbol(last.harmony);
   const firstRoot = normalizeRoot(first.harmony);
   const lastRoot = normalizeRoot(last.harmony);
+  const penultimate = ordered[ordered.length - 2];
+  const penultimateResolved = penultimate ? resolveChordSymbol(penultimate.harmony) : null;
+  const penultimateRoot = penultimate ? normalizeRoot(penultimate.harmony) : null;
 
   if (isMajorQuality(lastResolved.quality)) addScore(lastRoot, "major", 2, `acorde final sugere repouso em ${lastRoot}`);
   if (isMinorQuality(lastResolved.quality)) addScore(lastRoot, "minor", 2, `acorde final sugere repouso em ${lastRoot}`);
+  if (
+    lastRoot
+    && penultimateRoot
+    && penultimateResolved
+    && chromaticDistance(penultimateRoot, lastRoot) === 5
+    && (isMajorQuality(lastResolved.quality) || isMinorQuality(lastResolved.quality))
+    && (isMajorQuality(penultimateResolved.quality) || isMinorQuality(penultimateResolved.quality))
+  ) {
+    const targetMode = isMinorQuality(lastResolved.quality) ? "minor" : "major";
+    const cadenceLabel = isMinorQuality(penultimateResolved.quality) ? "iv" : "IV";
+    addScore(lastRoot, targetMode, 2.6, `${cadenceLabel}-I plagal aponta ${lastRoot} ${targetMode === "minor" ? "menor" : "maior"}`);
+  }
   if (isDominantQuality(lastResolved.quality)) {
     const target = dominantTarget(lastRoot);
     const mode = target ? targetModeFromExistingQualities(ordered.slice(0, -1), target) : null;

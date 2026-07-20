@@ -110,6 +110,27 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
     expect(analysis.referenceCenter?.evidence).toContain("meia cadência em A menor");
   });
 
+  it("infers a final plagal cadence from IV-I motion", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["C", "F", "C"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major",
+      confidence: "strong"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("IV-I plagal aponta C maior");
+  });
+
+  it("keeps minor plagal color as plagal evidence over a major tonic", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["C", "Fm", "C"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("iv-I plagal aponta C maior");
+  });
+
   it("reports blues as an existing harmonic idiom instead of dominant errors", () => {
     const analysis = analyzeReferenceHarmony(harmonies(["C7", "F7", "C7", "G7", "F7", "C7"]));
 

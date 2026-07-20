@@ -93,6 +93,21 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("promotes written plagal cadence evidence as plagal, not authentic", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["C", "Fm", "C"])
+    );
+
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).toContain("cadência plagal iv-I confirma C maior");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "C",
+      cadenceType: "PLAGAL",
+      confidence: 0.8
+    });
+  });
+
   it("keeps the melodic phrase center when reference evidence is weak", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),
@@ -134,6 +149,7 @@ describe("F48 reference-aware phrase context", () => {
     expect(formatReferenceCenterEvidence("V-I local aponta Bb maior")).toBe("cadência V-I confirma Bb maior");
     expect(formatReferenceCenterEvidence("V-i local aponta A menor")).toBe("cadência V-i confirma A menor");
     expect(formatReferenceCenterEvidence("meia cadência em C maior")).toBe("meia cadência confirma chegada dominante em C maior");
+    expect(formatReferenceCenterEvidence("iv-I plagal aponta C maior")).toBe("cadência plagal iv-I confirma C maior");
     expect(formatReferenceCenterEvidence("repouso menor recorrente em D")).toBe("repousos recorrentes sustentam D menor");
     expect(formatReferenceCenterEvidence("acorde final sugere repouso em Eb")).toBe("acorde final repousa em Eb");
     expect(formatReferenceCenterEvidence("primeiro acorde sugere Bb maior")).toBe("primeiro acorde apresenta Bb maior");

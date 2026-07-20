@@ -42,11 +42,13 @@ function hasExplicitReferenceCadence(evidence: string[]): boolean {
     || /^V-I local aponta /.test(item)
     || /^V-i local aponta /.test(item)
     || /^meia cadência em /.test(item)
+    || /^(?:IV|iv)-I plagal aponta /.test(item)
   );
 }
 
 function cadenceTypeFromReferenceEvidence(evidence: string[]): CadenceType {
   if (evidence.some(item => /^meia cadência em /.test(item))) return "HALF";
+  if (evidence.some(item => /^(?:IV|iv)-I plagal aponta /.test(item))) return "PLAGAL";
   return hasExplicitReferenceCadence(evidence) ? "AUTHENTIC" : "OPEN";
 }
 
@@ -86,6 +88,9 @@ export function formatReferenceCenterEvidence(evidence: string): string {
 
   const halfCadence = evidence.match(/^meia cadência em (.+) (maior|menor)$/);
   if (halfCadence) return `meia cadência confirma chegada dominante em ${halfCadence[1]} ${halfCadence[2]}`;
+
+  const plagalCadence = evidence.match(/^(IV|iv)-I plagal aponta (.+) (maior|menor)$/);
+  if (plagalCadence) return `cadência plagal ${plagalCadence[1]}-I confirma ${plagalCadence[2]} ${plagalCadence[3]}`;
 
   const recurringMajor = evidence.match(/^repouso maior recorrente em (.+)$/);
   if (recurringMajor) return `repousos recorrentes sustentam ${recurringMajor[1]} maior`;
