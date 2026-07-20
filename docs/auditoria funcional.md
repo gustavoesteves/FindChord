@@ -1,6 +1,6 @@
 # Auditoria funcional completa — Find Chord
 
-Auditoria concluída sobre o commit `16f346c`, sem modificar o repositório. O worktree terminou limpo.
+Auditoria originalmente concluída sobre o commit `16f346c`; este documento agora também registra a remediação incremental.
 
 Não encontrei P0. Encontrei P1 que quebram jornadas centrais e P2 que podem induzir decisões musicais incorretas.
 
@@ -15,7 +15,7 @@ Atualizado após os commits até `050d15b`.
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-02`, `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
+Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
 
 ## Parecer executivo
 
@@ -223,13 +223,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações / C-D.
 - **Esperado:** mudar o centro deve recomputar chegada, cadência e confiança.
-- **Observado:** `selectedCenter` muda, mas `cadentialTarget` permanece; `Math.max` transfere confiança entre centros conflitantes.
+- **Observado:** resolvido no contexto de frase. `selectedCenter`, `cadentialTarget` e confiança agora são atualizados juntos quando a referência muda o centro.
 - **Evidência:** [ReferenceAwarePhraseContext.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/ReferenceAwarePhraseContext.ts:73>) e [HarmonizerHeader.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/HarmonizerHeader.tsx:35>).
 - **Reprodução:** melodia forte em C major gera C/AUTHENTIC; referência Bm7b5–E7–Am6 muda centro para Am 0,95, mas mantém C/AUTHENTIC.
 - **Impacto:** músico — cabeçalho contraditório; produto — gates de ii–V, vamp e tonicização usam estado inválido.
 - **Causa provável:** atualização parcial de estado derivado.
-- **Correção recomendada:** recomputar `PhraseContext` integral; só fundir confiança para centro/modo compatíveis.
-- **Testes necessários:** referência conflitante e invariantes centro↔alvo↔cadência.
+- **Progresso:** `applyReferenceCenterToPhraseContext` só herda confiança de candidato centro/modo compatível; cadência funcional de referência redefine alvo para a nova tônica com tipo `AUTHENTIC`. Regressão cobre C maior melódico contra Bm7(b5)–E7–Am6.
+- **Correção recomendada:** ampliar validações para cadências menos diretas, repousos recorrentes e cabeçalho UI.
+- **Testes necessários:** matriz de referência conflitante, repouso modal e invariantes centro↔alvo↔cadência.
 - **Confiança:** muito alta.
 
 ### FC-HZ-03 — P1 — comparação com referência densa descarta acordes

@@ -1,4 +1,6 @@
 import type {
+  CadenceType,
+  CadentialTarget,
   PhraseContext,
   TonalCenterCandidate
 } from "../engines/PhraseAnalysisEngine";
@@ -31,6 +33,40 @@ function matchingCandidate(
   mode: TonalCenterCandidate["mode"]
 ): TonalCenterCandidate | undefined {
   return candidates.find(candidate => candidate.tonic === tonic && candidate.mode === mode);
+}
+
+function hasExplicitReferenceCadence(evidence: string[]): boolean {
+  return evidence.some(item =>
+    /^iiø-V-i local aponta /.test(item)
+    || /^ii-V-I local aponta /.test(item)
+    || /^V-I local aponta /.test(item)
+    || /^V-i local aponta /.test(item)
+  );
+}
+
+function cadenceTypeFromReferenceEvidence(evidence: string[]): CadenceType {
+  return hasExplicitReferenceCadence(evidence) ? "AUTHENTIC" : "OPEN";
+}
+
+function referenceCadentialTarget(
+  referenceCenter: { tonic: string; confidence: "weak" | "medium" | "strong"; evidence: string[] },
+  melodyCadentialTarget: CadentialTarget
+): CadentialTarget {
+  if (!hasExplicitReferenceCadence(referenceCenter.evidence)) {
+    return melodyCadentialTarget;
+  }
+
+  const cadenceType = cadenceTypeFromReferenceEvidence(referenceCenter.evidence);
+  const referenceConfidence = referenceConfidenceValue(referenceCenter.confidence);
+  const confidence = cadenceType === "AUTHENTIC"
+    ? Math.max(referenceConfidence, 0.75)
+    : Math.min(Math.max(referenceConfidence, melodyCadentialTarget.confidence), 0.8);
+
+  return {
+    targetPitch: referenceCenter.tonic,
+    cadenceType,
+    confidence
+  };
 }
 
 export function formatReferenceCenterEvidence(evidence: string): string {
@@ -95,9 +131,7 @@ export function applyReferenceCenterToPhraseContext(
     mode: referenceCenter.mode,
     confidence: Math.max(
       referenceConfidenceValue(referenceCenter.confidence),
-      weakReferenceConfirmedByMelody
-        ? Math.min(0.95, phraseContext.selectedCenter.confidence + 0.01)
-        : phraseContext.selectedCenter.confidence
+      melodyCandidate?.confidence ?? 0
     )
   };
 
@@ -106,6 +140,7 @@ export function applyReferenceCenterToPhraseContext(
     selectedCenter: referenceCandidate,
     selectedCenterSource: "reference",
     selectedCenterEvidence: referenceCenter.evidence.map(formatReferenceCenterEvidence),
+    cadentialTarget: referenceCadentialTarget(referenceCenter, phraseContext.cadentialTarget),
     tonalCenterCandidates: mergeCandidate(phraseContext.tonalCenterCandidates, referenceCandidate)
   };
 }

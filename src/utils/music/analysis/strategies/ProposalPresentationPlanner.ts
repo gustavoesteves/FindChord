@@ -144,6 +144,15 @@ function canBePrimary(
   if (
     mode === "balanced"
     && hasStablePrimaryCandidate
+    && proposal.routeProfile === "radical"
+    && (proposal.referenceRootAgreement || 0) < 0.75
+    && (proposal.referenceFunctionAgreement || 0) < 0.95
+  ) {
+    return false;
+  }
+  if (
+    mode === "balanced"
+    && hasStablePrimaryCandidate
     && proposal.routeProfile === "chromatic"
     && (proposal.kind === "controlled-reharmonization" || proposal.kind === "experimental-exploration")
     && (proposal.apparentFunctionReferenceBonus || 0) < 0.35

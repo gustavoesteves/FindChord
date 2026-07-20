@@ -18,7 +18,6 @@ describe("Bass calibration", () => {
 
     for (const [file, chords, bassLine] of expected) {
       const primary = primaryByFile.get(file);
-
       expect(primary?.name).toBe("Estratégia — Contraponto de Baixo");
       expect(primary?.chords).toBe(chords);
       expect(primary?.bassLine).toBe(bassLine);

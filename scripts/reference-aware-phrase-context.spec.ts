@@ -47,6 +47,33 @@ describe("F48 reference-aware phrase context", () => {
     expect(refined.tonalCenterCandidates[0]).toEqual(refined.selectedCenter);
   });
 
+  it("recomputes cadential target and confidence when reference changes the center", () => {
+    const context: PhraseContext = {
+      ...phraseContext("C"),
+      selectedCenter: { tonic: "C", mode: "major", confidence: 0.95 },
+      tonalCenterCandidates: [
+        { tonic: "C", mode: "major", confidence: 0.95 }
+      ],
+      cadentialTarget: { targetPitch: "C", cadenceType: "AUTHENTIC", confidence: 0.9 }
+    };
+
+    const refined = applyReferenceCenterToPhraseContext(
+      context,
+      harmonies(["Bm7(b5)", "E7", "Am6"])
+    );
+
+    expect(refined.selectedCenter).toMatchObject({
+      tonic: "A",
+      mode: "minor",
+      confidence: 0.88
+    });
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "A",
+      cadenceType: "AUTHENTIC",
+      confidence: 0.88
+    });
+  });
+
   it("keeps the melodic phrase center when reference evidence is weak", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),
@@ -79,7 +106,7 @@ describe("F48 reference-aware phrase context", () => {
       tonic: "Db",
       mode: "major"
     }));
-    expect(refined.selectedCenter.confidence).toBe(0.95);
+    expect(refined.selectedCenter.confidence).toBe(0.85);
     expect(refined.selectedCenterSource).toBe("reference");
   });
 
