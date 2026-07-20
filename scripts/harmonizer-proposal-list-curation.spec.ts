@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  collapsedHiddenProposalCount,
   rejectedDistantPathMessage,
   visibleProposalsForLayer
 } from "../src/domains/harmonizer/components/HarmonizerProposalList";
+import { groupProposalsByPresentationLayer } from "../src/utils/music/analysis/strategies/ProposalPresentationPlanner";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 
 function proposal(
@@ -53,6 +55,24 @@ describe("Harmonizer proposal list curation", () => {
     ];
 
     expect(visibleProposalsForLayer("reharmonization", proposals, true)).toBe(proposals);
+  });
+
+  it("keeps expansion overflow independent from the current expanded state", () => {
+    const proposals = [
+      proposal("primary", "Estratégia — Tonal Clássico", "primary"),
+      proposal("dominants", "Estratégia — Dominantes alteradas"),
+      proposal("modal", "Estratégia — Mistura modal densa"),
+      proposal("neighbor", "Estratégia — Cromatismo de vizinhança"),
+      proposal("subv", "Estratégia — SubV funcional", "adventurous"),
+      proposal("extra", "Estratégia — Contraponto no baixo")
+    ];
+    const hiddenCount = collapsedHiddenProposalCount(
+      groupProposalsByPresentationLayer(proposals),
+      []
+    );
+
+    expect(hiddenCount).toBe(1);
+    expect(visibleProposalsForLayer("reharmonization", proposals, true)).toHaveLength(proposals.length);
   });
 
   it("keeps reference-shaped and functional reference variations visible in collapsed mode", () => {

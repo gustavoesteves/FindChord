@@ -143,6 +143,19 @@ export function visibleProposalsForLayer(
   return selected.slice(0, limit);
 }
 
+export function collapsedHiddenProposalCount(
+  structuralLayerGroups: ReturnType<typeof groupProposalsByPresentationLayer>,
+  functionalColorProposals: ReharmonizationProposal[]
+): number {
+  const hiddenStructuralCount = structuralLayerGroups.reduce((count, group) => {
+    const visibleGroupProposals = visibleProposalsForLayer(group.layer, group.proposals, false);
+    return count + Math.max(0, group.proposals.length - visibleGroupProposals.length);
+  }, 0);
+  const hiddenFunctionalColorCount = Math.max(0, functionalColorProposals.length - COLLAPSED_FUNCTIONAL_COLOR_LIMIT);
+
+  return hiddenStructuralCount + hiddenFunctionalColorCount;
+}
+
 export default function HarmonizerProposalList({
   proposals,
   localSegments,
@@ -168,14 +181,9 @@ export default function HarmonizerProposalList({
   const visibleFunctionalColorProposals = isExpanded
     ? functionalColorProposals
     : functionalColorProposals.slice(0, COLLAPSED_FUNCTIONAL_COLOR_LIMIT);
-  const hiddenStructuralCount = isExpanded
-    ? 0
-    : structuralLayerGroups.reduce((count, group) => {
-      const visibleGroup = visibleStructuralLayerGroups.find(item => item.layer === group.layer);
-      return count + Math.max(0, group.proposals.length - (visibleGroup?.proposals.length || 0));
-    }, 0);
-  const hiddenFunctionalColorCount = Math.max(0, functionalColorProposals.length - COLLAPSED_FUNCTIONAL_COLOR_LIMIT);
-  const hiddenCount = isExpanded ? 0 : hiddenStructuralCount + hiddenFunctionalColorCount;
+  const collapsedHiddenCount = collapsedHiddenProposalCount(structuralLayerGroups, functionalColorProposals);
+  const hiddenCount = isExpanded ? 0 : collapsedHiddenCount;
+  const shouldShowExpansionToggle = collapsedHiddenCount > 0;
   const diagnosticGroups = groupDiagnosticsBySource(omittedStrategyDiagnostics);
 
   return (
@@ -292,7 +300,7 @@ export default function HarmonizerProposalList({
         </section>
       )}
 
-      {hiddenCount > 0 && (
+      {shouldShowExpansionToggle && (
         <div className="w-full py-4 text-center">
           <button
             onClick={onToggleExpanded}
