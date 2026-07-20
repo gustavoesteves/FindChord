@@ -105,6 +105,13 @@ function slashBass(chord: string): string | undefined {
   return chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
 }
 
+function spellScoreNotePitch(note: ScoreNoteEvent): string {
+  const alteration = Number.isFinite(note.alter) ? note.alter : 0;
+  if (alteration > 0) return `${note.step}${"#".repeat(alteration)}`;
+  if (alteration < 0) return `${note.step}${"b".repeat(Math.abs(alteration))}`;
+  return note.step;
+}
+
 function harmonyEventsToMeasures(harmonies: ScoreHarmonyEvent[]): ReharmonizationMeasure[] {
   const measuresMap = new Map<number, string[]>();
   for (const harmony of harmonies) {
@@ -341,17 +348,15 @@ export function selectMelodicAnchors(
     });
   }
 
-  const anchors = relevantNotes.map(note => {
-    let pitch = note.step;
-    if (note.alter === 1) pitch += "#";
-    else if (note.alter === -1) pitch += "b";
-
-    return {
+  const anchors = relevantNotes
+    .filter(note => Number.isFinite(note.tickStart) && Number.isFinite(note.tickEnd) && note.tickEnd > note.tickStart)
+    .map(note => ({
       measureIndex: note.measure || Math.floor(note.tickStart / 1920) + 1,
-      pitch,
-      duration: note.durationTicks
-    };
-  });
+      pitch: spellScoreNotePitch(note),
+      duration: note.durationTicks,
+      startTick: note.tickStart,
+      endTick: note.tickEnd
+    }));
 
   return {
     anchors: anchors.slice(0, limit),

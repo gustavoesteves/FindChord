@@ -5,10 +5,69 @@ import {
   buildMaterialReadingRegions,
   buildProposalMaterialSuggestionSets,
   buildProposalMaterialSuggestions,
+  selectMelodicAnchors,
   selectMelodyForHarmony
 } from "../src/domains/harmonizer/services/harmonizerService";
 
 describe("F119 janela temporal da melodia", () => {
+  it("preserva ticks e acidentes duplos ao selecionar anchors da partitura", () => {
+    const selection = selectMelodicAnchors([
+      {
+        id: "late-bbb",
+        step: "B",
+        alter: -2,
+        octave: 4,
+        voice: 1,
+        staff: 1,
+        measure: 5,
+        tickStart: 7680,
+        tickEnd: 8640,
+        durationTicks: 960
+      }
+    ], { startMeasure: 5, endMeasure: 5, startTick: 7680, endTick: 9600 });
+
+    expect(selection.anchors).toEqual([{
+      measureIndex: 5,
+      pitch: "Bbb",
+      duration: 960,
+      startTick: 7680,
+      endTick: 8640
+    }]);
+  });
+
+  it("mantem regioes temporais no compasso real quando anchors comecam longe do inicio", () => {
+    const selection = selectMelodicAnchors([
+      {
+        id: "m5-c",
+        step: "C",
+        alter: 0,
+        octave: 4,
+        voice: 1,
+        staff: 1,
+        measure: 5,
+        tickStart: 7680,
+        tickEnd: 8640,
+        durationTicks: 960
+      },
+      {
+        id: "m6-g",
+        step: "G",
+        alter: 0,
+        octave: 4,
+        voice: 1,
+        staff: 1,
+        measure: 6,
+        tickStart: 9600,
+        tickEnd: 10560,
+        durationTicks: 960
+      }
+    ], { startMeasure: 5, endMeasure: 6, startTick: 7680, endTick: 11520 });
+
+    expect(selection.anchors.map(anchor => anchor.startTick)).toEqual([7680, 9600]);
+    expect(selection.anchors.map(anchor => anchor.endTick)).toEqual([8640, 10560]);
+    expect(selection.anchors.map(anchor => anchor.measureIndex)).toEqual([5, 6]);
+  });
+
   it("prioriza notas que se sobrepoem ao intervalo da cifra", () => {
     const harmony = {
       measure: 2,

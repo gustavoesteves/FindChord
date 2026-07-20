@@ -33,13 +33,13 @@ describe("harmonization density audit", () => {
     expect(row.melodyDensityStatus).toBe("densidade-gerada-pela-melodia");
   });
 
-  it("separates reference-preserved density from melody-derived density gaps", () => {
+  it("separates reference vocabulary from melody-derived density after temporal anchor preservation", () => {
     const row = auditHarmonizationDensityForFile("imported-real-book/b-004-Ballin' the jack.musicxml");
 
     expect(row.referenceDenseMeasures).toBeGreaterThan(0);
-    expect(row.melodyDerivedDenseIdeaCount).toBe(0);
+    expect(row.melodyDerivedDenseIdeaCount).toBeGreaterThan(0);
     expect(row.referenceDerivedDenseIdeaCount).toBe(0);
     expect(row.referenceVocabularyLabel).toMatch(/ii-V|dom\.|SubV|dim\.|slash|funcional/);
-    expect(row.melodyDensityStatus).toBe("lacuna-de-densidade");
+    expect(row.melodyDensityStatus).toBe("densidade-gerada-pela-melodia");
   });
 });
