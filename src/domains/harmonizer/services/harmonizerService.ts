@@ -422,6 +422,12 @@ export function selectSectionHarmonies(
 ): ScoreHarmonyEvent[] {
   if (!harmonies?.length) return [];
   if (!activeSection) return harmonies;
+  if (activeSection.startTick !== undefined && activeSection.endTick !== undefined) {
+    return harmonies.filter(harmony => (
+      harmony.tickStart < activeSection.endTick!
+      && harmony.tickEnd > activeSection.startTick!
+    ));
+  }
   return harmonies.filter(harmony => (
     harmony.measure >= activeSection.startMeasure && harmony.measure <= activeSection.endMeasure
   ));

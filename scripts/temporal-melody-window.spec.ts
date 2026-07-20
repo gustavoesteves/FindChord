@@ -6,7 +6,8 @@ import {
   buildProposalMaterialSuggestionSets,
   buildProposalMaterialSuggestions,
   selectMelodicAnchors,
-  selectMelodyForHarmony
+  selectMelodyForHarmony,
+  selectSectionHarmonies
 } from "../src/domains/harmonizer/services/harmonizerService";
 
 describe("F119 janela temporal da melodia", () => {
@@ -191,6 +192,21 @@ describe("F119 janela temporal da melodia", () => {
     ];
 
     expect(selectMelodyForHarmony(harmony, anchors).map(anchor => anchor.pitch)).toEqual(["B"]);
+  });
+
+  it("seleciona harmonias por sobreposicao de ticks em secoes parciais", () => {
+    const harmonies = [
+      { measure: 2, beat: 1, harmony: "C", tickStart: 1920, tickEnd: 2400, durationTicks: 480 },
+      { measure: 2, beat: 2, harmony: "F", tickStart: 2400, tickEnd: 2880, durationTicks: 480 },
+      { measure: 2, beat: 3, harmony: "G7", tickStart: 2880, tickEnd: 3840, durationTicks: 960 }
+    ];
+
+    expect(selectSectionHarmonies(harmonies, {
+      startMeasure: 2,
+      endMeasure: 2,
+      startTick: 2400,
+      endTick: 2880
+    }).map(harmony => harmony.harmony)).toEqual(["F"]);
   });
 
   it("usa o mesmo compasso quando nao ha ticks confiaveis", () => {
