@@ -126,6 +126,7 @@ export default defineConfig({
       "scripts/writer-fretboard-playback.spec.ts",
       "scripts/writer-musescore-payload.spec.ts",
       "scripts/writer-translation-layer-cleanup.spec.ts",
+      "scripts/writer-voicing-inversion.spec.ts",
     ]
   }
 });

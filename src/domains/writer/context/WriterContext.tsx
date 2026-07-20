@@ -120,6 +120,7 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       const chordRoot = activeChord.root;
+      const bassPC = activeChord.bass ? getPitchClass(activeChord.bass) : null;
       // Pegamos as notas exatas que o usuário desenhou no braço
       const userPCs = Array.from(new Set(activeChord.drawnNotes.map(n => getPitchClass(n))));
 
@@ -129,7 +130,7 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         userPCs, // Permitimos apenas as notas que o usuário tocou
         tuning,
         activeChord.quality,
-        null,
+        bassPC,
         userPCs // Obrigamos que o shape contenha TODAS as notas que o usuário tocou
       );
       setVoicingResults(results);

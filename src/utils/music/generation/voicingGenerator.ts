@@ -67,7 +67,15 @@ export function generateVoicings(
   bassPC: number | null = null,
   forceRequiredPCs?: number[]
 ): VoicingShape[] {
-  const cacheKey = `${chordName}-${targetPitchClasses.join(",")}-${tuning.join(",")}-${forceRequiredPCs?.join(",") || ""}`;
+  const cacheKey = [
+    chordName,
+    chordRoot,
+    activeQuality || "",
+    bassPC ?? "any",
+    targetPitchClasses.join(","),
+    tuning.join(","),
+    forceRequiredPCs?.join(",") || ""
+  ].join("|");
   if (voicingCache.has(cacheKey)) {
     return voicingCache.get(cacheKey)!;
   }
