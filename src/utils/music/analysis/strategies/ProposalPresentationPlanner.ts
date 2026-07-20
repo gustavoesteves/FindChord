@@ -127,6 +127,16 @@ function canBePrimary(
   if (mode === "exploratory") return true;
   if (
     mode === "balanced"
+    && hasStablePrimaryCandidate
+    && (
+      proposal.id.startsWith("strategy_reference_center_")
+      || proposal.name === "Estratégia — Centro de referência"
+    )
+  ) {
+    return false;
+  }
+  if (
+    mode === "balanced"
     && proposal.id === "controlled-reference-contour"
     && ((proposal.apparentFunctionReferenceBonus || 0) >= 0.65 || (proposal.referenceRootAgreement || 0) >= 0.5)
   ) {

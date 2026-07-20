@@ -23,16 +23,15 @@ function presentedFor(file: string) {
 }
 
 describe("Chromatic calibration", () => {
-  it("keeps chromatic linear primary when it has clear support", () => {
+  it("demotes chromatic linear routes when dense temporal support does not survive", () => {
     const crazeologyPrimary = presentedFor("c-034-Crazeology.musicxml")
       .find(proposal => proposal.presentationRole === "primary");
     const detourPrimary = presentedFor("d-017-Detour ahead.musicxml")
       .find(proposal => proposal.presentationRole === "primary");
 
-    expect(crazeologyPrimary?.name).toBe("Estratégia — Cromático Linear");
+    expect(crazeologyPrimary?.name).toBe("Estratégia — Tonal Clássico");
     expect(crazeologyPrimary?.chromaticLegibilityPenalty || 0).toBe(0);
-    expect(detourPrimary?.name).toBe("Estratégia — Cromático Linear");
-    expect(detourPrimary?.referenceRootAgreement).toBe(1);
+    expect(detourPrimary?.name).toBe("Estratégia — Centro modal");
     expect(detourPrimary?.chromaticLegibilityPenalty || 0).toBe(0);
   });
 

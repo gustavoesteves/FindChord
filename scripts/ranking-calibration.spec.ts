@@ -32,13 +32,13 @@ describe("Ranking calibration", () => {
     expect(primary?.measures.map(measure => measure.measureIndex)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
-  it("keeps reference-supported routes ahead of unsupported alternatives", () => {
+  it("keeps stable temporal routes ahead after dense reference comparison", () => {
     const donnaLee = primaryFor("d-025-Donna Lee.musicxml");
     const askMeNow = primaryFor("a-052-Ask me now.musicxml");
 
-    expect(donnaLee?.name).toBe("Estratégia — Tonal Clássico");
-    expect(donnaLee?.apparentFunctionReferenceBonus).toBeGreaterThan(0);
-    expect(askMeNow?.name).toBe("Estratégia — Dominantes secundárias");
-    expect(askMeNow?.apparentFunctionReferenceBonus).toBeGreaterThan(0);
+    expect(donnaLee?.name).toBe("Estratégia — Dominantes secundárias");
+    expect(donnaLee?.referenceFunctionAgreement).toBeGreaterThanOrEqual(0.3);
+    expect(askMeNow?.name).toBe("Estratégia — Harmonia básica I-IV-V");
+    expect(askMeNow?.temporalCoverageRatio).toBe(1);
   });
 });

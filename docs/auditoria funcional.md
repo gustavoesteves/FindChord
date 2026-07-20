@@ -15,7 +15,7 @@ Atualizado após os commits até `050d15b`.
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-03`, `FC-HZ-05` e `FC-MS-01/MS-02`.
+Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto musical/operacional: `FC-HZ-05` e `FC-MS-01/MS-02`.
 
 ## Parecer executivo
 
@@ -237,13 +237,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações / D.
 - **Esperado:** comparar todos os eventos pelo tempo/duração.
-- **Observado:** o comparador guarda apenas o primeiro acorde da referência por compasso e escolhe a melhor correspondência.
+- **Observado:** resolvido no comparador. Referências com múltiplas cifras no mesmo compasso agora são comparadas por slot intra-compasso, sem descartar os eventos seguintes.
 - **Evidência:** [ReferenceHarmonyComparator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/ReferenceHarmonyComparator.ts:74>). No corpus, 182/199 referências têm mais de um acorde em algum compasso.
 - **Reprodução:** referência `[C,G7]`, proposta `[C,Db7]`: `aligned`, `rootAgreement=1` e `functionAgreement=1`.
 - **Impacto:** músico — proposta divergente parece alinhada; produto — bônus/ranking e agrupamento incorretos.
 - **Causa provável:** comparação agregada por medida eliminou identidade temporal.
-- **Correção recomendada:** alinhamento por evento/tick, ponderado por duração, com penalidade para não pareados.
-- **Testes necessários:** primeira metade igual e segunda divergente.
+- **Progresso:** `ReferenceHarmonyComparator` mantém todos os acordes da referência por compasso; quando a referência tem um único acorde, preserva a escolha do melhor acorde da proposta no compasso; quando a referência é densa, compara eventos por ordem interna e penaliza divergências como `C / Db7` contra `C / G7`.
+- **Correção recomendada:** evoluir de slots por ordem para pesos por tick/duração real quando as propostas também carregarem duração.
+- **Testes necessários:** ampliar casos com proposta mais curta/longa que a referência e métricas ponderadas por duração.
 - **Confiança:** muito alta.
 
 ### FC-HZ-04 — P1 — “Usar harmonia” não aplica a proposta no Writer

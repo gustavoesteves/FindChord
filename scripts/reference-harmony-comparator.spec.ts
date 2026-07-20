@@ -194,6 +194,52 @@ describe("F40 Reference Harmony Comparator", () => {
     }));
   });
 
+  it("compares dense reference chords by intra-measure slot instead of keeping only the first chord", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      proposalMeasures([
+        { measureIndex: 1, chords: ["C", "Db7"] }
+      ]),
+      [
+        {
+          measure: 1,
+          beat: 1,
+          harmony: "C",
+          tickStart: 0,
+          tickEnd: 960,
+          durationTicks: 960
+        },
+        {
+          measure: 1,
+          beat: 3,
+          harmony: "G7",
+          tickStart: 960,
+          tickEnd: 1920,
+          durationTicks: 960
+        }
+      ],
+      "C"
+    );
+
+    expect(comparison.status).toBe("partially-aligned");
+    expect(comparison.comparedMeasures).toBe(2);
+    expect(comparison.functionAgreement).toBe(0.5);
+    expect(comparison.rootAgreement).toBe(0.5);
+    expect(comparison.points).toEqual([
+      expect.objectContaining({
+        proposalChord: "C",
+        referenceChord: "C",
+        functionRelation: "same-function",
+        rootRelation: "same-root"
+      }),
+      expect.objectContaining({
+        proposalChord: "Db7",
+        referenceChord: "G7",
+        functionRelation: "different-function",
+        rootRelation: "different-root"
+      })
+    ]);
+  });
+
   it("does not mark a same-measure contextual m6 as divergent when the dominant is also present", () => {
     const comparison = compareProposalToReferenceHarmony(
       proposalMeasures([

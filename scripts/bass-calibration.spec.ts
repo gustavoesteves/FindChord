@@ -11,18 +11,37 @@ describe("Bass calibration", () => {
     );
 
     const expected = [
-      ["b-037-Blueberry hill.musicxml", "Dm7 / Gm6 / E7/G# / A7 / Dmaj7", "D -> G -> G# -> A -> D"],
-      ["a-039-Another Time.musicxml", "Bbmaj7 / F7/Eb / C7/E / A7/F / G#dim7/Bb", "Bb -> Eb -> E -> F -> Bb"],
-      ["e-008-Eighty one.musicxml", "Fmaj9 / Bbmaj7 / G7/B / E7/C / Fmaj9", "F -> Bb -> B -> C -> F"]
+      {
+        file: "b-037-Blueberry hill.musicxml",
+        name: "Estratégia — Contraponto de Baixo",
+        chords: "Dm7 / Gm6 / E7/G# / A7 / Dmaj7",
+        bassLine: "D -> G -> G# -> A -> D",
+        minFunctionAgreement: 1
+      },
+      {
+        file: "a-039-Another Time.musicxml",
+        name: "Estratégia — Dominantes secundárias",
+        chords: "Bb | Eb | Bb/D | Bb6/9 | Bb7 | Eb | Am7b5 / C7/Bb / F7/A | Bb6",
+        bassLine: "Bb -> Eb -> D -> Bb -> Bb -> Eb -> A -> Bb -> A -> Bb",
+        minFunctionAgreement: 0.25
+      },
+      {
+        file: "e-008-Eighty one.musicxml",
+        name: "Estratégia — Contraponto de Baixo",
+        chords: "Fmaj9 / Bbmaj7 / G7/B / E7/C / Fmaj9",
+        bassLine: "F -> Bb -> B -> C -> F",
+        minFunctionAgreement: 1
+      }
     ];
 
-    for (const [file, chords, bassLine] of expected) {
+    for (const expectedRow of expected) {
+      const { file, name, chords, bassLine, minFunctionAgreement } = expectedRow;
       const primary = primaryByFile.get(file);
-      expect(primary?.name).toBe("Estratégia — Contraponto de Baixo");
+      expect(primary?.name).toBe(name);
       expect(primary?.chords).toBe(chords);
       expect(primary?.bassLine).toBe(bassLine);
       expect(primary?.bassProfile).toBe("chromatic");
-      expect(primary?.functionAgreement).toBe(1);
+      expect(primary?.functionAgreement).toBeGreaterThanOrEqual(minFunctionAgreement);
       expect(primary?.bassBonus).toBeGreaterThan(0);
     }
   });
