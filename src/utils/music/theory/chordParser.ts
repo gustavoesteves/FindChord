@@ -2,6 +2,7 @@ import { Note as TonalNote, Interval as TonalInterval } from "tonal";
 import { simplifyNote } from "../core/pitch";
 import type { ChordQuality } from "../constants/chordRegistry";
 import { CHORD_REGISTRY } from "../constants/chordRegistry";
+import { resolveChordSymbol, type ChordQuality as ResolvedChordQuality } from "./ChordSymbolResolver";
 
 export interface CustomChord {
   empty: boolean;
@@ -57,11 +58,70 @@ export function getIntervalSymbol(semitones: number): string {
 
 const PARSE_CACHE: Record<string, CustomChord> = {};
 
+const CANONICAL_TO_REGISTRY_QUALITY: Partial<Record<ResolvedChordQuality, ChordQuality>> = {
+  maj: "major",
+  m: "minor",
+  madd9: "minorAdd9",
+  aug: "augmented",
+  dim: "diminished",
+  "5": "power",
+  sus2: "sus2",
+  sus4: "sus4",
+  "6": "major6th",
+  m6: "minor6th",
+  "6_9": "69",
+  "7": "dominant7th",
+  maj7: "major7th",
+  m7: "minor7th",
+  mMaj7: "minorMajor7th",
+  m9: "minor9th",
+  m11: "minor11th",
+  m13: "minor13th",
+  "9": "dominant9th",
+  "11": "dominant11th",
+  "13": "dominant13th",
+  "7sus4": "dominant7sus4",
+  "9sus4": "dominant7sus4",
+  "13sus4": "dominant7sus4",
+  dim7: "diminished7th",
+  m7b5: "halfDiminished",
+  "7_b5": "dominant7b5",
+  "7_b9": "dominant7b9",
+  "7_sharp9": "dominant7#9",
+  "7_sharp11": "dominant7#11",
+  "7_b13": "dominant7b13",
+  maj7_sharp11: "major7#11",
+  add9: "add9"
+};
+
 export function parseChord(symbol: string): CustomChord {
   if (!symbol) {
     return { empty: true, root: "", quality: "major" as ChordQuality, notes: [], intervals: [], symbol: String(symbol) };
   }
   if (PARSE_CACHE[symbol]) return PARSE_CACHE[symbol];
+
+  const canonical = resolveChordSymbol(symbol);
+  const canonicalQuality = CANONICAL_TO_REGISTRY_QUALITY[canonical.quality];
+  if (canonical.root && canonicalQuality && canonical.confidence !== "ambiguous") {
+    const def = CHORD_REGISTRY[canonicalQuality];
+    const notes = [...canonical.notes];
+    if (canonical.bass && !notes.includes(canonical.bass)) {
+      notes.push(canonical.bass);
+    }
+
+    const result: CustomChord = {
+      empty: false,
+      root: canonical.root,
+      quality: canonicalQuality,
+      notes,
+      intervals: def.intervals,
+      symbol,
+      bass: canonical.bass
+    };
+
+    PARSE_CACHE[symbol] = result;
+    return result;
+  }
 
   const match = symbol.match(/^([A-G][b#]?)(.*)$/);
   if (!match) {

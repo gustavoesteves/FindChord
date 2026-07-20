@@ -33,6 +33,7 @@ export default defineConfig({
       "scripts/applied-harmonic-vocabulary-audit.spec.ts",
       "scripts/bright-size-life-diagnostic.spec.ts",
       "scripts/chord-nomenclature-regression.spec.ts",
+      "scripts/chord-parser-slash-quality.spec.ts",
       "scripts/chord-symbol-real-music-compatibility.spec.ts",
       "scripts/chord-symbol-resolver.spec.ts",
       "scripts/chromatic-calibration.spec.ts",
