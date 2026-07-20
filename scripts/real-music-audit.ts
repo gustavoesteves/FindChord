@@ -25,7 +25,8 @@ import {
 import type { HarmonicDiagnostic } from "../src/utils/music/analysis/models/HarmonicDiagnostic";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
-import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import { timelineContextAtTick } from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -37,6 +38,11 @@ export interface RealMusicAuditWindow {
   phraseContext: PhraseContext;
   generation: GravityProposalGenerationResult;
   referenceOverlapCount: number;
+}
+
+export interface HarmonizableWindowContextOptions {
+  snapshot?: ScoreSnapshot;
+  keySignature?: string;
 }
 
 export interface FunctionalColorAuditSummary {
@@ -154,13 +160,20 @@ export function melodicWindows(notes: any[], size = 8): any[][] {
 
 export function findHarmonizableWindow(
   notes: any[],
-  keySignature?: string,
+  keySignatureOrOptions?: string | HarmonizableWindowContextOptions,
   referenceHarmonies: ScoreHarmonyEvent[] = []
 ): RealMusicAuditWindow | null {
   let bestWindow: RealMusicAuditWindow | null = null;
+  const contextOptions = typeof keySignatureOrOptions === "string"
+    ? { keySignature: keySignatureOrOptions }
+    : keySignatureOrOptions || {};
 
   for (const windowNotes of melodicWindows(notes)) {
     const anchors = toAnchors(windowNotes);
+    const windowTick = anchors[0]?.startTick ?? 0;
+    const keySignature = contextOptions.snapshot
+      ? timelineContextAtTick(contextOptions.snapshot, windowTick).keySignature
+      : contextOptions.keySignature;
     const referenceHarmoniesForWindow = referenceHarmonies.filter(harmony => (
       anchors.some(anchor => anchor.measureIndex === harmony.measure)
     ));
@@ -235,7 +248,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
     };
   }
 
-  const harmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, snapshot.harmonies);
+  const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
   if (!harmonizable) {
     return {
       ...base,
@@ -277,7 +290,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
     harmonizable.phraseContext,
     referenceComparison
   );
-  const melodyOnlyHarmonizable = findHarmonizableWindow(snapshot.notes, snapshot.metadata.keySignature, []);
+  const melodyOnlyHarmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, []);
   const dualPathComparison = compareHarmonizationPaths(
     melodyOnlyHarmonizable,
     harmonizable,

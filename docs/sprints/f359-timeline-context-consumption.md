@@ -21,14 +21,16 @@ Isso evita que uma peça modulante ou uma seção em menor seja analisada como s
 - O hook principal do Harmonizar agora usa o contexto da seção ativa para:
   - análise de frase;
   - geração de segmentos locais.
+- A auditoria real (`findHarmonizableWindow`) agora aceita o snapshot completo e resolve a tonalidade pelo início de cada janela melódica.
 - Adicionado teste de regressão para:
   - C menor vindo da timeline ser entregue ao motor como `Cm`;
   - mudança posterior para D maior em 3/4;
   - fallback para snapshots antigos sem timeline.
+- Adicionado teste de regressão para a auditoria real não voltar a usar apenas a tonalidade global em janelas harmonizáveis.
 
 ## Próximos consumidores
 
-- Scripts de auditoria real devem resolver contexto por janela, não pela tonalidade global.
+- Scripts derivados da auditoria real devem passar o snapshot completo quando disponível.
 - Comparadores de referência devem usar a tonalidade do trecho avaliado.
 - Seletores de janelas e motores temporais devem consumir `measureTicks/timeTimeline` para evitar pressupor 4/4 fixo.
 - O painel de Improviso pode herdar o mesmo resolvedor quando comparar materiais por região.

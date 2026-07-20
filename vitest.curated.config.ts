@@ -99,6 +99,7 @@ export default defineConfig({
       "scripts/reference-harmony-comparator.spec.ts",
       "scripts/reference-aware-phrase-context.spec.ts",
       "scripts/real-music-audit-report.spec.ts",
+      "scripts/real-music-audit-timeline-context.spec.ts",
       "scripts/real-music-fire-audit.spec.ts",
       "scripts/score-ingestion-modes.spec.ts",
       "scripts/score-timeline-context.spec.ts",
