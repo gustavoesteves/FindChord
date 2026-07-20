@@ -169,6 +169,38 @@ describe("F31.3 Proposal Presentation Planner", () => {
     ]);
   });
 
+  it("keeps unsupported advanced reharmonization from taking primary after route labels are normalized", () => {
+    const planned = annotateProposalPresentationRoles([
+      proposal("altered-dominants", "moderate", "controlled-reharmonization", "major-functional", undefined, "C"),
+      proposal("tonal-classic", "conservative", "validated-harmonization", "major-functional", undefined, "C")
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["tonal-classic", "primary"],
+      ["altered-dominants", "alternative"]
+    ]);
+  });
+
+  it("treats the basic I-IV-V answer as foundation even when its route is moderate", () => {
+    const foundation = {
+      ...proposal("basic", "moderate", "validated-harmonization", "major-functional", undefined, "C"),
+      name: "Estratégia — Harmonia básica I-IV-V"
+    };
+    const expansion = {
+      ...proposal("expansion", "moderate", "validated-harmonization", "major-functional", undefined, "C"),
+      name: "Estratégia — Expansão funcional diatônica"
+    };
+    const planned = annotateProposalPresentationRoles([
+      expansion,
+      foundation
+    ], "balanced", referencePhraseContext("C"));
+
+    expect(planned.map(item => [item.id, item.presentationRole])).toEqual([
+      ["basic", "primary"],
+      ["expansion", "alternative"]
+    ]);
+  });
+
   it("keeps dense unsupported chromatic routes exploratory even when they are not radical", () => {
     const denseChromatic = {
       ...proposal("dense-chromatic", "chromatic", "controlled-reharmonization"),

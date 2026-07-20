@@ -50,6 +50,37 @@ describe("F31 Harmonic Route Distance", () => {
     expect(route.cost).toBeLessThan(8);
   });
 
+  it("does not label diatonic third root motion as chromatic in a major center", () => {
+    const deceptiveDiatonic = evaluateHarmonicRouteDistance({
+      chords: ["Cmaj7", "Am7", "Dm7", "G7", "Cmaj7"],
+      center: "C"
+    });
+    const mediantDiatonic = evaluateHarmonicRouteDistance({
+      chords: ["Cmaj7", "Em7", "Fmaj7", "G7", "Cmaj7"],
+      center: "C"
+    });
+
+    expect(deceptiveDiatonic.chromaticPenalty).toBe(0);
+    expect(deceptiveDiatonic.evidence).not.toContain("rota usa salto cromático/raiz distante");
+    expect(mediantDiatonic.chromaticPenalty).toBe(0);
+    expect(mediantDiatonic.evidence).not.toContain("rota usa salto cromático/raiz distante");
+  });
+
+  it("keeps altered roots more expensive than diatonic third motion", () => {
+    const diatonic = evaluateHarmonicRouteDistance({
+      chords: ["Cmaj7", "Em7", "Fmaj7"],
+      center: "C"
+    });
+    const altered = evaluateHarmonicRouteDistance({
+      chords: ["Cmaj7", "F#7", "Fmaj7"],
+      center: "C"
+    });
+
+    expect(altered.chromaticPenalty).toBeGreaterThan(diatonic.chromaticPenalty);
+    expect(altered.evidence).toContain("rota usa salto cromático/raiz distante");
+    expect(altered.cost).toBeGreaterThan(diatonic.cost);
+  });
+
   it("classifies unresolved distant routes as radical", () => {
     const route = evaluateHarmonicRouteDistance({
       chords: ["Cmaj7", "F#7", "B7", "F7"],

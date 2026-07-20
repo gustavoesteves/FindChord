@@ -54,6 +54,12 @@ function isAdventurous(proposal: ReharmonizationProposal, phraseContext?: Phrase
   ) {
     return false;
   }
+  if (/SubV/.test(proposal.name)) {
+    return true;
+  }
+  if (proposal.kind === "controlled-reharmonization" && !isExploratoryChromatic(proposal, phraseContext)) {
+    return false;
+  }
   return proposal.routeProfile === "radical" || isExploratoryChromatic(proposal, phraseContext);
 }
 
@@ -67,6 +73,21 @@ function referenceBoundary(proposals: ReharmonizationProposal[]): Reharmonizatio
 
 function isNonTonalReferenceIdiom(idiom: ReharmonizationHarmonicIdiom | undefined): boolean {
   return idiom === "modal" || idiom === "blues";
+}
+
+function isAdvancedReharmonization(proposal: ReharmonizationProposal): boolean {
+  return proposal.kind === "controlled-reharmonization" || proposal.kind === "experimental-exploration";
+}
+
+function hasReferenceConfirmation(proposal: ReharmonizationProposal): boolean {
+  return (proposal.apparentFunctionReferenceBonus || 0) >= 0.35
+    || (proposal.referenceRootAgreement || 0) >= 0.5
+    || ((proposal.referenceFunctionAgreement || 0) >= 0.33 && (proposal.referenceRootAgreement || 0) >= 0.22);
+}
+
+function isStableFoundation(proposal: ReharmonizationProposal): boolean {
+  return proposal.routeProfile === "conservative"
+    || proposal.name === "Estratégia — Harmonia básica I-IV-V";
 }
 
 function preferredReferenceIdiom(boundary: ReharmonizationHarmonicBoundary | undefined): ReharmonizationHarmonicIdiom | undefined {
@@ -153,6 +174,25 @@ function canBePrimary(
   }
   if (
     mode === "balanced"
+    && proposal.cadentialTarget
+    && phraseContext
+    && !samePitchClass(proposal.cadentialTarget, phraseContext?.selectedCenter.tonic)
+  ) {
+    return false;
+  }
+  if (mode === "balanced" && isStableFoundation(proposal)) {
+    return true;
+  }
+  if (
+    mode === "balanced"
+    && hasStablePrimaryCandidate
+    && proposal.routeProfile === "moderate"
+    && !hasReferenceConfirmation(proposal)
+  ) {
+    return false;
+  }
+  if (
+    mode === "balanced"
     && hasStablePrimaryCandidate
     && proposal.routeProfile === "radical"
     && (proposal.referenceRootAgreement || 0) < 0.75
@@ -164,17 +204,17 @@ function canBePrimary(
     mode === "balanced"
     && hasStablePrimaryCandidate
     && proposal.routeProfile === "chromatic"
-    && (proposal.kind === "controlled-reharmonization" || proposal.kind === "experimental-exploration")
-    && (proposal.apparentFunctionReferenceBonus || 0) < 0.35
-    && (proposal.referenceRootAgreement || 0) < 0.75
+    && isAdvancedReharmonization(proposal)
+    && !hasReferenceConfirmation(proposal)
   ) {
     return false;
   }
   if (
     mode === "balanced"
-    && proposal.cadentialTarget
-    && phraseContext
-    && !samePitchClass(proposal.cadentialTarget, phraseContext?.selectedCenter.tonic)
+    && hasStablePrimaryCandidate
+    && isAdvancedReharmonization(proposal)
+    && proposal.routeProfile !== "conservative"
+    && !hasReferenceConfirmation(proposal)
   ) {
     return false;
   }
@@ -316,19 +356,26 @@ export function annotateProposalPresentationRoles(
   const arranged = arrangeByBoldness(proposals, mode);
   const hasStablePrimaryCandidate = arranged.some(proposal => (
     !isReference(proposal)
-    && (proposal.routeProfile === "conservative" || proposal.routeProfile === "moderate")
+    && isStableFoundation(proposal)
     && canBePrimary(proposal, mode, phraseContext, false)
   ));
   const preferredPrimaryId = !shouldPreserveReferenceAsAnswer && preferredIdiom
-    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode, phraseContext, hasStablePrimaryCandidate) && proposal.harmonicIdiom === preferredIdiom)?.id
+    ? arranged.find(proposal => !isReference(proposal) && canBePrimary(proposal, mode, phraseContext, false) && proposal.harmonicIdiom === preferredIdiom)?.id
     : undefined;
+  const protectedPrimaryId = preferredPrimaryId;
 
   return arranged.map((proposal, originalIndex) => {
     const presentationLayer = presentationLayerFor(proposal);
     if (isReference(proposal)) return { proposal: { ...proposal, presentationLayer }, originalIndex };
 
-    const isPreferredPrimary = preferredPrimaryId ? proposal.id === preferredPrimaryId : !primaryAssigned;
-    if (!shouldPreserveReferenceAsAnswer && isPreferredPrimary && !primaryAssigned && canBePrimary(proposal, mode, phraseContext, hasStablePrimaryCandidate)) {
+    const isPreferredPrimary = protectedPrimaryId ? proposal.id === protectedPrimaryId : !primaryAssigned;
+    const shouldProtectPreferredPrimary = !!protectedPrimaryId && proposal.id === protectedPrimaryId;
+    if (
+      !shouldPreserveReferenceAsAnswer
+      && isPreferredPrimary
+      && !primaryAssigned
+      && canBePrimary(proposal, mode, phraseContext, shouldProtectPreferredPrimary ? false : hasStablePrimaryCandidate)
+    ) {
       primaryAssigned = true;
       return {
         proposal: withPresentationRole(proposal, "primary", presentationLayer),

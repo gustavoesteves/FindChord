@@ -6,16 +6,16 @@ Não encontrei P0. Encontrei P1 que quebram jornadas centrais e P2 que podem ind
 
 ## Estado atual da remediação funcional
 
-Atualizado após os commits até `050d15b`.
+Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 
 | Área | Feito | Ainda aberto |
 |---|---|---|
 | Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
-| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados. | Somente cifras ainda não tem pipeline próprio; mudança centro↔cadência, referência densa, distância harmônica, rótulos de voice leading e Improviso ainda precisam refinamento funcional. |
-| MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado. | Status ainda precisa diferenciar bridge, plugin e score; falta validação real QML/MuseScore e fila por instância/score. |
+| Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio. | Rótulos de voice leading, regras contextuais e Improviso ainda precisam refinamento funcional. |
+| MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: fechar os P1 funcionais restantes por impacto operacional: `FC-MS-01/MS-02`.
+Próximo bloco recomendado: `FC-HZ-08`, calibrar rótulos de condução de vozes para que a UI não premie leitura fraca nem desvalorize condução realmente boa.
 
 ## Parecer executivo
 
@@ -293,13 +293,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações / C-D.
 - **Esperado:** cromatismo deve depender do centro, escala e função.
-- **Observado:** distâncias de raiz 3/4 recebem penalidade sem consultar a tonalidade.
+- **Observado:** resolvido. Distâncias de raiz 3/4 deixam de receber penalidade quando ambas as raízes pertencem ao campo funcional do centro/modo.
 - **Evidência:** [HarmonicRouteDistance.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/strategies/HarmonicRouteDistance.ts:43>).
-- **Reprodução:** em C, `C–Am–Dm–G7–C` e `C–Em–F–G7–C` são `chromatic`.
+- **Reprodução:** em C, `C–Am–Dm–G7–C` e `C–Em–F–G7–C` não carregam penalidade cromática; `C–F#7–F` continua mais caro que movimento diatônico.
 - **Impacto:** músico — rota diatônica recebe rótulo falso; produto — proposta pode ser demovida/agrupada incorretamente.
 - **Causa provável:** distância geométrica usada como substituto de pertencimento tonal.
-- **Correção recomendada:** avaliar alteração em relação ao centro e função.
-- **Testes necessários:** terças diatônicas versus raízes realmente alteradas.
+- **Progresso:** `chromaticPenalty` agora consulta centro, modo e função; o custo neutro de movimento de raiz foi separado do rótulo cromático; o planner preserva fundação I-IV-V contra expansões moderadas sem apoio de referência. Regressões cobrem terças diatônicas versus raízes alteradas, dominantes alteradas, SubV, calibração de ranking e relatório real.
+- **Correção recomendada:** acompanhar corpus real para calibrar custo de cromatismo por semitom controlado versus raiz distante.
+- **Testes necessários:** modos menores/modais adicionais e comparação auditiva no ranking de propostas reais.
 - **Confiança:** muito alta.
 
 ### FC-HZ-08 — P2 — rótulos de voice leading têm a escala invertida
