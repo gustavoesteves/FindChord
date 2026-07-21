@@ -86,4 +86,26 @@ describe("F219 payload MuseScore do Escrever", () => {
       canonicalSymbol: "G7(b9)/B"
     });
   });
+
+  it.each([
+    ["major13th", "C7M(13)", "Cmaj13"],
+    ["minorMajor7th", "Cm(7M)", "CmMaj7"],
+    ["dominant9th", "C7(9)", "C9"]
+  ])("exporta %s por cifra canonica mesmo quando a UI usa %s", (quality, symbol, expected) => {
+    expect(buildWriterMuseScoreChordEvent({
+      activeChord: {
+        ...activeChord,
+        quality,
+        symbol,
+        canonicalSymbol: undefined
+      },
+      selectedFrets: [8, 7, 9, 5],
+      tuning: ["E2", "A2", "D3", "G3"],
+      activeInstrument: "Violão",
+      now: 987
+    })).toMatchObject({
+      symbol,
+      canonicalSymbol: expected
+    });
+  });
 });

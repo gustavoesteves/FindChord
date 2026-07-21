@@ -140,9 +140,9 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `C9`: `C7(9)` vira `C7`.
 - **Impacto:** músico — pode inserir outro acorde ou nada; shape não é associado; produto — preferência visual altera correção funcional.
 - **Causa provável:** integração baseada em reparse de texto de apresentação e contratos divergentes entre `CHORD_REGISTRY` e `ChordSymbolResolver`.
-- **Progresso:** o Writer agora transporta `symbol` como apresentação e `canonicalSymbol` como identidade de exportação; o adapter prefere a cifra canônica confiável e preserva extensões como `Cmaj9`, `Cmaj13`, `CmMaj7` e baixos como `G7(b9)/B`.
-- **Correção recomendada:** ampliar a matriz `CHORD_REGISTRY × três estilos`, preservar pitch classes no mapper canônico e enviar fretboard somente se o plugin realmente o suportar.
-- **Testes necessários:** matriz completa de estilos; QML real para cifra+fretboard.
+- **Progresso:** o Writer agora transporta `symbol` como apresentação e `canonicalSymbol` como identidade de exportação; o adapter prefere a cifra canônica confiável e preserva extensões como `Cmaj9`, `Cmaj13`, `CmMaj7` e baixos como `G7(b9)/B`. A matriz local cobre estilos visuais críticos como `C7M(13) → Cmaj13`, `Cm(7M) → CmMaj7` e `C7(9) → C9` antes do envio.
+- **Correção recomendada:** ampliar gradualmente a matriz `CHORD_REGISTRY × três estilos`, preservar pitch classes no mapper canônico e enviar fretboard somente se o plugin realmente o suportar.
+- **Testes necessários:** matriz ampliada de estilos já iniciada em `writer-musescore-payload.spec.ts`; ainda falta QML real para cifra+fretboard.
 - **Confiança:** alta para transformação/contrato; inserção externa não verificada.
 
 ### FC-WR-03 — P1 — escolher uma abertura pode remover a inversão
