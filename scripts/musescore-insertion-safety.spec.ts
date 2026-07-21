@@ -130,6 +130,10 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
     expect(bridge).toContain("pluginSessionId: activePluginSessionId");
     expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
+    expect(bridge).toContain("const leasedCommandMessages = new Map();");
+    expect(bridge).toContain("const COMMAND_LEASE_MS = 6000;");
+    expect(bridge).toContain("function leaseConsumedCommands(messages)");
+    expect(bridge).toContain("leasedCommandMessages.delete(payload.commandId)");
     expect(bridge).toContain("function enqueueBridgeMessage(message)");
     expect(bridge).toContain("queued?.messageType === 'SESSION' && queued?.payload?.type === 'request_score'");
     expect(bridge).toContain("enqueueBridgeMessage(bridgeMessage)");

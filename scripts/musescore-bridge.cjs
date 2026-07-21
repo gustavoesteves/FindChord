@@ -10,6 +10,7 @@ const HOST = '127.0.0.1';
 const MAX_HTTP_BODY_BYTES = 131072;
 const MAX_SCORE_BODY_BYTES = 524288;
 const MAX_WS_PAYLOAD_BYTES = 65536;
+const COMMAND_LEASE_MS = 6000;
 const DASHBOARD_PATH = '/dashboard';
 const PLUGIN_PATH = '/plugin';
 const PLUGIN_HTTP_PATHS = new Set([
@@ -38,6 +39,7 @@ const pluginToken = crypto.randomBytes(24).toString('hex');
 const scoreUploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'findchord-bridge-'));
 const scoreUploadPath = path.join(scoreUploadDir, `score-${sessionId}.musicxml`);
 let eventQueue = [];
+const leasedCommandMessages = new Map();
 let activePluginSessionId = null;
 
 // Telemetria Operacional (Sprint B.5)
@@ -154,6 +156,12 @@ function isQueuedMessageForPlugin(message, pluginSessionId) {
   return !targetPluginSessionId || targetPluginSessionId === pluginSessionId;
 }
 
+function mutationCommandId(message) {
+  const payload = message?.payload || {};
+  if (message?.messageType !== 'MUTATION' || payload.type !== 'MUTATION') return null;
+  return typeof payload.commandId === 'string' ? payload.commandId : null;
+}
+
 function prepareBridgeMessageForQueue(message) {
   if (message?.messageType === 'SESSION' && message?.payload?.type === 'request_score') {
     if (activePluginSessionId && !message.payload.targetPluginSessionId) {
@@ -171,9 +179,31 @@ function prepareBridgeMessageForQueue(message) {
 }
 
 function pruneExpiredQueue() {
+  const now = Date.now();
+  for (const [commandId, lease] of leasedCommandMessages.entries()) {
+    if (lease.leaseExpiresAt > now) continue;
+    leasedCommandMessages.delete(commandId);
+    if (!isExpiredBridgeMessage(lease.message) && !eventQueue.some(message => mutationCommandId(message) === commandId)) {
+      eventQueue.push(lease.message);
+    }
+  }
+
   const before = eventQueue.length;
   eventQueue = eventQueue.filter(message => !isExpiredBridgeMessage(message));
   eventsDropped += before - eventQueue.length;
+}
+
+function leaseConsumedCommands(messages) {
+  const now = Date.now();
+  for (const message of messages) {
+    const commandId = mutationCommandId(message);
+    if (!commandId) continue;
+    leasedCommandMessages.set(commandId, {
+      message,
+      leasedAt: now,
+      leaseExpiresAt: now + COMMAND_LEASE_MS
+    });
+  }
 }
 
 function broadcastScoreSnapshot(snapshot, requestId) {
@@ -291,6 +321,7 @@ const server = http.createServer((req, res) => {
     eventQueue = eventQueue.filter(message => (
       !isQueuedMessageForPlugin(message, pluginSessionId)
     ));
+    leaseConsumedCommands(pending);
     if (pending.length > 0) {
       eventsConsumed += pending.length;
       console.log(`[Find Chord Bridge] Fila consumida por polling. (${pending.length} evento(s) removido(s))`);
@@ -324,6 +355,8 @@ const server = http.createServer((req, res) => {
           writeJson(res, 400, { error: 'ACK invalido.' });
           return;
         }
+
+        leasedCommandMessages.delete(payload.commandId);
 
         const ackMessage = {
           protocolVersion: '1.0',
@@ -512,6 +545,7 @@ const server = http.createServer((req, res) => {
       sessionId,
       pluginSessionId: activePluginSessionId,
       queueSize: eventQueue.length,
+      leasedCommandCount: leasedCommandMessages.size,
       eventsReceived,
       eventsAccepted,
       eventsRejected,

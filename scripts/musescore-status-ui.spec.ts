@@ -38,6 +38,7 @@ describe("MuseScore status UI", () => {
     expect(bridge).toContain("currentScoreIdentity");
     expect(bridge).toContain("score: currentScoreIdentity");
     expect(bridge).toContain("pluginSessionId: activePluginSessionId");
+    expect(bridge).toContain("leasedCommandCount: leasedCommandMessages.size");
     expect(adapter).toContain("pluginSessionId: status.pluginSessionId || null");
     expect(model).toContain("scoreId?: string;");
   });
