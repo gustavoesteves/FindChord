@@ -17,13 +17,15 @@ describe("F217 presenter da leitura do acorde no Escrever", () => {
       inversion: "Invertido",
       voicingType: "Drop 2",
       tensions: ["9", "13"],
-      tensionLevel: 0.65
+      tensionLevel: 0.65,
+      omissions: ["quinta"]
     })).toMatchObject({
       fields: [
         { label: "Baixo", value: "E" },
         { label: "Inversão", value: "Invertido" },
         { label: "Estrutura", value: "Drop 2" },
-        { label: "Tensões", value: "9, 13", title: "9, 13" }
+        { label: "Tensões", value: "9, 13", title: "9, 13" },
+        { label: "Omissões", value: "quinta", title: "quinta" }
       ],
       tensionLabel: "Tensão moderada",
       tensionPercent: 65
@@ -36,7 +38,8 @@ describe("F217 presenter da leitura do acorde no Escrever", () => {
       inversion: "Fundamental",
       voicingType: "Fechado",
       tensions: [],
-      tensionLevel: 1.4
+      tensionLevel: 1.4,
+      omissions: []
     })).toMatchObject({
       fields: expect.arrayContaining([{ label: "Tensões", value: "Nenhuma", title: "Nenhuma" }]),
       tensionPercent: 100

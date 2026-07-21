@@ -15,6 +15,7 @@ export interface WriterChordReadingAnalysisInput {
 export interface WriterChordReadingAnalysis {
   voicingType: string;
   tensionLevel: number;
+  omissions: string[];
 }
 
 const VOICING_TYPE_LABELS: Record<VoicingClassification["shellType"], string> = {
@@ -28,6 +29,13 @@ const VOICING_TYPE_LABELS: Record<VoicingClassification["shellType"], string> = 
 };
 
 const CHROMATIC_QUALITY_PATTERN = /(dim|aug|b5|#5|b9|#9|#11|b13)/i;
+
+const ROLE_OMISSION_LABELS: Record<string, string> = {
+  root: "tônica",
+  third: "terça",
+  fifth: "quinta",
+  seventh: "sétima"
+};
 
 function tensionLevelForClassification(
   classification: VoicingClassification,
@@ -75,6 +83,12 @@ function voicingTypeForReading(
   return VOICING_TYPE_LABELS[classification.shellType];
 }
 
+function omissionLabels(roles: VoiceRoleAnalysis): string[] {
+  return roles.omittedRoles
+    .map(role => ROLE_OMISSION_LABELS[role])
+    .filter((label): label is string => Boolean(label));
+}
+
 export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput): WriterChordReadingAnalysis {
   const roles = analyzeVoiceRoles(input.selectedFrets, input.tuning, input.root, input.quality);
   const classification = classifyVoicing(input.selectedFrets, input.tuning, roles, input.root, input.quality);
@@ -87,6 +101,7 @@ export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput
     voicingType,
     tensionLevel: semanticPlainStructure
       ? 0.15
-      : tensionLevelForClassification(classification, input.tensions, input.quality)
+      : tensionLevelForClassification(classification, input.tensions, input.quality),
+    omissions: omissionLabels(roles)
   };
 }

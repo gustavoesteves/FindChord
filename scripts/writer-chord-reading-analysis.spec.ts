@@ -13,7 +13,8 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensions: []
     })).toMatchObject({
       voicingType: "Tríade",
-      tensionLevel: 0.15
+      tensionLevel: 0.15,
+      omissions: []
     });
   });
 
@@ -26,7 +27,8 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensions: []
     })).toMatchObject({
       voicingType: "Shell",
-      tensionLevel: 0.15
+      tensionLevel: 0.15,
+      omissions: ["quinta"]
     });
   });
 

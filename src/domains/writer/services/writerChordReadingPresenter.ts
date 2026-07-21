@@ -4,6 +4,7 @@ interface WriterChordReadingInput {
   voicingType: string;
   tensions: string[];
   tensionLevel: number;
+  omissions?: string[];
 }
 
 export interface WriterChordReadingField {
@@ -26,13 +27,19 @@ export function writerTensionReading(level: number): string {
 
 export function presentWriterChordReading(chord: WriterChordReadingInput): WriterChordReadingPresentation {
   const tensionText = chord.tensions.join(", ") || "Nenhuma";
+  const omissionText = chord.omissions?.length ? chord.omissions.join(", ") : null;
+  const fields = [
+    { label: "Baixo", value: chord.bass },
+    { label: "Inversão", value: chord.inversion },
+    { label: "Estrutura", value: chord.voicingType },
+    { label: "Tensões", value: tensionText, title: tensionText }
+  ];
+  if (omissionText) {
+    fields.push({ label: "Omissões", value: omissionText, title: omissionText });
+  }
+
   return {
-    fields: [
-      { label: "Baixo", value: chord.bass },
-      { label: "Inversão", value: chord.inversion },
-      { label: "Estrutura", value: chord.voicingType },
-      { label: "Tensões", value: tensionText, title: tensionText }
-    ],
+    fields,
     tensionLabel: writerTensionReading(chord.tensionLevel),
     tensionPercent: Math.max(0, Math.min(100, chord.tensionLevel * 100))
   };
