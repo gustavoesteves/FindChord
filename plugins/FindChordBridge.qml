@@ -75,6 +75,8 @@ MuseScore {
     property string bridgeSessionId: ""
     property string bridgePluginToken: ""
     property string bridgeScoreUploadPath: ""
+    property var commandAckLedger: ({})
+    property var commandAckOrder: []
 
     property int safetyLimit: 5000
 
@@ -220,6 +222,31 @@ MuseScore {
         } catch (e) {}
     }
 
+    function rememberCommandAck(commandId, accepted, reason) {
+        if (!commandId)
+            return;
+
+        commandAckLedger[commandId] = {
+            accepted: accepted,
+            reason: reason || ""
+        };
+        commandAckOrder.push(commandId);
+
+        while (commandAckOrder.length > 50) {
+            var oldest = commandAckOrder.shift();
+            delete commandAckLedger[oldest];
+        }
+    }
+
+    function replayCommandAck(commandId) {
+        if (!commandId || !commandAckLedger[commandId])
+            return false;
+
+        var previous = commandAckLedger[commandId];
+        sendCommandAck(commandId, previous.accepted, previous.reason);
+        return true;
+    }
+
     // =========================
     // EVENT ROUTER
     // =========================
@@ -233,16 +260,23 @@ MuseScore {
         if (!type) return;
 
         if (type === "chord") {
+            if (replayCommandAck(payload.commandId))
+                return;
             var result = transcribeChord(payload.data || payload);
+            rememberCommandAck(payload.commandId, result.accepted, result.reason);
             sendCommandAck(payload.commandId, result.accepted, result.reason);
 
         } else if (type === "MUTATION") {
+            if (replayCommandAck(payload.commandId))
+                return;
             if (payload.action !== "INSERT_CHORD") {
+                rememberCommandAck(payload.commandId, false, "Ação de mutação não suportada pelo plugin.");
                 sendCommandAck(payload.commandId, false, "Ação de mutação não suportada pelo plugin.");
                 return;
             }
 
             var mutationResult = transcribeChord(payload.data || payload);
+            rememberCommandAck(payload.commandId, mutationResult.accepted, mutationResult.reason);
             sendCommandAck(payload.commandId, mutationResult.accepted, mutationResult.reason);
 
         } else if (type === "request_score") {

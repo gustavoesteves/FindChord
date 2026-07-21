@@ -129,6 +129,10 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("payload.type !== 'COMMAND_ACK'");
 
     expect(plugin).toContain("sendCommandAck");
+    expect(plugin).toContain("property var commandAckLedger");
+    expect(plugin).toContain("function rememberCommandAck(commandId, accepted, reason)");
+    expect(plugin).toContain("function replayCommandAck(commandId)");
+    expect(plugin).toContain("if (replayCommandAck(payload.commandId))");
     expect(plugin).toContain("payload.action !== \"INSERT_CHORD\"");
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 

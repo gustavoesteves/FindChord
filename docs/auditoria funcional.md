@@ -415,14 +415,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-MS-03 — P2 — mutações não são idempotentes e o protocolo promete ações inexistentes
 
 - **Módulo/tab/jornada:** Integração / A-F.
-- **Progresso:** o protocolo tipado restringe mutations a `INSERT_CHORD`, remove `REPLACE/DELETE`, adiciona `commandId`, expiração e ACK. Ledger/idempotência real por score ainda continua pendente.
+- **Progresso:** o protocolo tipado restringe mutations a `INSERT_CHORD`, remove `REPLACE/DELETE`, adiciona `commandId`, expiração e ACK. O plugin agora mantém um ledger curto por `commandId`: reentrega do mesmo comando reenvia o ACK anterior sem mutar a partitura novamente. Ledger por score/instância ainda continua pendente.
 - **Esperado:** retry seguro; ações desconhecidas rejeitadas; pareamento não recuperável por qualquer processo local.
-- **Observado:** `/consume` remove antes de processar; QML muta antes do ACK; retry usa novo ID e não há ledger. `REPLACE_CHORD`/`DELETE_CHORD` são aceitos pelo tipo, mas todo `MUTATION` chama `transcribeChord`. `/plugin-session` entrega token sem autenticação para cliente local.
+- **Observado:** resolvido parcialmente. `/consume` ainda remove antes de processar, mas reentrega com mesmo `commandId` não duplica a mutação no QML. Retry do dashboard ainda usa novo ID e não há ledger por score. `REPLACE_CHORD`/`DELETE_CHORD` não pertencem mais ao tipo público. `/plugin-session` entrega token sem autenticação para cliente local.
 - **Evidência:** [Protocol.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/Protocol.ts:7>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:221>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:223>).
 - **Reprodução:** perder ACK após inserção e repetir; ou enviar ação DELETE/REPLACE.
 - **Impacto:** músico — possível duplicação ou inserção em vez de remoção; produto — contrato público não corresponde à implementação. Um processo local pode consumir/forjar o canal.
 - **Causa provável:** ACK confirma depois da mutação sem armazenamento de resultado; protocolo antecipou capacidades.
-- **Correção recomendada:** mesmo `commandId` no retry, ledger por score, lease até ACK, `switch` exaustivo e pareamento aprovado.
+- **Correção recomendada:** mesmo `commandId` no retry, ledger por score, lease até ACK e pareamento aprovado.
 - **Testes necessários:** fault injection antes/depois da mutação, replay e cada ação do protocolo.
 - **Confiança:** alta; forma visual exata da duplicação depende do MuseScore.
 
