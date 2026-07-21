@@ -3,6 +3,8 @@ import { dirname, join, normalize, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const SOURCE_ROOT = "src";
+const SCRIPTS_ROOT = "scripts";
+const CURATED_CONFIG = "vitest.curated.config.ts";
 const LEGACY_COMPONENTS_DIR = join(SOURCE_ROOT, "components");
 const SOURCE_EXTENSIONS = [".ts", ".tsx"];
 const IMPORT_PATTERN = /from\s+["']([^"']+)["']/g;
@@ -12,6 +14,14 @@ function collectSourceFiles(dir: string): string[] {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return collectSourceFiles(path);
     return SOURCE_EXTENSIONS.some((extension) => path.endsWith(extension)) ? [path] : [];
+  });
+}
+
+function collectSpecFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return collectSpecFiles(path);
+    return path.endsWith(".spec.ts") ? [path] : [];
   });
 }
 
@@ -32,5 +42,15 @@ describe("suite boundary", () => {
     });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("keeps every script spec in the curated suite", () => {
+    const config = readFileSync(CURATED_CONFIG, "utf8");
+    const curatedSpecs = new Set(
+      [...config.matchAll(/"([^"]+\.spec\.ts)"/g)].map((match) => normalize(match[1]))
+    );
+    const allSpecs = collectSpecFiles(SCRIPTS_ROOT).map((file) => normalize(file));
+
+    expect(allSpecs.filter((file) => !curatedSpecs.has(file))).toEqual([]);
   });
 });

@@ -450,14 +450,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-TST-01 — P2 — cobertura extensa em funções, mas fraca nas jornadas e no deploy
 
 - **Escopo:** transversal.
-- **Progresso:** o workflow de deploy já executa `npm run lint` e `npm run test:curated`, além do build. Ainda faltam testes React/E2E, bridge real em porta efêmera, fault injection e MuseScore simulado.
+- **Progresso:** o workflow de deploy já executa `npm run lint` e `npm run test:curated`, além do build. A suíte curada agora inclui todos os `scripts/*.spec.ts` e `suite-boundary.spec.ts` falha quando uma nova spec fica fora da configuração. Ainda faltam testes React/E2E, bridge real em porta efêmera, fault injection e MuseScore simulado.
 - **Esperado:** lint/build/test e integrações críticas executadas no CI.
-- **Observado:** 124 specs existem; `test:curated` cobre 122 caminhos únicos, duplica uma spec e omite `musicxml-parser-timeline.spec.ts` e `active-section-selection.spec.ts`. Não há teste React/E2E do Harmonizer, handoff, bridge ou QML. O deploy executa somente build.
+- **Observado:** existem 142 specs em `scripts/*.spec.ts` e todas estão cobertas pelo `test:curated`, sem duplicatas. Não há teste React/E2E do Harmonizer, bridge real, fault injection ou QML.
 - **Evidência:** [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).
-- **Reprodução:** teste explicitamente solicitado com a configuração curada é ignorado se não estiver no include. Uma execução curada sob carga excedeu o timeout fixo; isolada e repetida passou.
+- **Reprodução original:** teste explicitamente solicitado com a configuração curada era ignorado se não estivesse no include. Uma execução curada sob carga excedeu o timeout fixo; isolada e repetida passou.
 - **Impacto:** músico — regressões de UI/integração podem chegar ao produto; produto — sucesso da suíte não prova as jornadas A–F.
-- **Causa provável:** crescimento por specs puras e auditorias estáticas, sem pirâmide de integração.
-- **Correção recomendada:** CI com lint/build/test; inclusão automática de specs; servidor em porta efêmera, transporte falso/fault injection, React e E2E com MuseScore simulado.
+- **Causa provável:** crescimento por specs puras e auditorias estáticas, sem pirâmide de integração. A lacuna de inclusão manual da suíte curada foi fechada por guardrail.
+- **Correção recomendada:** servidor em porta efêmera, transporte falso/fault injection, React e E2E com MuseScore simulado.
 - **Testes necessários:** as próprias jornadas A–F, incluindo offline, atraso, retry e estado tardio.
 - **Confiança:** alta.
 
