@@ -506,6 +506,21 @@ const server = http.createServer((req, res) => {
 let eventsConsumed = 0;
 let eventsDropped = 0;
 
+function enqueueBridgeMessage(message) {
+  if (message?.messageType === 'SESSION' && message?.payload?.type === 'request_score') {
+    const before = eventQueue.length;
+    eventQueue = eventQueue.filter(queued => !(queued?.messageType === 'SESSION' && queued?.payload?.type === 'request_score'));
+    eventsDropped += before - eventQueue.length;
+  }
+
+  eventQueue.push(message);
+  if (eventQueue.length > 50) {
+    eventQueue.shift();
+    eventsDropped++;
+    console.log('[Find Chord Bridge] Fila cheia. Descartando evento mais antigo (FIFO).');
+  }
+}
+
 function handleNewEvent(payload) {
   eventsReceived++;
   pruneExpiredQueue();
@@ -524,14 +539,8 @@ function handleNewEvent(payload) {
   }
 
   eventsAccepted++;
-  eventQueue.push(bridgeMessage);
+  enqueueBridgeMessage(bridgeMessage);
   console.log(`[Find Chord Bridge] HTTP Evento enfileirado [${bridgeMessage.messageType}]`);
-  
-  if (eventQueue.length > 50) {
-    eventQueue.shift();
-    eventsDropped++;
-    console.log('[Find Chord Bridge] Fila cheia. Descartando evento mais antigo (FIFO).');
-  }
 
   broadcastMessage(bridgeMessage);
   return true;
@@ -609,8 +618,7 @@ wss.on('connection', (ws, req) => {
             client.send(messageStr);
           }
         });
-        eventQueue.push(message);
-        if (eventQueue.length > 50) eventQueue.shift();
+        enqueueBridgeMessage(message);
       } else {
         wss.clients.forEach((client) => {
           if (client !== ws && client.role === 'dashboard' && client.readyState === WebSocket.OPEN) {

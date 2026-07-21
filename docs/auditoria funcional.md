@@ -388,12 +388,12 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Integração / A-C-D-F.
 - **Esperado:** pedido expira e só a instância/partitura destinatária pode consumi-lo.
-- **Observado:** resolvido parcialmente. `request_score` agora carrega `expiresAt`, o bridge poda mensagens expiradas, o snapshot/status carregam identidade de partitura (`scoreId/title`) e o adapter só carrega snapshots com `requestId` quando pertencem ao pedido ativo. A fila ainda é global por consumidor/plugin.
+- **Observado:** resolvido parcialmente. `request_score` agora carrega `expiresAt`, o bridge poda mensagens expiradas, pedidos de sync pendentes são coalescidos, o snapshot/status carregam identidade de partitura (`scoreId/title`) e o adapter só carrega snapshots com `requestId` quando pertencem ao pedido ativo. A fila ainda é global por consumidor/plugin.
 - **Evidência:** [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:109>), [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:118>) e [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:162>).
-- **Reprodução:** sincronizar com plugin fechado, esperar timeout e abrir o plugin; pedido antigo não deve mais substituir o estado no dashboard, pois o `requestId` ativo foi limpo. Com duas instâncias, a primeira a consultar `/consume` ainda leva toda a fila.
+- **Reprodução:** sincronizar com plugin fechado, esperar timeout e abrir o plugin; pedido antigo não deve mais substituir o estado no dashboard, pois o `requestId` ativo foi limpo. Disparar dois syncs antes do polling deixa apenas o pedido mais recente na fila. Com duas instâncias, a primeira a consultar `/consume` ainda leva toda a fila.
 - **Impacto:** músico — partitura errada ou obsoleta pode aparecer; produto — estado global parcial e não determinístico.
 - **Causa provável:** fila FIFO global sem `pluginId`, `scoreId` ou lifecycle de request.
-- **Progresso:** sync tardio deixa de permanecer indefinidamente na fila; parser MusicXML gera `metadata.scoreId`; `/api/v1/status` expõe a identidade da última partitura sincronizada; respostas de snapshot com `requestId` fora do pedido ativo são ignoradas antes de tocar o store.
+- **Progresso:** sync tardio deixa de permanecer indefinidamente na fila; parser MusicXML gera `metadata.scoreId`; `/api/v1/status` expõe a identidade da última partitura sincronizada; respostas de snapshot com `requestId` fora do pedido ativo são ignoradas antes de tocar o store; novo `request_score` substitui pedidos de sync anteriores ainda não consumidos.
 - **Correção recomendada:** filas por destino, pending/cancelled requests no bridge e validação efetiva de `scoreId/sessionId` quando houver múltiplos plugins.
 - **Testes necessários:** duas instâncias, troca de score e resposta fora de ordem rejeitada.
 - **Confiança:** alta; cenário multi-MuseScore não executado externamente.

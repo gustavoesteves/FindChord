@@ -120,6 +120,10 @@ describe("MuseScore chord insertion safety", () => {
 
     expect(bridge).toContain("'/api/v1/ack'");
     expect(bridge).toContain("isExpiredBridgeMessage");
+    expect(bridge).toContain("function enqueueBridgeMessage(message)");
+    expect(bridge).toContain("queued?.messageType === 'SESSION' && queued?.payload?.type === 'request_score'");
+    expect(bridge).toContain("enqueueBridgeMessage(bridgeMessage)");
+    expect(bridge).toContain("enqueueBridgeMessage(message)");
     expect(bridge).toContain("isSupportedQueuedMessage");
     expect(bridge).toContain("payload.action === 'INSERT_CHORD'");
     expect(bridge).toContain("payload.type !== 'COMMAND_ACK'");
