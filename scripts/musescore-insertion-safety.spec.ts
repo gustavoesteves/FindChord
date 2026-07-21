@@ -80,13 +80,17 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("const sessionId = crypto.randomUUID();");
     expect(bridge).toContain("const dashboardToken = crypto.randomBytes(24).toString('hex');");
     expect(bridge).toContain("const pluginToken = crypto.randomBytes(24).toString('hex');");
+    expect(bridge).toContain("let activePluginSessionId = null;");
     expect(bridge).toContain("url.pathname === '/api/v1/session'");
     expect(bridge).toContain("url.pathname === '/api/v1/plugin-session'");
+    expect(bridge).toContain("pluginSessionId: activePluginSessionId");
     expect(bridge).toContain("validatePluginToken(req, res)");
     expect(bridge).toContain("validateDashboardToken(req, res, url)");
 
+    expect(plugin).toContain("property string bridgePluginSessionId");
     expect(plugin).toContain("property string bridgePluginToken");
     expect(plugin).toContain("requestPluginSession()");
+    expect(plugin).toContain("bridgePluginSessionId = session.pluginSessionId || \"\"");
     expect(plugin).toContain("X-FindChord-Plugin-Token");
 
     expect(transport).toContain("/api/v1/session");
@@ -121,6 +125,9 @@ describe("MuseScore chord insertion safety", () => {
 
     expect(bridge).toContain("'/api/v1/ack'");
     expect(bridge).toContain("isExpiredBridgeMessage");
+    expect(bridge).toContain("prepareBridgeMessageForQueue");
+    expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
+    expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
     expect(bridge).toContain("function enqueueBridgeMessage(message)");
     expect(bridge).toContain("queued?.messageType === 'SESSION' && queued?.payload?.type === 'request_score'");
     expect(bridge).toContain("enqueueBridgeMessage(bridgeMessage)");
@@ -238,6 +245,8 @@ describe("MuseScore chord insertion safety", () => {
 
     expect(plugin).toContain("property string bridgeScoreUploadPath");
     expect(plugin).toContain("bridgeScoreUploadPath = session.scoreUploadPath");
+    expect(plugin).toContain("pluginSessionId: bridgePluginSessionId");
+    expect(plugin).toContain("X-FindChord-Plugin-Session");
     expect(plugin).toContain("writeScore(score, bridgeScoreUploadPath, \"musicxml\")");
     expect(plugin).not.toContain("/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml");
   });

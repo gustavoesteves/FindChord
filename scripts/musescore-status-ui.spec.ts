@@ -39,6 +39,17 @@ describe("MuseScore status UI", () => {
     expect(model).toContain("scoreId?: string;");
   });
 
+  it("targets score sync requests to the active plugin session", () => {
+    const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
+
+    expect(bridge).toContain("activePluginSessionId = crypto.randomUUID()");
+    expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
+    expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
+    expect(plugin).toContain("bridgePluginSessionId = session.pluginSessionId || \"\"");
+    expect(plugin).toContain("/api/v1/consume?pluginSessionId=");
+  });
+
   it("surfaces plugin timeout as a visible sync error", () => {
     const hook = readFileSync("src/domains/harmonizer/hooks/useScoreSync.ts", "utf8");
     const screen = readFileSync("src/domains/harmonizer/HarmonizerScreen.tsx", "utf8");

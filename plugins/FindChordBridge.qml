@@ -73,6 +73,7 @@ MuseScore {
     property bool requestInFlight: false
     property bool isProcessingSnapshot: false
     property string bridgeSessionId: ""
+    property string bridgePluginSessionId: ""
     property string bridgePluginToken: ""
     property string bridgeScoreUploadPath: ""
     property var commandAckLedger: ({})
@@ -148,6 +149,7 @@ MuseScore {
             try {
                 var session = JSON.parse(r.responseText);
                 bridgeSessionId = session.sessionId || "";
+                bridgePluginSessionId = session.pluginSessionId || "";
                 bridgePluginToken = session.pluginToken || "";
                 bridgeScoreUploadPath = session.scoreUploadPath || "";
                 statusText.text = "Status: Bridge pareado.";
@@ -193,8 +195,9 @@ MuseScore {
         };
 
         try {
-            r.open("GET", "http://localhost:9000/api/v1/consume", true);
+            r.open("GET", "http://localhost:9000/api/v1/consume?pluginSessionId=" + encodeURIComponent(bridgePluginSessionId), true);
             r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
+            r.setRequestHeader("X-FindChord-Plugin-Session", bridgePluginSessionId);
             r.send();
             return true;
         } catch (e) {
@@ -317,6 +320,7 @@ MuseScore {
             var payload = {
                 action: "PARSE_XML",
                 requestId: requestId || "",
+                pluginSessionId: bridgePluginSessionId,
                 path: bridgeScoreUploadPath
             };
 

@@ -38,6 +38,7 @@ const pluginToken = crypto.randomBytes(24).toString('hex');
 const scoreUploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'findchord-bridge-'));
 const scoreUploadPath = path.join(scoreUploadDir, `score-${sessionId}.musicxml`);
 let eventQueue = [];
+let activePluginSessionId = null;
 
 // Telemetria Operacional (Sprint B.5)
 let eventsReceived = 0;
@@ -144,6 +145,31 @@ function isSupportedQueuedMessage(message) {
   return true;
 }
 
+function queuedMessageTarget(message) {
+  return message?.targetPluginSessionId || message?.payload?.targetPluginSessionId || null;
+}
+
+function isQueuedMessageForPlugin(message, pluginSessionId) {
+  const targetPluginSessionId = queuedMessageTarget(message);
+  return !targetPluginSessionId || targetPluginSessionId === pluginSessionId;
+}
+
+function prepareBridgeMessageForQueue(message) {
+  if (message?.messageType === 'SESSION' && message?.payload?.type === 'request_score') {
+    if (activePluginSessionId && !message.payload.targetPluginSessionId) {
+      return {
+        ...message,
+        payload: {
+          ...message.payload,
+          targetPluginSessionId: activePluginSessionId
+        }
+      };
+    }
+  }
+
+  return message;
+}
+
 function pruneExpiredQueue() {
   const before = eventQueue.length;
   eventQueue = eventQueue.filter(message => !isExpiredBridgeMessage(message));
@@ -234,9 +260,11 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/v1/plugin-session') {
+    activePluginSessionId = crypto.randomUUID();
     pluginLastSeen = new Date().toISOString();
     writeJson(res, 200, {
       sessionId,
+      pluginSessionId: activePluginSessionId,
       pluginToken,
       scoreUploadPath
     });
@@ -256,8 +284,13 @@ const server = http.createServer((req, res) => {
     pluginLastSeen = new Date().toISOString();
 
     pruneExpiredQueue();
-    const pending = eventQueue.filter(message => !isExpiredBridgeMessage(message));
-    eventQueue = [];
+    const pluginSessionId = url.searchParams.get('pluginSessionId') || req.headers['x-findchord-plugin-session'] || null;
+    const pending = eventQueue.filter(message => (
+      !isExpiredBridgeMessage(message) && isQueuedMessageForPlugin(message, pluginSessionId)
+    ));
+    eventQueue = eventQueue.filter(message => (
+      !isQueuedMessageForPlugin(message, pluginSessionId)
+    ));
     if (pending.length > 0) {
       eventsConsumed += pending.length;
       console.log(`[Find Chord Bridge] Fila consumida por polling. (${pending.length} evento(s) removido(s))`);
@@ -526,11 +559,11 @@ function handleNewEvent(payload) {
   pruneExpiredQueue();
 
   // Wrap em BridgeMessage
-  const bridgeMessage = {
+  const bridgeMessage = prepareBridgeMessageForQueue({
     protocolVersion: payload.protocolVersion || '1.0',
     messageType: payload.messageType || 'RENDER',
     payload: payload.payload || payload
-  };
+  });
 
   if (!isSupportedQueuedMessage(bridgeMessage)) {
     eventsRejected++;
@@ -594,6 +627,7 @@ wss.on('connection', (ws, req) => {
 
   if (isPlugin) {
     ws.role = 'plugin';
+    ws.pluginSessionId = url.searchParams.get('pluginSessionId') || activePluginSessionId;
     pluginLastSeen = new Date().toISOString();
     console.log(`[Find Chord Bridge] Plugin WS conectado. Total: ${wss.clients.size}`);
   } else {
@@ -604,7 +638,7 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', (data) => {
     try {
-      const message = JSON.parse(data.toString());
+      const message = prepareBridgeMessageForQueue(JSON.parse(data.toString()));
       if (!isSupportedQueuedMessage(message)) {
         eventsRejected++;
         console.warn('[Find Chord Bridge] WS message rejeitada por protocolo/acao nao suportada.');
@@ -614,7 +648,10 @@ wss.on('connection', (ws, req) => {
       if (!isPlugin) {
         if (isExpiredBridgeMessage(message)) return;
         wss.clients.forEach((client) => {
-          if (client !== ws && client.role === 'plugin' && client.readyState === WebSocket.OPEN) {
+          if (client !== ws
+            && client.role === 'plugin'
+            && client.readyState === WebSocket.OPEN
+            && isQueuedMessageForPlugin(message, client.pluginSessionId || activePluginSessionId)) {
             client.send(messageStr);
           }
         });
