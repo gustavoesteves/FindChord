@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
+import { buildContextualMaterialCandidates } from "../src/utils/music/theory/contextualMaterialCandidates";
 
 interface CapabilityManifest {
   schemaVersion: number;
@@ -68,5 +69,20 @@ describe("capability manifest", () => {
       "FC-CAP-MAT-LOCAL-MELODIC-MATERIALS",
       "FC-CAP-MS-BRIDGE-SAFETY"
     ]));
+  });
+
+  it("declara os ruleIds emitidos pelos materiais melodicos contextuais", () => {
+    const declaredRuleIds = new Set(manifest().capabilities.flatMap(capability => capability.ruleIds));
+    const runtimeRuleIds = new Set([
+      ...buildContextualMaterialCandidates({ chord: "A7(b9)" }).flatMap(candidate => candidate.ruleIds),
+      ...buildContextualMaterialCandidates({ chord: "Bm7b5" }).flatMap(candidate => candidate.ruleIds),
+      ...buildContextualMaterialCandidates({ chord: "G#dim7" }).flatMap(candidate => candidate.ruleIds),
+      ...buildContextualMaterialCandidates({ chord: "Db7", nextChord: "C", resolutionTarget: "C" }).flatMap(candidate => candidate.ruleIds)
+    ]);
+
+    expect(runtimeRuleIds.size).toBeGreaterThan(0);
+    for (const ruleId of runtimeRuleIds) {
+      expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
+    }
   });
 });

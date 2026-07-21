@@ -492,10 +492,13 @@ describe("F115 candidatas contextuais de material", () => {
 
     expect(halfWhole?.melodicMaterials[0]?.label).toBe("Arpejos diminutos H/W");
     expect(halfWhole?.melodicMaterials[0]?.resolutionTargets).toEqual([]);
+    expect(halfWhole?.ruleIds).toEqual(["FC-RULE-DOMINANT-DIMINISHED-AXIS"]);
     expect(locrianSharpTwo?.melodicMaterials[0]?.label).toBe("iiø lócrio #2");
     expect(locrianSharpTwo?.melodicMaterials[0]?.resolutionTargets).toEqual([]);
+    expect(locrianSharpTwo?.ruleIds).toEqual(["FC-RULE-HALF-DIMINISHED-LOC2"]);
     expect(wholeHalf?.melodicMaterials[0]?.label).toBe("Diminuto resolvido");
     expect(wholeHalf?.melodicMaterials[0]?.resolutionTargets).toEqual([]);
+    expect(wholeHalf?.ruleIds).toEqual(["FC-RULE-DIMINISHED-PASSING-RESOLUTION"]);
   });
 
   it.each(["D7(#9,b13)", "Ab(#5)"])("mapeia %s para uma familia alterada", chord => {

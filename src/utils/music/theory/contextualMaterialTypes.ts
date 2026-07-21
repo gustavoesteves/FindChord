@@ -66,4 +66,5 @@ export interface ContextualMaterialCandidate extends MaterialSourceMap {
   linearFragments: string[];
   melodicMaterials: ContextualMelodicMaterial[];
   melodicFit: ContextualMelodicFit;
+  ruleIds: string[];
 }

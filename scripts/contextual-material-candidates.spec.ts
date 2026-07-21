@@ -33,6 +33,7 @@ describe("F199 candidatas contextuais de material", () => {
       materialOrigin: "curated-catalog",
       harmonicFunction: "dominant",
       intent: "functional",
+      ruleIds: ["FC-RULE-CONTEXTUAL-MATERIAL-RANKING"],
       resolutionTarget: "C"
     }));
     expect(upperTriads?.melodicMaterials[0]).toEqual(expect.objectContaining({
@@ -41,6 +42,7 @@ describe("F199 candidatas contextuais de material", () => {
     }));
     expect(diminishedAxis).toEqual(expect.objectContaining({
       materialOrigin: "curated-catalog",
+      ruleIds: ["FC-RULE-DOMINANT-DIMINISHED-AXIS"],
       intent: "tension"
     }));
   });

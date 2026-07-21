@@ -69,6 +69,16 @@ const INSIDE_SOURCE_TYPES = new Set([
   "minor pentatonic"
 ]);
 
+const SOURCE_TYPE_RULE_IDS: Record<string, string[]> = {
+  "half-whole diminished": ["FC-RULE-DOMINANT-DIMINISHED-AXIS"],
+  "whole-half diminished": ["FC-RULE-DIMINISHED-PASSING-RESOLUTION"],
+  "lydian dominant": ["FC-RULE-SUBV-LYDIAN-DOMINANT"],
+  "locrian #2": ["FC-RULE-HALF-DIMINISHED-LOC2"],
+  "dominant diminished axis": ["FC-RULE-DOMINANT-DIMINISHED-AXIS"],
+  "diminished symmetric cycle": ["FC-RULE-DIMINISHED-PASSING-RESOLUTION"],
+  "dominant upper triad colors": ["FC-RULE-CONTEXTUAL-MATERIAL-RANKING"]
+};
+
 function determineIntent(source: MaterialSourceMap, harmonicFunction: ContextualHarmonicFunction): ContextualMaterialIntent {
   if (TENSION_SOURCE_TYPES.has(source.type)) return "tension";
   if (harmonicFunction === "dominant" && ["lydian dominant", "phrygian dominant"].includes(source.type)) {
@@ -192,7 +202,8 @@ function buildRankedMaterialCandidate(input: {
     guideToneResolutions: input.guideToneResolutionPairs,
     linearFragments,
     melodicMaterials,
-    melodicFit
+    melodicFit,
+    ruleIds: SOURCE_TYPE_RULE_IDS[input.source.type] ?? []
   };
   candidate.explanation = describeMaterialCandidate(candidate);
   candidate.practiceHint = practiceHintForMaterialCandidate(candidate);
