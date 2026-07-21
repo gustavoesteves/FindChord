@@ -447,5 +447,9 @@ describe("F26.4 Strategy-Guided Harmonizer Integration", () => {
       "justifica a cor pela condução interna b6 -> 5, mesmo sem exigir b6 na melodia",
       "conduz a chegada plagal por linha interna até a tônica"
     ]));
+    expect(plagal?.ruleIds).toEqual([
+      "FC-RULE-MODAL-BORROWING-PARALLEL-MINOR",
+      "FC-RULE-MINOR-PLAGAL-CADENCE"
+    ]);
   });
 });

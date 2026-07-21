@@ -89,6 +89,9 @@
         "FC-RULE-BASIC-I-IV-V-FOUNDATION",
         "FC-RULE-SUBV-CHROMATIC-RESOLUTION",
         "FC-RULE-DIMINISHED-PASSING-RESOLUTION",
+        "FC-RULE-APPARENT-FUNCTION-PRESERVATION",
+        "FC-RULE-MODAL-BORROWING-PARALLEL-MINOR",
+        "FC-RULE-MINOR-PLAGAL-CADENCE",
         "FC-RULE-VOICE-LEADING-RANKING"
       ],
       "notes": "O sistema deve propor familias harmonicas, nao casos particulares de musicas do corpus."

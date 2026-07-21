@@ -41,6 +41,7 @@ describe("Apparent-function strategy", () => {
     expect(chords).toContain("F#m7(b5)");
     expect(proposal?.explanation).toContain("acorde aparente implica Fmaj7");
     expect(proposal?.explanation).toContain("preserva função PD");
+    expect(proposal?.ruleIds).toEqual(["FC-RULE-APPARENT-FUNCTION-PRESERVATION"]);
   });
 
   it("inserts a controlled predominant sus before the dominant when the melody supports suspension tones", () => {
@@ -64,6 +65,7 @@ describe("Apparent-function strategy", () => {
     expect(chords).toContain("G7");
     expect(proposal?.explanation).toContain("acorde aparente implica Dm7/G");
     expect(proposal?.explanation).toContain("preserva função PD");
+    expect(proposal?.ruleIds).toEqual(["FC-RULE-APPARENT-FUNCTION-PRESERVATION"]);
   });
 
   it("creates a controlled leading-tone diminished dominant when the melody supports the diminished chord", () => {
@@ -86,6 +88,7 @@ describe("Apparent-function strategy", () => {
     expect(chords).toContain("Bdim");
     expect(proposal?.explanation).toContain("acorde aparente implica G7(b9)");
     expect(proposal?.explanation).toContain("preserva função D");
+    expect(proposal?.ruleIds).toEqual(["FC-RULE-APPARENT-FUNCTION-PRESERVATION"]);
   });
 
   it("inserts a controlled contextual m6 before the dominant when the melody supports the m6 structure", () => {
@@ -110,5 +113,6 @@ describe("Apparent-function strategy", () => {
     expect(chords).toContain("G7");
     expect(proposal?.explanation).toContain("acorde aparente implica Bm7b5 ou G7");
     expect(proposal?.explanation).toContain("preserva função D");
+    expect(proposal?.ruleIds).toEqual(["FC-RULE-APPARENT-FUNCTION-PRESERVATION"]);
   });
 });

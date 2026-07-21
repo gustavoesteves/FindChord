@@ -23,6 +23,10 @@ function manifest(): CapabilityManifest {
   return JSON.parse(readFileSync("docs/capability_manifest.json", "utf8")) as CapabilityManifest;
 }
 
+function anchor(measureIndex: number, pitch: string): MelodicAnchor {
+  return { measureIndex, pitch, duration: 960 };
+}
+
 describe("capability manifest", () => {
   it("mantem um snapshot versionado e validavel das capacidades do sistema", () => {
     const data = manifest();
@@ -104,6 +108,48 @@ describe("capability manifest", () => {
     ]);
 
     expect(runtimeRuleIds.size).toBeGreaterThan(0);
+    for (const ruleId of runtimeRuleIds) {
+      expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
+    }
+  });
+
+  it("declara os ruleIds emitidos por propostas controladas de rearmonizacao", () => {
+    const declaredRuleIds = new Set(manifest().capabilities.flatMap(capability => capability.ruleIds));
+    const modalMelody: MelodicAnchor[] = [
+      anchor(1, "C"),
+      anchor(1, "E"),
+      anchor(2, "F"),
+      anchor(2, "Ab"),
+      anchor(2, "C"),
+      anchor(3, "G"),
+      anchor(3, "B"),
+      anchor(4, "C")
+    ];
+    const apparentMelody: MelodicAnchor[] = [
+      anchor(1, "C"),
+      anchor(1, "E"),
+      anchor(2, "A"),
+      anchor(2, "C"),
+      anchor(3, "B"),
+      anchor(3, "G"),
+      anchor(4, "C")
+    ];
+    const runtimeRuleIds = new Set([
+      ...StrategyGuidedHarmonizer.generateAcceptedProposals(
+        modalMelody,
+        PhraseAnalysisEngine.analyzePhrase(modalMelody, "C")
+      ).flatMap(proposal => proposal.ruleIds ?? []),
+      ...StrategyGuidedHarmonizer.generateAcceptedProposals(
+        apparentMelody,
+        PhraseAnalysisEngine.analyzePhrase(apparentMelody, "C")
+      ).flatMap(proposal => proposal.ruleIds ?? [])
+    ]);
+
+    expect(Array.from(runtimeRuleIds)).toEqual(expect.arrayContaining([
+      "FC-RULE-APPARENT-FUNCTION-PRESERVATION",
+      "FC-RULE-MODAL-BORROWING-PARALLEL-MINOR",
+      "FC-RULE-MINOR-PLAGAL-CADENCE"
+    ]));
     for (const ruleId of runtimeRuleIds) {
       expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
     }

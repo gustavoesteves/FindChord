@@ -84,6 +84,10 @@ const STRATEGY_RULE_IDS: Record<HarmonicStrategyId, string[]> = {
   II_SUBV7_CADENCIAL: ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-SUBV-CHROMATIC-RESOLUTION"]
 };
 
+const APPARENT_FUNCTION_RULE_IDS = ["FC-RULE-APPARENT-FUNCTION-PRESERVATION"];
+const MODAL_BORROWING_RULE_IDS = ["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR"];
+const MINOR_PLAGAL_RULE_IDS = ["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR", "FC-RULE-MINOR-PLAGAL-CADENCE"];
+
 const EXPANSION_EXPLANATIONS: Record<string, string> = {
   PROLONG_VIA_SECONDARY: "prolonga a região de repouso com um acorde representante",
   SUSTAIN: "sustenta a preparação subdominante sem sair da função",
@@ -318,7 +322,8 @@ export class StrategyGuidedHarmonizer {
         ],
         bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
         cadentialTarget: center,
-        harmonicIdiom: "major-functional"
+        harmonicIdiom: "major-functional",
+        ruleIds: APPARENT_FUNCTION_RULE_IDS
       };
     }
 
@@ -389,7 +394,8 @@ export class StrategyGuidedHarmonizer {
         ],
         bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
         cadentialTarget: center,
-        harmonicIdiom: "major-functional"
+        harmonicIdiom: "major-functional",
+        ruleIds: APPARENT_FUNCTION_RULE_IDS
       };
     }
 
@@ -458,7 +464,8 @@ export class StrategyGuidedHarmonizer {
         ],
         bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
         cadentialTarget: center,
-        harmonicIdiom: "major-functional"
+        harmonicIdiom: "major-functional",
+        ruleIds: APPARENT_FUNCTION_RULE_IDS
       };
     }
 
@@ -522,7 +529,8 @@ export class StrategyGuidedHarmonizer {
         ],
         bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
         cadentialTarget: center,
-        harmonicIdiom: "major-functional"
+        harmonicIdiom: "major-functional",
+        ruleIds: APPARENT_FUNCTION_RULE_IDS
       };
     }
 
@@ -579,7 +587,8 @@ export class StrategyGuidedHarmonizer {
           ],
           bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
           cadentialTarget: center,
-          harmonicIdiom: "major-functional"
+          harmonicIdiom: "major-functional",
+          ruleIds: MODAL_BORROWING_RULE_IDS
         });
         break;
       }
@@ -644,7 +653,8 @@ export class StrategyGuidedHarmonizer {
         ],
         bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
         cadentialTarget: center,
-        harmonicIdiom: "major-functional"
+        harmonicIdiom: "major-functional",
+        ruleIds: MODAL_BORROWING_RULE_IDS
       };
     }
 
@@ -716,7 +726,8 @@ export class StrategyGuidedHarmonizer {
       ],
       bassLine: measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
       cadentialTarget: center,
-      harmonicIdiom: "major-functional"
+      harmonicIdiom: "major-functional",
+      ruleIds: MINOR_PLAGAL_RULE_IDS
     }];
   }
 

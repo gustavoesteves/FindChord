@@ -35,6 +35,7 @@ describe("Modal borrowing strategy", () => {
       "usa iv menor como cor do modo paralelo",
       "a melodia traz b6 como assinatura do empréstimo modal"
     ]));
+    expect(proposal?.ruleIds).toEqual(["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR"]);
   });
 
   it("does not create modal borrowing without the borrowed b6 color", () => {
@@ -81,6 +82,7 @@ describe("Modal borrowing strategy", () => {
       "usa bVII como cor do modo paralelo menor",
       "preserva a região subdominante sem trocar automaticamente o centro tonal"
     ]));
+    expect(borrowedFlatSeven?.ruleIds).toEqual(["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR"]);
   });
 
   it("creates a controlled bVI borrowing when the melody exposes flat six as a structural color", () => {
@@ -109,5 +111,6 @@ describe("Modal borrowing strategy", () => {
       "usa bVI como cor do modo paralelo menor",
       "bVI vem do modo paralelo menor em contexto maior"
     ]));
+    expect(borrowedFlatSix?.ruleIds).toEqual(["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR"]);
   });
 });

@@ -431,9 +431,9 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-DOC-01 — P2 — rastreabilidade teórica é manual e os estados documentais contradizem o runtime
 
 - **Escopo:** transversal / todas as jornadas.
-- **Progresso:** criado `docs/capability_manifest.json` com `asOfCommit`, capacidades, fontes teoricas, arquivos de implementacao, specs e primeiros `ruleIds`; `scripts/capability-manifest.spec.ts` valida IDs unicos, caminhos existentes e `ruleIds` emitidos pelos materiais contextuais e por propostas validadas de rearmonizacao, e foi incluido no `test:curated`.
+- **Progresso:** criado `docs/capability_manifest.json` com `asOfCommit`, capacidades, fontes teoricas, arquivos de implementacao, specs e primeiros `ruleIds`; `scripts/capability-manifest.spec.ts` valida IDs unicos, caminhos existentes e `ruleIds` emitidos pelos materiais contextuais, por propostas validadas e por propostas controladas principais, e foi incluido no `test:curated`.
 - **Esperado:** documento→regra→algoritmo→serviço→estado→UI rastreável.
-- **Observado:** resolvido parcialmente. Existe agora um manifest canônico validável para as capacidades principais; materiais contextuais e estratégias validadas de rearmonização já carregam `ruleIds` rastreáveis. Ainda falta propagar fontes/IDs para propostas controladas e camadas de UI, e `materialOrigin` ainda é uma distinção de origem operacional. Documentos históricos ainda podem contradizer o estado atual.
+- **Observado:** resolvido parcialmente. Existe agora um manifest canônico validável para as capacidades principais; materiais contextuais, estratégias validadas e propostas controladas de função aparente/empréstimo modal/cadência plagal menor já carregam `ruleIds` rastreáveis. Ainda falta propagar fontes para a UI e cobrir famílias controladas mais exploratórias. Documentos históricos ainda podem contradizer o estado atual.
 - **Evidência:**
   - `estado_teorico_harmonizacao.md` diz que voice leading/modal/SubV ainda são futuros, embora existam.
   - `quadro_teorico_sistema_harmonizacao.md` marca distância/região como ausentes e depois registra implementação.
@@ -441,8 +441,8 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `composer_first_harmony_model.md` e `escala_compativel_diagnostico.md` citam `ScaleOverlayPanel`, já removido.
 - **Impacto:** músico — não consegue auditar por que recebeu uma sugestão; produto — status funcional depende da seção do documento consultada.
 - **Causa provável:** documentação evolutiva usada também como status vigente, sem manifest canônico.
-- **Correção recomendada:** propagar `ruleIds`/fontes do manifest para propostas controladas e UI; ampliar o validador para detectar símbolos removidos citados em documentos históricos.
-- **Testes necessários:** integridade regra→fonte já iniciada e ligada aos materiais/propostas validadas; falta verificação automática de símbolos citados e cobertura das regras nas propostas controladas.
+- **Correção recomendada:** propagar `ruleIds`/fontes do manifest para a UI e propostas controladas exploratórias restantes; ampliar o validador para detectar símbolos removidos citados em documentos históricos.
+- **Testes necessários:** integridade regra→fonte já iniciada e ligada aos materiais/propostas principais; falta verificação automática de símbolos citados e cobertura das regras nas propostas exploratórias.
 - **Confiança:** alta.
 
 ### FC-TST-01 — P2 — cobertura extensa em funções, mas fraca nas jornadas e no deploy
