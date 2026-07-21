@@ -29,6 +29,11 @@ import {
 } from "../../../utils/music/theory/contextualMaterialCandidates";
 import { measureNumberAtTick } from "../../../utils/music/analysis/scoreTimelineContext";
 
+const CONTROLLED_FUNCTIONAL_SUBSTITUTION_RULE_IDS = ["FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION"];
+const REFERENCE_CONTOUR_RULE_IDS = ["FC-RULE-REFERENCE-CONTOUR-PRESERVATION"];
+const REFERENCE_RHYTHM_RULE_IDS = ["FC-RULE-REFERENCE-RHYTHM-PRESERVATION"];
+const HARMONY_ONLY_READING_RULE_IDS = ["FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING"];
+
 export interface MelodicAnchorSelection {
   anchors: MelodicAnchor[];
   allAnchors: MelodicAnchor[];
@@ -429,6 +434,7 @@ function buildReferenceContourReharmonizationProposal(
     id: "controlled-reference-contour",
     kind: "controlled-reharmonization",
     name: "Rearmonização — contorno da partitura",
+    ruleIds: REFERENCE_CONTOUR_RULE_IDS,
     measures: harmonyEventsToMeasures(substitutedEvents),
     events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
     explanation: [
@@ -472,6 +478,7 @@ function buildReferenceRhythmReharmonizationProposal(
     id: "controlled-reference-rhythm",
     kind: "controlled-reharmonization",
     name: "Rearmonização — ritmo harmônico da partitura",
+    ruleIds: REFERENCE_RHYTHM_RULE_IDS,
     measures: harmonyEventsToMeasures(substitutedEvents),
     events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
     explanation: [
@@ -919,6 +926,7 @@ export function buildControlledReharmonizationProposals(
       id: `controlled-substitution-${index}`,
       kind: "controlled-reharmonization",
       name: "Rearmonização — substituição funcional",
+      ruleIds: CONTROLLED_FUNCTIONAL_SUBSTITUTION_RULE_IDS,
       measures: harmonyEventsToMeasures(substitutedEvents),
       events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
       explanation: controlled.explanation,
@@ -961,6 +969,7 @@ export function buildHarmonyOnlyAnalysisProposals(
     id: "harmony-only-functional-reading",
     kind: "controlled-reharmonization",
     name: "Leitura — Função da progressão",
+    ruleIds: HARMONY_ONLY_READING_RULE_IDS,
     measures: harmonyEventsToMeasures(sectionHarmonies),
     events: harmonyEventsToProposalEvents(sectionHarmonies),
     explanation: [

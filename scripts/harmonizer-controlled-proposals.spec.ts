@@ -67,6 +67,7 @@ describe("Harmonizer controlled proposals", () => {
 
     const rhythm = proposals.find(proposal => proposal.id === "controlled-reference-rhythm");
 
+    expect(rhythm?.ruleIds).toEqual(["FC-RULE-REFERENCE-RHYTHM-PRESERVATION"]);
     expect(rhythm?.measures[0].chords).toEqual(["A13sus4", "B7sus4"]);
     expect(rhythm?.explanation).toContain("normaliza a cifragem mantendo a harmonia escrita");
   });
@@ -86,6 +87,7 @@ describe("Harmonizer controlled proposals", () => {
     const contour = proposals.find(proposal => proposal.id === "controlled-reference-contour");
     const chords = contour?.measures.flatMap(measure => measure.chords);
 
+    expect(contour?.ruleIds).toEqual(["FC-RULE-REFERENCE-CONTOUR-PRESERVATION"]);
     expect(chords).toContain("Am7b5");
     expect(chords).toContain("D7(#9)");
     expect(chords).not.toContain("Am");
@@ -107,6 +109,7 @@ describe("Harmonizer controlled proposals", () => {
 
     const controlled = proposals.find(proposal => proposal.id === "controlled-substitution-0");
 
+    expect(controlled?.ruleIds).toEqual(["FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION"]);
     expect(controlled?.measures.find(measure => measure.measureIndex === 2)?.chords).toEqual([
       "F#m7(b5)",
       "Fmaj7"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOfCommit": "8b08545",
+  "asOfCommit": "3f88323",
   "purpose": "Mapa versionavel entre teoria, regras implementadas, testes e jornadas do Find Chord.",
   "capabilities": [
     {
@@ -92,6 +92,10 @@
         "FC-RULE-APPARENT-FUNCTION-PRESERVATION",
         "FC-RULE-MODAL-BORROWING-PARALLEL-MINOR",
         "FC-RULE-MINOR-PLAGAL-CADENCE",
+        "FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION",
+        "FC-RULE-REFERENCE-CONTOUR-PRESERVATION",
+        "FC-RULE-REFERENCE-RHYTHM-PRESERVATION",
+        "FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING",
         "FC-RULE-VOICE-LEADING-RANKING"
       ],
       "notes": "O sistema deve propor familias harmonicas, nao casos particulares de musicas do corpus."

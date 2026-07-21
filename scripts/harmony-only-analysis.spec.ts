@@ -37,6 +37,7 @@ describe("Harmony-only analysis", () => {
     expect(proposals[0]).toEqual(expect.objectContaining({
       id: "harmony-only-functional-reading",
       name: "Leitura — Função da progressão",
+      ruleIds: ["FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING"],
       inputContext: "harmony-only-analysis",
       referenceRelation: "harmony-only-reading",
       cadentialTarget: "C"

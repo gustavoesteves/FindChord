@@ -4,6 +4,12 @@ import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/Phrase
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import { buildContextualMaterialCandidates } from "../src/utils/music/theory/contextualMaterialCandidates";
+import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import {
+  buildControlledReharmonizationProposals,
+  buildHarmonyOnlyAnalysisProposals,
+  buildHarmonyOnlyPhraseContext
+} from "../src/domains/harmonizer/services/harmonizerService";
 
 interface CapabilityManifest {
   schemaVersion: number;
@@ -25,6 +31,18 @@ function manifest(): CapabilityManifest {
 
 function anchor(measureIndex: number, pitch: string): MelodicAnchor {
   return { measureIndex, pitch, duration: 960 };
+}
+
+function harmony(measure: number, chord: string, beat = 1): ScoreHarmonyEvent {
+  const tickStart = (measure - 1) * 1920 + (beat - 1) * 480;
+  return {
+    measure,
+    beat,
+    harmony: chord,
+    tickStart,
+    tickEnd: tickStart + 480,
+    durationTicks: 480
+  };
 }
 
 describe("capability manifest", () => {
@@ -149,6 +167,43 @@ describe("capability manifest", () => {
       "FC-RULE-APPARENT-FUNCTION-PRESERVATION",
       "FC-RULE-MODAL-BORROWING-PARALLEL-MINOR",
       "FC-RULE-MINOR-PLAGAL-CADENCE"
+    ]));
+    for (const ruleId of runtimeRuleIds) {
+      expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
+    }
+  });
+
+  it("declara os ruleIds emitidos por propostas controladas de servico", () => {
+    const declaredRuleIds = new Set(manifest().capabilities.flatMap(capability => capability.ruleIds));
+    const phraseContext = {
+      selectedCenter: { tonic: "C", mode: "major" as const, confidence: 0.9 },
+      selectedCenterSource: "reference" as const,
+      tonalCenterCandidates: [{ tonic: "C", mode: "major" as const, confidence: 0.9 }],
+      cadentialTarget: { targetPitch: "C", cadenceType: "OPEN" as const, confidence: 0.8 }
+    };
+    const sectionHarmonies = [
+      harmony(1, "Cmaj7"),
+      harmony(2, "Fmaj7", 1),
+      harmony(2, "Fmaj7", 3),
+      harmony(3, "G7"),
+      harmony(4, "Cmaj7")
+    ];
+    const melody = [
+      { ...anchor(2, "A"), startTick: 1920, endTick: 2400 },
+      { ...anchor(2, "C"), startTick: 2880, endTick: 3360 }
+    ];
+    const harmonyOnlyContext = buildHarmonyOnlyPhraseContext(sectionHarmonies);
+    const runtimeRuleIds = new Set([
+      ...buildControlledReharmonizationProposals(sectionHarmonies, melody, phraseContext)
+        .flatMap(proposal => proposal.ruleIds ?? []),
+      ...buildHarmonyOnlyAnalysisProposals(sectionHarmonies, harmonyOnlyContext)
+        .flatMap(proposal => proposal.ruleIds ?? [])
+    ]);
+
+    expect(Array.from(runtimeRuleIds)).toEqual(expect.arrayContaining([
+      "FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION",
+      "FC-RULE-REFERENCE-RHYTHM-PRESERVATION",
+      "FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING"
     ]));
     for (const ruleId of runtimeRuleIds) {
       expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
