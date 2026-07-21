@@ -38,6 +38,20 @@ describe("F209 papeis de nota em materiais locais", () => {
     });
   });
 
+  it("distingue nota estrutural implicita de tensao melodica", () => {
+    expect(classifyLocalMaterialNote(
+      "D",
+      "Bb",
+      ["Bb", "E", "Ab"],
+      "lydian dominant",
+      ["Bb", "D", "E", "Ab"]
+    )).toMatchObject({
+      category: "chordTone",
+      label: "3a (Impl.)",
+      tooltip: "Nota implicita do acorde: pertence a estrutura da cifra, mesmo que nao esteja no desenho atual."
+    });
+  });
+
   it("expoe as categorias do braco em ordem estavel para a UI", () => {
     expect(LOCAL_MATERIAL_NOTE_CATEGORIES.map(item => item.category)).toEqual([
       "root",

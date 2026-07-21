@@ -10,7 +10,7 @@ Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 
 | Área | Feito | Ainda aberto |
 |---|---|---|
-| Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; Materiais ainda precisa distinguir melhor nota soando, nota implícita e tensão; QML real ainda não usa shape/fretboard. |
+| Escrever | Seleção de interpretações ambíguas; preservação de baixo nas aberturas; filtros aberto/fechado; opções de afinação do catálogo; ergonomia centralizada; exportação MuseScore agora separa cifra visual de cifra canônica; Materiais já distingue nota soando, nota estrutural implícita e tensão no mapa do braço quando há qualidade canônica. | Leitura/estrutura/tensão ainda dependem parcialmente de DTO simplificado; QML real ainda não usa shape/fretboard. |
 | Harmonizar | Modo menor ganhou guardrail no ramo experimental; handoff Harmonizar→Writer cria sessão navegável; timelines/ticks/seleção estrutural foram amplamente remediados; mapas reais de compasso agora alimentam consumidores temporais também em 4/4 quando confiáveis; distância harmônica já diferencia terças diatônicas de raiz alterada; apresentação preserva fundação I-IV-V contra expansões sem apoio; rótulos de condução de vozes foram alinhados ao score; função contextual e resoluções de notas-guia respeitam alvo real; Improviso usa sets canônicos com referência/variantes aplicáveis; propostas vindas da partitura e propostas geradas pela melodia preservam eventos com tick, beat, duração e identidade. | Estratégias gerativas densas ainda dividem internamente o compasso de forma uniforme quando não há ritmo harmônico real escrito. |
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada; inserção no Writer agora retorna resultado tipado e feedback visível. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
@@ -162,17 +162,18 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-04 — P2 — Leitura e Materiais perdem semântica e fabricam dados simplificados
 
 - **Módulo/tab/jornada:** Escrever / Leitura e Materiais / A-B.
+- **Progresso:** o mapa do braço em Materiais agora pode receber a qualidade canônica do acorde e usa a fórmula do `CHORD_REGISTRY` para distinguir notas soantes, notas estruturais implícitas e tensões. Uma shell como `Bb7b5` sem a terça desenhada passa a rotular D como `3a (Impl.)`, não como tensão.
 - **Esperado:** estrutura, tensão e graus devem derivar do mesmo modelo canônico do acorde.
 - **Observado:**
   - qualquer shape de três cordas é classificado como `Shell Voicing`;
   - tensão só pode ser 0,15 ou 0,65 por substring, embora a UI tenha faixa alta a partir de 0,72;
-  - Materiais recebe notas soantes, não a fórmula canônica, e classifica notas omitidas como tensões.
+  - Materiais já recebe fórmula canônica no mapa do braço, mas outras leituras ainda dependem parcialmente do DTO simplificado.
 - **Evidência:** [voicingGenerator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/generation/voicingGenerator.ts:41>), [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:78>), [writerChordReadingPresenter.ts](</Volumes/Documents/Development/Find Chord/src/domains/writer/services/writerChordReadingPresenter.ts:21>) e [localMaterialNoteRoles.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/theory/localMaterialNoteRoles.ts:67>).
-- **Reprodução:** tríade C `[null,null,null,5,7,8]` aparece como Shell; Cmaj7 e C7b9 recebem 65%; shell Bb7b5 sem D mostra D como tensão/grau 4, apesar de D ser a terça estrutural.
+- **Reprodução:** tríade C `[null,null,null,5,7,8]` aparece como Shell; Cmaj7 e C7b9 recebem 65%; shell Bb7b5 sem D agora mostra D como `3a (Impl.)` no braço de Materiais, mas a leitura de estrutura/tensão do acorde ainda precisa migrar para o modelo canônico completo.
 - **Impacto:** músico — explicação factual e pedagógica incorreta; produto — tabs contradizem analisadores mais ricos já existentes.
 - **Causa provável:** DTO do Writer elimina fórmula, omissões e papéis de voz, substituindo-os por heurísticas locais.
-- **Correção recomendada:** usar `analyzeVoiceRoles`, `classifyVoicing` e fórmula canônica; distinguir nota soando, nota implícita e tensão.
-- **Testes necessários:** tríade, shell 1–3–7, Drop 2, quartal, acorde alterado e shapes rootless.
+- **Correção recomendada:** usar `analyzeVoiceRoles`, `classifyVoicing` e fórmula canônica também na Leitura; propagar explicitamente nota soando/nota implícita/tensão para explicações e estados da UI.
+- **Testes necessários:** tríade, shell 1–3–7, Drop 2, quartal, acorde alterado e shapes rootless; cobertura inicial de nota implícita já existe em `local-material-note-roles.spec.ts` e `local-material-fretboard-notes.spec.ts`.
 - **Confiança:** alta.
 
 ### FC-WR-05 — P2 — seletor de afinação não cobre afinações do próprio catálogo

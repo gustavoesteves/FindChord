@@ -68,12 +68,25 @@ export function classifyLocalMaterialNote(
   noteName: string,
   chordRoot: string,
   chordNotes: string[],
-  sourceType: string
+  sourceType: string,
+  structuralChordNotes: string[] = chordNotes
 ): LocalMaterialNoteRole {
   const notePC = getPitchClass(noteName);
   const rootPC = getPitchClass(chordRoot);
   const chordPCs = chordNotes.map(note => getPitchClass(note));
+  const structuralChordPCs = structuralChordNotes.map(note => getPitchClass(note));
   const distance = (notePC - rootPC + 12) % 12;
+  const chordToneLabels: Record<number, string> = {
+    3: "3a",
+    4: "3a",
+    5: "5a",
+    6: "5a",
+    7: "5a",
+    8: "5a",
+    9: "7a",
+    10: "7a",
+    11: "7a"
+  };
 
   if (notePC === rootPC) {
     return {
@@ -130,22 +143,20 @@ export function classifyLocalMaterialNote(
   }
 
   if (chordPCs.includes(notePC)) {
-    const labels: Record<number, string> = {
-      3: "3a (Acorde)",
-      4: "3a (Acorde)",
-      5: "5a (Acorde)",
-      6: "5a (Acorde)",
-      7: "5a (Acorde)",
-      8: "5a (Acorde)",
-      9: "7a (Acorde)",
-      10: "7a (Acorde)",
-      11: "7a (Acorde)"
-    };
     return {
       category: "chordTone",
-      label: labels[distance] || "Acorde",
+      label: `${chordToneLabels[distance] || "Acorde"} (Acorde)`,
       color: "#ff4e8c",
-      tooltip: "Nota do acorde: ponto estavel para apoiar ou finalizar frases."
+      tooltip: "Nota soando do acorde: ponto estavel para apoiar ou finalizar frases."
+    };
+  }
+
+  if (structuralChordPCs.includes(notePC)) {
+    return {
+      category: "chordTone",
+      label: `${chordToneLabels[distance] || "Acorde"} (Impl.)`,
+      color: "#ff4e8c",
+      tooltip: "Nota implicita do acorde: pertence a estrutura da cifra, mesmo que nao esteja no desenho atual."
     };
   }
 

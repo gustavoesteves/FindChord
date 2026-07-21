@@ -2,6 +2,7 @@ import {
   buildLocalMaterialFretboardGeometry,
   localMaterialStringGeometry
 } from "../../../utils/music/theory/localMaterialFretboardGeometry";
+import type { ChordQuality } from "../../../utils/music/constants/chordRegistry";
 import {
   buildLocalMaterialFretboardNote,
   type LocalMaterialFretboardLabelMode
@@ -15,6 +16,7 @@ import type {
 export interface WriterMaterialFretboardChordContext {
   root: string;
   notes: string[];
+  quality?: ChordQuality;
 }
 
 export interface WriterMaterialFretboardSourceContext {
@@ -47,6 +49,7 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
         sourceNotes: input.source.notes,
         chordRoot: input.activeChord.root,
         chordNotes: input.activeChord.notes,
+        chordQuality: input.activeChord.quality,
         sourceType: input.source.type,
         visibleCategories: input.visibleCategories,
         labelMode: input.labelMode

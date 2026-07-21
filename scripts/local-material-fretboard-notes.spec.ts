@@ -58,4 +58,25 @@ describe("F213 notas do braco para materiais locais", () => {
       labelMode: "position"
     })).toBeNull();
   });
+
+  it("usa a formula canonica para rotular notas estruturais omitidas", () => {
+    expect(buildLocalMaterialFretboardNote({
+      baseNote: "D",
+      fret: 0,
+      sourceNotes: ["Bb", "C", "D", "E", "F", "G", "Ab"],
+      chordRoot: "Bb",
+      chordNotes: ["Bb", "E", "Ab"],
+      chordQuality: "dominant7b5",
+      sourceType: "lydian dominant",
+      visibleCategories,
+      labelMode: "position"
+    })).toMatchObject({
+      noteName: "D",
+      displayLabel: "3a",
+      role: {
+        category: "chordTone",
+        label: "3a (Impl.)"
+      }
+    });
+  });
 });
