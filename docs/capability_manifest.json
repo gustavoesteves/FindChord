@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "asOfCommit": "8b08545",
+  "purpose": "Mapa versionavel entre teoria, regras implementadas, testes e jornadas do Find Chord.",
+  "capabilities": [
+    {
+      "id": "FC-CAP-WR-CHORD-SYMBOL-CONTRACT",
+      "title": "Contrato de cifragem canonica",
+      "status": "implemented",
+      "journeys": ["Escrever", "MuseScore", "Importacao MusicXML"],
+      "theorySources": [
+        "docs/theory/chord_symbol_dictionary.md",
+        "docs/references/chord_symbol_sources.md"
+      ],
+      "implementationFiles": [
+        "src/utils/music/theory/ChordSymbolResolver.ts",
+        "src/utils/music/theory/MusicXmlChordSymbolMapper.ts",
+        "src/utils/musescoreAdapter.ts"
+      ],
+      "tests": [
+        "scripts/chord-symbol-resolver.spec.ts",
+        "scripts/musicxml-chord-symbol-mapper.spec.ts",
+        "scripts/writer-musescore-payload.spec.ts",
+        "scripts/musescore-insertion-safety.spec.ts"
+      ],
+      "ruleIds": [
+        "FC-RULE-CHORD-CANONICAL-INTERNAL",
+        "FC-RULE-MUSESCORE-OMISSION-SANITIZATION",
+        "FC-RULE-MUSICXML-KIND-DEGREE-MAPPING"
+      ],
+      "notes": "O parser aceita dialetos, mas o motor trabalha com forma canonica e a exportacao visual para MuseScore remove omissoes internas."
+    },
+    {
+      "id": "FC-CAP-HZ-CADENTIAL-CONTEXT",
+      "title": "Contexto tonal e cadencial por evidencia harmonica",
+      "status": "partial",
+      "journeys": ["Harmonizar", "Improviso"],
+      "theorySources": [
+        "docs/theory/schoenberg_harmonia_source_map.md",
+        "docs/theory/almada_harmonia_funcional_source_map.md",
+        "docs/theory/berklee_jazz_harmony_source_map.md",
+        "docs/theory/quadro_teorico_sistema_harmonizacao.md"
+      ],
+      "implementationFiles": [
+        "src/utils/music/analysis/engines/PhraseAnalysisEngine.ts",
+        "src/utils/music/analysis/strategies/ReferenceHarmonyAnalysis.ts",
+        "src/utils/music/analysis/strategies/ReferenceAwarePhraseContext.ts",
+        "src/utils/music/analysis/scoreTimelineContext.ts"
+      ],
+      "tests": [
+        "scripts/reference-harmony-analysis.spec.ts",
+        "scripts/reference-aware-phrase-context.spec.ts",
+        "scripts/score-timeline-context.spec.ts",
+        "scripts/blue-in-green-calibration.spec.ts"
+      ],
+      "ruleIds": [
+        "FC-RULE-MELODIC-ARRIVAL-NOT-CADENCE",
+        "FC-RULE-REFERENCE-AUTHENTIC-CADENCE",
+        "FC-RULE-REFERENCE-HALF-CADENCE",
+        "FC-RULE-REFERENCE-PLAGAL-CADENCE",
+        "FC-RULE-REFERENCE-DECEPTIVE-CADENCE",
+        "FC-RULE-REFERENCE-PHRYGIAN-CADENCE"
+      ],
+      "notes": "A melodia isolada preserva alvo melodico aberto; cadencias nomeadas dependem de evidencia harmonica escrita."
+    },
+    {
+      "id": "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+      "title": "Vocabulario progressivo de rearmonizacao",
+      "status": "partial",
+      "journeys": ["Harmonizar"],
+      "theorySources": [
+        "docs/theory/almada_examples.md",
+        "docs/theory/almada_harmonia_funcional_source_map.md",
+        "docs/theory/analise_ebooks_erica_masson.md",
+        "docs/theory/berklee_jazz_harmony_source_map.md"
+      ],
+      "implementationFiles": [
+        "src/utils/music/analysis/strategies/StrategyGuidedHarmonizer.ts",
+        "src/utils/music/analysis/strategies/ProposalPresentationPlanner.ts",
+        "src/utils/music/analysis/strategies/VoiceLeadingProposalRanker.ts"
+      ],
+      "tests": [
+        "scripts/almada-example-comparison.spec.ts",
+        "scripts/harmonic-strategy-properties.spec.ts",
+        "scripts/subv7-cadential-strategy.spec.ts",
+        "scripts/voice-leading-ranking.spec.ts"
+      ],
+      "ruleIds": [
+        "FC-RULE-BASIC-I-IV-V-FOUNDATION",
+        "FC-RULE-SUBV-CHROMATIC-RESOLUTION",
+        "FC-RULE-DIMINISHED-PASSING-RESOLUTION",
+        "FC-RULE-VOICE-LEADING-RANKING"
+      ],
+      "notes": "O sistema deve propor familias harmonicas, nao casos particulares de musicas do corpus."
+    },
+    {
+      "id": "FC-CAP-MAT-LOCAL-MELODIC-MATERIALS",
+      "title": "Materiais melodicos locais para acorde/vamp e contexto",
+      "status": "partial",
+      "journeys": ["Escrever", "Harmonizar", "Improviso"],
+      "theorySources": [
+        "docs/theory/melodic_materials_vocabulary.md",
+        "docs/theory/improvisação.md",
+        "docs/theory/berklee_jazz_harmony_source_map.md"
+      ],
+      "implementationFiles": [
+        "src/utils/music/theory/localChordVampMaterialCatalog.ts",
+        "src/utils/music/theory/contextualMaterialCandidates.ts",
+        "src/domains/writer/services/writerMaterialScreenModel.ts",
+        "src/domains/harmonizer/services/harmonizerService.ts"
+      ],
+      "tests": [
+        "scripts/local-chord-vamp-material-catalog.spec.ts",
+        "scripts/contextual-material-candidates.spec.ts",
+        "scripts/writer-material-screen-model.spec.ts",
+        "scripts/melodic-materials-audit.spec.ts"
+      ],
+      "ruleIds": [
+        "FC-RULE-WRITER-VAMP-NO-CONTEXT",
+        "FC-RULE-DOMINANT-DIMINISHED-AXIS",
+        "FC-RULE-SUBV-LYDIAN-DOMINANT",
+        "FC-RULE-HALF-DIMINISHED-LOC2",
+        "FC-RULE-CONTEXTUAL-MATERIAL-RANKING"
+      ],
+      "notes": "Escrever trata o acorde isolado como vamp; Harmonizar pode promover materiais pela funcao e pelo alvo harmonico."
+    },
+    {
+      "id": "FC-CAP-MS-BRIDGE-SAFETY",
+      "title": "Integracao MuseScore com ACK e feedback tipado",
+      "status": "partial",
+      "journeys": ["Escrever", "Harmonizar", "MuseScore"],
+      "theorySources": [
+        "docs/theory/chord_symbol_dictionary.md"
+      ],
+      "implementationFiles": [
+        "scripts/musescore-bridge.cjs",
+        "plugins/FindChordBridge.qml",
+        "src/utils/music/bridge/Protocol.ts",
+        "src/utils/musescoreAdapter.ts",
+        "src/domains/writer/components/VirtualFretboard.tsx"
+      ],
+      "tests": [
+        "scripts/musescore-insertion-safety.spec.ts",
+        "scripts/musescore-status-ui.spec.ts"
+      ],
+      "ruleIds": [
+        "FC-RULE-MS-ACK-LEDGER",
+        "FC-RULE-MS-TYPED-SEND-RESULT",
+        "FC-RULE-MS-PLUGIN-STATUS-SEPARATION"
+      ],
+      "notes": "Ainda falta validacao real QML/MuseScore e fila por score/instancia."
+    }
+  ]
+}
