@@ -122,6 +122,7 @@ export default defineConfig({
       "scripts/writer-active-scale-legacy-cleanup.spec.ts",
       "scripts/writer-active-material-panel.spec.ts",
       "scripts/writer-material-action.spec.ts",
+      "scripts/writer-chord-reading-analysis.spec.ts",
       "scripts/writer-chord-reading-presenter.spec.ts",
       "scripts/writer-fretboard-geometry.spec.ts",
       "scripts/writer-input-fretboard-notes.spec.ts",

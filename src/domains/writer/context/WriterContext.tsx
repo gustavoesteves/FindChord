@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from "
 import { useChordStore, type WriterProgressionChord } from "../../../store/useChordStore";
 import type { ChordCandidate } from "../../../utils/music/models/ChordCandidate";
 import { getPitchClass } from "../../../utils/music/core/pitch";
-import { generateVoicings, identifyShapeFamily } from "../../../utils/music/generation/voicingGenerator";
+import { generateVoicings } from "../../../utils/music/generation/voicingGenerator";
 import type { VoicingShape } from "../../../utils/music/models/VoicingShape";
 import { buildWriterCanonicalChordSymbol } from "../services/writerCanonicalChordSymbol";
+import { analyzeWriterChordReading } from "../services/writerChordReadingAnalysis";
 
 interface DetectedChord {
   notes: string[];
@@ -86,18 +87,19 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const isRoot = !c.bass || c.bass === c.root;
       const inversion = isRoot ? "Fundamental" : "Invertido";
 
-      // Determine voicingType (Drop 2, Drop 3, Shell, etc.)
-      const voicingType = identifyShapeFamily(selectedFrets);
-
-      // Determine tensionLevel estimate
-      const tensionSource = c.notationInternational || "";
-      const tensionLevel = (tensionSource.includes("dim") || tensionSource.includes("aug") || tensionSource.includes("7") || tensionSource.includes("9") || tensionSource.includes("11") || tensionSource.includes("13")) ? 0.65 : 0.15;
-
       const getDrawnChordName = (chord: ChordCandidate) => {
         if (notationStyle === "Brazilian") return chord.notationBrazilian;
         if (notationStyle === "Academic") return chord.notationAcademic;
         return chord.notationInternational;
       };
+
+      const readingAnalysis = analyzeWriterChordReading({
+        selectedFrets,
+        tuning,
+        root: c.root,
+        quality: c.quality,
+        tensions: c.tensions
+      });
 
       const bass = c.bass || c.root;
       const symbol = getDrawnChordName(c);
@@ -117,8 +119,8 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         score: c.score,
         confidence: c.confidence,
         inversion,
-        voicingType,
-        tensionLevel,
+        voicingType: readingAnalysis.voicingType,
+        tensionLevel: readingAnalysis.tensionLevel,
         additions: c.additions || [],
         tensions: c.tensions || [],
         root: c.root,
@@ -126,7 +128,7 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         equivalentInterpretations: c.equivalentInterpretations || []
       };
     });
-  }, [storeDetectedChords, selectedFrets, notationStyle]);
+  }, [storeDetectedChords, selectedFrets, tuning, notationStyle]);
 
   const activeChord = useMemo<DetectedChord | null>(() => {
     if (selectedChordIndex === null || selectedChordIndex >= mappedDetectedChords.length) return null;
