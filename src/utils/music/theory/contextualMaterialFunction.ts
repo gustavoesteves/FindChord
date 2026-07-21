@@ -41,6 +41,33 @@ function isHalfDiminishedPredominant(symbol: string | undefined): boolean {
   return resolveChordSymbol(symbol, "plain").quality === "m7b5";
 }
 
+function isSubdominantPreparationLike(symbol: string | undefined): boolean {
+  if (!symbol) return false;
+  const resolved = resolveChordSymbol(symbol, "plain");
+  return [
+    "maj",
+    "maj7",
+    "maj7_sharp11",
+    "6",
+    "6_9",
+    "add9",
+    "m",
+    "m6",
+    "m6_9",
+    "m7",
+    "m9",
+    "m11",
+    "m13",
+    "madd9"
+  ].includes(resolved.quality);
+}
+
+function isMinorSubdominantPreparation(symbol: string | undefined): boolean {
+  if (!symbol) return false;
+  const resolved = resolveChordSymbol(symbol, "plain");
+  return ["m", "m6", "m6_9", "m7", "m9", "m11", "m13", "madd9"].includes(resolved.quality);
+}
+
 function chordBass(symbol: string): string | undefined {
   return resolveChordSymbol(symbol, "plain").bass || undefined;
 }
@@ -62,6 +89,13 @@ function impliedIiVResolutionTarget(context: MaterialContext, root: string): str
   const previousRoot = chordRoot(context.previousChord);
   if (!previousRoot || !isMinorPredominantLike(context.previousChord)) return undefined;
   if (directedSemitones(previousRoot, root) !== 5) return undefined;
+  return transposePitchClass(root, "4P") || undefined;
+}
+
+function impliedSubdominantVResolutionTarget(context: MaterialContext, root: string): string | undefined {
+  const previousRoot = chordRoot(context.previousChord);
+  if (!previousRoot || !isSubdominantPreparationLike(context.previousChord)) return undefined;
+  if (directedSemitones(previousRoot, root) !== 2) return undefined;
   return transposePitchClass(root, "4P") || undefined;
 }
 
@@ -88,6 +122,8 @@ export function contextualResolutionTarget(context: MaterialContext, root: strin
   if (context.nextChord) return undefined;
   const localIiVTarget = impliedIiVResolutionTarget(context, root);
   if (localIiVTarget) return localIiVTarget;
+  const localSubdominantVTarget = impliedSubdominantVResolutionTarget(context, root);
+  if (localSubdominantVTarget) return localSubdominantVTarget;
   return impliedRegionalResolutionTarget(context, root);
 }
 
@@ -104,6 +140,11 @@ export function contextualResolutionChord(
     return `${targetRoot}m`;
   }
 
+  const localSubdominantVTarget = impliedSubdominantVResolutionTarget(context, root);
+  if (localSubdominantVTarget && rootsEqual(localSubdominantVTarget, targetRoot) && isMinorSubdominantPreparation(context.previousChord)) {
+    return `${targetRoot}m`;
+  }
+
   return undefined;
 }
 
@@ -114,7 +155,6 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
   const dominantLike = isDominantLike(context.chord);
   const diminishedLike = isDiminishedLike(context.chord);
 
-  if (center && rootsEqual(root, center.tonic)) return "tonic";
   if (diminishedLike && (
     resolvesAsLeadingDiminished(context.chord, root, nextRoot)
     || resolvesAsLeadingDiminished(context.chord, root, resolutionRoot)
@@ -125,6 +165,7 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
     || (!!center && resolvesAsDominant(root, center.tonic))
   )) return "dominant";
   if (dominantLike) return "color";
+  if (center && rootsEqual(root, center.tonic)) return "tonic";
   if (center && center.mode === "major" && (
     rootsEqual(root, Note.transpose(center.tonic, "2M"))
     || rootsEqual(root, Note.transpose(center.tonic, "4P"))

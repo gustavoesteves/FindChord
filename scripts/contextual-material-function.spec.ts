@@ -110,6 +110,36 @@ describe("F202 funcao contextual de material", () => {
     expect(guideToneResolutions(["C#", "G"], "D", "Dm")).toEqual(["C#->D", "G->F"]);
   });
 
+  it("infere alvo regional local quando IV prepara dominante sem proximo acorde", () => {
+    const preparedDominant = {
+      chord: "D7",
+      previousChord: "C",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSecondaryDominant = {
+      chord: "D7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedDominant, "D")).toBe("G");
+    expect(contextualResolutionChord(preparedDominant, "D", "G")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(preparedDominant, "D")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSecondaryDominant, "D")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSecondaryDominant, "D")).toBe("color");
+  });
+
+  it("infere alvo menor quando iv prepara dominante sem proximo acorde", () => {
+    const preparedMinorDominant = {
+      chord: "C7",
+      previousChord: "Bbm7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedMinorDominant, "C")).toBe("F");
+    expect(contextualResolutionChord(preparedMinorDominant, "C", "F")).toBe("Fm");
+    expect(guideToneResolutions(["E", "Bb"], "F", "Fm")).toEqual(["E->F", "Bb->Ab"]);
+  });
+
   it("reconhece diminuto resolvido por semitom como dominante auxiliar", () => {
     expect(determineContextualHarmonicFunction({
       chord: "G#dim7",
