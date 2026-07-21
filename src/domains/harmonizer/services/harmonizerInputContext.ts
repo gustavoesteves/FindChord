@@ -22,7 +22,8 @@ const REFERENCE_RELATION_LABELS: Record<ReharmonizationReferenceRelation, string
   "reference-close": "Próxima da harmonia da partitura",
   "reference-functional-variation": "Varia a partitura mantendo função",
   "melody-derived-alternative": "Alternativa guiada pela melodia",
-  "harmony-only-reading": "Leitura sem validação melódica"
+  "harmony-only-reading": "Leitura sem validação melódica",
+  "harmony-only-function-preserving-color": "Coloração funcional sem melodia"
 };
 
 export function resolveHarmonizerInputContext({

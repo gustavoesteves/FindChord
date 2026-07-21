@@ -96,6 +96,7 @@
         "FC-RULE-REFERENCE-CONTOUR-PRESERVATION",
         "FC-RULE-REFERENCE-RHYTHM-PRESERVATION",
         "FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING",
+        "FC-RULE-HARMONY-ONLY-DIATONIC-COLOR",
         "FC-RULE-VOICE-LEADING-RANKING"
       ],
       "notes": "O sistema deve propor familias harmonicas, nao casos particulares de musicas do corpus."

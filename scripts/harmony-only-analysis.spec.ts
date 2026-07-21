@@ -33,7 +33,7 @@ describe("Harmony-only analysis", () => {
         targetPitch: "C"
       })
     }));
-    expect(proposals).toHaveLength(1);
+    expect(proposals).toHaveLength(2);
     expect(proposals[0]).toEqual(expect.objectContaining({
       id: "harmony-only-functional-reading",
       name: "Leitura — Função da progressão",
@@ -43,6 +43,27 @@ describe("Harmony-only analysis", () => {
       cadentialTarget: "C"
     }));
     expect(proposals[0].explanation.join(" ")).toContain("sem validação melódica");
+    expect(proposals[1]).toEqual(expect.objectContaining({
+      id: "harmony-only-diatonic-color",
+      name: "Variação — Cores diatônicas da progressão",
+      ruleIds: ["FC-RULE-HARMONY-ONLY-DIATONIC-COLOR"],
+      inputContext: "harmony-only-analysis",
+      referenceRelation: "harmony-only-function-preserving-color",
+      cadentialTarget: "C"
+    }));
+    expect(proposals[1].measures.flatMap(measure => measure.chords)).toEqual([
+      "Cmaj7",
+      "Am7",
+      "Dm7",
+      "G7",
+      "Cmaj7"
+    ]);
+    expect(proposals[1].bassLine).toEqual(["C", "A", "D", "G", "C"]);
+    expect(proposals[1].events?.[0]).toEqual(expect.objectContaining({
+      chord: "Cmaj7",
+      originalChord: "C"
+    }));
+    expect(proposals[1].explanation.join(" ")).toContain("sem validação melódica");
   });
 
   it("offers contextual materials from the reference harmony even without melody", () => {

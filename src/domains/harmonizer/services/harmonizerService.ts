@@ -33,6 +33,7 @@ const CONTROLLED_FUNCTIONAL_SUBSTITUTION_RULE_IDS = ["FC-RULE-CONTROLLED-FUNCTIO
 const REFERENCE_CONTOUR_RULE_IDS = ["FC-RULE-REFERENCE-CONTOUR-PRESERVATION"];
 const REFERENCE_RHYTHM_RULE_IDS = ["FC-RULE-REFERENCE-RHYTHM-PRESERVATION"];
 const HARMONY_ONLY_READING_RULE_IDS = ["FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING"];
+const HARMONY_ONLY_DIATONIC_COLOR_RULE_IDS = ["FC-RULE-HARMONY-ONLY-DIATONIC-COLOR"];
 
 export interface MelodicAnchorSelection {
   anchors: MelodicAnchor[];
@@ -116,6 +117,13 @@ function normalizeControlledChordSymbol(chord: string): string {
 
 function slashBass(chord: string): string | undefined {
   return chord.match(/\/([A-G](?:#|b)?)$/)?.[1];
+}
+
+function pitchClassDistance(from: string, to: string): number | null {
+  const fromChroma = Note.chroma(from);
+  const toChroma = Note.chroma(to);
+  if (fromChroma === null || toChroma === null) return null;
+  return (toChroma - fromChroma + 12) % 12;
 }
 
 function spellScoreNotePitch(note: ScoreNoteEvent): string {
@@ -414,6 +422,84 @@ function bestReferenceContourSubstitute(
     .sort((a, b) => b.fit - a.fit)[0]?.candidate;
 
   return normalizeControlledChordSymbol(changed || candidates[0] || harmony.harmony);
+}
+
+function harmonyOnlyDiatonicColor(harmony: ScoreHarmonyEvent, center: string, mode: "major" | "minor"): string {
+  if (shouldPreserveReferenceColor(harmony.harmony)) {
+    return normalizeControlledChordSymbol(harmony.harmony);
+  }
+
+  const root = chordRoot(harmony.harmony);
+  if (!root) return normalizeControlledChordSymbol(harmony.harmony);
+
+  const distance = pitchClassDistance(center, root);
+  if (distance === null) return normalizeControlledChordSymbol(harmony.harmony);
+
+  const bass = slashBass(harmony.harmony);
+  const bassSuffix = bass && bass !== root ? `/${bass}` : "";
+  const majorQualityByDegree: Record<number, string> = {
+    0: "maj7",
+    2: "m7",
+    4: "m7",
+    5: "maj7",
+    7: "7",
+    9: "m7",
+    11: "m7b5"
+  };
+  const minorQualityByDegree: Record<number, string> = {
+    0: "m7",
+    2: "m7b5",
+    5: "m7",
+    7: "7",
+    8: "maj7",
+    10: "7"
+  };
+  const quality = mode === "minor"
+    ? minorQualityByDegree[distance]
+    : majorQualityByDegree[distance];
+
+  if (!quality) return normalizeControlledChordSymbol(harmony.harmony);
+  return normalizeControlledChordSymbol(`${root}${quality}${bassSuffix}`);
+}
+
+function buildHarmonyOnlyDiatonicColorProposal(
+  sectionHarmonies: ScoreHarmonyEvent[],
+  phraseContext: PhraseContext,
+  referenceAnalysis: ReturnType<typeof analyzeReferenceHarmony>
+): ReharmonizationProposal | null {
+  const mode = phraseContext.selectedCenter.mode === "minor" ? "minor" : "major";
+  const substitutedEvents = sectionHarmonies.map(harmony => ({
+    ...harmony,
+    harmony: harmonyOnlyDiatonicColor(harmony, phraseContext.selectedCenter.tonic, mode)
+  }));
+  const changed = substitutedEvents.some((harmony, index) => (
+    harmony.harmony !== normalizeControlledChordSymbol(sectionHarmonies[index].harmony)
+  ));
+  if (!changed) return null;
+
+  return {
+    id: "harmony-only-diatonic-color",
+    kind: "controlled-reharmonization",
+    name: "Variação — Cores diatônicas da progressão",
+    ruleIds: HARMONY_ONLY_DIATONIC_COLOR_RULE_IDS,
+    measures: harmonyEventsToMeasures(substitutedEvents),
+    events: harmonyEventsToProposalEvents(substitutedEvents, sectionHarmonies),
+    explanation: [
+      "preserva raízes, baixo escrito e percurso funcional da referência",
+      "aplica cores diatônicas típicas para tornar a progressão mais tocável",
+      "proposta construída somente pelas cifras; sem validação melódica"
+    ],
+    bassLine: referenceAnalysis.bassTrajectory.length > 0
+      ? referenceAnalysis.bassTrajectory
+      : sectionHarmonies.map(harmony => chordBass(harmony.harmony)),
+    inputContext: "harmony-only-analysis",
+    referenceRelation: "harmony-only-function-preserving-color",
+    harmonicIdiom: referenceAnalysis.idiom?.idiom,
+    harmonicBoundary: referenceAnalysis.minorModalBoundary?.boundary === "undetermined"
+      ? undefined
+      : referenceAnalysis.minorModalBoundary?.boundary,
+    cadentialTarget: phraseContext.cadentialTarget.targetPitch
+  };
 }
 
 function buildReferenceContourReharmonizationProposal(
@@ -964,6 +1050,7 @@ export function buildHarmonyOnlyAnalysisProposals(
     classifyFunctionInMode(harmony.harmony, phraseContext.selectedCenter.tonic, mode)
   ));
   const functionRoute = functionSummary.join(" -> ");
+  const colorProposal = buildHarmonyOnlyDiatonicColorProposal(sectionHarmonies, phraseContext, referenceAnalysis);
 
   return [{
     id: "harmony-only-functional-reading",
@@ -987,7 +1074,7 @@ export function buildHarmonyOnlyAnalysisProposals(
       ? undefined
       : referenceAnalysis.minorModalBoundary?.boundary,
     cadentialTarget: phraseContext.cadentialTarget.targetPitch
-  }];
+  }, ...(colorProposal ? [colorProposal] : [])];
 }
 
 export function flattenProposalChords(proposal: ReharmonizationProposal): string[] {

@@ -75,7 +75,8 @@ const REFERENCE_RELATION_TONE: Record<ReharmonizationReferenceRelation, string> 
   "reference-close": "text-emerald-300",
   "reference-functional-variation": "text-violet-300",
   "melody-derived-alternative": "text-indigo-300",
-  "harmony-only-reading": "text-amber-300"
+  "harmony-only-reading": "text-amber-300",
+  "harmony-only-function-preserving-color": "text-yellow-300"
 };
 
 export function voiceLeadingLabel(score: number): string {

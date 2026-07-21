@@ -39,7 +39,8 @@ export type ReharmonizationReferenceRelation =
   | "reference-close"
   | "reference-functional-variation"
   | "melody-derived-alternative"
-  | "harmony-only-reading";
+  | "harmony-only-reading"
+  | "harmony-only-function-preserving-color";
 export type ReharmonizationBassLineProfile =
   | "stepwise"
   | "chromatic"

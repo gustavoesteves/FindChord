@@ -265,14 +265,14 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Harmonizações e Improviso / E.
 - **Esperado:** analisar centro, função, trajetória e cadência; propor transformações sem alegar validação melódica.
-- **Observado:** resolvido parcialmente. Sem notas, o Harmonizar agora constrói contexto harmônico, leitura funcional e materiais derivados da referência, explicitando ausência de validação melódica.
+- **Observado:** resolvido parcialmente. Sem notas, o Harmonizar agora constrói contexto harmônico, leitura funcional, uma variação conservadora de cor diatônica e materiais derivados da referência, explicitando ausência de validação melódica.
 - **Evidência:** [useHarmonizerProposals.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useHarmonizerProposals.ts:76>) e [ContextualMaterialSuggestionsPanel.tsx](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/components/ContextualMaterialSuggestionsPanel.tsx:280>).
-- **Reprodução:** C–Am–Dm7–G7–C sem notas: `harmony-only-analysis`, uma referência, zero materiais e painel nulo.
+- **Reprodução original:** C–Am–Dm7–G7–C sem notas produzia apenas a referência/leitura e nenhum material contextual.
 - **Impacto:** músico — Jornada E não existe; produto — um dos três modos prometidos não é entregue.
 - **Causa provável:** pipeline depende obrigatoriamente de `melodicAnchors`.
-- **Progresso:** `buildHarmonyOnlyPhraseContext` infere centro/cadência pela referência; `buildHarmonyOnlyAnalysisProposals` cria a proposta `Leitura — Função da progressão`; materiais contextuais passam a usar a harmonia mesmo com `melody=[]`. Regressão coberta em `harmony-only-analysis.spec.ts` e incluída na suíte curada.
-- **Correção recomendada:** evoluir para transformações harmony-only mais musicais, sem usar critérios de cobertura melódica.
-- **Testes necessários:** UI sem notas, corpus real somente cifras e transformações que preservem função/baixo/cadência.
+- **Progresso:** `buildHarmonyOnlyPhraseContext` infere centro/cadência pela referência; `buildHarmonyOnlyAnalysisProposals` cria a proposta `Leitura — Função da progressão` e `Variação — Cores diatônicas da progressão`, preservando raízes/baixo/cadência e evitando critérios de cobertura melódica. Materiais contextuais passam a usar a harmonia mesmo com `melody=[]`. Regressão coberta em `harmony-only-analysis.spec.ts` e incluída na suíte curada.
+- **Correção recomendada:** evoluir para transformações harmony-only mais musicais além da coloração diatônica, ainda sem usar critérios de cobertura melódica.
+- **Testes necessários:** UI sem notas, corpus real somente cifras e novas famílias de transformação que preservem função/baixo/cadência.
 - **Confiança:** muito alta.
 
 ### FC-HZ-06 — P2 — limite de 32 notas corta seções no meio

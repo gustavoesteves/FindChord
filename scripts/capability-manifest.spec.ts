@@ -182,11 +182,11 @@ describe("capability manifest", () => {
       cadentialTarget: { targetPitch: "C", cadenceType: "OPEN" as const, confidence: 0.8 }
     };
     const sectionHarmonies = [
-      harmony(1, "Cmaj7"),
-      harmony(2, "Fmaj7", 1),
-      harmony(2, "Fmaj7", 3),
+      harmony(1, "C"),
+      harmony(2, "F", 1),
+      harmony(2, "Dm7", 3),
       harmony(3, "G7"),
-      harmony(4, "Cmaj7")
+      harmony(4, "C")
     ];
     const melody = [
       { ...anchor(2, "A"), startTick: 1920, endTick: 2400 },
@@ -203,7 +203,8 @@ describe("capability manifest", () => {
     expect(Array.from(runtimeRuleIds)).toEqual(expect.arrayContaining([
       "FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION",
       "FC-RULE-REFERENCE-RHYTHM-PRESERVATION",
-      "FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING"
+      "FC-RULE-HARMONY-ONLY-FUNCTIONAL-READING",
+      "FC-RULE-HARMONY-ONLY-DIATONIC-COLOR"
     ]));
     for (const ruleId of runtimeRuleIds) {
       expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
