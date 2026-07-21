@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { isBridgeMessage } from "../src/utils/music/bridge/Protocol";
-import { toMuseScoreChordSymbol } from "../src/utils/musescoreAdapter";
+import { createInsertChordBridgeMessage, toMuseScoreChordSymbol } from "../src/utils/musescoreAdapter";
+import type { CanonicalChordEvent } from "../src/utils/music/analysis/models/CanonicalChordEvent";
 
 describe("MuseScore chord insertion safety", () => {
   it.each([
@@ -136,16 +137,54 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("payload.action !== \"INSERT_CHORD\"");
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 
-    expect(adapter).toContain("const commandId = crypto.randomUUID();");
+    expect(adapter).toContain("const commandId = options.commandId || crypto.randomUUID();");
+    expect(adapter).toContain("createInsertChordBridgeMessage");
     expect(adapter).toContain("export type MuseScoreSendChordResult");
     expect(adapter).toContain("public async sendChordDetailed");
-    expect(adapter).toContain("expiresAt: Date.now() + 8000");
+    expect(adapter).toContain("expiresAt: options.now + 8000");
     expect(adapter).toContain("sendWithAck(msg, commandId, 8000)");
 
     expect(transport).toContain("private pendingAcks");
     expect(transport).toContain("isBridgeMessage(payload)");
     expect(transport).toContain("resolveAck(payload)");
     expect(transport).toContain("public async sendWithAck");
+  });
+
+  it("permite retry idempotente reutilizando commandId da mesma insercao", () => {
+    const chord: CanonicalChordEvent = {
+      id: "writer-cmaj7",
+      symbol: "C7M",
+      canonicalSymbol: "Cmaj7",
+      voicing: {
+        notes: [60, 64, 67, 71]
+      },
+      tuning: {
+        instrument: "Guitarra",
+        strings: ["E2", "A2", "D3", "G3", "B3", "E4"]
+      },
+      inversion: "Root"
+    };
+
+    const first = createInsertChordBridgeMessage(chord, "Cmaj7", {
+      commandId: "cmd_insert_cmaj7",
+      now: 1000
+    });
+    const retry = createInsertChordBridgeMessage(chord, "Cmaj7", {
+      commandId: "cmd_insert_cmaj7",
+      now: 1200
+    });
+
+    expect(first.payload).toEqual(expect.objectContaining({
+      type: "MUTATION",
+      commandId: "cmd_insert_cmaj7",
+      action: "INSERT_CHORD",
+      expiresAt: 9000,
+      chordSymbol: "Cmaj7"
+    }));
+    expect(retry.payload).toEqual(expect.objectContaining({
+      commandId: "cmd_insert_cmaj7",
+      expiresAt: 9200
+    }));
   });
 
   it("exibe resultado tipado da insercao no Writer em vez de apenas console.warn", () => {
@@ -156,6 +195,10 @@ describe("MuseScore chord insertion safety", () => {
     expect(adapter).toContain("reason: \"plugin-rejected\"");
     expect(adapter).toContain("reason: /timed out/i.test(message) ? \"timeout\" : \"bridge-offline\"");
     expect(fretboard).toContain("sendChordDetailed(payload)");
+    expect(fretboard).toContain("setMuseScoreRetry(!result.ok && result.commandId");
+    expect(fretboard).toContain("sendChordDetailed(museScoreRetry.payload, {");
+    expect(fretboard).toContain("commandId: museScoreRetry.commandId");
+    expect(fretboard).toContain("Tentar novamente");
     expect(fretboard).toContain("museScoreSendStatus");
     expect(fretboard).toContain("Inserido no MuseScore");
     expect(fretboard).not.toContain("Falha ao enviar acorde para o MuseScore local.");

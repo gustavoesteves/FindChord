@@ -3,6 +3,7 @@ import { useWriter } from "../context/WriterContext";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import { playGuitarNote } from "../../../utils/audioSynth";
 import { musescoreAdapter } from "../../../utils/musescoreAdapter";
+import type { CanonicalChordEvent } from "../../../utils/music/analysis/models/CanonicalChordEvent";
 import { buildWriterMuseScoreChordEvent } from "../services/writerMuseScorePayload";
 import { buildWriterFretboardPlaybackSteps } from "../services/writerFretboardPlayback";
 import {
@@ -19,6 +20,10 @@ export const VirtualFretboard: React.FC = () => {
   const [museScoreSendStatus, setMuseScoreSendStatus] = useState<{
     kind: "success" | "error";
     message: string;
+  } | null>(null);
+  const [museScoreRetry, setMuseScoreRetry] = useState<{
+    commandId: string;
+    payload: CanonicalChordEvent;
   } | null>(null);
 
   useEffect(() => {
@@ -52,6 +57,26 @@ export const VirtualFretboard: React.FC = () => {
     if (!payload) return;
 
     const result = await musescoreAdapter.sendChordDetailed(payload);
+    setMuseScoreRetry(!result.ok && result.commandId
+      ? { commandId: result.commandId, payload }
+      : null
+    );
+    setMuseScoreSendStatus(result.ok
+      ? { kind: "success", message: `Inserido no MuseScore: ${result.chordSymbol}` }
+      : { kind: "error", message: result.message }
+    );
+  };
+
+  const handleRetryMuseScoreSend = async () => {
+    if (!museScoreRetry) return;
+
+    const result = await musescoreAdapter.sendChordDetailed(museScoreRetry.payload, {
+      commandId: museScoreRetry.commandId
+    });
+    setMuseScoreRetry(!result.ok && result.commandId
+      ? { commandId: result.commandId, payload: museScoreRetry.payload }
+      : null
+    );
     setMuseScoreSendStatus(result.ok
       ? { kind: "success", message: `Inserido no MuseScore: ${result.chordSymbol}` }
       : { kind: "error", message: result.message }
@@ -130,10 +155,20 @@ export const VirtualFretboard: React.FC = () => {
         </div>
       </div>
       {museScoreSendStatus && (
-        <div className={`px-1 text-[11px] font-semibold ${
+        <div className={`flex items-center gap-2 px-1 text-[11px] font-semibold ${
           museScoreSendStatus.kind === "success" ? "text-emerald-300" : "text-amber-300"
         }`}>
-          {museScoreSendStatus.message}
+          <span>{museScoreSendStatus.message}</span>
+          {museScoreRetry && (
+            <button
+              onClick={handleRetryMuseScoreSend}
+              className="inline-flex items-center gap-1 rounded-md border border-amber-400/40 px-2 py-0.5 text-[10px] text-amber-200 hover:border-amber-300 hover:text-amber-100"
+              title="Reenviar a mesma operação ao MuseScore"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Tentar novamente
+            </button>
+          )}
         </div>
       )}
 

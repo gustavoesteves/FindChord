@@ -46,6 +46,11 @@ export type MuseScoreSendChordResult =
   | { ok: true; commandId: string; chordSymbol: string }
   | { ok: false; reason: MuseScoreSendChordFailure; message: string; commandId?: string; chordSymbol?: string };
 
+export interface MuseScoreSendChordOptions {
+  commandId?: string;
+  now?: number;
+}
+
 /**
  * MuseScore recebe somente a cifra musical, nao os metadados de analise.
  * Omissões como `(no3)` servem ao motor de deteccao, mas nao devem atravessar
@@ -76,6 +81,26 @@ export function toMuseScoreChordSymbol(
   }
 
   return resolved.display;
+}
+
+export function createInsertChordBridgeMessage(
+  chord: CanonicalChordEvent,
+  chordSymbol: string,
+  options: Required<MuseScoreSendChordOptions>
+): BridgeMessage {
+  return {
+    protocolVersion: '1.0',
+    messageType: 'MUTATION',
+    payload: {
+      type: 'MUTATION',
+      commandId: options.commandId,
+      expiresAt: options.now + 8000,
+      action: 'INSERT_CHORD',
+      targetTick: 0,
+      chordSymbol,
+      data: { ...chord, symbol: chordSymbol, canonicalSymbol: chordSymbol }
+    } satisfies MutationCommand
+  };
 }
 
 function isScoreSessionPayload(payload: unknown): payload is ScoreSessionPayload {
@@ -136,7 +161,10 @@ class MuseScoreAdapter {
     this.transport.disconnect();
   }
 
-  public async sendChordDetailed(chord: CanonicalChordEvent): Promise<MuseScoreSendChordResult> {
+  public async sendChordDetailed(
+    chord: CanonicalChordEvent,
+    options: MuseScoreSendChordOptions = {}
+  ): Promise<MuseScoreSendChordResult> {
     const sourceSymbol = chord.canonicalSymbol || chord.symbol;
     const chordSymbol = toMuseScoreChordSymbol(sourceSymbol, { trustedCanonical: Boolean(chord.canonicalSymbol) });
     if (!chordSymbol) {
@@ -148,20 +176,11 @@ class MuseScoreAdapter {
       };
     }
 
-    const commandId = crypto.randomUUID();
-    const msg: BridgeMessage = {
-      protocolVersion: '1.0',
-      messageType: 'MUTATION',
-      payload: {
-        type: 'MUTATION',
-        commandId,
-        expiresAt: Date.now() + 8000,
-        action: 'INSERT_CHORD',
-        targetTick: 0,
-        chordSymbol,
-        data: { ...chord, symbol: chordSymbol, canonicalSymbol: chordSymbol }
-      } satisfies MutationCommand
-    };
+    const commandId = options.commandId || crypto.randomUUID();
+    const msg = createInsertChordBridgeMessage(chord, chordSymbol, {
+      commandId,
+      now: options.now ?? Date.now()
+    });
     try {
       const ack = await this.transport.sendWithAck(msg, commandId, 8000);
       if (ack.status === "accepted") {
