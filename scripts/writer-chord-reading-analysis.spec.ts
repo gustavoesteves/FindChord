@@ -44,4 +44,42 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensionLevel: 0.72
     });
   });
+
+  it("reconhece drop 2 em quatro cordas adjacentes sem chamar de shell", () => {
+    expect(analyzeWriterChordReading({
+      selectedFrets: [7, 8, 9, 10, null, null],
+      tuning,
+      root: "C",
+      quality: "major7th",
+      tensions: []
+    })).toMatchObject({
+      voicingType: "Drop 2",
+      omissions: []
+    });
+  });
+
+  it("preserva leitura quartal quando o empilhamento de quartas e o material", () => {
+    expect(analyzeWriterChordReading({
+      selectedFrets: [0, 0, 0],
+      tuning: ["C4", "F4", "Bb4"],
+      root: "C",
+      quality: "dominant7sus4",
+      tensions: []
+    })).toMatchObject({
+      voicingType: "Quartal"
+    });
+  });
+
+  it("nomeia shapes rootless como sem tonica e explicita a omissao", () => {
+    expect(analyzeWriterChordReading({
+      selectedFrets: [0, 0, 0],
+      tuning: ["E4", "G4", "B4"],
+      root: "C",
+      quality: "major7th",
+      tensions: []
+    })).toMatchObject({
+      voicingType: "Sem tônica",
+      omissions: ["tônica"]
+    });
+  });
 });

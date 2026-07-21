@@ -62,6 +62,14 @@ function voicingTypeForReading(
   classification: VoicingClassification
 ): string {
   if (
+    roles.root === "omitted"
+    && roles.third === "present"
+    && roles.seventh === "present"
+  ) {
+    return "Sem tônica";
+  }
+
+  if (
     roles.physicalVoices === 3
     && roles.root === "present"
     && roles.third === "present"
