@@ -106,6 +106,11 @@ function normalizeRoot(chord: string): string | null {
   return root ? Note.pitchClass(root) || root : null;
 }
 
+function normalizeBass(chord: string): string | null {
+  const bass = resolveChordSymbol(chord).bass;
+  return bass ? Note.pitchClass(bass) || bass : normalizeRoot(chord);
+}
+
 function dominantTarget(root: string | null): string | null {
   if (!root) return null;
   return Note.pitchClass(Note.transpose(`${root}4`, "4P"));
@@ -224,6 +229,20 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
     const mode = target ? targetModeFromExistingQualities(ordered.slice(0, -1), target) : null;
     if (target && mode) {
       addScore(target, mode, 2.2, `meia cadência em ${target} ${mode === "minor" ? "menor" : "maior"}`);
+    }
+    const penultimateBass = penultimate ? normalizeBass(penultimate.harmony) : null;
+    const lastBass = normalizeBass(last.harmony);
+    const hasPhrygianBass = target
+      && penultimateRoot
+      && penultimateResolved
+      && penultimateBass
+      && lastBass
+      && isMinorQuality(penultimateResolved.quality)
+      && chromaticDistance(penultimateRoot, target) === 5
+      && chromaticDistance(penultimateBass, target) === 8
+      && chromaticDistance(lastBass, target) === 7;
+    if (target && hasPhrygianBass) {
+      addScore(target, "minor", 2.8, `cadência frígia iv6-V aponta ${target} menor`);
     }
   }
   if (isMajorQuality(firstResolved.quality)) addScore(firstRoot, "major", 0.4, `primeiro acorde sugere ${firstRoot} maior`);

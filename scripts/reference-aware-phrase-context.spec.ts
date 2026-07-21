@@ -149,6 +149,25 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("promotes written phrygian half-cadence evidence in minor", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["Dm/F", "E7"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      mode: "minor"
+    }));
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).toContain("cadência frígia iv6-V confirma chegada dominante em A menor");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "A",
+      cadenceType: "PHRYGIAN",
+      confidence: 0.76
+    });
+  });
+
   it("keeps the melodic phrase center when reference evidence is weak", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),
@@ -191,6 +210,7 @@ describe("F48 reference-aware phrase context", () => {
     expect(formatReferenceCenterEvidence("V-i local aponta A menor")).toBe("cadência V-i confirma A menor");
     expect(formatReferenceCenterEvidence("cadência deceptiva V-vi aponta C maior")).toBe("cadência deceptiva V-vi confirma C maior");
     expect(formatReferenceCenterEvidence("cadência deceptiva V-VI aponta A menor")).toBe("cadência deceptiva V-VI confirma A menor");
+    expect(formatReferenceCenterEvidence("cadência frígia iv6-V aponta A menor")).toBe("cadência frígia iv6-V confirma chegada dominante em A menor");
     expect(formatReferenceCenterEvidence("meia cadência em C maior")).toBe("meia cadência confirma chegada dominante em C maior");
     expect(formatReferenceCenterEvidence("iv-I plagal aponta C maior")).toBe("cadência plagal iv-I confirma C maior");
     expect(formatReferenceCenterEvidence("repouso menor recorrente em D")).toBe("repousos recorrentes sustentam D menor");

@@ -110,6 +110,17 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
     expect(analysis.referenceCenter?.evidence).toContain("meia cadência em A menor");
   });
 
+  it("infers a phrygian half cadence from iv6-V bass motion in minor", () => {
+    const analysis = analyzeReferenceHarmony(harmonies(["Dm/F", "E7"]));
+
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      mode: "minor",
+      confidence: "medium"
+    }));
+    expect(analysis.referenceCenter?.evidence).toContain("cadência frígia iv6-V aponta A menor");
+  });
+
   it("infers a final plagal cadence from IV-I motion", () => {
     const analysis = analyzeReferenceHarmony(harmonies(["C", "F", "C"]));
 
