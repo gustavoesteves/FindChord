@@ -75,6 +75,15 @@ const STRATEGY_LABELS: Record<HarmonicStrategyId, string> = {
   II_SUBV7_CADENCIAL: "Estratégia — ii-SubV7 cadencial"
 };
 
+const STRATEGY_RULE_IDS: Record<HarmonicStrategyId, string[]> = {
+  I_IV_V: ["FC-RULE-BASIC-I-IV-V-FOUNDATION"],
+  EXPANSAO_FUNCIONAL_DIATONICA: ["FC-RULE-BASIC-I-IV-V-FOUNDATION"],
+  DOMINANTES_SECUNDARIAS: ["FC-RULE-BASIC-I-IV-V-FOUNDATION"],
+  DIMINUTO_PASSAGEM: ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-DIMINISHED-PASSING-RESOLUTION"],
+  SUBV7_CADENCIAL: ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-SUBV-CHROMATIC-RESOLUTION"],
+  II_SUBV7_CADENCIAL: ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-SUBV-CHROMATIC-RESOLUTION"]
+};
+
 const EXPANSION_EXPLANATIONS: Record<string, string> = {
   PROLONG_VIA_SECONDARY: "prolonga a região de repouso com um acorde representante",
   SUSTAIN: "sustenta a preparação subdominante sem sair da função",
@@ -2702,7 +2711,8 @@ export class StrategyGuidedHarmonizer {
         )
       ],
       bassLine: candidate.measures.flatMap(measure => measure.chords.map(chord => this.bassOrRootOfChord(chord) || chord)),
-      cadentialTarget: candidate.center
+      cadentialTarget: candidate.center,
+      ruleIds: STRATEGY_RULE_IDS[candidate.strategy]
     };
   }
 

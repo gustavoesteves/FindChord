@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
+import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
+import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
+import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import { buildContextualMaterialCandidates } from "../src/utils/music/theory/contextualMaterialCandidates";
 
 interface CapabilityManifest {
@@ -78,6 +81,26 @@ describe("capability manifest", () => {
       ...buildContextualMaterialCandidates({ chord: "Bm7b5" }).flatMap(candidate => candidate.ruleIds),
       ...buildContextualMaterialCandidates({ chord: "G#dim7" }).flatMap(candidate => candidate.ruleIds),
       ...buildContextualMaterialCandidates({ chord: "Db7", nextChord: "C", resolutionTarget: "C" }).flatMap(candidate => candidate.ruleIds)
+    ]);
+
+    expect(runtimeRuleIds.size).toBeGreaterThan(0);
+    for (const ruleId of runtimeRuleIds) {
+      expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
+    }
+  });
+
+  it("declara os ruleIds emitidos por propostas de rearmonizacao validadas", () => {
+    const declaredRuleIds = new Set(manifest().capabilities.flatMap(capability => capability.ruleIds));
+    const melody: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 3, pitch: "Db", duration: 960 },
+      { measureIndex: 4, pitch: "C", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(melody, "C");
+    const runtimeRuleIds = new Set([
+      ...(StrategyGuidedHarmonizer.tryStrategy("I_IV_V", melody, phraseContext).proposal?.ruleIds ?? []),
+      ...(StrategyGuidedHarmonizer.tryStrategy("SUBV7_CADENCIAL", melody, phraseContext).proposal?.ruleIds ?? [])
     ]);
 
     expect(runtimeRuleIds.size).toBeGreaterThan(0);

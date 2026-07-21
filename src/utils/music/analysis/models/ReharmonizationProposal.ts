@@ -89,6 +89,7 @@ export interface ReharmonizationProposal {
   harmonicIdiom?: ReharmonizationHarmonicIdiom;
   harmonicBoundary?: ReharmonizationHarmonicBoundary;
   cadentialTarget?: string;
+  ruleIds?: string[];
   diagnostics?: HarmonicDiagnostic[];
   colorVariants?: ReharmonizationProposal[];
 }

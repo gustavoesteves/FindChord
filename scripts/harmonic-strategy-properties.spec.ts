@@ -45,6 +45,18 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(validation.report.bassMotionProfile).toMatch(/ASCENDING|MIXED/);
   });
 
+  it("anexa ruleIds versionaveis nas propostas geradas por estrategia", () => {
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(almadaMelody, "C");
+    const basic = StrategyGuidedHarmonizer.tryStrategy("I_IV_V", almadaMelody, phraseContext);
+    const diminished = StrategyGuidedHarmonizer.tryStrategy("DIMINUTO_PASSAGEM", almadaMelody, phraseContext);
+
+    expect(basic.proposal?.ruleIds).toEqual(["FC-RULE-BASIC-I-IV-V-FOUNDATION"]);
+    expect(diminished.proposal?.ruleIds).toEqual(expect.arrayContaining([
+      "FC-RULE-BASIC-I-IV-V-FOUNDATION",
+      "FC-RULE-DIMINISHED-PASSING-RESOLUTION"
+    ]));
+  });
+
   it("accepts diatonic functional expansion when secondary representatives preserve function", () => {
     const candidate: HarmonizationCandidate = {
       strategy: "EXPANSAO_FUNCIONAL_DIATONICA",

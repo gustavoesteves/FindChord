@@ -103,6 +103,9 @@ describe("F29 Cadential SubV7 Strategy", () => {
       "substitui a dominante cadencial por SubV7 com resolução cromática",
       "substitui a dominante por trítono com resolução cromática"
     ]));
+    expect(attempt.proposal?.ruleIds).toEqual(expect.arrayContaining([
+      "FC-RULE-SUBV-CHROMATIC-RESOLUTION"
+    ]));
   });
 
   it("does not accept SubV7 when the substitute fails melodic coverage", () => {
