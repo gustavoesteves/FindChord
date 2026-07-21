@@ -12,6 +12,7 @@ type StatusListener = (status: ConnectionStatus) => void;
 export interface BridgeOperationalStatus {
   bridgeOnline: boolean;
   pluginOnline: boolean;
+  pluginSessionId: string | null;
   pluginLastSeen: string | null;
   frontendLastSeen: string | null;
   queueSize: number;
@@ -26,6 +27,7 @@ export interface BridgeOperationalStatus {
 
 interface BridgeStatusResponse {
   bridgeOnline?: boolean;
+  pluginSessionId?: string | null;
   pluginLastSeen?: string | null;
   frontendLastSeen?: string | null;
   queueSize?: number;
@@ -48,6 +50,7 @@ export type MuseScoreSendChordResult =
 
 export interface MuseScoreSendChordOptions {
   commandId?: string;
+  targetPluginSessionId?: string;
   now?: number;
 }
 
@@ -86,7 +89,7 @@ export function toMuseScoreChordSymbol(
 export function createInsertChordBridgeMessage(
   chord: CanonicalChordEvent,
   chordSymbol: string,
-  options: Required<MuseScoreSendChordOptions>
+  options: { commandId: string; now: number; targetPluginSessionId?: string }
 ): BridgeMessage {
   return {
     protocolVersion: '1.0',
@@ -94,6 +97,7 @@ export function createInsertChordBridgeMessage(
     payload: {
       type: 'MUTATION',
       commandId: options.commandId,
+      ...(options.targetPluginSessionId ? { targetPluginSessionId: options.targetPluginSessionId } : {}),
       expiresAt: options.now + 8000,
       action: 'INSERT_CHORD',
       targetTick: 0,
@@ -112,6 +116,7 @@ function isScoreSessionPayload(payload: unknown): payload is ScoreSessionPayload
 class MuseScoreAdapter {
   private transport: WebSocketTransport;
   private activeScoreSyncRequestId: string | null = null;
+  private activePluginSessionId: string | null = null;
 
   constructor() {
     this.transport = new WebSocketTransport("ws://localhost:9000/dashboard");
@@ -146,11 +151,22 @@ class MuseScoreAdapter {
     return {
       bridgeOnline: Boolean(status.bridgeOnline),
       pluginOnline,
+      pluginSessionId: status.pluginSessionId || null,
       pluginLastSeen: status.pluginLastSeen || null,
       frontendLastSeen: status.frontendLastSeen || null,
       queueSize: status.queueSize || 0,
       score: status.score || null
     };
+  }
+
+  private async resolveTargetPluginSessionId(): Promise<string | null> {
+    try {
+      const status = await this.getOperationalStatus();
+      this.activePluginSessionId = status.pluginSessionId;
+      return this.activePluginSessionId;
+    } catch {
+      return this.activePluginSessionId;
+    }
   }
 
   public connect() {
@@ -177,8 +193,10 @@ class MuseScoreAdapter {
     }
 
     const commandId = options.commandId || crypto.randomUUID();
+    const targetPluginSessionId = options.targetPluginSessionId ?? await this.resolveTargetPluginSessionId();
     const msg = createInsertChordBridgeMessage(chord, chordSymbol, {
       commandId,
+      targetPluginSessionId: targetPluginSessionId || undefined,
       now: options.now ?? Date.now()
     });
     try {

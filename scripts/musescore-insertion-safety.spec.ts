@@ -116,6 +116,7 @@ describe("MuseScore chord insertion safety", () => {
 
     expect(protocol).toContain("messageType: 'SESSION' | 'MUTATION' | 'ACK'");
     expect(protocol).toContain("commandId: string;");
+    expect(protocol).toContain("targetPluginSessionId?: string;");
     expect(protocol).toContain("expiresAt: number;");
     expect(protocol).toContain("action: 'INSERT_CHORD';");
     expect(protocol).not.toContain("REPLACE_CHORD");
@@ -127,6 +128,7 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("isExpiredBridgeMessage");
     expect(bridge).toContain("prepareBridgeMessageForQueue");
     expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
+    expect(bridge).toContain("pluginSessionId: activePluginSessionId");
     expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
     expect(bridge).toContain("function enqueueBridgeMessage(message)");
     expect(bridge).toContain("queued?.messageType === 'SESSION' && queued?.payload?.type === 'request_score'");
@@ -145,6 +147,8 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 
     expect(adapter).toContain("const commandId = options.commandId || crypto.randomUUID();");
+    expect(adapter).toContain("resolveTargetPluginSessionId");
+    expect(adapter).toContain("targetPluginSessionId: targetPluginSessionId || undefined");
     expect(adapter).toContain("createInsertChordBridgeMessage");
     expect(adapter).toContain("export type MuseScoreSendChordResult");
     expect(adapter).toContain("public async sendChordDetailed");
@@ -174,22 +178,26 @@ describe("MuseScore chord insertion safety", () => {
 
     const first = createInsertChordBridgeMessage(chord, "Cmaj7", {
       commandId: "cmd_insert_cmaj7",
+      targetPluginSessionId: "plugin_active",
       now: 1000
     });
     const retry = createInsertChordBridgeMessage(chord, "Cmaj7", {
       commandId: "cmd_insert_cmaj7",
+      targetPluginSessionId: "plugin_active",
       now: 1200
     });
 
     expect(first.payload).toEqual(expect.objectContaining({
       type: "MUTATION",
       commandId: "cmd_insert_cmaj7",
+      targetPluginSessionId: "plugin_active",
       action: "INSERT_CHORD",
       expiresAt: 9000,
       chordSymbol: "Cmaj7"
     }));
     expect(retry.payload).toEqual(expect.objectContaining({
       commandId: "cmd_insert_cmaj7",
+      targetPluginSessionId: "plugin_active",
       expiresAt: 9200
     }));
   });

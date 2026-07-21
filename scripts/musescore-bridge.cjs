@@ -510,6 +510,7 @@ const server = http.createServer((req, res) => {
       bridgeVersion: '1.0',
       bridgeOnline: true,
       sessionId,
+      pluginSessionId: activePluginSessionId,
       queueSize: eventQueue.length,
       eventsReceived,
       eventsAccepted,

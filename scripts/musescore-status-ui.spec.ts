@@ -30,22 +30,28 @@ describe("MuseScore status UI", () => {
   it("propagates score identity from MusicXML parsing to bridge status", () => {
     const parser = readFileSync("scripts/musicxml-parser.cjs", "utf8");
     const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
     const model = readFileSync("src/utils/music/analysis/models/ScoreSnapshot.ts", "utf8");
 
     expect(parser).toContain("function stableScoreId");
     expect(parser).toContain("snapshot.metadata.scoreId = stableScoreId(snapshot)");
     expect(bridge).toContain("currentScoreIdentity");
     expect(bridge).toContain("score: currentScoreIdentity");
+    expect(bridge).toContain("pluginSessionId: activePluginSessionId");
+    expect(adapter).toContain("pluginSessionId: status.pluginSessionId || null");
     expect(model).toContain("scoreId?: string;");
   });
 
   it("targets score sync requests to the active plugin session", () => {
     const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
     const plugin = readFileSync("plugins/FindChordBridge.qml", "utf8");
 
     expect(bridge).toContain("activePluginSessionId = crypto.randomUUID()");
     expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
     expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
+    expect(adapter).toContain("resolveTargetPluginSessionId");
+    expect(adapter).toContain("targetPluginSessionId: targetPluginSessionId || undefined");
     expect(plugin).toContain("bridgePluginSessionId = session.pluginSessionId || \"\"");
     expect(plugin).toContain("/api/v1/consume?pluginSessionId=");
   });

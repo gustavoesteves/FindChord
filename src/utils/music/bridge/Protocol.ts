@@ -7,6 +7,7 @@ export interface BridgeMessage {
 export interface MutationCommand {
   type: 'MUTATION';
   commandId: string;
+  targetPluginSessionId?: string;
   expiresAt: number;
   action: 'INSERT_CHORD';
   targetTick: number;
