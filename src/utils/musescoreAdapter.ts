@@ -36,6 +36,16 @@ type ScoreSessionPayload =
   | { type: "SCORE_SNAPSHOT"; requestId?: string; data: ScoreSnapshot }
   | { type: "CURSOR_CHANGED"; cursorTick: number };
 
+export type MuseScoreSendChordFailure =
+  | "invalid-symbol"
+  | "bridge-offline"
+  | "timeout"
+  | "plugin-rejected";
+
+export type MuseScoreSendChordResult =
+  | { ok: true; commandId: string; chordSymbol: string }
+  | { ok: false; reason: MuseScoreSendChordFailure; message: string; commandId?: string; chordSymbol?: string };
+
 /**
  * MuseScore recebe somente a cifra musical, nao os metadados de analise.
  * Omissões como `(no3)` servem ao motor de deteccao, mas nao devem atravessar
@@ -126,12 +136,16 @@ class MuseScoreAdapter {
     this.transport.disconnect();
   }
 
-  public async sendChord(chord: CanonicalChordEvent): Promise<boolean> {
+  public async sendChordDetailed(chord: CanonicalChordEvent): Promise<MuseScoreSendChordResult> {
     const sourceSymbol = chord.canonicalSymbol || chord.symbol;
     const chordSymbol = toMuseScoreChordSymbol(sourceSymbol, { trustedCanonical: Boolean(chord.canonicalSymbol) });
     if (!chordSymbol) {
-      console.warn("Cifra rejeitada antes do envio ao MuseScore:", sourceSymbol);
-      return false;
+      return {
+        ok: false,
+        reason: "invalid-symbol",
+        message: "Cifra rejeitada antes do envio ao MuseScore.",
+        chordSymbol: sourceSymbol
+      };
     }
 
     const commandId = crypto.randomUUID();
@@ -150,11 +164,32 @@ class MuseScoreAdapter {
     };
     try {
       const ack = await this.transport.sendWithAck(msg, commandId, 8000);
-      return ack.status === "accepted";
+      if (ack.status === "accepted") {
+        return { ok: true, commandId, chordSymbol };
+      }
+      return {
+        ok: false,
+        reason: "plugin-rejected",
+        message: ack.reason || "O plugin do MuseScore rejeitou a inserção.",
+        commandId,
+        chordSymbol
+      };
     } catch (e) {
-      console.warn("MuseScore bridge offline", e);
-      return false;
+      const message = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        reason: /timed out/i.test(message) ? "timeout" : "bridge-offline",
+        message: /timed out/i.test(message)
+          ? "O plugin do MuseScore não confirmou a inserção a tempo."
+          : "Bridge local do MuseScore offline.",
+        commandId,
+        chordSymbol
+      };
     }
+  }
+
+  public async sendChord(chord: CanonicalChordEvent): Promise<boolean> {
+    return (await this.sendChordDetailed(chord)).ok;
   }
 
   public async requestScoreSync(): Promise<boolean> {

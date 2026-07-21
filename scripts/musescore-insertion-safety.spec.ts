@@ -137,6 +137,8 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 
     expect(adapter).toContain("const commandId = crypto.randomUUID();");
+    expect(adapter).toContain("export type MuseScoreSendChordResult");
+    expect(adapter).toContain("public async sendChordDetailed");
     expect(adapter).toContain("expiresAt: Date.now() + 8000");
     expect(adapter).toContain("sendWithAck(msg, commandId, 8000)");
 
@@ -144,6 +146,19 @@ describe("MuseScore chord insertion safety", () => {
     expect(transport).toContain("isBridgeMessage(payload)");
     expect(transport).toContain("resolveAck(payload)");
     expect(transport).toContain("public async sendWithAck");
+  });
+
+  it("exibe resultado tipado da insercao no Writer em vez de apenas console.warn", () => {
+    const adapter = readFileSync("src/utils/musescoreAdapter.ts", "utf8");
+    const fretboard = readFileSync("src/domains/writer/components/VirtualFretboard.tsx", "utf8");
+
+    expect(adapter).toContain("reason: \"invalid-symbol\"");
+    expect(adapter).toContain("reason: \"plugin-rejected\"");
+    expect(adapter).toContain("reason: /timed out/i.test(message) ? \"timeout\" : \"bridge-offline\"");
+    expect(fretboard).toContain("sendChordDetailed(payload)");
+    expect(fretboard).toContain("museScoreSendStatus");
+    expect(fretboard).toContain("Inserido no MuseScore");
+    expect(fretboard).not.toContain("Falha ao enviar acorde para o MuseScore local.");
   });
 
   it("rejeita mensagens fora da versao e do tipo de protocolo suportados", () => {

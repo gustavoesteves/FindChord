@@ -16,6 +16,10 @@ import { Volume2, RotateCcw, Send } from "lucide-react";
 export const VirtualFretboard: React.FC = () => {
   const { state, actions } = useWriter();
   const [vibratingStrings, setVibratingStrings] = useState<boolean[]>([]);
+  const [museScoreSendStatus, setMuseScoreSendStatus] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     setVibratingStrings(Array(state.tuning.length).fill(false));
@@ -47,10 +51,11 @@ export const VirtualFretboard: React.FC = () => {
     });
     if (!payload) return;
 
-    const success = await musescoreAdapter.sendChord(payload);
-    if (!success) {
-      console.warn("Falha ao enviar acorde para o MuseScore local.");
-    }
+    const result = await musescoreAdapter.sendChordDetailed(payload);
+    setMuseScoreSendStatus(result.ok
+      ? { kind: "success", message: `Inserido no MuseScore: ${result.chordSymbol}` }
+      : { kind: "error", message: result.message }
+    );
   };
 
   const playCurrentFretboard = () => {
@@ -124,6 +129,13 @@ export const VirtualFretboard: React.FC = () => {
           </button>
         </div>
       </div>
+      {museScoreSendStatus && (
+        <div className={`px-1 text-[11px] font-semibold ${
+          museScoreSendStatus.kind === "success" ? "text-emerald-300" : "text-amber-300"
+        }`}>
+          {museScoreSendStatus.message}
+        </div>
+      )}
 
       {/* SVG Fretboard */}
       <div className="w-full overflow-x-auto rounded-xl border border-zinc-800/80 glass-panel p-4 shadow-2xl relative select-none">
