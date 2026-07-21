@@ -25,10 +25,10 @@ O caminho atual e:
 4. a tela lista todas as escalas no mesmo nivel;
 5. ao clicar, o braco mostra notas do campo e uma classificacao visual local.
 
-As referencias principais sao:
+As referencias principais eram:
 
 - `src/utils/music/theory/musicTheory.ts`;
-- `src/domains/writer/components/ScaleOverlayPanel.tsx`;
+- `src/domains/writer/components/WriterMaterialPanel.tsx`;
 - `src/domains/writer/context/WriterContext.tsx`;
 - `src/utils/music/constants/chordRegistry.ts`.
 
@@ -92,10 +92,10 @@ Isso transforma uma decisao musical em um inventario.
 
 ### 5. A classificação visual mistura conceitos
 
-`ScaleOverlayPanel` classifica uma nota como nota do acorde antes de aplicar
-algumas regras de nota característica. A classificação e útil como mapa visual,
-mas ainda não e um contrato analítico de tensões: ela não informa se a nota e
-uma extensão realmente disponível para aquela qualidade e contexto.
+O painel atual de materiais classifica uma nota como nota do acorde antes de
+aplicar algumas regras de nota característica. A classificação e útil como mapa
+visual, mas ainda não e um contrato analítico de tensões: ela não informa se a
+nota e uma extensão realmente disponível para aquela qualidade e contexto.
 
 ### 6. A camada pedagógica e expressiva, mas nao suficientemente precisa
 

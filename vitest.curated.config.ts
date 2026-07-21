@@ -104,6 +104,7 @@ export default defineConfig({
       "scripts/real-music-audit-report.spec.ts",
       "scripts/real-music-audit-timeline-context.spec.ts",
       "scripts/real-music-fire-audit.spec.ts",
+      "scripts/removed-symbol-registry.spec.ts",
       "scripts/score-ingestion-modes.spec.ts",
       "scripts/score-timeline-context.spec.ts",
       "scripts/select-promoted-import-calibration-set.spec.ts",

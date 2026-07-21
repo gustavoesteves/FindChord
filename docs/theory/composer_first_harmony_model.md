@@ -179,7 +179,7 @@ Um conceito deve permanecer como primeira classe quando:
 | Área | Estado | Decisão |
 | --- | --- | --- |
 | `getCompatibleScales` | útil como adaptador de escala-fonte | rebaixar para infraestrutura |
-| `ScaleOverlayPanel` | já virou “Materiais do acorde”, mas ainda carrega estrutura antiga | migrar gradualmente para material-first |
+| `WriterMaterialPanel` | consolidou “Materiais do acorde” como tela material-first | continuar reduzindo dependências conceituais herdadas de escala |
 | `contextualScaleCandidates` | contém boa parte do novo vocabulário | renomear conceitualmente para candidatos de material/linha no futuro |
 | `Tonal` | útil para operações mecânicas | manter sem autoridade musical |
 | nomes de escala na UI | úteis como mapa | exibir como fonte, não como resposta |

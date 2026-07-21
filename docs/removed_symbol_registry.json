@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "removedSymbols": [
+    {
+      "symbol": "ScaleOverlayPanel",
+      "removedPath": "src/domains/writer/components/ScaleOverlayPanel.tsx",
+      "replacementSymbol": "WriterMaterialPanel",
+      "replacementPath": "src/domains/writer/components/WriterMaterialPanel.tsx",
+      "activeDocRoots": [
+        "docs/theory",
+        "docs"
+      ],
+      "historicalDocRoots": [
+        "docs/sprints",
+        "docs/reports"
+      ],
+      "notes": "Componente legado da tela antiga de escalas; documentos vigentes devem falar em WriterMaterialPanel ou Materiais do acorde."
+    }
+  ]
+}
