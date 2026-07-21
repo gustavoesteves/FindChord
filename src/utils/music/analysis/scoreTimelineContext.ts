@@ -13,9 +13,16 @@ interface TimelineSectionLike {
 export interface ScoreTimelineContext {
   tick: number;
   keySignature?: string;
+  keyContext?: ScoreTonalKeyContext;
   timeSignature?: string;
   keyTimelineEntry?: ScoreKeyTimelineEntry;
   timeTimelineEntry?: ScoreTimeTimelineEntry;
+}
+
+export interface ScoreTonalKeyContext {
+  tonic: string;
+  mode: "major" | "minor";
+  label: string;
 }
 
 function lastEntryAtOrBeforeTick<T extends { tick: number }>(
@@ -35,18 +42,47 @@ function normalizeMode(mode?: string): string | undefined {
   return mode?.trim().toLowerCase();
 }
 
+export function keyContextFromSignature(keySignature?: string): ScoreTonalKeyContext | undefined {
+  const normalized = keySignature?.trim();
+  if (!normalized) return undefined;
+
+  const explicitMinor = /\bminor\b/i.test(normalized);
+  const explicitMajor = /\bmajor\b/i.test(normalized);
+  const compactMinor = !explicitMajor && /m$/i.test(normalized);
+  const mode = explicitMinor || compactMinor ? "minor" : "major";
+  const tonic = normalized
+    .replace(/\b(?:major|minor)\b/gi, "")
+    .replace(/m$/i, "")
+    .trim();
+
+  if (!/^[A-G](?:#|b)?$/.test(tonic)) return undefined;
+
+  return {
+    tonic,
+    mode,
+    label: mode === "minor" ? `${tonic}m` : tonic
+  };
+}
+
+export function keyContextForAnalysis(
+  entry: ScoreKeyTimelineEntry | undefined,
+  fallbackKeySignature?: string
+): ScoreTonalKeyContext | undefined {
+  if (!entry?.keySignature) return keyContextFromSignature(fallbackKeySignature);
+
+  const mode = normalizeMode(entry.mode) === "minor" ? "minor" : "major";
+  return {
+    tonic: entry.keySignature,
+    mode,
+    label: mode === "minor" ? `${entry.keySignature}m` : entry.keySignature
+  };
+}
+
 export function keySignatureForAnalysis(
   entry: ScoreKeyTimelineEntry | undefined,
   fallbackKeySignature?: string
 ): string | undefined {
-  if (!entry?.keySignature) return fallbackKeySignature;
-
-  const mode = normalizeMode(entry.mode);
-  if (mode === "minor" && !/m$/i.test(entry.keySignature)) {
-    return `${entry.keySignature}m`;
-  }
-
-  return entry.keySignature;
+  return keyContextForAnalysis(entry, fallbackKeySignature)?.label;
 }
 
 export function timelineContextAtTick(
@@ -59,6 +95,7 @@ export function timelineContextAtTick(
   return {
     tick,
     keySignature: keySignatureForAnalysis(keyTimelineEntry, snapshot?.metadata?.keySignature),
+    keyContext: keyContextForAnalysis(keyTimelineEntry, snapshot?.metadata?.keySignature),
     timeSignature: timeTimelineEntry?.timeSignature || snapshot?.metadata?.timeSignature,
     keyTimelineEntry,
     timeTimelineEntry

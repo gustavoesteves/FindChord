@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
 import {
+  keyContextFromSignature,
   measureNumberAtTick,
   measureTicksForMetricContext,
   timelineContextAtTick,
@@ -37,11 +38,31 @@ describe("score timeline context", () => {
 
     expect(timelineContextAtTick(snapshot, 0)).toMatchObject({
       keySignature: "Cm",
+      keyContext: { tonic: "C", mode: "minor", label: "Cm" },
       timeSignature: "4/4"
     });
     expect(timelineContextAtTick(snapshot, 8000)).toMatchObject({
       keySignature: "D",
+      keyContext: { tonic: "D", mode: "major", label: "D" },
       timeSignature: "3/4"
+    });
+  });
+
+  it("parses explicit major/minor key names without treating major as minor", () => {
+    expect(keyContextFromSignature("C major")).toEqual({
+      tonic: "C",
+      mode: "major",
+      label: "C"
+    });
+    expect(keyContextFromSignature("C minor")).toEqual({
+      tonic: "C",
+      mode: "minor",
+      label: "Cm"
+    });
+    expect(keyContextFromSignature("F#m")).toEqual({
+      tonic: "F#",
+      mode: "minor",
+      label: "F#m"
     });
   });
 

@@ -1,6 +1,7 @@
 import { Scale, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ScoreMeasureTickRange } from "../models/ScoreSnapshot";
+import { keyContextFromSignature } from "../scoreTimelineContext";
 
 export type CadenceType = 
   | "AUTHENTIC"
@@ -203,10 +204,10 @@ export class PhraseAnalysisEngine {
     if (uniqueNotes.length < 6) confidencePenalty *= 0.65;
     if (measureCount < 8) confidencePenalty *= 0.75;
 
-    const normalizedKeySignature = keySignature?.trim();
-    const isMinorKeySignature = normalizedKeySignature ? /m/i.test(normalizedKeySignature) : false;
-    const keySignatureTonic = normalizedKeySignature?.replace(/m/i, "").trim();
-    const relativeMinorTonic = keySignatureTonic && !isMinorKeySignature
+    const keyContext = keyContextFromSignature(keySignature);
+    const keySignatureTonic = keyContext?.tonic;
+    const keySignatureMode = keyContext?.mode;
+    const relativeMinorTonic = keySignatureTonic && keySignatureMode === "major"
       ? Scale.get(`${keySignatureTonic} major`).notes[5]
       : undefined;
 
@@ -214,7 +215,7 @@ export class PhraseAnalysisEngine {
     // key can be musically decisive even when a short phrase ranks it fourth.
     const finalCandidates = candidates.map(c => {
       let conf = c.confidence * confidencePenalty;
-      if (keySignatureTonic && c.tonic === keySignatureTonic && c.mode === (isMinorKeySignature ? "minor" : "major")) {
+      if (keySignatureTonic && c.tonic === keySignatureTonic && c.mode === keySignatureMode) {
         conf = Math.min(0.95, conf + 0.3);
       } else if (relativeMinorTonic && c.tonic === relativeMinorTonic && c.mode === "minor") {
         conf = Math.min(0.95, conf + 0.18);
