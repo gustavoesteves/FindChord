@@ -16,6 +16,7 @@ export interface WriterChordReadingAnalysis {
   voicingType: string;
   tensionLevel: number;
   omissions: string[];
+  structuralRoles: string[];
 }
 
 const VOICING_TYPE_LABELS: Record<VoicingClassification["shellType"], string> = {
@@ -97,6 +98,43 @@ function omissionLabels(roles: VoiceRoleAnalysis): string[] {
     .filter((label): label is string => Boolean(label));
 }
 
+function structuralRoleLabel(role: VoiceRoleAnalysis["orderedVoiceRoles"][number]): string | null {
+  if (role.role === "root") return "tônica";
+  if (role.role === "third") return role.alteration === "b" ? "terça menor" : "terça maior";
+  if (role.role === "fifth") {
+    if (role.alteration === "b") return "quinta diminuta";
+    if (role.alteration === "#") return "quinta aumentada";
+    return "quinta";
+  }
+  if (role.role === "seventh") {
+    if (role.degree === 6) return "sexta";
+    if (role.alteration === "bb") return "sétima diminuta";
+    if (role.alteration === "b") return "sétima menor";
+    return "sétima maior";
+  }
+  return null;
+}
+
+function structuralRoleLabels(roles: VoiceRoleAnalysis): string[] {
+  const roleOrder = [
+    "tônica",
+    "terça menor",
+    "terça maior",
+    "quinta diminuta",
+    "quinta",
+    "quinta aumentada",
+    "sexta",
+    "sétima diminuta",
+    "sétima menor",
+    "sétima maior"
+  ];
+  return Array.from(new Set(
+    roles.orderedVoiceRoles
+      .map(structuralRoleLabel)
+      .filter((label): label is string => Boolean(label))
+  )).sort((a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b));
+}
+
 export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput): WriterChordReadingAnalysis {
   const roles = analyzeVoiceRoles(input.selectedFrets, input.tuning, input.root, input.quality);
   const classification = classifyVoicing(input.selectedFrets, input.tuning, roles, input.root, input.quality);
@@ -110,6 +148,7 @@ export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput
     tensionLevel: semanticPlainStructure
       ? 0.15
       : tensionLevelForClassification(classification, input.tensions, input.quality),
-    omissions: omissionLabels(roles)
+    omissions: omissionLabels(roles),
+    structuralRoles: structuralRoleLabels(roles)
   };
 }

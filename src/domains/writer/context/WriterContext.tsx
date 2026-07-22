@@ -19,6 +19,7 @@ interface DetectedChord {
   voicingType: string;
   tensionLevel: number;
   omissions: string[];
+  structuralRoles: string[];
   additions: string[];
   tensions: string[];
   root: string;
@@ -123,6 +124,7 @@ export const WriterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         voicingType: readingAnalysis.voicingType,
         tensionLevel: readingAnalysis.tensionLevel,
         omissions: readingAnalysis.omissions,
+        structuralRoles: readingAnalysis.structuralRoles,
         additions: c.additions || [],
         tensions: c.tensions || [],
         root: c.root,

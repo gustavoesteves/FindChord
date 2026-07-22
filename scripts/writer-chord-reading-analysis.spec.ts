@@ -14,7 +14,8 @@ describe("F231 leitura semantica do acorde no Writer", () => {
     })).toMatchObject({
       voicingType: "Tríade",
       tensionLevel: 0.15,
-      omissions: []
+      omissions: [],
+      structuralRoles: ["tônica", "terça maior", "quinta"]
     });
   });
 
@@ -28,7 +29,8 @@ describe("F231 leitura semantica do acorde no Writer", () => {
     })).toMatchObject({
       voicingType: "Shell",
       tensionLevel: 0.15,
-      omissions: ["quinta"]
+      omissions: ["quinta"],
+      structuralRoles: ["tônica", "terça maior", "sétima menor"]
     });
   });
 
@@ -79,7 +81,20 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensions: []
     })).toMatchObject({
       voicingType: "Sem tônica",
-      omissions: ["tônica"]
+      omissions: ["tônica"],
+      structuralRoles: ["terça maior", "quinta", "sétima maior"]
+    });
+  });
+
+  it("nomeia sexta estrutural sem apresentar como setima", () => {
+    expect(analyzeWriterChordReading({
+      selectedFrets: [0, 0, 0],
+      tuning: ["C4", "E4", "A4"],
+      root: "C",
+      quality: "major6th",
+      tensions: []
+    })).toMatchObject({
+      structuralRoles: ["tônica", "terça maior", "sexta"]
     });
   });
 });
