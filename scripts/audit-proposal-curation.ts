@@ -178,7 +178,9 @@ export function analyzeProposalCurationSnapshot(
 
   const timelineContext = timelineContextForAnchors(snapshot, melody.anchors);
   const phraseContext = applyReferenceCenterToPhraseContext(
-    PhraseAnalysisEngine.analyzePhrase(melody.anchors, timelineContext.keySignature),
+    PhraseAnalysisEngine.analyzePhrase(melody.anchors, timelineContext.keySignature, {
+      measureTicks: measureTicksForMetricContext(snapshot)
+    }),
     harmonies
   );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(

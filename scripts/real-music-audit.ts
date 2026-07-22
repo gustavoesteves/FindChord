@@ -186,7 +186,9 @@ export function findHarmonizableWindow(
       anchors.some(anchor => anchor.measureIndex === harmony.measure)
     ));
     const phraseContext = applyReferenceCenterToPhraseContext(
-      PhraseAnalysisEngine.analyzePhrase(anchors, keySignature),
+      PhraseAnalysisEngine.analyzePhrase(anchors, keySignature, {
+        measureTicks: measureTicksForMetricContext(contextOptions.snapshot)
+      }),
       referenceHarmoniesForWindow
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(
