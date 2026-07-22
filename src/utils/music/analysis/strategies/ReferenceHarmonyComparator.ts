@@ -69,18 +69,56 @@ interface OrderedComparisonChord {
   measureIndex: number;
   chordIndex: number;
   chord: string;
+  tickStart?: number;
+  tickEnd?: number;
 }
 
 function proposalChordsByMeasure(proposal: ReharmonizationProposal): Map<number, string[]> {
   return new Map(proposal.measures.map(measure => [measure.measureIndex, measure.chords]));
 }
 
-function referenceChordsByMeasure(harmonies: ScoreHarmonyEvent[]): Map<number, string[]> {
+function proposalComparisonChordsByMeasure(proposal: ReharmonizationProposal): Map<number, OrderedComparisonChord[]> {
+  const byMeasure = new Map<number, OrderedComparisonChord[]>();
+  if (proposal.events && proposal.events.length > 0) {
+    for (const event of [...proposal.events].sort((a, b) => a.tickStart - b.tickStart || a.chordIndex - b.chordIndex)) {
+      const chords = byMeasure.get(event.measureIndex) || [];
+      chords.push({
+        measureIndex: event.measureIndex,
+        chordIndex: event.chordIndex,
+        chord: event.chord,
+        tickStart: event.tickStart,
+        tickEnd: event.tickEnd
+      });
+      byMeasure.set(event.measureIndex, chords);
+    }
+    return byMeasure;
+  }
+
+  for (const measure of proposal.measures) {
+    byMeasure.set(
+      measure.measureIndex,
+      measure.chords.map((chord, chordIndex) => ({
+        measureIndex: measure.measureIndex,
+        chordIndex,
+        chord
+      }))
+    );
+  }
+  return byMeasure;
+}
+
+function referenceChordsByMeasure(harmonies: ScoreHarmonyEvent[]): Map<number, OrderedComparisonChord[]> {
   const ordered = [...harmonies].sort((a, b) => a.measure - b.measure || a.tickStart - b.tickStart);
-  const byMeasure = new Map<number, string[]>();
+  const byMeasure = new Map<number, OrderedComparisonChord[]>();
   for (const harmony of ordered) {
     const chords = byMeasure.get(harmony.measure) || [];
-    chords.push(harmony.harmony);
+    chords.push({
+      measureIndex: harmony.measure,
+      chordIndex: chords.length,
+      chord: harmony.harmony,
+      tickStart: harmony.tickStart,
+      tickEnd: harmony.tickEnd
+    });
     byMeasure.set(harmony.measure, chords);
   }
   return byMeasure;
@@ -162,28 +200,10 @@ function comparisonFunctionWithReferenceBass(
   return bassFunction === referenceFunction ? bassFunction : baseFunction;
 }
 
-function orderedProposalChords(chordsByMeasure: Map<number, string[]>): OrderedComparisonChord[] {
+function orderedComparisonChords(chordsByMeasure: Map<number, OrderedComparisonChord[]>): OrderedComparisonChord[] {
   return [...chordsByMeasure.entries()]
     .sort((a, b) => a[0] - b[0])
-    .flatMap(([measureIndex, chords]) => (
-      chords.map((chord, chordIndex) => ({
-        measureIndex,
-        chordIndex,
-        chord
-      }))
-    ));
-}
-
-function orderedReferenceChords(chordsByMeasure: Map<number, string[]>): OrderedComparisonChord[] {
-  return [...chordsByMeasure.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .flatMap(([measureIndex, chords]) => (
-      chords.map((chord, chordIndex) => ({
-        measureIndex,
-        chordIndex,
-        chord
-      }))
-    ));
+    .flatMap(([, chords]) => chords);
 }
 
 function chordContext(
@@ -233,6 +253,16 @@ function comparisonPointScore(point: ReferenceHarmonyComparisonPoint): number {
   const functionScore = point.functionRelation === "same-function" ? 3 : 0;
   const apparentScore = point.proposalImpliedChordSymbols.length > 0 || point.referenceImpliedChordSymbols.length > 0 ? 1 : 0;
   return rootScore + functionScore + apparentScore;
+}
+
+function overlapDuration(a: OrderedComparisonChord, b: OrderedComparisonChord): number {
+  if (
+    typeof a.tickStart !== "number"
+    || typeof a.tickEnd !== "number"
+    || typeof b.tickStart !== "number"
+    || typeof b.tickEnd !== "number"
+  ) return 0;
+  return Math.max(0, Math.min(a.tickEnd, b.tickEnd) - Math.max(a.tickStart, b.tickStart));
 }
 
 function buildComparisonPoint(input: {
@@ -460,9 +490,10 @@ export function compareProposalToReferenceHarmony(
   }
 
   const proposalByMeasure = proposalChordsByMeasure(proposal);
+  const proposalComparisonByMeasure = proposalComparisonChordsByMeasure(proposal);
   const referenceByMeasure = referenceChordsByMeasure(referenceHarmonies);
-  const orderedProposal = orderedProposalChords(proposalByMeasure);
-  const orderedReference = orderedReferenceChords(referenceByMeasure);
+  const orderedProposal = orderedComparisonChords(proposalComparisonByMeasure);
+  const orderedReference = orderedComparisonChords(referenceByMeasure);
   const overlappingReferenceHarmonies = referenceHarmonies.filter(harmony => (
     proposalByMeasure.has(harmony.measure)
   ));
@@ -481,37 +512,66 @@ export function compareProposalToReferenceHarmony(
   );
   const points: ReferenceHarmonyComparisonPoint[] = [];
 
-  for (const [measureIndex, proposalChords] of proposalByMeasure.entries()) {
+  for (const [measureIndex, proposalChords] of proposalComparisonByMeasure.entries()) {
     const referenceChords = referenceByMeasure.get(measureIndex);
     if (!referenceChords || referenceChords.length === 0) continue;
 
     if (referenceChords.length === 1) {
       const referenceChord = referenceChords[0];
       const referenceContext = chordContext(orderedReference, { measureIndex, chordIndex: 0 });
-      const candidatePoints = proposalChords.map((proposalChord, chordIndex) => (
-        buildComparisonPoint({
+      const candidatePoints = proposalChords.map(proposalChord => ({
+        point: buildComparisonPoint({
           measureIndex,
-          proposalChord,
-          referenceChord,
-          proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex }),
+          proposalChord: proposalChord.chord,
+          referenceChord: referenceChord.chord,
+          proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex: proposalChord.chordIndex }),
           referenceContext,
           center,
           referenceCenter,
           mode
         })
-      ));
-      const bestPoint = candidatePoints.sort((a, b) => comparisonPointScore(b) - comparisonPointScore(a))[0];
+      }));
+      const bestPoint = candidatePoints
+        .sort((a, b) => (
+          comparisonPointScore(b.point) - comparisonPointScore(a.point)
+        ))[0]?.point;
       if (bestPoint) points.push(bestPoint);
       continue;
     }
 
     for (const [referenceChordIndex, referenceChord] of referenceChords.entries()) {
-      const proposalChord = proposalChords[referenceChordIndex] || "N.C.";
+      const overlappedProposal = proposalChords
+        .map(chord => ({
+          chord,
+          overlap: overlapDuration(chord, referenceChord),
+          point: buildComparisonPoint({
+            measureIndex,
+            proposalChord: chord.chord,
+            referenceChord: referenceChord.chord,
+            proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex: chord.chordIndex }),
+            referenceContext: chordContext(orderedReference, { measureIndex, chordIndex: referenceChordIndex }),
+            center,
+            referenceCenter,
+            mode
+          })
+        }))
+        .sort((a, b) => (
+          b.overlap - a.overlap
+          || comparisonPointScore(b.point) - comparisonPointScore(a.point)
+          || (a.chord.chordIndex - b.chord.chordIndex)
+        ))[0];
+      const proposalChord = (overlappedProposal && overlappedProposal.overlap > 0 ? overlappedProposal.chord : undefined)
+        || proposalChords[referenceChordIndex]
+        || {
+          measureIndex,
+          chordIndex: referenceChordIndex,
+          chord: "N.C."
+        };
       points.push(buildComparisonPoint({
         measureIndex,
-        proposalChord,
-        referenceChord,
-        proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex: referenceChordIndex }),
+        proposalChord: proposalChord.chord,
+        referenceChord: referenceChord.chord,
+        proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex: proposalChord.chordIndex }),
         referenceContext: chordContext(orderedReference, { measureIndex, chordIndex: referenceChordIndex }),
         center,
         referenceCenter,

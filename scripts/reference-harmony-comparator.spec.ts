@@ -29,6 +29,24 @@ function proposalMeasures(measures: Array<{ measureIndex: number; chords: string
   };
 }
 
+function timedProposal(events: ReharmonizationProposal["events"]): ReharmonizationProposal {
+  const byMeasure = new Map<number, string[]>();
+  for (const event of events || []) {
+    const chords = byMeasure.get(event.measureIndex) || [];
+    chords.push(event.chord);
+    byMeasure.set(event.measureIndex, chords);
+  }
+  return {
+    id: "proposal",
+    kind: "validated-harmonization",
+    name: "Teste",
+    measures: Array.from(byMeasure.entries()).map(([measureIndex, chords]) => ({ measureIndex, chords })),
+    events,
+    explanation: [],
+    bassLine: (events || []).map(event => event.chord.split("/")[1] || event.chord.replace(/[^A-G#b].*$/, ""))
+  };
+}
+
 function harmonies(chords: string[]): ScoreHarmonyEvent[] {
   return chords.map((harmony, index) => ({
     measure: index + 1,
@@ -237,6 +255,62 @@ describe("F40 Reference Harmony Comparator", () => {
         functionRelation: "different-function",
         rootRelation: "different-root"
       })
+    ]);
+  });
+
+  it("matches dense timed chords by overlap instead of intra-measure index", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      timedProposal([
+        {
+          id: "c-long",
+          measureIndex: 1,
+          beat: 1,
+          chord: "C",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 1440,
+          durationTicks: 1440
+        },
+        {
+          id: "g-short",
+          measureIndex: 1,
+          beat: 4,
+          chord: "G7",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 1440,
+          tickEnd: 1920,
+          durationTicks: 480
+        }
+      ]),
+      [
+        {
+          measure: 1,
+          beat: 1,
+          harmony: "C",
+          tickStart: 0,
+          tickEnd: 960,
+          durationTicks: 960
+        },
+        {
+          measure: 1,
+          beat: 3,
+          harmony: "G7",
+          tickStart: 960,
+          tickEnd: 1920,
+          durationTicks: 960
+        }
+      ],
+      "C"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.functionAgreement).toBe(1);
+    expect(comparison.rootAgreement).toBe(1);
+    expect(comparison.points).toEqual([
+      expect.objectContaining({ proposalChord: "C", referenceChord: "C" }),
+      expect.objectContaining({ proposalChord: "G7", referenceChord: "G7" })
     ]);
   });
 
