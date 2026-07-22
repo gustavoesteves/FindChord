@@ -215,7 +215,8 @@ function generatedProposalRows(): GeneratedAlmadaProposal[] {
   const anchors = toAnchors(snapshot.notes);
   const phraseContext = PhraseAnalysisEngine.analyzePhrase(
     anchors,
-    timelineContextForAnchors(snapshot, anchors).keySignature || "C"
+    timelineContextForAnchors(snapshot, anchors).keySignature || "C",
+    { measureTicks: measureTicksForMetricContext(snapshot) }
   );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(
     anchors,
