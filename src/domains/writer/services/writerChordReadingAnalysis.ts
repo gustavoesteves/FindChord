@@ -17,6 +17,7 @@ export interface WriterChordReadingAnalysis {
   tensionLevel: number;
   omissions: string[];
   structuralRoles: string[];
+  voiceRoles: string[];
 }
 
 const VOICING_TYPE_LABELS: Record<VoicingClassification["shellType"], string> = {
@@ -98,7 +99,7 @@ function omissionLabels(roles: VoiceRoleAnalysis): string[] {
     .filter((label): label is string => Boolean(label));
 }
 
-function structuralRoleLabel(role: VoiceRoleAnalysis["orderedVoiceRoles"][number]): string | null {
+function voiceRoleLabel(role: VoiceRoleAnalysis["orderedVoiceRoles"][number]): string | null {
   if (role.role === "root") return "tônica";
   if (role.role === "third") return role.alteration === "b" ? "terça menor" : "terça maior";
   if (role.role === "fifth") {
@@ -112,7 +113,15 @@ function structuralRoleLabel(role: VoiceRoleAnalysis["orderedVoiceRoles"][number
     if (role.alteration === "b") return "sétima menor";
     return "sétima maior";
   }
+  if (role.role === "tension") {
+    const alteration = role.alteration || "";
+    return role.degree ? `${alteration}${role.degree}` : "tensão";
+  }
   return null;
+}
+
+function structuralRoleLabel(role: VoiceRoleAnalysis["orderedVoiceRoles"][number]): string | null {
+  return role.role === "tension" ? null : voiceRoleLabel(role);
 }
 
 function structuralRoleLabels(roles: VoiceRoleAnalysis): string[] {
@@ -135,6 +144,17 @@ function structuralRoleLabels(roles: VoiceRoleAnalysis): string[] {
   )).sort((a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b));
 }
 
+function voiceRoleLabels(roles: VoiceRoleAnalysis): string[] {
+  return roles.voices
+    .slice()
+    .sort((a, b) => a.stringIndex - b.stringIndex)
+    .map(voice => {
+      const label = voiceRoleLabel(voice.info || { role: voice.role });
+      return label ? `corda ${voice.stringIndex + 1} ${voice.noteName}: ${label}` : null;
+    })
+    .filter((label): label is string => Boolean(label));
+}
+
 export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput): WriterChordReadingAnalysis {
   const roles = analyzeVoiceRoles(input.selectedFrets, input.tuning, input.root, input.quality);
   const classification = classifyVoicing(input.selectedFrets, input.tuning, roles, input.root, input.quality);
@@ -149,6 +169,7 @@ export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput
       ? 0.15
       : tensionLevelForClassification(classification, input.tensions, input.quality),
     omissions: omissionLabels(roles),
-    structuralRoles: structuralRoleLabels(roles)
+    structuralRoles: structuralRoleLabels(roles),
+    voiceRoles: voiceRoleLabels(roles)
   };
 }

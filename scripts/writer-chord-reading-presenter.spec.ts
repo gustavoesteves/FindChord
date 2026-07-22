@@ -19,7 +19,8 @@ describe("F217 presenter da leitura do acorde no Escrever", () => {
       tensions: ["9", "13"],
       tensionLevel: 0.65,
       omissions: ["quinta"],
-      structuralRoles: ["tônica", "terça maior", "sétima menor"]
+      structuralRoles: ["tônica", "terça maior", "sétima menor"],
+      voiceRoles: ["corda 1 C5: tônica", "corda 2 E4: terça maior"]
     })).toMatchObject({
       fields: [
         { label: "Baixo", value: "E" },
@@ -30,6 +31,11 @@ describe("F217 presenter da leitura do acorde no Escrever", () => {
           label: "Notas estruturais",
           value: "tônica, terça maior, sétima menor",
           title: "tônica, terça maior, sétima menor"
+        },
+        {
+          label: "Papéis por corda",
+          value: "corda 1 C5: tônica, corda 2 E4: terça maior",
+          title: "corda 1 C5: tônica, corda 2 E4: terça maior"
         },
         { label: "Omissões", value: "quinta", title: "quinta" }
       ],
@@ -46,7 +52,8 @@ describe("F217 presenter da leitura do acorde no Escrever", () => {
       tensions: [],
       tensionLevel: 1.4,
       omissions: [],
-      structuralRoles: []
+      structuralRoles: [],
+      voiceRoles: []
     })).toMatchObject({
       fields: expect.arrayContaining([{ label: "Tensões", value: "Nenhuma", title: "Nenhuma" }]),
       tensionPercent: 100

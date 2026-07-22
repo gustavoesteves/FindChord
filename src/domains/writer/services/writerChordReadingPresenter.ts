@@ -6,6 +6,7 @@ interface WriterChordReadingInput {
   tensionLevel: number;
   omissions?: string[];
   structuralRoles?: string[];
+  voiceRoles?: string[];
 }
 
 export interface WriterChordReadingField {
@@ -29,6 +30,7 @@ export function writerTensionReading(level: number): string {
 export function presentWriterChordReading(chord: WriterChordReadingInput): WriterChordReadingPresentation {
   const tensionText = chord.tensions.join(", ") || "Nenhuma";
   const structuralRolesText = chord.structuralRoles?.length ? chord.structuralRoles.join(", ") : null;
+  const voiceRolesText = chord.voiceRoles?.length ? chord.voiceRoles.join(", ") : null;
   const omissionText = chord.omissions?.length ? chord.omissions.join(", ") : null;
   const fields = [
     { label: "Baixo", value: chord.bass },
@@ -38,6 +40,9 @@ export function presentWriterChordReading(chord: WriterChordReadingInput): Write
   ];
   if (structuralRolesText) {
     fields.push({ label: "Notas estruturais", value: structuralRolesText, title: structuralRolesText });
+  }
+  if (voiceRolesText) {
+    fields.push({ label: "Papéis por corda", value: voiceRolesText, title: voiceRolesText });
   }
   if (omissionText) {
     fields.push({ label: "Omissões", value: omissionText, title: omissionText });

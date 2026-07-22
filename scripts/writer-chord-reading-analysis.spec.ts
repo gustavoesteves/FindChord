@@ -15,7 +15,12 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       voicingType: "Tríade",
       tensionLevel: 0.15,
       omissions: [],
-      structuralRoles: ["tônica", "terça maior", "quinta"]
+      structuralRoles: ["tônica", "terça maior", "quinta"],
+      voiceRoles: [
+        "corda 1 C5: tônica",
+        "corda 2 G4: quinta",
+        "corda 3 E4: terça maior"
+      ]
     });
   });
 
@@ -30,7 +35,12 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       voicingType: "Shell",
       tensionLevel: 0.15,
       omissions: ["quinta"],
-      structuralRoles: ["tônica", "terça maior", "sétima menor"]
+      structuralRoles: ["tônica", "terça maior", "sétima menor"],
+      voiceRoles: [
+        "corda 2 C4: tônica",
+        "corda 3 Bb3: sétima menor",
+        "corda 4 E3: terça maior"
+      ]
     });
   });
 
@@ -43,7 +53,12 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensions: ["b9"]
     })).toMatchObject({
       voicingType: "Cluster",
-      tensionLevel: 0.72
+      tensionLevel: 0.72,
+      voiceRoles: [
+        "corda 1 C4: tônica",
+        "corda 2 Db4: b9",
+        "corda 3 E4: terça maior"
+      ]
     });
   });
 
@@ -82,7 +97,12 @@ describe("F231 leitura semantica do acorde no Writer", () => {
     })).toMatchObject({
       voicingType: "Sem tônica",
       omissions: ["tônica"],
-      structuralRoles: ["terça maior", "quinta", "sétima maior"]
+      structuralRoles: ["terça maior", "quinta", "sétima maior"],
+      voiceRoles: [
+        "corda 1 E4: terça maior",
+        "corda 2 G4: quinta",
+        "corda 3 B4: sétima maior"
+      ]
     });
   });
 
