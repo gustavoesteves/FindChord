@@ -95,7 +95,9 @@ function impliedIiVResolutionTarget(context: MaterialContext, root: string): str
 function impliedSubdominantVResolutionTarget(context: MaterialContext, root: string): string | undefined {
   const previousRoot = chordRoot(context.previousChord);
   if (!previousRoot || !isSubdominantPreparationLike(context.previousChord)) return undefined;
-  if (directedSemitones(previousRoot, root) !== 2) return undefined;
+  const motionToDominant = directedSemitones(previousRoot, root);
+  if (motionToDominant !== 2 && motionToDominant !== 5) return undefined;
+  if (motionToDominant === 5 && isMinorSubdominantPreparation(context.previousChord)) return undefined;
   return transposePitchClass(root, "4P") || undefined;
 }
 
