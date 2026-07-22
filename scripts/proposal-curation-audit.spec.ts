@@ -3,8 +3,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   analyzeProposalCurationForFile,
+  analyzeProposalCurationSnapshot,
   auditProposalCurationForFile
 } from "./audit-proposal-curation";
+import type { ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
 
 function repeatedVisibleIdeaNames(visibleIdeaNames: string): string[] {
   const counts = visibleIdeaNames
@@ -83,6 +85,27 @@ describe("proposal curation audit", () => {
       "Estratégia — Dominantes alteradas"
     );
     expect(analysis.row.totalVisibleCards).toBe(analysis.visibleIdeas.length);
+  });
+
+  it("uses key context mode for no-melody curation fallback", () => {
+    const snapshot: ScoreSnapshot = {
+      timestamp: 1,
+      harmonies: [],
+      notes: [],
+      metadata: {
+        title: "No melody minor context",
+        keySignature: "C",
+        keyTimeline: [
+          { measure: 1, tick: 0, fifths: -3, mode: "minor", keySignature: "C" }
+        ]
+      }
+    };
+
+    const analysis = analyzeProposalCurationSnapshot(snapshot, "no-melody.musicxml");
+
+    expect(analysis.center).toBe("C");
+    expect(analysis.classificationMode).toBe("minor-functional");
+    expect(analysis.row.status).toBe("sem-ideia");
   });
 
   it("keeps visible proposal signatures unique within each score", () => {

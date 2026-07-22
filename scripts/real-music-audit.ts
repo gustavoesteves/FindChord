@@ -36,6 +36,11 @@ const { parseMusicXML } = require("./musicxml-parser.cjs");
 
 export const realMusicDir = path.resolve(process.cwd(), "docs/musics");
 
+function auditReferenceCenter(snapshot: ScoreSnapshot): string {
+  const timelineContext = timelineContextAtTick(snapshot);
+  return timelineContext.keyContext?.tonic || timelineContext.keySignature || "C";
+}
+
 export interface RealMusicAuditWindow {
   anchors: MelodicAnchor[];
   phraseContext: PhraseContext;
@@ -241,7 +246,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
   const anchors = toAnchors(firstMelodicWindow(snapshot.notes));
 
   if (anchors.length === 0) {
-    const referenceCenter = timelineContextAtTick(snapshot).keySignature || "C";
+    const referenceCenter = auditReferenceCenter(snapshot);
     return {
       ...base,
       status: "reference-only",
@@ -258,7 +263,7 @@ export function auditRealMusicFile(file: string): RealMusicAuditResult {
 
   const harmonizable = findHarmonizableWindow(snapshot.notes, { snapshot }, snapshot.harmonies);
   if (!harmonizable) {
-    const referenceCenter = timelineContextAtTick(snapshot).keySignature || "C";
+    const referenceCenter = auditReferenceCenter(snapshot);
     return {
       ...base,
       status: "no-proposal",

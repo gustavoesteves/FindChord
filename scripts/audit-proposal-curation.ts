@@ -32,10 +32,24 @@ import {
   timelineContextAtTick,
   timelineContextForAnchors
 } from "../src/utils/music/analysis/scoreTimelineContext";
+import type { ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
 const MUSIC_DIR = path.join(process.cwd(), "docs/musics");
+
+function fallbackCenterForSnapshot(snapshot: ScoreSnapshot): {
+  center: string;
+  classificationMode: FunctionalClassificationMode;
+} {
+  const timelineContext = timelineContextAtTick(snapshot);
+  return {
+    center: timelineContext.keyContext?.tonic || timelineContext.keySignature || "C",
+    classificationMode: timelineContext.keyContext?.mode === "minor"
+      ? "minor-functional"
+      : "major-functional"
+  };
+}
 
 export type ProposalCurationStatus =
   | "sem-ideia"
@@ -123,12 +137,21 @@ export function analyzeProposalCurationForFile(
   options: AnalyzeProposalCurationOptions = {}
 ): ProposalCurationAnalysis {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(MUSIC_DIR, relativeFile), "utf8"));
+  return analyzeProposalCurationSnapshot(snapshot, relativeFile, options);
+}
+
+export function analyzeProposalCurationSnapshot(
+  snapshot: ScoreSnapshot,
+  relativeFile: string,
+  options: AnalyzeProposalCurationOptions = {}
+): ProposalCurationAnalysis {
   const melody = selectMelodicAnchors(snapshot.notes, undefined, 32, {
     measureTicks: snapshot.metadata.measureTicks
   });
   const harmonies = selectSectionHarmonies(snapshot.harmonies, undefined);
 
   if (melody.anchors.length === 0) {
+    const fallbackCenter = fallbackCenterForSnapshot(snapshot);
     return {
       row: {
         file: relativeFile,
@@ -147,8 +170,8 @@ export function analyzeProposalCurationForFile(
         status: "sem-ideia",
         visibleIdeaNames: ""
       },
-      center: timelineContextAtTick(snapshot).keySignature || "C",
-      classificationMode: "major-functional",
+      center: fallbackCenter.center,
+      classificationMode: fallbackCenter.classificationMode,
       visibleIdeas: []
     };
   }
