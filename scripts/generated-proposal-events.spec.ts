@@ -68,4 +68,33 @@ describe("Generated proposal temporal events", () => {
     expect(events?.[0]?.tickStart).toBeLessThan(events?.[1]?.tickStart ?? 0);
     expect(events?.every(event => event.durationTicks > 0)).toBe(true);
   });
+
+  it("uses internal melodic attacks as split points for dense generated measures", () => {
+    const anchorsWithInternalAttacks: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "C", duration: 480, startTick: 0, endTick: 480 },
+      { measureIndex: 1, pitch: "E", duration: 480, startTick: 480, endTick: 960 },
+      { measureIndex: 2, pitch: "F", duration: 480, startTick: 1440, endTick: 1920 },
+      { measureIndex: 2, pitch: "A", duration: 480, startTick: 1920, endTick: 2400 },
+      { measureIndex: 3, pitch: "B", duration: 480, startTick: 2880, endTick: 3360 },
+      { measureIndex: 3, pitch: "D", duration: 480, startTick: 3360, endTick: 3840 },
+      { measureIndex: 4, pitch: "C", duration: 960, startTick: 4320, endTick: 5280 },
+      { measureIndex: 4, pitch: "G", duration: 480, startTick: 4800, endTick: 5280 }
+    ];
+    const localContext: PhraseContext = {
+      ...phraseContext,
+      cadentialTarget: { targetPitch: "G", cadenceType: "OPEN", confidence: 0.8 }
+    };
+    const generation = GravityFieldManager.generateProposalsWithDiagnostics(anchorsWithInternalAttacks, localContext, { measureTicks });
+    const denseProposal = generation.proposals.find(candidate => (
+      candidate.measures.some(measure => measure.chords.length > 1)
+    ));
+    const denseMeasure = denseProposal?.measures.find(measure => measure.chords.length > 1);
+    const measureRange = measureTicks.find(item => item.measure === denseMeasure?.measureIndex);
+    const events = denseProposal?.events?.filter(event => event.measureIndex === denseMeasure?.measureIndex);
+
+    expect(denseMeasure).toBeTruthy();
+    expect(measureRange).toBeTruthy();
+    expect(events?.[1]?.tickStart).toBe((measureRange?.startTick ?? 0) + 480);
+    expect(events?.[1]?.beat).toBe(2);
+  });
 });

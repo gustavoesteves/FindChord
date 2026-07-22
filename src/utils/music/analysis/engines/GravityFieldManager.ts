@@ -53,7 +53,7 @@ export class GravityFieldManager {
     options: GravityProposalGenerationOptions = {}
   ): GravityProposalGenerationResult {
     const allProposals: ReharmonizationProposal[] = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
-      .map(proposal => this.withGeneratedEvents(proposal, options.measureTicks));
+      .map(proposal => this.withGeneratedEvents(proposal, options.measureTicks, anchors));
     let pIdx = 1;
     let rejectedExperimentalCount = 0;
 
@@ -127,7 +127,7 @@ export class GravityFieldManager {
               kind: "experimental-exploration",
               name: `Estratégia — ${field.name}`,
               measures,
-              events: this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks),
+              events: this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks, anchors),
               explanation: seed.explanation, 
               bassLine: bestPath.bassLine
             });
@@ -156,19 +156,21 @@ export class GravityFieldManager {
 
   private static withGeneratedEvents(
     proposal: ReharmonizationProposal,
-    measureTicks?: ScoreMeasureTickRange[]
+    measureTicks?: ScoreMeasureTickRange[],
+    anchors: MelodicAnchor[] = []
   ): ReharmonizationProposal {
     if (proposal.events && proposal.events.length > 0) return proposal;
     return {
       ...proposal,
-      events: this.proposalEventsFromMeasures(proposal.id, proposal.measures, measureTicks)
+      events: this.proposalEventsFromMeasures(proposal.id, proposal.measures, measureTicks, anchors)
     };
   }
 
   private static proposalEventsFromMeasures(
     proposalId: string,
     measures: ReharmonizationMeasure[],
-    measureTicks?: ScoreMeasureTickRange[]
+    measureTicks?: ScoreMeasureTickRange[],
+    anchors: MelodicAnchor[] = []
   ): ReharmonizationChordEvent[] {
     const orderedTicks = measureTicks ? [...measureTicks].sort((a, b) => a.measure - b.measure) : [];
     return measures.flatMap(measure => {
@@ -178,12 +180,20 @@ export class GravityFieldManager {
       const measureDuration = Math.max(1, tickEnd - tickStart);
       const chordCount = Math.max(1, measure.chords.length);
       const eventDuration = Math.max(1, Math.floor(measureDuration / chordCount));
+      const boundaries = this.eventBoundariesForMeasure(
+        measure.measureIndex,
+        chordCount,
+        tickStart,
+        tickEnd,
+        eventDuration,
+        anchors
+      );
 
       return measure.chords.map((chord, chordIndex) => {
-        const eventStart = tickStart + eventDuration * chordIndex;
+        const eventStart = boundaries[chordIndex] ?? (tickStart + eventDuration * chordIndex);
         const isLast = chordIndex === measure.chords.length - 1;
-        const eventEnd = isLast ? tickEnd : Math.min(tickEnd, eventStart + eventDuration);
-        const beat = 1 + (measureDuration > 0 ? ((eventStart - tickStart) / measureDuration) * 4 : 0);
+        const eventEnd = isLast ? tickEnd : Math.min(tickEnd, boundaries[chordIndex + 1] ?? eventStart + eventDuration);
+        const beat = this.eventBeat(eventStart, tickStart, measureDuration, measureRange?.timeSignature);
         return {
           id: `${proposalId}-m${measure.measureIndex}-c${chordIndex}`,
           measureIndex: measure.measureIndex,
@@ -197,6 +207,47 @@ export class GravityFieldManager {
         };
       });
     });
+  }
+
+  private static eventBoundariesForMeasure(
+    measureIndex: number,
+    chordCount: number,
+    tickStart: number,
+    tickEnd: number,
+    eventDuration: number,
+    anchors: MelodicAnchor[]
+  ): number[] {
+    if (chordCount <= 1) return [tickStart, tickEnd];
+
+    const internalAnchorStarts = Array.from(new Set(
+      anchors
+        .filter(anchor => anchor.measureIndex === measureIndex)
+        .map(anchor => anchor.startTick)
+        .filter((start): start is number => (
+          typeof start === "number"
+          && Number.isFinite(start)
+          && start > tickStart
+          && start < tickEnd
+        ))
+    )).sort((a, b) => a - b);
+
+    const splitPoints = internalAnchorStarts.length >= chordCount - 1
+      ? internalAnchorStarts.slice(0, chordCount - 1)
+      : Array.from({ length: chordCount - 1 }, (_, index) => tickStart + eventDuration * (index + 1));
+
+    return [tickStart, ...splitPoints, tickEnd];
+  }
+
+  private static eventBeat(
+    eventStart: number,
+    measureStart: number,
+    measureDuration: number,
+    timeSignature?: string
+  ): number {
+    const numerator = Number(timeSignature?.split("/")[0]);
+    const beatCount = Number.isFinite(numerator) && numerator > 0 ? numerator : 4;
+    const beat = 1 + (measureDuration > 0 ? ((eventStart - measureStart) / measureDuration) * beatCount : 0);
+    return Math.round(beat * 100) / 100;
   }
 
   private static passesModeCompatibilityGate(
