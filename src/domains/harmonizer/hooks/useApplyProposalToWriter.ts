@@ -4,6 +4,28 @@ import type { ReharmonizationProposal } from "../../../utils/music/analysis/mode
 export function proposalToWriterProgression(proposal: ReharmonizationProposal): WriterProgressionChord[] {
   let order = 0;
 
+  if (proposal.events && proposal.events.length > 0) {
+    return [...proposal.events]
+      .sort((a, b) => (
+        a.tickStart - b.tickStart
+        || a.measureIndex - b.measureIndex
+        || a.chordIndex - b.chordIndex
+      ))
+      .map(event => ({
+        id: event.id,
+        eventId: event.id,
+        measureIndex: event.measureIndex,
+        beat: event.beat,
+        chordIndex: event.chordIndex,
+        occurrenceInMeasure: event.occurrenceInMeasure,
+        order: order++,
+        chord: event.chord,
+        tickStart: event.tickStart,
+        tickEnd: event.tickEnd,
+        durationTicks: event.durationTicks
+      }));
+  }
+
   return proposal.measures.flatMap(measure => (
     measure.chords.map((chord, chordIndex) => ({
       id: `${proposal.id}-${measure.measureIndex}-${chordIndex}`,

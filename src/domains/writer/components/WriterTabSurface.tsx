@@ -38,6 +38,9 @@ function WriterProgressionStrip() {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {state.progressionItems.map((item, index) => {
           const isActive = state.activeProgressionIndex === index;
+          const positionLabel = item.beat && item.beat > 1
+            ? `Comp. ${item.measureIndex} · beat ${item.beat}`
+            : `Comp. ${item.measureIndex}`;
           return (
             <button
               key={item.id}
@@ -48,10 +51,10 @@ function WriterProgressionStrip() {
                   ? "border-pink-500/80 bg-pink-500/15 text-white"
                   : "border-zinc-800 bg-zinc-950/70 text-zinc-300 hover:border-zinc-600"
               }`}
-              title={`Compasso ${item.measureIndex}: ${item.chord}`}
+              title={`${positionLabel}: ${item.chord}`}
             >
               <span className="block text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                Comp. {item.measureIndex}
+                {positionLabel}
               </span>
               <span className="block text-sm font-black">{item.chord}</span>
             </button>

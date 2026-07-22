@@ -12,10 +12,16 @@ import { parseChord } from "../utils/music/theory/chordParser";
 
 export interface WriterProgressionChord {
   id: string;
+  eventId?: string;
   measureIndex: number;
+  beat?: number;
   chordIndex: number;
+  occurrenceInMeasure?: number;
   order: number;
   chord: string;
+  tickStart?: number;
+  tickEnd?: number;
+  durationTicks?: number;
 }
 
 interface ChordStore {

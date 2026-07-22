@@ -26,6 +26,83 @@ describe("apply proposal to Writer", () => {
     ]);
   });
 
+  it("prefers timed proposal events when applying dense harmonizations", () => {
+    const timedProposal: ReharmonizationProposal = {
+      ...proposal,
+      events: [
+        {
+          id: "late-g",
+          measureIndex: 5,
+          beat: 3,
+          chord: "G7/B",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 2880,
+          tickEnd: 3840,
+          durationTicks: 960
+        },
+        {
+          id: "early-d",
+          measureIndex: 5,
+          beat: 1,
+          chord: "Dm7",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 1920,
+          tickEnd: 2880,
+          durationTicks: 960
+        },
+        {
+          id: "opening-c",
+          measureIndex: 4,
+          beat: 1,
+          chord: "Cmaj7",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 1920,
+          durationTicks: 1920
+        }
+      ]
+    };
+
+    expect(proposalToWriterProgression(timedProposal)).toEqual([
+      expect.objectContaining({
+        id: "opening-c",
+        eventId: "opening-c",
+        measureIndex: 4,
+        beat: 1,
+        tickStart: 0,
+        tickEnd: 1920,
+        durationTicks: 1920,
+        order: 0,
+        chord: "Cmaj7"
+      }),
+      expect.objectContaining({
+        id: "early-d",
+        eventId: "early-d",
+        measureIndex: 5,
+        beat: 1,
+        tickStart: 1920,
+        tickEnd: 2880,
+        durationTicks: 960,
+        order: 1,
+        chord: "Dm7"
+      }),
+      expect.objectContaining({
+        id: "late-g",
+        eventId: "late-g",
+        measureIndex: 5,
+        beat: 3,
+        tickStart: 2880,
+        tickEnd: 3840,
+        durationTicks: 960,
+        order: 2,
+        chord: "G7/B"
+      })
+    ]);
+  });
+
   it("loads a playable voicing for the first applied chord", () => {
     const store = useChordStore.getState();
 
