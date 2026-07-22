@@ -98,7 +98,8 @@ export function collectPresentableWindowsForFile(
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         candidate.anchors,
-        timelineContextForAnchors(snapshot, candidate.anchors).keySignature
+        timelineContextForAnchors(snapshot, candidate.anchors).keySignature,
+        { measureTicks: measureTicksForMetricContext(snapshot) }
       ),
       referenceHarmonies
     );

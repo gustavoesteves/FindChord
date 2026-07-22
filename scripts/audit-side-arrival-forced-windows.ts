@@ -89,7 +89,8 @@ export function analyzeForcedSideArrivalWindow(
   const phraseContext = applyReferenceCenterToPhraseContext(
     PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContextForAnchors(snapshot, anchors).keySignature,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
     ),
     referenceHarmonies
   );

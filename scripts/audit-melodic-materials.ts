@@ -14,7 +14,10 @@ import type { ContextualMelodicMaterial } from "../src/utils/music/theory/contex
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 import { realMusicDir, findHarmonizableWindow, toAnchors } from "./real-music-audit";
 
 const require = createRequire(import.meta.url);
@@ -158,7 +161,8 @@ function auditFile(file: string): MelodicMaterialAuditRow[] {
   const phraseContext = applyReferenceCenterToPhraseContext(
     PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContextForAnchors(snapshot, anchors).keySignature,
+      { measureTicks: measureTicksForMetricContext(snapshot) }
     ),
     snapshot.harmonies
   );

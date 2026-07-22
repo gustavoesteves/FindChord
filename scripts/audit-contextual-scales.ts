@@ -6,7 +6,10 @@ import { applyReferenceCenterToPhraseContext } from "../src/utils/music/analysis
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import { buildContextualMaterialCandidates, type ContextualMaterialCandidate } from "../src/utils/music/theory/contextualMaterialCandidates";
 import { selectMelodyForHarmony } from "../src/domains/harmonizer/services/harmonizerService";
-import { timelineContextForAnchors } from "../src/utils/music/analysis/scoreTimelineContext";
+import {
+  measureTicksForMetricContext,
+  timelineContextForAnchors
+} from "../src/utils/music/analysis/scoreTimelineContext";
 
 const require = createRequire(import.meta.url);
 const { parseMusicXML } = require("./musicxml-parser.cjs");
@@ -68,7 +71,8 @@ export function auditContextualMaterialLibrary(): ContextualMaterialAuditReport 
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         anchors,
-        timelineContextForAnchors(snapshot, anchors).keySignature
+        timelineContextForAnchors(snapshot, anchors).keySignature,
+        { measureTicks: measureTicksForMetricContext(snapshot) }
       ),
       snapshot.harmonies
     );
