@@ -799,6 +799,54 @@ export function buildProposalMaterialSuggestions(
   });
 }
 
+function proposalChordSlots(proposal: ReharmonizationProposal): Array<{
+  measureIndex: number;
+  chord: string;
+  chordIndex: number;
+}> {
+  return proposal.measures.flatMap(measure => (
+    measure.chords.map((chord, chordIndex) => ({
+      measureIndex: measure.measureIndex,
+      chord,
+      chordIndex
+    }))
+  ));
+}
+
+function withInheritedVariantEvents(
+  source: ReharmonizationProposal,
+  variant: ReharmonizationProposal
+): ReharmonizationProposal {
+  if (variant.events && variant.events.length > 0) return variant;
+  if (!source.events || source.events.length === 0) return variant;
+
+  const sourceSlots = proposalChordSlots(source);
+  const variantSlots = proposalChordSlots(variant);
+  if (sourceSlots.length !== variantSlots.length || source.events.length !== variantSlots.length) return variant;
+
+  const sameTimelineShape = variantSlots.every((slot, index) => (
+    slot.measureIndex === sourceSlots[index]?.measureIndex
+    && slot.measureIndex === source.events?.[index]?.measureIndex
+  ));
+  if (!sameTimelineShape) return variant;
+
+  return {
+    ...variant,
+    events: variantSlots.map((slot, index) => {
+      const sourceEvent = source.events![index];
+      return {
+        ...sourceEvent,
+        id: `${variant.id}-${sourceEvent.id}`,
+        measureIndex: slot.measureIndex,
+        chord: slot.chord,
+        chordIndex: slot.chordIndex,
+        occurrenceInMeasure: slot.chordIndex,
+        originalChord: sourceEvent.chord
+      };
+    })
+  };
+}
+
 function regionKey(suggestion: SectionMaterialSuggestion): string {
   const primary = suggestion.candidates[0];
   return [
@@ -954,7 +1002,7 @@ export function buildProposalMaterialSuggestionSets(
   const applicableProposals = proposals.flatMap(proposal => [
     proposal,
     ...(proposal.colorVariants || []).map(variant => ({
-      ...variant,
+      ...withInheritedVariantEvents(proposal, variant),
       presentationRole: variant.presentationRole || proposal.presentationRole
     }))
   ]);

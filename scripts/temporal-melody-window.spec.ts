@@ -604,6 +604,52 @@ describe("F119 janela temporal da melodia", () => {
           { measureIndex: 3, chords: ["G7"] },
           { measureIndex: 4, chords: ["C"] }
         ],
+        events: [
+          {
+            id: "basic-m1-c0",
+            measureIndex: 1,
+            beat: 1,
+            chord: "C",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 0,
+            tickEnd: 1920,
+            durationTicks: 1920
+          },
+          {
+            id: "basic-m2-c0",
+            measureIndex: 2,
+            beat: 1,
+            chord: "F",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 1920,
+            tickEnd: 3840,
+            durationTicks: 1920
+          },
+          {
+            id: "basic-m3-c0",
+            measureIndex: 3,
+            beat: 1,
+            chord: "G7",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 3840,
+            tickEnd: 5760,
+            durationTicks: 1920
+          },
+          {
+            id: "basic-m4-c0",
+            measureIndex: 4,
+            beat: 1,
+            chord: "C",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 5760,
+            tickEnd: 7680,
+            durationTicks: 1920
+          }
+        ],
         explanation: [],
         bassLine: ["C", "F", "G", "C"],
         colorVariants: [{
@@ -624,7 +670,12 @@ describe("F119 janela temporal da melodia", () => {
 
     expect(sets.map(set => set.id)).toEqual(["basic", "basic-color"]);
     expect(sets.find(set => set.id === "basic-color")?.presentationRole).toBe("primary");
-    expect(sets.find(set => set.id === "basic-color")?.suggestions.find(suggestion => suggestion.chord === "Db7")?.candidates[0]).toBeTruthy();
+    expect(sets.find(set => set.id === "basic-color")?.suggestions.find(suggestion => suggestion.chord === "Db7")).toMatchObject({
+      eventId: "basic-color-basic-m3-c0",
+      tickStart: 3840,
+      tickEnd: 5760,
+      durationTicks: 1920
+    });
   });
 
   it("identifica leitura regional quando um acorde sustenta varios compassos", () => {
