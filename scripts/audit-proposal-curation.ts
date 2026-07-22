@@ -220,6 +220,7 @@ export function analyzeProposalCurationSnapshot(
   const rawLocal = buildLocalSegmentHarmonizations({
     anchors: melody.allAnchors,
     keySignature: timelineContext.keySignature,
+    keyContext: timelineContext.keyContext,
     referenceHarmonies: harmonies,
     primaryMeasures: uniqueMeasureIndexes(melody.anchors),
     boldnessMode: "balanced",
