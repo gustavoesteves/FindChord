@@ -91,7 +91,7 @@ export function collectSideArrivalGenerationGapRows(
     const snapshot = parseMusicXML(fs.readFileSync(file, "utf8"));
     const harmonizable = findHarmonizableWindow(
       snapshot.notes || [],
-      snapshot.metadata.keySignature,
+      { snapshot },
       snapshot.harmonies || []
     );
     if (!harmonizable) {

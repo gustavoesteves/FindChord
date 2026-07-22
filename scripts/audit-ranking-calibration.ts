@@ -73,7 +73,7 @@ function auditCase(file: string): RankingRow[] {
   const snapshot = loadSnapshot(file);
   const harmonizable = findHarmonizableWindow(
     snapshot.notes,
-    snapshot.metadata.keySignature,
+    { snapshot },
     snapshot.harmonies
   );
   if (!harmonizable) return [];
