@@ -65,6 +65,31 @@ describe("buildLocalSegmentHarmonizations", () => {
     expect(segments[0].reasonLabel).toBe("Harmonia da partitura");
   });
 
+  it("uses structured key context before legacy key signature in local windows", () => {
+    const anchors = [
+      anchor(1, "A"),
+      anchor(2, "C"),
+      anchor(3, "E"),
+      anchor(4, "A"),
+      anchor(5, "B"),
+      anchor(6, "C"),
+      anchor(7, "E"),
+      anchor(8, "A")
+    ];
+
+    const segments = buildLocalSegmentHarmonizations({
+      anchors,
+      keySignature: "C",
+      keyContext: { tonic: "A", mode: "minor", label: "Am" },
+      interestingMeasures: [1],
+      primaryMeasures: [99],
+      maxSegments: 1
+    });
+
+    expect(segments.length).toBeGreaterThan(0);
+    expect(segments[0].selectedCenter).toBe("A menor");
+  });
+
   it("groups one route while preserving each applicable location", () => {
     const proposal = (id: string, measureIndex: number): ReharmonizationProposal => ({
       id,

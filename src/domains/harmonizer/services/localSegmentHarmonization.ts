@@ -10,6 +10,7 @@ import type {
   ScoreHarmonyEvent,
   ScoreMeasureTickRange
 } from "../../../utils/music/analysis/models/ScoreSnapshot";
+import type { ScoreTonalKeyContext } from "../../../utils/music/analysis/scoreTimelineContext";
 import { annotateProposalPresentationRoles } from "../../../utils/music/analysis/strategies/ProposalPresentationPlanner";
 import {
   selectPresentableHarmonizationWindows,
@@ -51,6 +52,7 @@ export interface LocalSegmentOccurrence {
 export interface BuildLocalSegmentHarmonizationsOptions {
   anchors: MelodicAnchor[];
   keySignature?: string;
+  keyContext?: ScoreTonalKeyContext;
   referenceHarmonies?: ScoreHarmonyEvent[];
   inputContext?: ReharmonizationInputContext | null;
   primaryMeasures?: number[];
@@ -67,6 +69,7 @@ const DEFAULT_MAX_CANDIDATE_WINDOWS = 12;
 export function buildLocalSegmentHarmonizations({
   anchors,
   keySignature,
+  keyContext,
   referenceHarmonies = [],
   inputContext,
   primaryMeasures = [],
@@ -77,6 +80,7 @@ export function buildLocalSegmentHarmonizations({
   measureTicks
 }: BuildLocalSegmentHarmonizationsOptions): LocalSegmentHarmonization[] {
   if (anchors.length === 0) return [];
+  const analysisKeySignature = keyContext?.label || keySignature;
 
   const windows = selectPresentableHarmonizationWindows(anchors, {
     referenceHarmonies,
@@ -96,7 +100,7 @@ export function buildLocalSegmentHarmonizations({
       referenceHarmonyCount: referenceForWindow.length
     });
     const phraseContext = applyReferenceCenterToPhraseContext(
-      PhraseAnalysisEngine.analyzePhrase(window.anchors, keySignature, { measureTicks }),
+      PhraseAnalysisEngine.analyzePhrase(window.anchors, analysisKeySignature, { measureTicks }),
       referenceForWindow
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(

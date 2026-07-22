@@ -231,6 +231,7 @@ export function useHarmonizerProposals({
     const segments = buildLocalSegmentHarmonizations({
       anchors: melodyAnchorsData.allAnchors,
       keySignature: timelineContext.keySignature,
+      keyContext: timelineContext.keyContext,
       referenceHarmonies: sectionHarmonies,
       inputContext,
       primaryMeasures: uniqueMeasureIndexes(melodyAnchorsData.anchors),
@@ -244,6 +245,7 @@ export function useHarmonizerProposals({
     displayedProposals,
     melodyAnchorsData.allAnchors,
     melodyAnchorsData.anchors,
+    timelineContext.keyContext,
     timelineContext.keySignature,
     metricMeasureTicks,
     sectionHarmonies,
