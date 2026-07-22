@@ -27,7 +27,10 @@ import {
   type ContextualMelodicFit,
   type ContextualMaterialCandidate
 } from "../../../utils/music/theory/contextualMaterialCandidates";
-import { measureNumberAtTick } from "../../../utils/music/analysis/scoreTimelineContext";
+import {
+  measureNumberAtTick,
+  type ScoreTonalKeyContext
+} from "../../../utils/music/analysis/scoreTimelineContext";
 
 const CONTROLLED_FUNCTIONAL_SUBSTITUTION_RULE_IDS = ["FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION"];
 const REFERENCE_CONTOUR_RULE_IDS = ["FC-RULE-REFERENCE-CONTOUR-PRESERVATION"];
@@ -266,11 +269,34 @@ function referenceCadenceType(evidence: string[] | undefined): PhraseContext["ca
   return "OPEN";
 }
 
-export function buildHarmonyOnlyPhraseContext(sectionHarmonies: ScoreHarmonyEvent[]): PhraseContext | null {
+interface HarmonyOnlyPhraseContextOptions {
+  keyContext?: ScoreTonalKeyContext;
+}
+
+function isApproximateFirstChordCenter(evidence: string[] | undefined): boolean {
+  return Boolean(evidence?.some(item => item === "centro aproximado pelo primeiro acorde por falta de cadência clara"));
+}
+
+export function buildHarmonyOnlyPhraseContext(
+  sectionHarmonies: ScoreHarmonyEvent[],
+  options: HarmonyOnlyPhraseContextOptions = {}
+): PhraseContext | null {
   if (sectionHarmonies.length === 0) return null;
 
   const referenceAnalysis = analyzeReferenceHarmony(sectionHarmonies);
-  const referenceCenter = referenceAnalysis.referenceCenter;
+  const shouldUseTimelineCenter = Boolean(
+    options.keyContext
+    && referenceAnalysis.referenceCenter?.confidence === "weak"
+    && isApproximateFirstChordCenter(referenceAnalysis.referenceCenter.evidence)
+  );
+  const referenceCenter = shouldUseTimelineCenter
+    ? {
+      tonic: options.keyContext!.tonic,
+      mode: options.keyContext!.mode,
+      confidence: "medium" as const,
+      evidence: [`armadura da seção aponta ${options.keyContext!.label}`]
+    }
+    : referenceAnalysis.referenceCenter;
   const fallbackRoot = chordRoot(sectionHarmonies[0]?.harmony) || "C";
   const selectedCenter = {
     tonic: referenceCenter?.tonic || fallbackRoot,

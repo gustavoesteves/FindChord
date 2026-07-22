@@ -98,6 +98,31 @@ describe("Harmony-only analysis", () => {
     expect(proposals[0]?.cadentialTarget).toBe("C");
   });
 
+  it("uses the section key context before the first-chord fallback", () => {
+    const withoutTimeline = buildHarmonyOnlyPhraseContext(harmonies(["D7"]));
+    const withTimeline = buildHarmonyOnlyPhraseContext(harmonies(["D7"]), {
+      keyContext: { tonic: "C", mode: "minor", label: "Cm" }
+    });
+
+    expect(withoutTimeline?.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "D",
+      mode: "major"
+    }));
+    expect(withTimeline).toEqual(expect.objectContaining({
+      selectedCenter: expect.objectContaining({
+        tonic: "C",
+        mode: "minor",
+        confidence: 0.76
+      }),
+      selectedCenterEvidence: ["armadura da seção aponta Cm"],
+      cadentialTarget: {
+        targetPitch: "C",
+        cadenceType: "OPEN",
+        confidence: 0.76
+      }
+    }));
+  });
+
   it("keeps a harmony-only final IV-I as a plagal cadence", () => {
     const phraseContext = buildHarmonyOnlyPhraseContext(harmonies(["C", "F", "C"]));
 

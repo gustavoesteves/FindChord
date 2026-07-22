@@ -90,7 +90,9 @@ export function useHarmonizerProposals({
 
   const { proposals, phraseContext, rejectedExperimentalCount, omittedStrategyDiagnostics } = useMemo(() => {
     if (melodyAnchorsData.anchors.length === 0) {
-      const phraseContext = buildHarmonyOnlyPhraseContext(sectionHarmonies);
+      const phraseContext = buildHarmonyOnlyPhraseContext(sectionHarmonies, {
+        keyContext: timelineContext.keyContext
+      });
       return {
         proposals: buildHarmonyOnlyAnalysisProposals(sectionHarmonies, phraseContext),
         phraseContext,
@@ -120,7 +122,7 @@ export function useHarmonizerProposals({
       rejectedExperimentalCount: generation.rejectedExperimentalCount,
       omittedStrategyDiagnostics: generation.omittedStrategyDiagnostics
     };
-  }, [melodyAnchorsData.anchors, timelineContext.keySignature, sectionHarmonies, metricMeasureTicks]);
+  }, [melodyAnchorsData.anchors, timelineContext.keyContext, timelineContext.keySignature, sectionHarmonies, metricMeasureTicks]);
 
   const existingHarmonyProposal = useMemo(
     () => buildExistingHarmonyProposal(sectionHarmonies, inputContext),
