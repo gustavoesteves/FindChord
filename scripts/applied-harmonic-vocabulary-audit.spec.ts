@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
-import { summarizeAppliedHarmonicVocabulary } from "./audit-applied-harmonic-vocabulary";
+import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import {
+  auditAppliedHarmonicVocabularySnapshot,
+  summarizeAppliedHarmonicVocabulary
+} from "./audit-applied-harmonic-vocabulary";
 
 function harmony(harmonySymbol: string, index: number): ScoreHarmonyEvent {
   return {
@@ -51,5 +54,34 @@ describe("Applied harmonic vocabulary audit", () => {
 
     expect(formulas.modalBorrowingColors).toBe(0);
     expect(formulas.tritoneSubstitutions).toBe(2);
+  });
+
+  it("uses key timeline context before a weak first-chord center", () => {
+    const snapshot: ScoreSnapshot = {
+      timestamp: 1,
+      harmonies: [{
+        measure: 1,
+        beat: 1,
+        harmony: "D7",
+        tickStart: 0,
+        tickEnd: 1920,
+        durationTicks: 1920
+      }],
+      notes: [],
+      metadata: {
+        title: "Minor timeline vocabulary",
+        keySignature: "C",
+        keyTimeline: [
+          { measure: 1, tick: 0, fifths: -3, mode: "minor", keySignature: "C" }
+        ]
+      }
+    };
+
+    const row = auditAppliedHarmonicVocabularySnapshot(snapshot, "minor-timeline.musicxml");
+
+    expect(row.referenceCenter).toBe("C minor");
+    expect(row.referenceIdiom).toBe("major-functional");
+    expect(row.formulas.appliedDominants).toBe(0);
+    expect(row.formulas.primaryDominants).toBe(0);
   });
 });

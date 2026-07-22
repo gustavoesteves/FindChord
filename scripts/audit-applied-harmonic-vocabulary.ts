@@ -3,10 +3,11 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { Note } from "tonal";
-import type { ScoreHarmonyEvent } from "../src/utils/music/analysis/models/ScoreSnapshot";
+import type { ScoreHarmonyEvent, ScoreSnapshot } from "../src/utils/music/analysis/models/ScoreSnapshot";
 import { analyzeReferenceHarmony } from "../src/utils/music/analysis/strategies/ReferenceHarmonyAnalysis";
 import { analyzeModalBorrowingColors } from "../src/utils/music/analysis/strategies/ModalBorrowingAnalysis";
 import { detectIiVFunctionalCells } from "../src/utils/music/analysis/strategies/IiVFunctionalGrammar";
+import { timelineContextAtTick } from "../src/utils/music/analysis/scoreTimelineContext";
 import {
   chordPitchClasses,
   chordRoot,
@@ -240,42 +241,74 @@ function notesFor(row: Pick<AppliedHarmonicVocabularyAuditRow, "formulas" | "ref
   return notes.length > 0 ? notes.join("; ") : "Vocabulário funcional direto, sem cromatismo aplicado forte nesta leitura.";
 }
 
+function isApproximateFirstChordCenter(evidence: string[] | undefined): boolean {
+  return Boolean(evidence?.some(item => item === "centro aproximado pelo primeiro acorde por falta de cadência clara"));
+}
+
+function centerForVocabularyAudit(
+  snapshot: ScoreSnapshot,
+  analysis: ReturnType<typeof analyzeReferenceHarmony>
+): { center: string | null; mode: "major" | "minor" | null } {
+  const timelineContext = timelineContextAtTick(snapshot);
+  if (
+    timelineContext.keyContext
+    && analysis.referenceCenter?.confidence === "weak"
+    && isApproximateFirstChordCenter(analysis.referenceCenter.evidence)
+  ) {
+    return {
+      center: timelineContext.keyContext.tonic,
+      mode: timelineContext.keyContext.mode
+    };
+  }
+
+  return {
+    center: analysis.referenceCenter?.tonic || timelineContext.keyContext?.tonic || null,
+    mode: analysis.referenceCenter?.mode || timelineContext.keyContext?.mode || null
+  };
+}
+
+export function auditAppliedHarmonicVocabularySnapshot(
+  snapshot: ScoreSnapshot,
+  fileLabel: string
+): AppliedHarmonicVocabularyAuditRow {
+  const harmonies = snapshot.harmonies as ScoreHarmonyEvent[];
+  if (harmonies.length === 0) {
+    return {
+      file: relativeMusicPath(fileLabel),
+      title: snapshot.metadata.title || path.basename(fileLabel, ".musicxml"),
+      status: "no-reference-harmony",
+      referenceCenter: "n/a",
+      referenceIdiom: "n/a",
+      harmonyCount: 0,
+      signalScore: 0,
+      formulas: emptyFormulaSummary(),
+      examples: [],
+      notes: "Sem cifras de referencia."
+    };
+  }
+
+  const analysis = analyzeReferenceHarmony(harmonies);
+  const { center, mode } = centerForVocabularyAudit(snapshot, analysis);
+  const formulas = summarizeAppliedHarmonicVocabulary(harmonies, center, mode);
+  const row = {
+    file: relativeMusicPath(fileLabel),
+    title: snapshot.metadata.title || path.basename(fileLabel, ".musicxml"),
+    status: "ok" as const,
+    referenceCenter: center && mode ? `${center} ${mode}` : "n/a",
+    referenceIdiom: analysis.idiom?.idiom || "n/a",
+    harmonyCount: harmonies.length,
+    signalScore: signalScore(formulas),
+    formulas,
+    examples: examplesFor(orderedChords(harmonies)),
+    notes: ""
+  };
+  return { ...row, notes: notesFor(row) };
+}
+
 export function auditAppliedHarmonicVocabularyFile(file: string): AppliedHarmonicVocabularyAuditRow {
   try {
     const snapshot = parseMusicXML(fs.readFileSync(file, "utf8"));
-    const harmonies = snapshot.harmonies as ScoreHarmonyEvent[];
-    if (harmonies.length === 0) {
-      return {
-        file: relativeMusicPath(file),
-        title: snapshot.metadata.title || path.basename(file, ".musicxml"),
-        status: "no-reference-harmony",
-        referenceCenter: "n/a",
-        referenceIdiom: "n/a",
-        harmonyCount: 0,
-        signalScore: 0,
-        formulas: emptyFormulaSummary(),
-        examples: [],
-        notes: "Sem cifras de referencia."
-      };
-    }
-
-    const analysis = analyzeReferenceHarmony(harmonies);
-    const center = analysis.referenceCenter?.tonic || snapshot.metadata.keySignature || null;
-    const mode = analysis.referenceCenter?.mode || "major";
-    const formulas = summarizeAppliedHarmonicVocabulary(harmonies, center, mode);
-    const row = {
-      file: relativeMusicPath(file),
-      title: snapshot.metadata.title || path.basename(file, ".musicxml"),
-      status: "ok" as const,
-      referenceCenter: center ? `${center} ${mode}` : "n/a",
-      referenceIdiom: analysis.idiom?.idiom || "n/a",
-      harmonyCount: harmonies.length,
-      signalScore: signalScore(formulas),
-      formulas,
-      examples: examplesFor(orderedChords(harmonies)),
-      notes: ""
-    };
-    return { ...row, notes: notesFor(row) };
+    return auditAppliedHarmonicVocabularySnapshot(snapshot, file);
   } catch (error) {
     return {
       file: relativeMusicPath(file),
