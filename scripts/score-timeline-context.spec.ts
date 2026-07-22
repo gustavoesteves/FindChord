@@ -64,6 +64,16 @@ describe("score timeline context", () => {
       mode: "minor",
       label: "F#m"
     });
+    expect(keyContextFromSignature("Bb maior")).toEqual({
+      tonic: "Bb",
+      mode: "major",
+      label: "Bb"
+    });
+    expect(keyContextFromSignature("Eb menor")).toEqual({
+      tonic: "Eb",
+      mode: "minor",
+      label: "Ebm"
+    });
   });
 
   it("resolves context from the active section start", () => {

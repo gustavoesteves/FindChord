@@ -42,16 +42,21 @@ function normalizeMode(mode?: string): string | undefined {
   return mode?.trim().toLowerCase();
 }
 
+function isMinorModeLabel(mode?: string): boolean {
+  const normalized = normalizeMode(mode);
+  return normalized === "minor" || normalized === "menor";
+}
+
 export function keyContextFromSignature(keySignature?: string): ScoreTonalKeyContext | undefined {
   const normalized = keySignature?.trim();
   if (!normalized) return undefined;
 
-  const explicitMinor = /\bminor\b/i.test(normalized);
-  const explicitMajor = /\bmajor\b/i.test(normalized);
+  const explicitMinor = /\b(?:minor|menor)\b/i.test(normalized);
+  const explicitMajor = /\b(?:major|maior)\b/i.test(normalized);
   const compactMinor = !explicitMajor && /m$/i.test(normalized);
   const mode = explicitMinor || compactMinor ? "minor" : "major";
   const tonic = normalized
-    .replace(/\b(?:major|minor)\b/gi, "")
+    .replace(/\b(?:major|minor|maior|menor)\b/gi, "")
     .replace(/m$/i, "")
     .trim();
 
@@ -70,7 +75,7 @@ export function keyContextForAnalysis(
 ): ScoreTonalKeyContext | undefined {
   if (!entry?.keySignature) return keyContextFromSignature(fallbackKeySignature);
 
-  const mode = normalizeMode(entry.mode) === "minor" ? "minor" : "major";
+  const mode = isMinorModeLabel(entry.mode) ? "minor" : "major";
   return {
     tonic: entry.keySignature,
     mode,
