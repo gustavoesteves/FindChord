@@ -85,11 +85,17 @@ function resolvesAsDominant(root: string, targetRoot: string | undefined): boole
   return motion === 5 || motion === 11;
 }
 
+function resolvesAsPrimaryDominant(root: string, targetRoot: string | undefined): boolean {
+  return directedSemitones(root, targetRoot) === 5;
+}
+
 function impliedIiVResolutionTarget(context: MaterialContext, root: string): string | undefined {
   const previousRoot = chordRoot(context.previousChord);
   if (!previousRoot || !isMinorPredominantLike(context.previousChord)) return undefined;
-  if (directedSemitones(previousRoot, root) !== 5) return undefined;
-  return transposePitchClass(root, "4P") || undefined;
+  const motionToDominant = directedSemitones(previousRoot, root);
+  if (motionToDominant === 5) return transposePitchClass(root, "4P") || undefined;
+  if (motionToDominant === 11) return transposePitchClass(root, "7M") || undefined;
+  return undefined;
 }
 
 function impliedSubdominantVResolutionTarget(context: MaterialContext, root: string): string | undefined {
@@ -116,7 +122,7 @@ function impliedRegionalResolutionTarget(context: MaterialContext, root: string)
   const center = context.tonalCenter?.tonic;
   if (!center) return undefined;
   if (resolvesAsLeadingDiminished(context.chord, root, center)) return center;
-  return resolvesAsDominant(root, center) ? center : undefined;
+  return resolvesAsPrimaryDominant(root, center) ? center : undefined;
 }
 
 export function contextualResolutionTarget(context: MaterialContext, root: string): string | undefined {
@@ -164,7 +170,7 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
   if (dominantLike && (
     resolvesAsDominant(root, nextRoot)
     || resolvesAsDominant(root, resolutionRoot)
-    || (!!center && resolvesAsDominant(root, center.tonic))
+    || (!!center && resolvesAsPrimaryDominant(root, center.tonic))
   )) return "dominant";
   if (dominantLike) return "color";
   if (center && rootsEqual(root, center.tonic)) return "tonic";

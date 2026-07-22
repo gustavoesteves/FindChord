@@ -100,6 +100,24 @@ describe("F199 candidatas contextuais de material", () => {
     ]));
   });
 
+  it("infere alvo regional local quando ii prepara SubV sem proximo acorde", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "Db7",
+      previousChord: "Dm7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["F", "B"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "C"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "F->E",
+      "Cb->C"
+    ]));
+  });
+
   it("infere alvo menor quando iiø prepara dominante sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7",
