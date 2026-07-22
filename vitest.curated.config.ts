@@ -88,6 +88,7 @@ export default defineConfig({
       "scripts/musicxml-parser-timeline.spec.ts",
       "scripts/omitted-strategy-diagnostics.spec.ts",
       "scripts/palhaco-diagnostic.spec.ts",
+      "scripts/phrase-analysis-key-context.spec.ts",
       "scripts/proposal-presentation-planner.spec.ts",
       "scripts/proposal-display-context.spec.ts",
       "scripts/proposal-harmonic-identity.spec.ts",

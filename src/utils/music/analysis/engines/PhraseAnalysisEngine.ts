@@ -63,12 +63,19 @@ export class PhraseAnalysisEngine {
     options: PhraseAnalysisOptions = {}
   ): PhraseContext {
     if (anchors.length === 0) {
-      const defaultCenter: TonalCenterCandidate = { tonic: "C", mode: "major", confidence: 0.1 };
+      const keyContext = keyContextFromSignature(keySignature);
+      const defaultCenter: TonalCenterCandidate = keyContext
+        ? { tonic: keyContext.tonic, mode: keyContext.mode, confidence: 0.25 }
+        : { tonic: "C", mode: "major", confidence: 0.1 };
       return {
         selectedCenter: defaultCenter,
         selectedCenterSource: "melody",
         tonalCenterCandidates: [defaultCenter],
-        cadentialTarget: { targetPitch: "C", cadenceType: "UNKNOWN", confidence: 0.1 }
+        cadentialTarget: {
+          targetPitch: defaultCenter.tonic,
+          cadenceType: "UNKNOWN",
+          confidence: defaultCenter.confidence
+        }
       };
     }
 
