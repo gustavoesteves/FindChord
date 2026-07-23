@@ -715,6 +715,7 @@ export function buildSectionMaterialSuggestions(
     const candidates = buildContextualMaterialCandidates({
       chord: harmony.harmony,
       previousChord,
+      chordHistory: sectionHarmonies.slice(Math.max(0, index - 4), index).map(item => item.harmony),
       nextChord,
       tonalCenter: phraseContext.selectedCenter,
       melody: selectMelodyForHarmony(harmony, melodyAnchors),
@@ -775,6 +776,7 @@ export function buildProposalMaterialSuggestions(
     const candidates = buildContextualMaterialCandidates({
       chord: item.chord,
       previousChord: chords[index - 1]?.chord,
+      chordHistory: chords.slice(Math.max(0, index - 4), index).map(previous => previous.chord),
       nextChord,
       tonalCenter: phraseContext.selectedCenter,
       melody: selectMelodyForHarmony(harmonyLikeEvent, melodyAnchors),

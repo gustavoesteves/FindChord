@@ -22,7 +22,7 @@ export function transposePitchClass(root: string, interval: string): string | nu
 
 function isDominantLike(symbol: string): boolean {
   const resolved = resolveChordSymbol(symbol, "plain");
-  return ["7", "9", "11", "13", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
+  return ["7", "9", "11", "13", "7sus4", "13sus4", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
 }
 
 function isDiminishedLike(symbol: string): boolean {
@@ -80,6 +80,30 @@ function directedSemitones(from: string | undefined, to: string | undefined): nu
   return (toChroma - fromChroma + 12) % 12;
 }
 
+function preparationChordCandidates(context: MaterialContext, root: string): string[] {
+  const candidates: string[] = [];
+  const pushCandidate = (chord: string | undefined) => {
+    if (chord && !candidates.includes(chord)) candidates.push(chord);
+  };
+
+  pushCandidate(context.previousChord);
+
+  const history = context.chordHistory ?? [];
+  const immediate = context.previousChord ?? history[history.length - 1];
+  const immediateRoot = chordRoot(immediate);
+  if (!rootsEqual(immediateRoot, root)) return candidates;
+
+  for (let index = history.length - 1; index >= 0; index--) {
+    const chord = history[index];
+    const historyRoot = chordRoot(chord);
+    if (rootsEqual(historyRoot, root)) continue;
+    pushCandidate(chord);
+    break;
+  }
+
+  return candidates;
+}
+
 function resolvesAsDominant(root: string, targetRoot: string | undefined): boolean {
   const motion = directedSemitones(root, targetRoot);
   return motion === 5 || motion === 11;
@@ -90,29 +114,37 @@ function resolvesAsPrimaryDominant(root: string, targetRoot: string | undefined)
 }
 
 function impliedIiVResolutionTarget(context: MaterialContext, root: string): string | undefined {
-  const previousRoot = chordRoot(context.previousChord);
-  if (!previousRoot || !isMinorPredominantLike(context.previousChord)) return undefined;
-  const motionToDominant = directedSemitones(previousRoot, root);
-  if (motionToDominant === 5) return transposePitchClass(root, "4P") || undefined;
-  if (motionToDominant === 11) return transposePitchClass(root, "7M") || undefined;
+  for (const previousChord of preparationChordCandidates(context, root)) {
+    const previousRoot = chordRoot(previousChord);
+    if (!previousRoot || !isMinorPredominantLike(previousChord)) continue;
+    const motionToDominant = directedSemitones(previousRoot, root);
+    if (motionToDominant === 5) return transposePitchClass(root, "4P") || undefined;
+    if (motionToDominant === 11) return transposePitchClass(root, "7M") || undefined;
+  }
   return undefined;
 }
 
 function impliedSubdominantVResolutionTarget(context: MaterialContext, root: string): string | undefined {
-  const previousRoot = chordRoot(context.previousChord);
-  if (!previousRoot || !isSubdominantPreparationLike(context.previousChord)) return undefined;
-  const motionToDominant = directedSemitones(previousRoot, root);
-  if (motionToDominant !== 2 && motionToDominant !== 5) return undefined;
-  if (motionToDominant === 5 && isMinorSubdominantPreparation(context.previousChord)) return undefined;
-  return transposePitchClass(root, "4P") || undefined;
+  for (const previousChord of preparationChordCandidates(context, root)) {
+    const previousRoot = chordRoot(previousChord);
+    if (!previousRoot || !isSubdominantPreparationLike(previousChord)) continue;
+    const motionToDominant = directedSemitones(previousRoot, root);
+    if (motionToDominant !== 2 && motionToDominant !== 5) continue;
+    if (motionToDominant === 5 && isMinorSubdominantPreparation(previousChord)) continue;
+    return transposePitchClass(root, "4P") || undefined;
+  }
+  return undefined;
 }
 
 function impliedDominantChainResolutionTarget(context: MaterialContext, root: string): string | undefined {
-  const previousRoot = chordRoot(context.previousChord);
-  if (!previousRoot || !isDominantLike(context.previousChord || "")) return undefined;
-  if (!resolvesAsPrimaryDominant(previousRoot, root)) return undefined;
-  if (context.tonalCenter && rootsEqual(root, context.tonalCenter.tonic)) return undefined;
-  return transposePitchClass(root, "4P") || undefined;
+  for (const previousChord of preparationChordCandidates(context, root)) {
+    const previousRoot = chordRoot(previousChord);
+    if (!previousRoot || !isDominantLike(previousChord)) continue;
+    if (!resolvesAsPrimaryDominant(previousRoot, root)) continue;
+    if (context.tonalCenter && rootsEqual(root, context.tonalCenter.tonic)) return undefined;
+    return transposePitchClass(root, "4P") || undefined;
+  }
+  return undefined;
 }
 
 function resolvesAsLeadingDiminished(
@@ -154,12 +186,14 @@ export function contextualResolutionChord(
   if (!targetRoot) return undefined;
 
   const localIiVTarget = impliedIiVResolutionTarget(context, root);
-  if (localIiVTarget && rootsEqual(localIiVTarget, targetRoot) && isHalfDiminishedPredominant(context.previousChord)) {
+  const minorIiVPreparation = preparationChordCandidates(context, root).find(isHalfDiminishedPredominant);
+  if (localIiVTarget && rootsEqual(localIiVTarget, targetRoot) && minorIiVPreparation) {
     return `${targetRoot}m`;
   }
 
   const localSubdominantVTarget = impliedSubdominantVResolutionTarget(context, root);
-  if (localSubdominantVTarget && rootsEqual(localSubdominantVTarget, targetRoot) && isMinorSubdominantPreparation(context.previousChord)) {
+  const minorSubdominantPreparation = preparationChordCandidates(context, root).find(isMinorSubdominantPreparation);
+  if (localSubdominantVTarget && rootsEqual(localSubdominantVTarget, targetRoot) && minorSubdominantPreparation) {
     return `${targetRoot}m`;
   }
 

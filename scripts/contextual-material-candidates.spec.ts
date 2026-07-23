@@ -114,6 +114,25 @@ describe("F199 candidatas contextuais de material", () => {
     ]));
   });
 
+  it("mantem alvo regional quando uma dominante preparada passa por suspensao", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A7",
+      previousChord: "A7sus4",
+      chordHistory: ["Em7", "A7sus4"],
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["C#", "G"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "C#->D",
+      "G->F#"
+    ]));
+  });
+
   it("infere alvo regional local quando ii prepara SubV sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "Db7",

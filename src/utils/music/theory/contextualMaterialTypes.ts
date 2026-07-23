@@ -11,6 +11,7 @@ export type MelodySupportRole = "guide-tone" | "resolution-target" | "passing-to
 export interface MaterialContext {
   chord: string;
   previousChord?: string;
+  chordHistory?: string[];
   nextChord?: string;
   tonalCenter?: { tonic: string; mode: "major" | "minor" };
   melody?: MelodicAnchor[] | string[];

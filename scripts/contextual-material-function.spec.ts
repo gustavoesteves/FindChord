@@ -118,6 +118,26 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(looseSecondaryDominant, "A")).toBe("color");
   });
 
+  it("recupera preparacao recente quando a dominante foi prolongada na mesma raiz", () => {
+    const suspendedResolution = {
+      chord: "A7",
+      previousChord: "A7sus4",
+      chordHistory: ["Em7", "A7sus4"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSuspension = {
+      chord: "A7",
+      previousChord: "A7sus4",
+      chordHistory: ["A7sus4"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(suspendedResolution, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(suspendedResolution, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSuspension, "A")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSuspension, "A")).toBe("color");
+  });
+
   it("infere alvo regional local quando ii prepara SubV sem proximo acorde", () => {
     const preparedSubV = {
       chord: "Db7",
