@@ -455,15 +455,15 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-TST-01 — P2 — cobertura extensa em funções, mas fraca nas jornadas e no deploy
 
 - **Escopo:** transversal.
-- **Progresso:** o workflow de deploy já executa `npm run lint` e `npm run test:curated`, além do build. A suíte curada agora inclui todos os `scripts/*.spec.ts` e `suite-boundary.spec.ts` falha quando uma nova spec fica fora da configuração. Ainda faltam testes React/E2E, bridge real em porta efêmera, fault injection e MuseScore simulado.
+- **Progresso:** o workflow de deploy já executa `npm run lint` e `npm run test:curated`, além do build. A suíte curada agora inclui todos os `scripts/*.spec.ts` e `suite-boundary.spec.ts` falha quando uma nova spec fica fora da configuração. `react-screen-smoke.spec.ts` renderiza Writer e Harmonizer via `react-dom/server`, garantindo uma primeira cobertura React sem depender de browser/screenshot. Ainda faltam E2E, bridge real em porta efêmera, fault injection e MuseScore simulado.
 - **Esperado:** lint/build/test e integrações críticas executadas no CI.
-- **Observado:** existem 142 specs em `scripts/*.spec.ts` e todas estão cobertas pelo `test:curated`, sem duplicatas. Não há teste React/E2E do Harmonizer, bridge real, fault injection ou QML.
+- **Observado:** existem specs em `scripts/*.spec.ts` e todas estão cobertas pelo `test:curated`, sem duplicatas. Há smoke React server-side das jornadas Writer/Harmonizer, mas ainda não há E2E do Harmonizer, bridge real, fault injection ou QML.
 - **Evidência:** [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>) e [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).
 - **Reprodução original:** teste explicitamente solicitado com a configuração curada era ignorado se não estivesse no include. Uma execução curada sob carga excedeu o timeout fixo; isolada e repetida passou.
 - **Impacto:** músico — regressões de UI/integração podem chegar ao produto; produto — sucesso da suíte não prova as jornadas A–F.
 - **Causa provável:** crescimento por specs puras e auditorias estáticas, sem pirâmide de integração. A lacuna de inclusão manual da suíte curada foi fechada por guardrail.
-- **Correção recomendada:** servidor em porta efêmera, transporte falso/fault injection, React e E2E com MuseScore simulado.
-- **Testes necessários:** as próprias jornadas A–F, incluindo offline, atraso, retry e estado tardio.
+- **Correção recomendada:** servidor em porta efêmera, transporte falso/fault injection, E2E com MuseScore simulado e expansão gradual da cobertura React além do smoke inicial.
+- **Testes necessários:** as próprias jornadas A–F, incluindo offline, atraso, retry, estado tardio e interação real entre abas.
 - **Confiança:** alta.
 
 ## Inventário de `docs/theory`
