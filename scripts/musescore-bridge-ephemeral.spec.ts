@@ -1,5 +1,10 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
+import type { BridgeMessage } from "../src/utils/music/bridge/Protocol";
+
+const require = createRequire(import.meta.url);
+const WebSocketClient = require("ws") as typeof import("ws");
 
 function waitForBridge(): Promise<{
   process: ChildProcessWithoutNullStreams;
@@ -61,6 +66,51 @@ async function stopBridge(bridge: ChildProcessWithoutNullStreams): Promise<void>
   });
 }
 
+function openDashboardSocket(wsEndpoint: string): Promise<import("ws")> {
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocketClient.WebSocket(wsEndpoint, {
+      headers: {
+        Origin: "http://localhost:5173"
+      }
+    });
+    const timeout = setTimeout(() => {
+      socket.close();
+      reject(new Error("Dashboard WebSocket did not open in time."));
+    }, 2000);
+
+    socket.once("open", () => {
+      clearTimeout(timeout);
+      resolve(socket);
+    });
+    socket.once("error", error => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
+
+function waitForSocketMessage(
+  socket: import("ws"),
+  predicate: (message: BridgeMessage) => boolean
+): Promise<BridgeMessage> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      socket.off("message", onMessage);
+      reject(new Error("Dashboard WebSocket message did not arrive in time."));
+    }, 2000);
+
+    function onMessage(data: import("ws").RawData) {
+      const message = JSON.parse(data.toString()) as BridgeMessage;
+      if (!predicate(message)) return;
+      clearTimeout(timeout);
+      socket.off("message", onMessage);
+      resolve(message);
+    }
+
+    socket.on("message", onMessage);
+  });
+}
+
 describe("MuseScore bridge ephemeral server", () => {
   it("starts on an ephemeral port and serves dashboard/plugin sessions", async () => {
     let bridge: Awaited<ReturnType<typeof waitForBridge>>;
@@ -95,6 +145,7 @@ describe("MuseScore bridge ephemeral server", () => {
       };
       expect(dashboard.dashboardToken).toHaveLength(48);
       expect(dashboard.wsEndpoint).toContain(bridge.baseUrl.replace("http:", "ws:"));
+      const dashboardSocket = await openDashboardSocket(dashboard.wsEndpoint);
 
       const pluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
       expect(pluginSession.status).toBe(200);
@@ -165,6 +216,10 @@ describe("MuseScore bridge ephemeral server", () => {
         leasedCommandCount: 1
       }));
 
+      const ackMessage = waitForSocketMessage(dashboardSocket, message => (
+        message.messageType === "ACK"
+        && (message.payload as { commandId?: string }).commandId === "cmd-ephemeral-insert"
+      ));
       const acknowledge = await fetch(`${bridge.baseUrl}/api/v1/ack`, {
         method: "POST",
         headers: {
@@ -178,6 +233,13 @@ describe("MuseScore bridge ephemeral server", () => {
         })
       });
       expect(acknowledge.status).toBe(200);
+      await expect(ackMessage).resolves.toEqual(expect.objectContaining({
+        messageType: "ACK",
+        payload: expect.objectContaining({
+          commandId: "cmd-ephemeral-insert",
+          status: "accepted"
+        })
+      }));
 
       const acknowledgedStatus = await fetch(`${bridge.baseUrl}/api/v1/status`, {
         headers: {
@@ -189,6 +251,7 @@ describe("MuseScore bridge ephemeral server", () => {
       await expect(acknowledgedStatus.json()).resolves.toEqual(expect.objectContaining({
         leasedCommandCount: 0
       }));
+      dashboardSocket.close();
     } finally {
       await stopBridge(bridge.process);
     }
