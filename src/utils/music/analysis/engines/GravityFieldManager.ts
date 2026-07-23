@@ -22,6 +22,8 @@ import {
   weightedMelodicCoverage
 } from "../strategies/MelodicCoverage";
 
+const GRAVITY_FIELD_EXPLORATION_RULE_IDS = ["FC-RULE-GRAVITY-FIELD-EXPLORATION"];
+
 export interface GravityProposalGenerationResult {
   proposals: ReharmonizationProposal[];
   rejectedExperimentalCount: number;
@@ -129,7 +131,8 @@ export class GravityFieldManager {
               measures,
               events: this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks, anchors),
               explanation: seed.explanation, 
-              bassLine: bestPath.bassLine
+              bassLine: bestPath.bassLine,
+              ruleIds: GRAVITY_FIELD_EXPLORATION_RULE_IDS
             });
 
             pIdx++;

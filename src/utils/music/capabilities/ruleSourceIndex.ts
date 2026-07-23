@@ -165,6 +165,116 @@ export const RULE_SOURCE_INDEX: Record<string, RuleSourceInfo> = {
       "docs/theory/berklee_jazz_harmony_source_map.md"
     ]
   },
+  "FC-RULE-REFERENCE-CENTERED-HARMONIZATION": {
+    ruleId: "FC-RULE-REFERENCE-CENTERED-HARMONIZATION",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-ALTERED-DOMINANT-TENSION": {
+    ruleId: "FC-RULE-ALTERED-DOMINANT-TENSION",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-CHROMATIC-MEDIANT-DECEPTIVE": {
+    ruleId: "FC-RULE-CHROMATIC-MEDIANT-DECEPTIVE",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-DENSE-MODAL-MIXTURE": {
+    ruleId: "FC-RULE-DENSE-MODAL-MIXTURE",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-CHROMATIC-NEIGHBOR-REGION": {
+    ruleId: "FC-RULE-CHROMATIC-NEIGHBOR-REGION",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-LOCAL-II-V-CADENCE": {
+    ruleId: "FC-RULE-LOCAL-II-V-CADENCE",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-BLUES-FUNCTIONAL-IDIOM": {
+    ruleId: "FC-RULE-BLUES-FUNCTIONAL-IDIOM",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-MODAL-CENTER-NON-DOMINANT": {
+    ruleId: "FC-RULE-MODAL-CENTER-NON-DOMINANT",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-MINOR-FUNCTIONAL-DOMINANT": {
+    ruleId: "FC-RULE-MINOR-FUNCTIONAL-DOMINANT",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
+  "FC-RULE-GRAVITY-FIELD-EXPLORATION": {
+    ruleId: "FC-RULE-GRAVITY-FIELD-EXPLORATION",
+    capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",
+    capabilityTitle: "Vocabulario progressivo de rearmonizacao",
+    theorySources: [
+      "docs/theory/almada_examples.md",
+      "docs/theory/almada_harmonia_funcional_source_map.md",
+      "docs/theory/analise_ebooks_erica_masson.md",
+      "docs/theory/berklee_jazz_harmony_source_map.md"
+    ]
+  },
   "FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION": {
     ruleId: "FC-RULE-CONTROLLED-FUNCTIONAL-SUBSTITUTION",
     capabilityId: "FC-CAP-HZ-REHARMONIZATION-VOCABULARY",

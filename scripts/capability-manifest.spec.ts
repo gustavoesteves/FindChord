@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { PhraseAnalysisEngine } from "../src/utils/music/analysis/engines/PhraseAnalysisEngine";
+import { GravityFieldManager } from "../src/utils/music/analysis/engines/GravityFieldManager";
 import type { MelodicAnchor } from "../src/utils/music/analysis/models/ProjectionSet";
 import { StrategyGuidedHarmonizer } from "../src/utils/music/analysis/strategies/StrategyGuidedHarmonizer";
 import { buildContextualMaterialCandidates } from "../src/utils/music/theory/contextualMaterialCandidates";
@@ -36,6 +37,18 @@ function manifest(): CapabilityManifest {
 
 function anchor(measureIndex: number, pitch: string): MelodicAnchor {
   return { measureIndex, pitch, duration: 960 };
+}
+
+function phraseContext(anchors: MelodicAnchor[], tonic: string, mode: "major" | "minor") {
+  const analyzed = PhraseAnalysisEngine.analyzePhrase(anchors, tonic);
+  return {
+    ...analyzed,
+    selectedCenter: {
+      ...analyzed.selectedCenter,
+      tonic,
+      mode
+    }
+  };
 }
 
 function harmony(measure: number, chord: string, beat = 1): ScoreHarmonyEvent {
@@ -244,6 +257,42 @@ describe("capability manifest", () => {
     for (const ruleId of runtimeRuleIds) {
       expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
     }
+  });
+
+  it("mantem toda proposta estrategica com ruleIds rastreaveis", () => {
+    const samples = [
+      {
+        anchors: [anchor(1, "C"), anchor(1, "E"), anchor(2, "A"), anchor(2, "C"), anchor(3, "B"), anchor(4, "G")],
+        tonic: "C",
+        mode: "major" as const
+      },
+      {
+        anchors: [anchor(1, "C"), anchor(1, "Eb"), anchor(2, "F"), anchor(2, "Gb"), anchor(3, "Bb"), anchor(4, "C")],
+        tonic: "C",
+        mode: "major" as const
+      },
+      {
+        anchors: [anchor(1, "C"), anchor(1, "Bb"), anchor(2, "Ab"), anchor(3, "C"), anchor(4, "Bb"), anchor(5, "C")],
+        tonic: "C",
+        mode: "major" as const
+      },
+      {
+        anchors: [anchor(1, "A"), anchor(1, "C"), anchor(2, "F"), anchor(3, "G#"), anchor(4, "E"), anchor(5, "A")],
+        tonic: "A",
+        mode: "minor" as const
+      }
+    ];
+    const proposals = samples.flatMap(sample => {
+      const context = phraseContext(sample.anchors, sample.tonic, sample.mode);
+      return [
+        ...StrategyGuidedHarmonizer.generateAcceptedProposals(sample.anchors, context),
+        ...GravityFieldManager.generateProposals(sample.anchors, context)
+      ];
+    });
+    const missing = proposals.filter(proposal => !proposal.ruleIds || proposal.ruleIds.length === 0);
+
+    expect(proposals.length).toBeGreaterThan(0);
+    expect(missing.map(proposal => proposal.name)).toEqual([]);
   });
 
   it("mantem as fontes teoricas visiveis no detalhe dos cards de proposta", () => {

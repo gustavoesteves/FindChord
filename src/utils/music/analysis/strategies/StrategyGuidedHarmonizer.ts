@@ -87,6 +87,15 @@ const STRATEGY_RULE_IDS: Record<HarmonicStrategyId, string[]> = {
 const APPARENT_FUNCTION_RULE_IDS = ["FC-RULE-APPARENT-FUNCTION-PRESERVATION"];
 const MODAL_BORROWING_RULE_IDS = ["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR"];
 const MINOR_PLAGAL_RULE_IDS = ["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR", "FC-RULE-MINOR-PLAGAL-CADENCE"];
+const REFERENCE_CENTER_RULE_IDS = ["FC-RULE-REFERENCE-CENTERED-HARMONIZATION"];
+const ALTERED_DOMINANT_RULE_IDS = ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-ALTERED-DOMINANT-TENSION"];
+const DECEPTIVE_CHROMATIC_RULE_IDS = ["FC-RULE-CHROMATIC-MEDIANT-DECEPTIVE"];
+const DENSE_MODAL_MIXTURE_RULE_IDS = ["FC-RULE-MODAL-BORROWING-PARALLEL-MINOR", "FC-RULE-DENSE-MODAL-MIXTURE"];
+const CHROMATIC_NEIGHBOR_RULE_IDS = ["FC-RULE-DIMINISHED-PASSING-RESOLUTION", "FC-RULE-CHROMATIC-NEIGHBOR-REGION"];
+const LOCAL_II_V_RULE_IDS = ["FC-RULE-LOCAL-II-V-CADENCE"];
+const BLUES_IDIOM_RULE_IDS = ["FC-RULE-BLUES-FUNCTIONAL-IDIOM"];
+const MODAL_CENTER_RULE_IDS = ["FC-RULE-MODAL-CENTER-NON-DOMINANT"];
+const MINOR_FUNCTIONAL_RULE_IDS = ["FC-RULE-MINOR-FUNCTIONAL-DOMINANT"];
 
 const EXPANSION_EXPLANATIONS: Record<string, string> = {
   PROLONG_VIA_SECONDARY: "prolonga a região de repouso com um acorde representante",
@@ -153,7 +162,7 @@ export class StrategyGuidedHarmonizer {
       ...this.buildBluesProposals(anchors, phraseContext),
       ...this.buildModalProposals(anchors, phraseContext),
       ...this.buildMinorFunctionalProposals(anchors, phraseContext)
-    ].map(proposal => this.attachReferenceAssistedExplanation(proposal, phraseContext));
+    ].map(proposal => this.attachDefaultRuleIds(this.attachReferenceAssistedExplanation(proposal, phraseContext)));
   }
 
   public static tryStrategy(
@@ -2673,6 +2682,30 @@ export class StrategyGuidedHarmonizer {
       ...proposal,
       explanation: [...proposal.explanation, explanation]
     };
+  }
+
+  private static attachDefaultRuleIds(proposal: ReharmonizationProposal): ReharmonizationProposal {
+    if (proposal.ruleIds && proposal.ruleIds.length > 0) return proposal;
+
+    const ruleIds = this.defaultRuleIdsForProposal(proposal);
+    return ruleIds.length > 0 ? { ...proposal, ruleIds } : proposal;
+  }
+
+  private static defaultRuleIdsForProposal(proposal: ReharmonizationProposal): string[] {
+    if (/Centro de referência/.test(proposal.name)) return REFERENCE_CENTER_RULE_IDS;
+    if (/Harmonia fundamental|Melodia primeiro/.test(proposal.name)) return STRATEGY_RULE_IDS.I_IV_V;
+    if (/Dominantes alteradas|Ciclo de dominantes alteradas/.test(proposal.name)) return ALTERED_DOMINANT_RULE_IDS;
+    if (/SubV funcional/.test(proposal.name)) {
+      return ["FC-RULE-BASIC-I-IV-V-FOUNDATION", "FC-RULE-SUBV-CHROMATIC-RESOLUTION"];
+    }
+    if (/Chegada deceptiva cromática/.test(proposal.name)) return DECEPTIVE_CHROMATIC_RULE_IDS;
+    if (/Mistura modal densa/.test(proposal.name)) return DENSE_MODAL_MIXTURE_RULE_IDS;
+    if (/Cromatismo de vizinhança/.test(proposal.name)) return CHROMATIC_NEIGHBOR_RULE_IDS;
+    if (/Gramática funcional ii-V|ii-V compacto/.test(proposal.name)) return LOCAL_II_V_RULE_IDS;
+    if (/Blues funcional|Vamp dominante/.test(proposal.name)) return BLUES_IDIOM_RULE_IDS;
+    if (/Centro modal/.test(proposal.name)) return MODAL_CENTER_RULE_IDS;
+    if (/Menor funcional/.test(proposal.name)) return MINOR_FUNCTIONAL_RULE_IDS;
+    return [];
   }
 
   private static hasDifferentLocalCadenceTarget(
