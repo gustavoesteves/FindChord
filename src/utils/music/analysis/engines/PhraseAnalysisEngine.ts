@@ -1,7 +1,7 @@
 import { Scale, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
 import type { ScoreMeasureTickRange } from "../models/ScoreSnapshot";
-import { keyContextFromSignature } from "../scoreTimelineContext";
+import { keyContextFromSignature, type ScoreTonalKeyContext } from "../scoreTimelineContext";
 
 export type CadenceType = 
   | "AUTHENTIC"
@@ -35,6 +35,7 @@ export interface PhraseContext {
 
 interface PhraseAnalysisOptions {
   measureTicks?: ScoreMeasureTickRange[];
+  keyContext?: ScoreTonalKeyContext;
 }
 
 const TONAL_CENTER_ROOTS = [
@@ -63,7 +64,7 @@ export class PhraseAnalysisEngine {
     options: PhraseAnalysisOptions = {}
   ): PhraseContext {
     if (anchors.length === 0) {
-      const keyContext = keyContextFromSignature(keySignature);
+      const keyContext = options.keyContext || keyContextFromSignature(keySignature);
       const defaultCenter: TonalCenterCandidate = keyContext
         ? { tonic: keyContext.tonic, mode: keyContext.mode, confidence: 0.25 }
         : { tonic: "C", mode: "major", confidence: 0.1 };
@@ -80,7 +81,7 @@ export class PhraseAnalysisEngine {
     }
 
     const cadentialTarget = this.inferCadentialTarget(anchors, options);
-    const candidates = this.evaluateTonalCenters(anchors, cadentialTarget, keySignature);
+    const candidates = this.evaluateTonalCenters(anchors, cadentialTarget, keySignature, options.keyContext);
     
     // Fallback if no candidate
     if (candidates.length === 0) {
@@ -143,7 +144,8 @@ export class PhraseAnalysisEngine {
   private static evaluateTonalCenters(
     anchors: MelodicAnchor[], 
     cadentialTarget: CadentialTarget, 
-    keySignature?: string
+    keySignature?: string,
+    declaredKeyContext?: ScoreTonalKeyContext
   ): TonalCenterCandidate[] {
     
     const uniqueNotes = Array.from(new Set(anchors.map(a => Note.pitchClass(a.pitch))));
@@ -211,7 +213,7 @@ export class PhraseAnalysisEngine {
     if (uniqueNotes.length < 6) confidencePenalty *= 0.65;
     if (measureCount < 8) confidencePenalty *= 0.75;
 
-    const keyContext = keyContextFromSignature(keySignature);
+    const keyContext = declaredKeyContext || keyContextFromSignature(keySignature);
     const keySignatureTonic = keyContext?.tonic;
     const keySignatureMode = keyContext?.mode;
     const relativeMinorTonic = keySignatureTonic && keySignatureMode === "major"

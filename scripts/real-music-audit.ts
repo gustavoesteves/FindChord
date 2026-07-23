@@ -179,15 +179,19 @@ export function findHarmonizableWindow(
   for (const windowNotes of melodicWindows(notes)) {
     const anchors = toAnchors(windowNotes);
     const windowTick = anchors[0]?.startTick ?? 0;
-    const keySignature = contextOptions.snapshot
-      ? timelineContextAtTick(contextOptions.snapshot, windowTick).keySignature
+    const timelineContext = contextOptions.snapshot
+      ? timelineContextAtTick(contextOptions.snapshot, windowTick)
+      : undefined;
+    const keySignature = timelineContext
+      ? timelineContext.keySignature
       : contextOptions.keySignature;
     const referenceHarmoniesForWindow = referenceHarmonies.filter(harmony => (
       anchors.some(anchor => anchor.measureIndex === harmony.measure)
     ));
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(anchors, keySignature, {
-        measureTicks: measureTicksForMetricContext(contextOptions.snapshot)
+        measureTicks: measureTicksForMetricContext(contextOptions.snapshot),
+        keyContext: timelineContext?.keyContext
       }),
       referenceHarmoniesForWindow
     );
