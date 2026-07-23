@@ -18,6 +18,7 @@ export default defineConfig({
       "scripts/contextual-material-candidate-behavior.spec.ts",
       "scripts/contextual-scale-audit.spec.ts",
       "scripts/temporal-melody-window.spec.ts",
+      "scripts/transport-layer-fault-injection.spec.ts",
       "scripts/musescore-insertion-safety.spec.ts",
       "scripts/musescore-status-ui.spec.ts",
       "scripts/apparent-function-analysis.spec.ts",
