@@ -53,6 +53,10 @@ interface ReferenceHarmonyAnalysis {
   explanation: string[];
 }
 
+interface ReferenceHarmonyCenterOptions {
+  suppressFinalPlagalCadence?: boolean;
+}
+
 function directCadentialDependency(chordCount: number, lowDirectCadentialDependence: boolean): "low" | "medium" | "high" {
   if (chordCount === 0) return "low";
   return lowDirectCadentialDependence ? "low" : "medium";
@@ -134,7 +138,10 @@ function targetModeFromExistingQualities(
   return minorSupport > majorSupport ? "minor" : "major";
 }
 
-function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceTonalCenterInference | null {
+function inferReferenceHarmonyCenter(
+  harmonies: ScoreHarmonyEvent[],
+  options: ReferenceHarmonyCenterOptions = {}
+): ReferenceTonalCenterInference | null {
   if (harmonies.length === 0) return null;
 
   const ordered = [...harmonies].sort((a, b) => a.tickStart - b.tickStart);
@@ -213,7 +220,8 @@ function inferReferenceHarmonyCenter(harmonies: ScoreHarmonyEvent[]): ReferenceT
   if (isMajorQuality(lastResolved.quality)) addScore(lastRoot, "major", 2, `acorde final sugere repouso em ${lastRoot}`);
   if (isMinorQuality(lastResolved.quality)) addScore(lastRoot, "minor", 2, `acorde final sugere repouso em ${lastRoot}`);
   if (
-    lastRoot
+    !options.suppressFinalPlagalCadence
+    && lastRoot
     && penultimateRoot
     && penultimateResolved
     && chromaticDistance(penultimateRoot, lastRoot) === 5
@@ -359,7 +367,14 @@ export function analyzeReferenceHarmony(harmonies: ScoreHarmonyEvent[]): Referen
 
   const bassGrammar = analyzeStructuralBassGrammar(harmonies);
   const harmonyChords = harmonies.map(harmony => harmony.harmony);
-  const referenceCenter = inferReferenceHarmonyCenter(harmonies);
+  const suppressFinalPlagalCadence = bassGrammar.lowDirectCadentialDependence
+    && (
+      bassGrammar.properties.includes("STRUCTURAL_BASS_GRAMMAR")
+      || bassGrammar.properties.includes("PLANAR_CHORD_MOTION")
+    );
+  const referenceCenter = inferReferenceHarmonyCenter(harmonies, {
+    suppressFinalPlagalCadence
+  });
   const referenceCenterTonic = referenceCenter?.tonic || bassGrammar.bassLine[0] || chordRoot(harmonies[0].harmony) || harmonies[0].harmony;
   const idiom = classifyHarmonicIdiom(harmonyChords, referenceCenterTonic);
   const minorModalBoundary = analyzeMinorModalBoundary(harmonyChords, referenceCenterTonic);

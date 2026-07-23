@@ -20,6 +20,12 @@ describe("F26.9 Reference Harmony Analysis Contract", () => {
     expect(analysis.hasExistingHarmony).toBe(true);
     expect(analysis.bassTrajectory).toEqual(["G", "A", "D", "C", "Bb", "A", "B", "D"]);
     expect(analysis.directCadentialDependency).toBe("low");
+    expect(analysis.referenceCenter).toEqual(expect.objectContaining({
+      tonic: "D",
+      mode: "major",
+      confidence: "strong"
+    }));
+    expect(analysis.referenceCenter?.evidence).not.toContain("IV-I plagal aponta D maior");
     expect(analysis.properties).toEqual(expect.arrayContaining([
       "STRUCTURAL_BASS_GRAMMAR",
       "PLANAR_CHORD_MOTION",
