@@ -86,11 +86,15 @@ export function analyzeForcedSideArrivalWindow(
   const referenceHarmonies = (snapshot.harmonies || []).filter((harmony: any) => (
     anchors.some(anchor => anchor.measureIndex === harmony.measure)
   ));
+  const timelineContext = timelineContextForAnchors(snapshot, anchors);
   const phraseContext = applyReferenceCenterToPhraseContext(
     PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature,
-      { measureTicks: measureTicksForMetricContext(snapshot) }
+      timelineContext.keySignature,
+      {
+        measureTicks: measureTicksForMetricContext(snapshot),
+        keyContext: timelineContext.keyContext
+      }
     ),
     referenceHarmonies
   );
