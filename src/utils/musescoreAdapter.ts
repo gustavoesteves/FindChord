@@ -51,6 +51,7 @@ export type MuseScoreSendChordResult =
 export interface MuseScoreSendChordOptions {
   commandId?: string;
   targetPluginSessionId?: string;
+  targetScoreId?: string;
   now?: number;
 }
 
@@ -89,7 +90,7 @@ export function toMuseScoreChordSymbol(
 export function createInsertChordBridgeMessage(
   chord: CanonicalChordEvent,
   chordSymbol: string,
-  options: { commandId: string; now: number; targetPluginSessionId?: string }
+  options: { commandId: string; now: number; targetPluginSessionId?: string; targetScoreId?: string }
 ): BridgeMessage {
   return {
     protocolVersion: '1.0',
@@ -98,6 +99,7 @@ export function createInsertChordBridgeMessage(
       type: 'MUTATION',
       commandId: options.commandId,
       ...(options.targetPluginSessionId ? { targetPluginSessionId: options.targetPluginSessionId } : {}),
+      ...(options.targetScoreId ? { targetScoreId: options.targetScoreId } : {}),
       expiresAt: options.now + 8000,
       action: 'INSERT_CHORD',
       targetTick: 0,
@@ -159,13 +161,19 @@ class MuseScoreAdapter {
     };
   }
 
-  private async resolveTargetPluginSessionId(): Promise<string | null> {
+  private async resolveTargetIdentity(): Promise<{ pluginSessionId: string | null; scoreId: string | null }> {
     try {
       const status = await this.getOperationalStatus();
       this.activePluginSessionId = status.pluginSessionId;
-      return this.activePluginSessionId;
+      return {
+        pluginSessionId: this.activePluginSessionId,
+        scoreId: status.score?.scoreId || null
+      };
     } catch {
-      return this.activePluginSessionId;
+      return {
+        pluginSessionId: this.activePluginSessionId,
+        scoreId: null
+      };
     }
   }
 
@@ -193,10 +201,13 @@ class MuseScoreAdapter {
     }
 
     const commandId = options.commandId || crypto.randomUUID();
-    const targetPluginSessionId = options.targetPluginSessionId ?? await this.resolveTargetPluginSessionId();
+    const targetIdentity = await this.resolveTargetIdentity();
+    const targetPluginSessionId = options.targetPluginSessionId ?? targetIdentity.pluginSessionId;
+    const targetScoreId = options.targetScoreId ?? targetIdentity.scoreId;
     const msg = createInsertChordBridgeMessage(chord, chordSymbol, {
       commandId,
       targetPluginSessionId: targetPluginSessionId || undefined,
+      targetScoreId: targetScoreId || undefined,
       now: options.now ?? Date.now()
     });
     try {

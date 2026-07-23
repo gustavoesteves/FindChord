@@ -119,6 +119,7 @@ describe("MuseScore chord insertion safety", () => {
     expect(protocol).toContain("targetPluginSessionId?: string;");
     expect(protocol).toContain("expiresAt: number;");
     expect(protocol).toContain("action: 'INSERT_CHORD';");
+    expect(protocol).toContain("targetScoreId?: string;");
     expect(protocol).not.toContain("REPLACE_CHORD");
     expect(protocol).not.toContain("DELETE_CHORD");
     expect(protocol).toContain("export function isBridgeMessage");
@@ -130,6 +131,10 @@ describe("MuseScore chord insertion safety", () => {
     expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
     expect(bridge).toContain("pluginSessionId: activePluginSessionId");
     expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
+    expect(bridge).toContain("function queuedMessageTargetScore(message)");
+    expect(bridge).toContain("function isQueuedMessageForCurrentScore(message)");
+    expect(bridge).toContain("targetScoreId === currentScoreIdentity?.scoreId");
+    expect(bridge).toContain("isConsumableQueuedMessage(message, pluginSessionId)");
     expect(bridge).toContain("const leasedCommandMessages = new Map();");
     expect(bridge).toContain("const COMMAND_LEASE_MS = 6000;");
     expect(bridge).toContain("function leaseConsumedCommands(messages)");
@@ -151,8 +156,9 @@ describe("MuseScore chord insertion safety", () => {
     expect(plugin).toContain("status: accepted ? \"accepted\" : \"rejected\"");
 
     expect(adapter).toContain("const commandId = options.commandId || crypto.randomUUID();");
-    expect(adapter).toContain("resolveTargetPluginSessionId");
+    expect(adapter).toContain("resolveTargetIdentity");
     expect(adapter).toContain("targetPluginSessionId: targetPluginSessionId || undefined");
+    expect(adapter).toContain("targetScoreId: targetScoreId || undefined");
     expect(adapter).toContain("createInsertChordBridgeMessage");
     expect(adapter).toContain("export type MuseScoreSendChordResult");
     expect(adapter).toContain("public async sendChordDetailed");
@@ -183,11 +189,13 @@ describe("MuseScore chord insertion safety", () => {
     const first = createInsertChordBridgeMessage(chord, "Cmaj7", {
       commandId: "cmd_insert_cmaj7",
       targetPluginSessionId: "plugin_active",
+      targetScoreId: "score_active",
       now: 1000
     });
     const retry = createInsertChordBridgeMessage(chord, "Cmaj7", {
       commandId: "cmd_insert_cmaj7",
       targetPluginSessionId: "plugin_active",
+      targetScoreId: "score_active",
       now: 1200
     });
 
@@ -195,6 +203,7 @@ describe("MuseScore chord insertion safety", () => {
       type: "MUTATION",
       commandId: "cmd_insert_cmaj7",
       targetPluginSessionId: "plugin_active",
+      targetScoreId: "score_active",
       action: "INSERT_CHORD",
       expiresAt: 9000,
       chordSymbol: "Cmaj7"
@@ -202,6 +211,7 @@ describe("MuseScore chord insertion safety", () => {
     expect(retry.payload).toEqual(expect.objectContaining({
       commandId: "cmd_insert_cmaj7",
       targetPluginSessionId: "plugin_active",
+      targetScoreId: "score_active",
       expiresAt: 9200
     }));
   });

@@ -151,9 +151,23 @@ function queuedMessageTarget(message) {
   return message?.targetPluginSessionId || message?.payload?.targetPluginSessionId || null;
 }
 
+function queuedMessageTargetScore(message) {
+  return message?.targetScoreId || message?.payload?.targetScoreId || null;
+}
+
 function isQueuedMessageForPlugin(message, pluginSessionId) {
   const targetPluginSessionId = queuedMessageTarget(message);
   return !targetPluginSessionId || targetPluginSessionId === pluginSessionId;
+}
+
+function isQueuedMessageForCurrentScore(message) {
+  const targetScoreId = queuedMessageTargetScore(message);
+  return !targetScoreId || targetScoreId === currentScoreIdentity?.scoreId;
+}
+
+function isConsumableQueuedMessage(message, pluginSessionId) {
+  return isQueuedMessageForPlugin(message, pluginSessionId)
+    && isQueuedMessageForCurrentScore(message);
 }
 
 function mutationCommandId(message) {
@@ -316,10 +330,10 @@ const server = http.createServer((req, res) => {
     pruneExpiredQueue();
     const pluginSessionId = url.searchParams.get('pluginSessionId') || req.headers['x-findchord-plugin-session'] || null;
     const pending = eventQueue.filter(message => (
-      !isExpiredBridgeMessage(message) && isQueuedMessageForPlugin(message, pluginSessionId)
+      !isExpiredBridgeMessage(message) && isConsumableQueuedMessage(message, pluginSessionId)
     ));
     eventQueue = eventQueue.filter(message => (
-      !isQueuedMessageForPlugin(message, pluginSessionId)
+      !isConsumableQueuedMessage(message, pluginSessionId)
     ));
     leaseConsumedCommands(pending);
     if (pending.length > 0) {

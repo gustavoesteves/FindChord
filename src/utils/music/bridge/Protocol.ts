@@ -8,6 +8,7 @@ export interface MutationCommand {
   type: 'MUTATION';
   commandId: string;
   targetPluginSessionId?: string;
+  targetScoreId?: string;
   expiresAt: number;
   action: 'INSERT_CHORD';
   targetTick: number;

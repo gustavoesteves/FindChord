@@ -51,8 +51,9 @@ describe("MuseScore status UI", () => {
     expect(bridge).toContain("activePluginSessionId = crypto.randomUUID()");
     expect(bridge).toContain("targetPluginSessionId: activePluginSessionId");
     expect(bridge).toContain("isQueuedMessageForPlugin(message, pluginSessionId)");
-    expect(adapter).toContain("resolveTargetPluginSessionId");
+    expect(adapter).toContain("resolveTargetIdentity");
     expect(adapter).toContain("targetPluginSessionId: targetPluginSessionId || undefined");
+    expect(adapter).toContain("targetScoreId: targetScoreId || undefined");
     expect(plugin).toContain("bridgePluginSessionId = session.pluginSessionId || \"\"");
     expect(plugin).toContain("/api/v1/consume?pluginSessionId=");
   });
