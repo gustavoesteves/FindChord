@@ -95,11 +95,15 @@ export function collectPresentableWindowsForFile(
     const referenceHarmonies = (snapshot.harmonies || []).filter((harmony: ScoreHarmonyEvent) => (
       candidate.measureIndexes.includes(harmony.measure)
     ));
+    const timelineContext = timelineContextForAnchors(snapshot, candidate.anchors);
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         candidate.anchors,
-        timelineContextForAnchors(snapshot, candidate.anchors).keySignature,
-        { measureTicks: measureTicksForMetricContext(snapshot) }
+        timelineContext.keySignature,
+        {
+          measureTicks: measureTicksForMetricContext(snapshot),
+          keyContext: timelineContext.keyContext
+        }
       ),
       referenceHarmonies
     );
