@@ -57,6 +57,8 @@ describe("MuseScore chord insertion safety", () => {
     const bridge = readFileSync("scripts/musescore-bridge.cjs", "utf8");
 
     expect(bridge).toContain("const HOST = '127.0.0.1';");
+    expect(bridge).toContain("process.env.FIND_CHORD_BRIDGE_PORT || 9000");
+    expect(bridge).toContain("function bridgePort()");
     expect(bridge).toContain("server.listen(PORT, HOST");
     expect(bridge).toContain("url.pathname === PLUGIN_PATH");
     expect(bridge).toContain("url.pathname === DASHBOARD_PATH");

@@ -85,6 +85,7 @@ export default defineConfig({
       "scripts/modal-borrowing-analysis.spec.ts",
       "scripts/modal-center-strategy.spec.ts",
       "scripts/modal-borrowing-strategy.spec.ts",
+      "scripts/musescore-bridge-ephemeral.spec.ts",
       "scripts/musicxml-chord-symbol-mapper.spec.ts",
       "scripts/musicxml-parser-timeline.spec.ts",
       "scripts/omitted-strategy-diagnostics.spec.ts",

@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const { WebSocketServer, WebSocket } = require('ws');
 
-const PORT = 9000;
+const PORT = Number(process.env.FIND_CHORD_BRIDGE_PORT || 9000);
 const HOST = '127.0.0.1';
 const MAX_HTTP_BODY_BYTES = 131072;
 const MAX_SCORE_BODY_BYTES = 524288;
@@ -50,6 +50,11 @@ let pluginPollCount = 0;
 let pluginLastSeen = null;
 let frontendLastSeen = null;
 let currentScoreIdentity = null;
+
+function bridgePort() {
+  const address = server.address();
+  return address && typeof address === 'object' ? address.port : PORT;
+}
 
 // Helper to write JSON HTTP responses
 function writeJson(res, status, data) {
@@ -110,7 +115,7 @@ function timingSafeEqualString(left, right) {
 }
 
 function validatePluginToken(req, res) {
-  const token = req.headers['x-findchord-plugin-token'] || new URL(req.url, `http://localhost:${PORT}`).searchParams.get('token');
+  const token = req.headers['x-findchord-plugin-token'] || new URL(req.url, `http://localhost:${bridgePort()}`).searchParams.get('token');
   if (!timingSafeEqualString(token, pluginToken)) {
     eventsRejected++;
     writeJson(res, 403, { error: 'Token do plugin ausente ou invalido.' });
@@ -267,7 +272,7 @@ function readAllowedScoreXml(candidatePath) {
 
 // Create HTTP Server
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const url = new URL(req.url, `http://localhost:${bridgePort()}`);
 
   // CORS Preflight
   if (req.method === 'OPTIONS') {
@@ -298,7 +303,7 @@ const server = http.createServer((req, res) => {
     writeJson(res, 200, {
       sessionId,
       dashboardToken,
-      wsEndpoint: `ws://${HOST}:${PORT}${DASHBOARD_PATH}?session=${sessionId}&token=${dashboardToken}`
+      wsEndpoint: `ws://${HOST}:${bridgePort()}${DASHBOARD_PATH}?session=${sessionId}&token=${dashboardToken}`
     });
     return;
   }
@@ -641,7 +646,7 @@ function broadcastMessage(message) {
 const wss = new WebSocketServer({ server, maxPayload: MAX_WS_PAYLOAD_BYTES });
 
 wss.on('connection', (ws, req) => {
-  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const url = new URL(req.url, `http://localhost:${bridgePort()}`);
   const isPlugin = url.pathname === PLUGIN_PATH;
   const isDashboard = url.pathname === DASHBOARD_PATH;
 
@@ -725,11 +730,12 @@ wss.on('connection', (ws, req) => {
 
 // Inicializa o Servidor
 server.listen(PORT, HOST, () => {
+  const actualPort = bridgePort();
   console.log(`====================================================`);
   console.log(` 📡 FIND CHORD LOCAL INTEGRATION BRIDGE SERVER      `);
   console.log(`====================================================`);
-  console.log(`➜  Porta: http://${HOST}:${PORT}`);
-  console.log(`➜  WebSocket: ws://${HOST}:${PORT}`);
+  console.log(`➜  Porta: http://${HOST}:${actualPort}`);
+  console.log(`➜  WebSocket: ws://${HOST}:${actualPort}`);
   console.log(`➜  Endpoints de Polling (v1):`);
   console.log(`   - GET  /api/v1/pending  (Exibe fila atual)`);
   console.log(`   - GET  /api/v1/consume  (Consome e limpa a fila)`);
