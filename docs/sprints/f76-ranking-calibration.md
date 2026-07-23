@@ -24,9 +24,9 @@ Tambem apareceu um segundo caso: uma rota cromatica parcialmente alinhada podia 
 
 ### Donna Lee
 
-Mantem `Estratégia — Tonal Clássico` como primaria.
+Atualizado apos a ponderacao temporal da comparacao densa: mantem `Estratégia — Harmonia básica I-IV-V` como primaria.
 
-Motivo: a celula curta e conservadora recebe apoio da referencia e funciona melhor como resposta clara do que as rotas mais densas.
+Motivo: a rota cobre a janela inteira, nao recebe penalidade cromatica e funciona melhor como primeira resposta clara quando as rotas cromaticas nao ganham apoio temporal suficiente da referencia.
 
 ### Firm roots
 

@@ -40,6 +40,7 @@ export interface ReferenceHarmonyComparisonPoint {
   referenceApparentRole?: ApparentFunctionRole;
   proposalImpliedChordSymbols: string[];
   referenceImpliedChordSymbols: string[];
+  durationWeight?: number;
 }
 
 export interface ReferenceHarmonyComparison {
@@ -243,6 +244,18 @@ function ratio(count: number, total: number): number {
   return total === 0 ? 0 : Number((count / total).toFixed(2));
 }
 
+function weightedAgreement(
+  points: ReferenceHarmonyComparisonPoint[],
+  predicate: (point: ReferenceHarmonyComparisonPoint) => boolean
+): number {
+  const hasDurationWeights = points.some(point => typeof point.durationWeight === "number" && point.durationWeight > 1);
+  if (!hasDurationWeights) return ratio(points.filter(predicate).length, points.length);
+
+  const totalWeight = points.reduce((sum, point) => sum + (point.durationWeight || 1), 0);
+  const matchingWeight = points.reduce((sum, point) => sum + (predicate(point) ? point.durationWeight || 1 : 0), 0);
+  return totalWeight === 0 ? 0 : Number((matchingWeight / totalWeight).toFixed(2));
+}
+
 function samePitchClass(a: string | undefined, b: string | undefined): boolean {
   if (!a || !b) return false;
   return Note.pitchClass(a) === Note.pitchClass(b);
@@ -265,6 +278,11 @@ function overlapDuration(a: OrderedComparisonChord, b: OrderedComparisonChord): 
   return Math.max(0, Math.min(a.tickEnd, b.tickEnd) - Math.max(a.tickStart, b.tickStart));
 }
 
+function comparisonDurationWeight(chord: OrderedComparisonChord): number | undefined {
+  if (typeof chord.tickStart !== "number" || typeof chord.tickEnd !== "number") return undefined;
+  return Math.max(1, chord.tickEnd - chord.tickStart);
+}
+
 function buildComparisonPoint(input: {
   measureIndex: number;
   proposalChord: string;
@@ -274,6 +292,7 @@ function buildComparisonPoint(input: {
   center: string;
   referenceCenter: string;
   mode: FunctionalClassificationMode;
+  durationWeight?: number;
 }): ReferenceHarmonyComparisonPoint {
   const proposalApparent = analyzeApparentFunction(input.proposalChord, {
     center: input.center,
@@ -318,7 +337,8 @@ function buildComparisonPoint(input: {
       : [],
     referenceImpliedChordSymbols: referenceApparent && !referenceApparent.shouldCountAsFunctionalEscape
       ? referenceApparent.impliedChordSymbols
-      : []
+      : [],
+    durationWeight: input.durationWeight
   };
 }
 
@@ -528,7 +548,8 @@ export function compareProposalToReferenceHarmony(
           referenceContext,
           center,
           referenceCenter,
-          mode
+          mode,
+          durationWeight: comparisonDurationWeight(referenceChord)
         })
       }));
       const bestPoint = candidatePoints
@@ -552,7 +573,8 @@ export function compareProposalToReferenceHarmony(
             referenceContext: chordContext(orderedReference, { measureIndex, chordIndex: referenceChordIndex }),
             center,
             referenceCenter,
-            mode
+            mode,
+            durationWeight: comparisonDurationWeight(referenceChord)
           })
         }))
         .sort((a, b) => (
@@ -575,7 +597,8 @@ export function compareProposalToReferenceHarmony(
         referenceContext: chordContext(orderedReference, { measureIndex, chordIndex: referenceChordIndex }),
         center,
         referenceCenter,
-        mode
+        mode,
+        durationWeight: comparisonDurationWeight(referenceChord)
       }));
     }
   }
@@ -583,8 +606,8 @@ export function compareProposalToReferenceHarmony(
   const comparedMeasures = points.length;
   const matchingFunctionCount = points.filter(point => point.functionRelation === "same-function").length;
   const matchingRootCount = points.filter(point => point.rootRelation === "same-root").length;
-  const functionAgreement = ratio(matchingFunctionCount, comparedMeasures);
-  const rootAgreement = ratio(matchingRootCount, comparedMeasures);
+  const functionAgreement = weightedAgreement(points, point => point.functionRelation === "same-function");
+  const rootAgreement = weightedAgreement(points, point => point.rootRelation === "same-root");
   const referenceIdiom = localReferenceAnalysis.idiom?.idiom || referenceAnalysis.idiom?.idiom;
   const status = statusFor(functionAgreement, comparedMeasures, rootAgreement, referenceIdiom);
   const causes = comparisonCauses({

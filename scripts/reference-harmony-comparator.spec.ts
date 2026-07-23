@@ -314,6 +314,60 @@ describe("F40 Reference Harmony Comparator", () => {
     ]);
   });
 
+  it("weights timed agreement by reference duration", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      timedProposal([
+        {
+          id: "c-long",
+          measureIndex: 1,
+          beat: 1,
+          chord: "C",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 1440,
+          durationTicks: 1440
+        },
+        {
+          id: "db-short",
+          measureIndex: 1,
+          beat: 4,
+          chord: "Db7",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 1440,
+          tickEnd: 1920,
+          durationTicks: 480
+        }
+      ]),
+      [
+        {
+          measure: 1,
+          beat: 1,
+          harmony: "C",
+          tickStart: 0,
+          tickEnd: 1440,
+          durationTicks: 1440
+        },
+        {
+          measure: 1,
+          beat: 4,
+          harmony: "G7",
+          tickStart: 1440,
+          tickEnd: 1920,
+          durationTicks: 480
+        }
+      ],
+      "C"
+    );
+
+    expect(comparison.status).toBe("aligned");
+    expect(comparison.matchingFunctionCount).toBe(1);
+    expect(comparison.matchingRootCount).toBe(1);
+    expect(comparison.functionAgreement).toBe(0.75);
+    expect(comparison.rootAgreement).toBe(0.75);
+  });
+
   it("does not mark a same-measure contextual m6 as divergent when the dominant is also present", () => {
     const comparison = compareProposalToReferenceHarmony(
       proposalMeasures([
