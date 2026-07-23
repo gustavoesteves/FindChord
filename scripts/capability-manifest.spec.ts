@@ -245,4 +245,17 @@ describe("capability manifest", () => {
       expect(declaredRuleIds.has(ruleId), ruleId).toBe(true);
     }
   });
+
+  it("mantem as fontes teoricas visiveis no detalhe dos cards de proposta", () => {
+    const cardSource = readFileSync(
+      "src/domains/harmonizer/components/HarmonizationProposalCard.tsx",
+      "utf8"
+    );
+
+    expect(cardSource).toContain("ruleSourceInfoFor(proposal.ruleIds)");
+    expect(cardSource).toContain("theorySourceLabelsForRuleIds(proposal.ruleIds)");
+    expect(cardSource).toContain("Base:");
+    expect(cardSource).toContain("Fontes:");
+    expect(cardSource).toContain("hasRuleSources");
+  });
 });

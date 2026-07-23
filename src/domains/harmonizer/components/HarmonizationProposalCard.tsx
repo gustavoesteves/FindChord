@@ -12,6 +12,10 @@ import { inputContextLabel, referenceRelationLabel } from "../services/harmonize
 import type {
   HarmonicDiagnosticCategory
 } from "../../../utils/music/analysis/models/HarmonicDiagnostic";
+import {
+  ruleSourceInfoFor,
+  theorySourceLabelsForRuleIds
+} from "../../../utils/music/capabilities/ruleSourceIndex";
 
 interface HarmonizationProposalCardProps {
   proposal: ReharmonizationProposal;
@@ -123,6 +127,10 @@ export default function HarmonizationProposalCard({
 }: HarmonizationProposalCardProps) {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [areVariantsOpen, setAreVariantsOpen] = useState(false);
+  const ruleSources = ruleSourceInfoFor(proposal.ruleIds);
+  const capabilityLabels = Array.from(new Set(ruleSources.map(source => source.capabilityTitle)));
+  const theoryLabels = theorySourceLabelsForRuleIds(proposal.ruleIds);
+  const hasRuleSources = capabilityLabels.length > 0 || theoryLabels.length > 0;
 
   return (
     <div className="flex flex-col gap-3 p-5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
@@ -291,7 +299,7 @@ export default function HarmonizationProposalCard({
               </div>
             )}
 
-            {(proposal.explanation.length > 0 || (proposal.diagnostics && proposal.diagnostics.length > 0)) && (
+            {(proposal.explanation.length > 0 || (proposal.diagnostics && proposal.diagnostics.length > 0) || hasRuleSources) && (
               <div className="mt-3 pt-3 border-t border-zinc-800/50">
                 <button
                   type="button"
@@ -318,6 +326,16 @@ export default function HarmonizationProposalCard({
                         <span>{diagnostic.message}</span>
                       </div>
                     ))}
+                    {hasRuleSources && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-zinc-400">
+                        {capabilityLabels.length > 0 && (
+                          <span>Base: <strong className="text-zinc-200">{capabilityLabels.join(", ")}</strong></span>
+                        )}
+                        {theoryLabels.length > 0 && (
+                          <span>Fontes: <strong className="text-zinc-300">{theoryLabels.join(", ")}</strong></span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
