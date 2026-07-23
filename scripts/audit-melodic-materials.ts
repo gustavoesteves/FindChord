@@ -158,11 +158,15 @@ function primaryGeneratedProposal(
 function auditFile(file: string): MelodicMaterialAuditRow[] {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(realMusicDir, file), "utf8"));
   const anchors = toAnchors(snapshot.notes);
+  const timelineContext = timelineContextForAnchors(snapshot, anchors);
   const phraseContext = applyReferenceCenterToPhraseContext(
     PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature,
-      { measureTicks: measureTicksForMetricContext(snapshot) }
+      timelineContext.keySignature,
+      {
+        measureTicks: measureTicksForMetricContext(snapshot),
+        keyContext: timelineContext.keyContext
+      }
     ),
     snapshot.harmonies
   );
