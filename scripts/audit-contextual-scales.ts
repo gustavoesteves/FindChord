@@ -68,11 +68,15 @@ export function auditContextualMaterialLibrary(): ContextualMaterialAuditReport 
   for (const file of musicXmlFiles(MUSIC_DIR)) {
     const snapshot = parseMusicXML(fs.readFileSync(path.join(MUSIC_DIR, file), "utf8"));
     const anchors = toAnchors(snapshot.notes);
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = applyReferenceCenterToPhraseContext(
       PhraseAnalysisEngine.analyzePhrase(
         anchors,
-        timelineContextForAnchors(snapshot, anchors).keySignature,
-        { measureTicks: measureTicksForMetricContext(snapshot) }
+        timelineContext.keySignature,
+        {
+          measureTicks: measureTicksForMetricContext(snapshot),
+          keyContext: timelineContext.keyContext
+        }
       ),
       snapshot.harmonies
     );
