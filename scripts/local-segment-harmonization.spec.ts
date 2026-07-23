@@ -80,7 +80,7 @@ describe("buildLocalSegmentHarmonizations", () => {
     const segments = buildLocalSegmentHarmonizations({
       anchors,
       keySignature: "C",
-      keyContext: { tonic: "A", mode: "minor", label: "Am" },
+      keyContext: { tonic: "A", mode: "minor", label: "A" },
       interestingMeasures: [1],
       primaryMeasures: [99],
       maxSegments: 1

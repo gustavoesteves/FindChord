@@ -100,7 +100,7 @@ export function buildLocalSegmentHarmonizations({
       referenceHarmonyCount: referenceForWindow.length
     });
     const phraseContext = applyReferenceCenterToPhraseContext(
-      PhraseAnalysisEngine.analyzePhrase(window.anchors, analysisKeySignature, { measureTicks }),
+      PhraseAnalysisEngine.analyzePhrase(window.anchors, analysisKeySignature, { measureTicks, keyContext }),
       referenceForWindow
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(
