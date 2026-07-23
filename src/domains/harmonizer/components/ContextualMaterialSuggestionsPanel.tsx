@@ -3,6 +3,10 @@ import { ChevronDown, CircleDot, Target } from "lucide-react";
 import type { SectionMaterialSuggestion, SectionMaterialSuggestionSet } from "../services/harmonizerService";
 import type { ContextualMaterialCandidate, MelodySupportRole } from "../../../utils/music/theory/contextualMaterialCandidates";
 import { materialIntentPresentation } from "../../../utils/music/theory/materialIntentPresentation";
+import {
+  ruleSourceInfoFor,
+  theorySourceLabelsForRuleIds
+} from "../../../utils/music/capabilities/ruleSourceIndex";
 
 interface ContextualMaterialSuggestionsPanelProps {
   suggestionSets: SectionMaterialSuggestionSet[];
@@ -106,6 +110,9 @@ function MaterialReading({ candidate, compact = false }: { candidate: Contextual
       ? `${note} (${roles.map(role => SUPPORT_ROLE_LABELS[role]).join(", ")})`
       : note;
   });
+  const ruleSources = ruleSourceInfoFor(candidate.ruleIds);
+  const capabilityLabels = Array.from(new Set(ruleSources.map(source => source.capabilityTitle)));
+  const theoryLabels = theorySourceLabelsForRuleIds(candidate.ruleIds);
 
   return (
     <div className={`flex flex-col gap-2 border-l-2 border-sky-500/40 pl-3 ${compact ? "min-w-0" : ""}`}>
@@ -208,6 +215,12 @@ function MaterialReading({ candidate, compact = false }: { candidate: Contextual
             )}
             {candidate.avoidNotes.length > 0 && (
               <span>Evitar: <strong className="text-rose-200">{candidate.avoidNotes.join(", ")}</strong></span>
+            )}
+            {capabilityLabels.length > 0 && (
+              <span>Base: <strong className="text-zinc-200">{capabilityLabels.join(", ")}</strong></span>
+            )}
+            {theoryLabels.length > 0 && (
+              <span>Fontes: <strong className="text-zinc-300">{theoryLabels.join(", ")}</strong></span>
             )}
           </div>
         </div>

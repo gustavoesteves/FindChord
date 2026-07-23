@@ -10,6 +10,11 @@ import {
   buildHarmonyOnlyAnalysisProposals,
   buildHarmonyOnlyPhraseContext
 } from "../src/domains/harmonizer/services/harmonizerService";
+import {
+  RULE_SOURCE_INDEX,
+  ruleSourceInfoFor,
+  theorySourceLabelsForRuleIds
+} from "../src/utils/music/capabilities/ruleSourceIndex";
 
 interface CapabilityManifest {
   schemaVersion: number;
@@ -77,6 +82,36 @@ describe("capability manifest", () => {
     for (const path of allPaths) {
       expect(existsSync(path), path).toBe(true);
     }
+  });
+
+  it("mantem o indice runtime de ruleIds sincronizado com o manifest", () => {
+    const data = manifest();
+    const declaredRuleIds = data.capabilities.flatMap(capability => capability.ruleIds).sort();
+    const indexedRuleIds = Object.keys(RULE_SOURCE_INDEX).sort();
+
+    expect(indexedRuleIds).toEqual(declaredRuleIds);
+    for (const capability of data.capabilities) {
+      for (const ruleId of capability.ruleIds) {
+        expect(RULE_SOURCE_INDEX[ruleId]).toEqual(expect.objectContaining({
+          ruleId,
+          capabilityId: capability.id,
+          theorySources: capability.theorySources
+        }));
+      }
+    }
+  });
+
+  it("expõe fontes compactas para consumo discreto na UI", () => {
+    const ruleIds = ["FC-RULE-DOMINANT-DIMINISHED-AXIS", "FC-RULE-HALF-DIMINISHED-LOC2"];
+
+    expect(ruleSourceInfoFor(ruleIds).map(info => info.capabilityId)).toEqual([
+      "FC-CAP-MAT-LOCAL-MELODIC-MATERIALS",
+      "FC-CAP-MAT-LOCAL-MELODIC-MATERIALS"
+    ]);
+    expect(theorySourceLabelsForRuleIds(ruleIds, 2)).toEqual([
+      "melodic_materials_vocabulary",
+      "improvisação"
+    ]);
   });
 
   it("cobre as frentes principais da auditoria funcional", () => {
