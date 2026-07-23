@@ -50,9 +50,11 @@ describeIfFixtureExists("Palhaco diagnostic", () => {
     const snapshot = parseMusicXML(fs.readFileSync(findPalhacoPath(), "utf8"));
     const notes = snapshot.notes.filter((note: any) => note.measure >= 1 && note.measure <= 8);
     const anchors = toAnchors(notes);
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const attempt = StrategyGuidedHarmonizer.tryStrategy("I_IV_V", anchors, phraseContext);
     const chords = attempt.candidate.measures.map(measure => measure.chords[0]);

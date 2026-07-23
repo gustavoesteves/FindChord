@@ -73,9 +73,11 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
     const snapshot = loadDepoisDeMuitoDiscutir();
     const anchors = anchorsForSection(snapshot, "A1");
     const selectedAnchors = anchors.slice(0, 32);
+    const timelineContext = timelineContextForAnchors(snapshot, selectedAnchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       selectedAnchors,
-      timelineContextForAnchors(snapshot, selectedAnchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const proposals = GravityFieldManager.generateProposals(
       selectedAnchors,
@@ -92,9 +94,11 @@ describeIfFixtureExists("Depois de Muito Discutir diagnostic", () => {
   it("does not surface gravity-field proposals whose opening chord misses the melodic territory", () => {
     const snapshot = loadDepoisDeMuitoDiscutir();
     const anchors = anchorsForSection(snapshot, "A1").slice(0, 32);
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(
       anchors,

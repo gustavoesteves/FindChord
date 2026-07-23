@@ -31,9 +31,11 @@ describe("Autumn Leaves diagnostic", () => {
       endTick: note.tickEnd
     }));
 
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     const realChords = snapshot.harmonies

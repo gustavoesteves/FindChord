@@ -19,9 +19,11 @@ describe("Asa Branca diagnostic", () => {
       startTick: note.tickStart,
       endTick: note.tickEnd
     }));
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const proposals = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext);
     const attempts = (["I_IV_V", "EXPANSAO_FUNCIONAL_DIATONICA", "DOMINANTES_SECUNDARIAS", "DIMINUTO_PASSAGEM"] as const)
@@ -80,9 +82,11 @@ describe("Asa Branca diagnostic", () => {
         endTick: note.tickEnd
       }));
 
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const attempt = StrategyGuidedHarmonizer.tryStrategy("I_IV_V", anchors, phraseContext);
     const chordsByMeasure = new Map(attempt.candidate.measures.map(measure => [measure.measureIndex, measure.chords[0]]));

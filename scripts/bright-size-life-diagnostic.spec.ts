@@ -86,9 +86,11 @@ describe("Bright Size Life diagnostic", () => {
   it("generates a primary melody-only harmonization while ignoring the existing chord layer", () => {
     const snapshot = loadBrightSizeLife();
     const anchors = toAnchors(firstMelodicWindow(snapshot.notes));
+    const timelineContext = timelineContextForAnchors(snapshot, anchors);
     const phraseContext = PhraseAnalysisEngine.analyzePhrase(
       anchors,
-      timelineContextForAnchors(snapshot, anchors).keySignature
+      timelineContext.keySignature,
+      { keyContext: timelineContext.keyContext }
     );
     const generation = GravityFieldManager.generateProposalsWithDiagnostics(
       anchors,
