@@ -225,15 +225,20 @@ MuseScore {
         } catch (e) {}
     }
 
-    function rememberCommandAck(commandId, accepted, reason) {
+    function commandAckKey(commandId, targetScoreId) {
+        return targetScoreId ? commandId + "::" + targetScoreId : commandId;
+    }
+
+    function rememberCommandAck(commandId, targetScoreId, accepted, reason) {
         if (!commandId)
             return;
 
-        commandAckLedger[commandId] = {
+        var ledgerKey = commandAckKey(commandId, targetScoreId);
+        commandAckLedger[ledgerKey] = {
             accepted: accepted,
             reason: reason || ""
         };
-        commandAckOrder.push(commandId);
+        commandAckOrder.push(ledgerKey);
 
         while (commandAckOrder.length > 50) {
             var oldest = commandAckOrder.shift();
@@ -241,11 +246,12 @@ MuseScore {
         }
     }
 
-    function replayCommandAck(commandId) {
-        if (!commandId || !commandAckLedger[commandId])
+    function replayCommandAck(commandId, targetScoreId) {
+        var ledgerKey = commandAckKey(commandId, targetScoreId);
+        if (!commandId || !commandAckLedger[ledgerKey])
             return false;
 
-        var previous = commandAckLedger[commandId];
+        var previous = commandAckLedger[ledgerKey];
         sendCommandAck(commandId, previous.accepted, previous.reason);
         return true;
     }
@@ -263,23 +269,23 @@ MuseScore {
         if (!type) return;
 
         if (type === "chord") {
-            if (replayCommandAck(payload.commandId))
+            if (replayCommandAck(payload.commandId, payload.targetScoreId))
                 return;
             var result = transcribeChord(payload.data || payload);
-            rememberCommandAck(payload.commandId, result.accepted, result.reason);
+            rememberCommandAck(payload.commandId, payload.targetScoreId, result.accepted, result.reason);
             sendCommandAck(payload.commandId, result.accepted, result.reason);
 
         } else if (type === "MUTATION") {
-            if (replayCommandAck(payload.commandId))
+            if (replayCommandAck(payload.commandId, payload.targetScoreId))
                 return;
             if (payload.action !== "INSERT_CHORD") {
-                rememberCommandAck(payload.commandId, false, "Ação de mutação não suportada pelo plugin.");
+                rememberCommandAck(payload.commandId, payload.targetScoreId, false, "Ação de mutação não suportada pelo plugin.");
                 sendCommandAck(payload.commandId, false, "Ação de mutação não suportada pelo plugin.");
                 return;
             }
 
             var mutationResult = transcribeChord(payload.data || payload);
-            rememberCommandAck(payload.commandId, mutationResult.accepted, mutationResult.reason);
+            rememberCommandAck(payload.commandId, payload.targetScoreId, mutationResult.accepted, mutationResult.reason);
             sendCommandAck(payload.commandId, mutationResult.accepted, mutationResult.reason);
 
         } else if (type === "request_score") {
