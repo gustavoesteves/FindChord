@@ -119,6 +119,76 @@ describe("MuseScore bridge ephemeral server", () => {
         bridgeOnline: true,
         pluginSessionId: plugin.pluginSessionId
       }));
+
+      const mutation = {
+        protocolVersion: "1.0",
+        messageType: "MUTATION",
+        payload: {
+          type: "MUTATION",
+          commandId: "cmd-ephemeral-insert",
+          targetPluginSessionId: plugin.pluginSessionId,
+          expiresAt: Date.now() + 8000,
+          action: "INSERT_CHORD",
+          targetTick: 0,
+          chordSymbol: "Cmaj7"
+        }
+      };
+      const send = await fetch(`${bridge.baseUrl}/api/v1/send`, {
+        method: "POST",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Content-Type": "application/json",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        },
+        body: JSON.stringify(mutation)
+      });
+      expect(send.status).toBe(200);
+
+      const consume = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${plugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": plugin.pluginSessionId
+        }
+      });
+      expect(consume.status).toBe(200);
+      await expect(consume.json()).resolves.toEqual([mutation]);
+
+      const leasedStatus = await fetch(`${bridge.baseUrl}/api/v1/status`, {
+        headers: {
+          Origin: "http://localhost:5173",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        }
+      });
+      await expect(leasedStatus.json()).resolves.toEqual(expect.objectContaining({
+        leasedCommandCount: 1
+      }));
+
+      const acknowledge = await fetch(`${bridge.baseUrl}/api/v1/ack`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-FindChord-Plugin-Token": plugin.pluginToken
+        },
+        body: JSON.stringify({
+          type: "COMMAND_ACK",
+          commandId: "cmd-ephemeral-insert",
+          status: "accepted"
+        })
+      });
+      expect(acknowledge.status).toBe(200);
+
+      const acknowledgedStatus = await fetch(`${bridge.baseUrl}/api/v1/status`, {
+        headers: {
+          Origin: "http://localhost:5173",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        }
+      });
+      await expect(acknowledgedStatus.json()).resolves.toEqual(expect.objectContaining({
+        leasedCommandCount: 0
+      }));
     } finally {
       await stopBridge(bridge.process);
     }
