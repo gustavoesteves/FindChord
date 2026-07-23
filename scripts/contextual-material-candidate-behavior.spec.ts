@@ -392,6 +392,7 @@ describe("F115 candidatas contextuais de material", () => {
     });
     const altered = candidates.find(candidate => candidate.type === "altered");
 
+    expect(altered?.harmonicFunction).toBe("modal");
     expect(altered?.melodicMaterials[0]?.cells).toEqual(["Bb-C-C#", "D#-F-G"]);
     expect(altered?.melodicMaterials[0]?.resolutionTargets).toEqual([]);
     expect(candidates.find(candidate => candidate.type === "mixolydian")?.melodicMaterials).toEqual([]);
