@@ -213,10 +213,14 @@ function renderChordList(chords: string[]): string {
 function generatedProposalRows(): GeneratedAlmadaProposal[] {
   const snapshot = parseMusicXML(fs.readFileSync(path.join(process.cwd(), "docs/musics/exemplo.musicxml"), "utf8"));
   const anchors = toAnchors(snapshot.notes);
+  const timelineContext = timelineContextForAnchors(snapshot, anchors);
   const phraseContext = PhraseAnalysisEngine.analyzePhrase(
     anchors,
-    timelineContextForAnchors(snapshot, anchors).keySignature || "C",
-    { measureTicks: measureTicksForMetricContext(snapshot) }
+    timelineContext.keySignature || "C",
+    {
+      measureTicks: measureTicksForMetricContext(snapshot),
+      keyContext: timelineContext.keyContext
+    }
   );
   const generation = GravityFieldManager.generateProposalsWithDiagnostics(
     anchors,
