@@ -7,6 +7,7 @@ import WriterMaterialPanel from "./WriterMaterialPanel";
 import { StandardLayout } from "../../suite/components/StandardLayout";
 import type { TabConfig } from "../../suite/components/StandardLayout";
 import { useWriter } from "../context/WriterContext";
+import { formatWriterProgressionPositionLabel } from "../services/writerProgressionPresenter";
 
 type WriterTab = "input" | "translation" | "voicings" | "materials";
 
@@ -38,9 +39,7 @@ function WriterProgressionStrip() {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {state.progressionItems.map((item, index) => {
           const isActive = state.activeProgressionIndex === index;
-          const positionLabel = item.beat && item.beat > 1
-            ? `Comp. ${item.measureIndex} · beat ${item.beat}`
-            : `Comp. ${item.measureIndex}`;
+          const positionLabel = formatWriterProgressionPositionLabel(item);
           return (
             <button
               key={item.id}

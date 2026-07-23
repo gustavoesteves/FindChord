@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { proposalToWriterProgression } from "../src/domains/harmonizer/hooks/useApplyProposalToWriter";
+import { formatWriterProgressionPositionLabel } from "../src/domains/writer/services/writerProgressionPresenter";
 import { useChordStore } from "../src/store/useChordStore";
 import type { ReharmonizationProposal } from "../src/utils/music/analysis/models/ReharmonizationProposal";
 
@@ -115,5 +116,40 @@ describe("apply proposal to Writer", () => {
     expect(state.activeProgressionIndex).toBe(0);
     expect(state.selectedFrets.some(fret => fret !== null)).toBe(true);
     expect(state.detectedChords[0]?.root).toBe("C");
+  });
+
+  it("formats applied progression positions with measure and internal beat", () => {
+    const progression = proposalToWriterProgression({
+      ...proposal,
+      events: [
+        {
+          id: "opening-c",
+          measureIndex: 4,
+          beat: 1,
+          chord: "Cmaj7",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 1920,
+          durationTicks: 1920
+        },
+        {
+          id: "late-g",
+          measureIndex: 5,
+          beat: 3,
+          chord: "G7/B",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 2880,
+          tickEnd: 3840,
+          durationTicks: 960
+        }
+      ]
+    });
+
+    expect(progression.map(formatWriterProgressionPositionLabel)).toEqual([
+      "Comp. 4",
+      "Comp. 5 · beat 3"
+    ]);
   });
 });
