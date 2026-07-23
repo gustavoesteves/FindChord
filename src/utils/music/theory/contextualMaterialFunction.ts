@@ -107,6 +107,14 @@ function impliedSubdominantVResolutionTarget(context: MaterialContext, root: str
   return transposePitchClass(root, "4P") || undefined;
 }
 
+function impliedDominantChainResolutionTarget(context: MaterialContext, root: string): string | undefined {
+  const previousRoot = chordRoot(context.previousChord);
+  if (!previousRoot || !isDominantLike(context.previousChord || "")) return undefined;
+  if (!resolvesAsPrimaryDominant(previousRoot, root)) return undefined;
+  if (context.tonalCenter && rootsEqual(root, context.tonalCenter.tonic)) return undefined;
+  return transposePitchClass(root, "4P") || undefined;
+}
+
 function resolvesAsLeadingDiminished(
   symbol: string,
   root: string,
@@ -132,6 +140,8 @@ export function contextualResolutionTarget(context: MaterialContext, root: strin
   if (localIiVTarget) return localIiVTarget;
   const localSubdominantVTarget = impliedSubdominantVResolutionTarget(context, root);
   if (localSubdominantVTarget) return localSubdominantVTarget;
+  const dominantChainTarget = impliedDominantChainResolutionTarget(context, root);
+  if (dominantChainTarget) return dominantChainTarget;
   return impliedRegionalResolutionTarget(context, root);
 }
 

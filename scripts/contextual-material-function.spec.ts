@@ -184,6 +184,24 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(looseDominant, "Bb")).toBe("color");
   });
 
+  it("infere alvo de cadeia dominante sem capturar tonica dominante", () => {
+    const chainDominant = {
+      chord: "D7",
+      previousChord: "A7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const tonicDominantAfterCadence = {
+      chord: "C7",
+      previousChord: "G7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(chainDominant, "D")).toBe("G");
+    expect(determineContextualHarmonicFunction(chainDominant, "D")).toBe("dominant");
+    expect(contextualResolutionTarget(tonicDominantAfterCadence, "C")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(tonicDominantAfterCadence, "C")).toBe("modal");
+  });
+
   it("infere alvo menor quando iv prepara dominante sem proximo acorde", () => {
     const preparedMinorDominant = {
       chord: "C7",
