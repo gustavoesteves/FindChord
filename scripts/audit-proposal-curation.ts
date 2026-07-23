@@ -179,7 +179,8 @@ export function analyzeProposalCurationSnapshot(
   const timelineContext = timelineContextForAnchors(snapshot, melody.anchors);
   const phraseContext = applyReferenceCenterToPhraseContext(
     PhraseAnalysisEngine.analyzePhrase(melody.anchors, timelineContext.keySignature, {
-      measureTicks: measureTicksForMetricContext(snapshot)
+      measureTicks: measureTicksForMetricContext(snapshot),
+      keyContext: timelineContext.keyContext
     }),
     harmonies
   );

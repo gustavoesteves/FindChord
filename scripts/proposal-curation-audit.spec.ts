@@ -108,6 +108,41 @@ describe("proposal curation audit", () => {
     expect(analysis.row.status).toBe("sem-ideia");
   });
 
+  it("passes structured key context into melodic curation analysis", () => {
+    const snapshot: ScoreSnapshot = {
+      timestamp: 1,
+      harmonies: [],
+      notes: [
+        { id: "n1", step: "C", alter: 0, octave: 4, voice: 1, staff: 1, measure: 1, tickStart: 0, tickEnd: 1920, durationTicks: 1920 },
+        { id: "n2", step: "E", alter: -1, octave: 4, voice: 1, staff: 1, measure: 2, tickStart: 1920, tickEnd: 3840, durationTicks: 1920 },
+        { id: "n3", step: "G", alter: 0, octave: 4, voice: 1, staff: 1, measure: 3, tickStart: 3840, tickEnd: 5760, durationTicks: 1920 },
+        { id: "n4", step: "B", alter: -1, octave: 4, voice: 1, staff: 1, measure: 4, tickStart: 5760, tickEnd: 7680, durationTicks: 1920 },
+        { id: "n5", step: "C", alter: 0, octave: 4, voice: 1, staff: 1, measure: 5, tickStart: 7680, tickEnd: 9600, durationTicks: 1920 },
+        { id: "n6", step: "E", alter: -1, octave: 4, voice: 1, staff: 1, measure: 6, tickStart: 9600, tickEnd: 11520, durationTicks: 1920 },
+        { id: "n7", step: "G", alter: 0, octave: 4, voice: 1, staff: 1, measure: 7, tickStart: 11520, tickEnd: 13440, durationTicks: 1920 },
+        { id: "n8", step: "C", alter: 0, octave: 4, voice: 1, staff: 1, measure: 8, tickStart: 13440, tickEnd: 15360, durationTicks: 1920 }
+      ],
+      metadata: {
+        title: "Melodic minor context",
+        keySignature: "C",
+        keyTimeline: [
+          { measure: 1, tick: 0, fifths: -3, mode: "minor", keySignature: "C" }
+        ],
+        measureTicks: Array.from({ length: 8 }, (_, index) => ({
+          measure: index + 1,
+          startTick: index * 1920,
+          endTick: (index + 1) * 1920
+        }))
+      }
+    };
+
+    const analysis = analyzeProposalCurationSnapshot(snapshot, "melodic-minor.musicxml");
+
+    expect(analysis.center).toBe("C");
+    expect(analysis.classificationMode).toBe("minor-functional");
+    expect(analysis.row.status).not.toBe("sem-ideia");
+  });
+
   it("keeps visible proposal signatures unique within each score", () => {
     const repeated = visibleIdeaRowsFromReport()
       .map(row => ({
