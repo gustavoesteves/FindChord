@@ -15,7 +15,7 @@ Atualizado incrementalmente durante a remediação dos blocos P1/P2.
 | MuseScore | Segurança/pareamento/ACK/origin Pages avançaram bastante; ações inexistentes foram removidas do protocolo tipado; status já mostra plugin e última partitura sincronizada; inserção no Writer agora retorna resultado tipado e feedback visível. | Falta validação real QML/MuseScore e fila por instância/score. |
 | Testes/documentação | CI já roda lint e suíte curada; documentos agora possuem trilha de progresso. | Falta E2E/React/bridge em porta efêmera e rastreabilidade teoria→regra→UI. |
 
-Próximo bloco recomendado: `FC-HZ-11`, agora restrito à evidência harmônica negativa em baixo estrutural/planar antes de avançar para `FC-HZ-12`.
+Próximo bloco recomendado: `FC-HZ-12`, consolidar alvos ambíguos e cadeias locais longas antes de avançar para o bloco MuseScore.
 
 ## Parecer executivo
 
@@ -363,7 +363,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 
 - **Módulo/tab/jornada:** Harmonizar / Improviso / C-D.
 - **Esperado:** reconhecer dominantes pelo alvo real e produzir notas-guia da qualidade/alvo.
-- **Observado:** resolvido parcialmente. Dominantes secundárias/SubV agora dependem de alvo real; D7→C não vira dominante funcional; notas-guia vêm da fórmula do acorde; resoluções usam a qualidade do acorde de chegada; diminutos em inversão também podem ser lidos como dominantes auxiliares quando o baixo conduz ao alvo por semitom; dominantes sem próximo acorde explícito inferem alvo regional local quando vêm preparados por ii/iiø, por ii→SubV, por IV/iv ou por IV maior local em movimento de quarta ascendente, preservando alvo menor quando a preparação é meio-diminuta ou subdominante menor. SubV solto no centro global permanece cor, não dominante funcional. Ainda falta ampliar outros acordes sem alvo explícito em centros locais não globais.
+- **Observado:** resolvido parcialmente. Dominantes secundárias/SubV agora dependem de alvo real; D7→C não vira dominante funcional; notas-guia vêm da fórmula do acorde; resoluções usam a qualidade do acorde de chegada; diminutos em inversão também podem ser lidos como dominantes auxiliares quando o baixo conduz ao alvo por semitom; dominantes sem próximo acorde explícito inferem alvo regional local quando vêm preparados por ii/iiø, por ii→SubV, por IV/iv ou por IV maior local em movimento de quarta ascendente, preservando alvo menor quando a preparação é meio-diminuta ou subdominante menor. SubV solto no centro global permanece cor, não dominante funcional; dominante sobre a própria tônica é tratado como material modal/blues sem alvo resolutivo artificial. Ainda falta ampliar outros acordes sem alvo explícito em centros locais não globais.
 - **Evidência:** [contextualMaterialFunction.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/theory/contextualMaterialFunction.ts:23>).
 - **Reprodução:**
   - `A7→Dm`, `E7→Am` e `Db7→C` são `dominant`;
@@ -376,14 +376,15 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `C→D7` sem próximo acorde infere alvo regional G, mas `D7` solto em C continua `color`;
   - `Bbm7→C7` sem próximo acorde infere F menor e resolve `Bb→Ab`, não `Bb→A`;
   - `Fmaj7→Bb7` sem próximo acorde infere alvo regional Eb, mas `Bb7` solto em C permanece `color`;
+  - `C7` em centro C permanece material modal sem `resolutionTarget`;
   - `G#dim7→Am` é dominante auxiliar por resolução semitonal; `Edim7/C#→Dm` também é dominante auxiliar pelo baixo dirigido; `Cdim7→Am` permanece `color`;
   - C, C6, Cadd9 produzem apenas a terça; Csus/F#5 não fabricam terça+sétima;
   - E7→Am sugere D→C; G7→Cm sugere F→Eb.
 - **Impacto:** músico — recebe resolução melódica objetivamente errada; produto — ranking, região e rota linear usam a classificação defeituosa.
 - **Causa provável:** predicados incompletos e alvo representado apenas pela raiz.
-- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem o acorde-alvo efetivo; dominantes sem próximo acorde explícito agora usam `resolutionTarget` para classificar função e resoluções; diminutos resolvidos por semitom ascendente são classificados como dominantes auxiliares; diminutos invertidos consideram o baixo indicado na cifra; dominante primária, diminuto de sensível e dominante preparada por ii/iiø, ii→SubV, IV/iv ou IV maior local sem `nextChord`/`resolutionTarget` inferem alvo regional sem capturar dominantes secundárias/SubV soltos; iiø-V e iv-V implícitos sintetizam alvo menor para notas-guia e células melódicas. Dominantes com mesma raiz do centro global passam a priorizar alvo resolutivo real antes de repouso por raiz.
+- **Progresso:** `determineContextualHarmonicFunction` valida V/SubV por movimento de raiz; `guideTonesFor` usa `CHORD_REGISTRY`; `guideToneResolutions` e `nearestGuideToneTargets` recebem o acorde-alvo efetivo; dominantes sem próximo acorde explícito agora usam `resolutionTarget` para classificar função e resoluções; diminutos resolvidos por semitom ascendente são classificados como dominantes auxiliares; diminutos invertidos consideram o baixo indicado na cifra; dominante primária, diminuto de sensível e dominante preparada por ii/iiø, ii→SubV, IV/iv ou IV maior local sem `nextChord`/`resolutionTarget` inferem alvo regional sem capturar dominantes secundárias/SubV soltos; iiø-V e iv-V implícitos sintetizam alvo menor para notas-guia e células melódicas. Dominantes com mesma raiz do centro global passam a priorizar alvo resolutivo real antes de repouso por raiz e dominantes sobre a própria tônica ficam como continuidade modal quando não há alvo explícito.
 - **Correção recomendada:** aprofundar alvo regional para outras cadências locais não centradas no centro global, mantendo gates de preparação para não capturar dominantes soltas.
-- **Testes necessários:** casos com cadeia local mais longa, alvos ambíguos e dominantes sobre a própria tônica em contexto blues/modal.
+- **Testes necessários:** casos com cadeia local mais longa e alvos ambíguos.
 - **Confiança:** alta.
 
 ## MuseScore, concorrência e segurança

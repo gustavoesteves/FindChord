@@ -82,6 +82,20 @@ describe("F199 candidatas contextuais de material", () => {
     ]));
   });
 
+  it("mantem dominante sobre a propria tonica como material modal sem alvo artificial", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "C7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["E", "Bb"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "modal",
+      resolutionTarget: undefined
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toHaveLength(0);
+  });
+
   it("infere alvo regional local quando ii prepara dominante sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7",

@@ -81,6 +81,16 @@ describe("F202 funcao contextual de material", () => {
     }, "G")).toBeUndefined();
   });
 
+  it("trata dominante sobre a propria tonica como cor modal, nao alvo resolutivo", () => {
+    const tonicDominant = {
+      chord: "C7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(tonicDominant, "C")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(tonicDominant, "C")).toBe("modal");
+  });
+
   it("infere alvo regional local quando um ii prepara dominante sem proximo acorde", () => {
     const preparedDominant = {
       chord: "A7",

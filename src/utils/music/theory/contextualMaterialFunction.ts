@@ -172,6 +172,7 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
     || resolvesAsDominant(root, resolutionRoot)
     || (!!center && resolvesAsPrimaryDominant(root, center.tonic))
   )) return "dominant";
+  if (dominantLike && center && rootsEqual(root, center.tonic)) return "modal";
   if (dominantLike) return "color";
   if (center && rootsEqual(root, center.tonic)) return "tonic";
   if (center && center.mode === "major" && (
