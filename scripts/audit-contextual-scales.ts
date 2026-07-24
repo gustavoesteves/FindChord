@@ -87,6 +87,7 @@ export function auditContextualMaterialLibrary(): ContextualMaterialAuditReport 
       const candidates = buildContextualMaterialCandidates({
         chord: harmony.harmony,
         previousChord: snapshot.harmonies[index - 1]?.harmony,
+        chordHistory: snapshot.harmonies.slice(Math.max(0, index - 4), index).map(item => item.harmony),
         nextChord: snapshot.harmonies[index + 1]?.harmony,
         tonalCenter: phraseContext.selectedCenter,
         melody: selectMelodyForHarmony(harmony, anchors),

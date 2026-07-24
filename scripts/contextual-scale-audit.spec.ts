@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   auditContextualMaterialLibrary,
   auditContextualScaleLibrary,
@@ -21,5 +22,11 @@ describe("F118 auditoria de materiais contextuais", () => {
   it("mantem aliases legados de escala apontando para materiais", () => {
     expect(auditContextualScaleLibrary).toBe(auditContextualMaterialLibrary);
     expect(renderContextualScaleAuditMarkdown).toBe(renderContextualMaterialAuditMarkdown);
+  });
+
+  it("alimenta materiais contextuais com historico curto de cifras", () => {
+    const source = readFileSync("scripts/audit-contextual-scales.ts", "utf8");
+
+    expect(source).toContain("chordHistory: snapshot.harmonies.slice(Math.max(0, index - 4), index).map(item => item.harmony)");
   });
 });
