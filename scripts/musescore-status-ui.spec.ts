@@ -56,6 +56,7 @@ describe("MuseScore status UI", () => {
     expect(adapter).toContain("targetScoreId: targetScoreId || undefined");
     expect(plugin).toContain("bridgePluginSessionId = session.pluginSessionId || \"\"");
     expect(plugin).toContain("/api/v1/consume?pluginSessionId=");
+    expect(plugin).toContain("X-FindChord-Plugin-Session");
   });
 
   it("surfaces plugin timeout as a visible sync error", () => {

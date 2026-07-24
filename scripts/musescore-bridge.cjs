@@ -375,9 +375,18 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        if (!leasedCommandMessages.has(payload.commandId)) {
+        const lease = leasedCommandMessages.get(payload.commandId);
+        if (!lease) {
           eventsRejected++;
           writeJson(res, 409, { error: 'ACK sem comando ativo.' });
+          return;
+        }
+
+        const targetPluginSessionId = queuedMessageTarget(lease.message);
+        const ackPluginSessionId = req.headers['x-findchord-plugin-session'] || payload.pluginSessionId || null;
+        if (targetPluginSessionId && ackPluginSessionId !== targetPluginSessionId) {
+          eventsRejected++;
+          writeJson(res, 409, { error: 'ACK de sessão incorreta.' });
           return;
         }
 

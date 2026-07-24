@@ -260,7 +260,8 @@ describe("MuseScore bridge ephemeral server", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-FindChord-Plugin-Token": plugin.pluginToken
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": plugin.pluginSessionId
         },
         body: JSON.stringify({
           type: "COMMAND_ACK",
@@ -446,6 +447,93 @@ describe("MuseScore bridge ephemeral server", () => {
       expect(acknowledge.status).toBe(409);
       await expect(acknowledge.json()).resolves.toEqual({
         error: "ACK sem comando ativo."
+      });
+    } finally {
+      await stopBridge(bridge.process);
+    }
+  }, 10000);
+
+  it("rejects command acknowledgements from a different plugin session", async () => {
+    let bridge: Awaited<ReturnType<typeof waitForBridge>>;
+    try {
+      bridge = await waitForBridge();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("listen EPERM")) {
+        expect(message).toContain("listen EPERM");
+        return;
+      }
+      throw error;
+    }
+
+    try {
+      const dashboardSession = await fetch(`${bridge.baseUrl}/api/v1/session`, {
+        headers: {
+          Origin: "http://localhost:5173",
+          "X-FindChord-Client": "compose-suite"
+        }
+      });
+      const dashboard = await dashboardSession.json() as {
+        dashboardToken: string;
+      };
+
+      const pluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
+      const plugin = await pluginSession.json() as {
+        pluginSessionId: string;
+        pluginToken: string;
+      };
+
+      const mutation = {
+        protocolVersion: "1.0",
+        messageType: "MUTATION",
+        payload: {
+          type: "MUTATION",
+          commandId: "cmd-session-bound",
+          targetPluginSessionId: plugin.pluginSessionId,
+          expiresAt: Date.now() + 8000,
+          action: "INSERT_CHORD",
+          targetTick: 0,
+          chordSymbol: "Dm7"
+        }
+      };
+      const send = await fetch(`${bridge.baseUrl}/api/v1/send`, {
+        method: "POST",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Content-Type": "application/json",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        },
+        body: JSON.stringify(mutation)
+      });
+      expect(send.status).toBe(200);
+
+      const consume = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${plugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": plugin.pluginSessionId
+        }
+      });
+      expect(consume.status).toBe(200);
+      await expect(consume.json()).resolves.toEqual([mutation]);
+
+      const acknowledge = await fetch(`${bridge.baseUrl}/api/v1/ack`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": "wrong-session"
+        },
+        body: JSON.stringify({
+          type: "COMMAND_ACK",
+          commandId: "cmd-session-bound",
+          status: "accepted"
+        })
+      });
+
+      expect(acknowledge.status).toBe(409);
+      await expect(acknowledge.json()).resolves.toEqual({
+        error: "ACK de sessão incorreta."
       });
     } finally {
       await stopBridge(bridge.process);

@@ -216,6 +216,7 @@ MuseScore {
             r.open("POST", "http://localhost:9000/api/v1/ack", true);
             r.setRequestHeader("Content-Type", "application/json");
             r.setRequestHeader("X-FindChord-Plugin-Token", bridgePluginToken);
+            r.setRequestHeader("X-FindChord-Plugin-Session", bridgePluginSessionId);
             r.send(JSON.stringify({
                 type: "COMMAND_ACK",
                 commandId: commandId,
