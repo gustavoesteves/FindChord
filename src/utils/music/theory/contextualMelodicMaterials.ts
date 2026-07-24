@@ -60,15 +60,17 @@ function halfWholeDiminishedMaterials(
     .map(cell => cell.join("-"));
   if (cells.length === 0) return [];
 
+  const targetRoot = displayNote(hasRealResolutionTarget(root, resolutionTarget) ? resolutionTarget || null : null);
+
   return [{
     label: "Arpejos diminutos H/W",
     source: "arpeggio",
     sourceScale: scale.name,
     cells,
     tensionProfile: ["b9", "#9", "#11", "13"],
-    resolutionTargets: resolutionTarget ? [resolutionTarget] : [],
-    practiceHint: resolutionTarget
-      ? `Use as celulas 1-#2-3-5 por tercas menores e resolva em ${resolutionTarget}.`
+    resolutionTargets: targetRoot ? [targetRoot] : [],
+    practiceHint: targetRoot
+      ? `Use as celulas 1-#2-3-5 por tercas menores e resolva em ${targetRoot}.`
       : "Use as celulas 1-#2-3-5 por tercas menores como vocabulario de dominante diminuta."
   }];
 }

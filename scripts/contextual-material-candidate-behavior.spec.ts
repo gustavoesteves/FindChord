@@ -283,6 +283,21 @@ describe("F115 candidatas contextuais de material", () => {
     expect(halfWhole?.practiceHint).toContain("conduza para D");
   });
 
+  it("nao promete resolucao H/W quando a dominante diminuta permanece na mesma raiz", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A7(b9)",
+      nextChord: "A13",
+      melody: ["C#", "G", "Bb"],
+      resolutionTarget: "A"
+    });
+    const halfWhole = candidates.find(candidate => candidate.type === "half-whole diminished");
+
+    expect(halfWhole?.harmonicFunction).toBe("modal");
+    expect(halfWhole?.melodicMaterials[0]?.resolutionTargets).toEqual([]);
+    expect(halfWhole?.melodicMaterials[0]?.practiceHint).toContain("vocabulario de dominante diminuta");
+    expect(halfWhole?.practiceHint).not.toContain("conduza para A");
+  });
+
   it("oferece celulas da escala alterada com resolucao para o acorde-alvo", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7alt",
