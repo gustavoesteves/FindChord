@@ -410,4 +410,45 @@ describe("MuseScore bridge ephemeral server", () => {
       await stopBridge(bridge.process);
     }
   }, 10000);
+
+  it("rejects command acknowledgements that were not leased to the plugin", async () => {
+    let bridge: Awaited<ReturnType<typeof waitForBridge>>;
+    try {
+      bridge = await waitForBridge();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("listen EPERM")) {
+        expect(message).toContain("listen EPERM");
+        return;
+      }
+      throw error;
+    }
+
+    try {
+      const pluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
+      const plugin = await pluginSession.json() as {
+        pluginToken: string;
+      };
+
+      const acknowledge = await fetch(`${bridge.baseUrl}/api/v1/ack`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-FindChord-Plugin-Token": plugin.pluginToken
+        },
+        body: JSON.stringify({
+          type: "COMMAND_ACK",
+          commandId: "cmd-never-consumed",
+          status: "accepted"
+        })
+      });
+
+      expect(acknowledge.status).toBe(409);
+      await expect(acknowledge.json()).resolves.toEqual({
+        error: "ACK sem comando ativo."
+      });
+    } finally {
+      await stopBridge(bridge.process);
+    }
+  }, 10000);
 });

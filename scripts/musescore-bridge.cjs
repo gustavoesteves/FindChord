@@ -375,6 +375,12 @@ const server = http.createServer((req, res) => {
           return;
         }
 
+        if (!leasedCommandMessages.has(payload.commandId)) {
+          eventsRejected++;
+          writeJson(res, 409, { error: 'ACK sem comando ativo.' });
+          return;
+        }
+
         leasedCommandMessages.delete(payload.commandId);
 
         const ackMessage = {
