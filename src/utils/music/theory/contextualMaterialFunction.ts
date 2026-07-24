@@ -147,6 +147,20 @@ function impliedDominantChainResolutionTarget(context: MaterialContext, root: st
   return undefined;
 }
 
+function impliedLeadingDiminishedDominantTarget(context: MaterialContext, root: string): string | undefined {
+  for (const previousChord of preparationChordCandidates(context, root)) {
+    const previousRoot = chordRoot(previousChord);
+    if (!previousRoot || !isDiminishedLike(previousChord)) continue;
+    if (context.tonalCenter && rootsEqual(root, context.tonalCenter.tonic)) return undefined;
+
+    const previousBass = chordBass(previousChord);
+    const leadsIntoDominant = directedSemitones(previousRoot, root) === 1
+      || directedSemitones(previousBass, root) === 1;
+    if (leadsIntoDominant) return transposePitchClass(root, "4P") || undefined;
+  }
+  return undefined;
+}
+
 function resolvesAsLeadingDiminished(
   symbol: string,
   root: string,
@@ -174,6 +188,8 @@ export function contextualResolutionTarget(context: MaterialContext, root: strin
   if (localSubdominantVTarget) return localSubdominantVTarget;
   const dominantChainTarget = impliedDominantChainResolutionTarget(context, root);
   if (dominantChainTarget) return dominantChainTarget;
+  const leadingDiminishedDominantTarget = impliedLeadingDiminishedDominantTarget(context, root);
+  if (leadingDiminishedDominantTarget) return leadingDiminishedDominantTarget;
   return impliedRegionalResolutionTarget(context, root);
 }
 

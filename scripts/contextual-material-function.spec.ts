@@ -279,6 +279,24 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(tonicDominantAfterCadence, "C")).toBe("modal");
   });
 
+  it("infere alvo regional quando diminuto de sensivel prepara uma dominante local", () => {
+    const leadingDiminishedToDominant = {
+      chord: "A7",
+      previousChord: "G#dim7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const tonicDominantPreparedByLeadingDiminished = {
+      chord: "C7",
+      previousChord: "Bdim7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(leadingDiminishedToDominant, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(leadingDiminishedToDominant, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(tonicDominantPreparedByLeadingDiminished, "C")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(tonicDominantPreparedByLeadingDiminished, "C")).toBe("modal");
+  });
+
   it("infere alvo menor quando iv prepara dominante sem proximo acorde", () => {
     const preparedMinorDominant = {
       chord: "C7",
