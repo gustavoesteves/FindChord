@@ -372,9 +372,9 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
   - `G7` sem próximo acorde em C infere alvo regional C; `D7` solto em C continua `color`;
   - `Em7→A7` sem próximo acorde infere alvo regional D; `Em7→A7sus→A7` preserva o alvo D; `A7` solto em C continua `color`;
   - `Dm7→Db7` sem próximo acorde infere alvo regional C por SubV; `Db7` solto em C continua `color`;
-  - `Em7b5→A7` sem próximo acorde infere D menor e resolve `G→F`, não `G→F#`;
+  - `Em7b5→A7` e `Em7b5→A7sus→A7` sem próximo acorde inferem D menor e resolvem `G→F`, não `G→F#`;
   - `C→D7` sem próximo acorde infere alvo regional G, mas `D7` solto em C continua `color`;
-  - `Bbm7→C7` sem próximo acorde infere F menor e resolve `Bb→Ab`, não `Bb→A`;
+  - `Bbm7→C7` e `Bbm7→C7sus→C7` sem próximo acorde inferem F menor e resolvem `Bb→Ab`, não `Bb→A`;
   - `Fmaj7→Bb7` sem próximo acorde infere alvo regional Eb, mas `Bb7` solto em C permanece `color`;
   - `C7` em centro C permanece material modal sem `resolutionTarget`;
   - `A7alt→A13` permanece continuidade modal e não fabrica resolução cadencial;

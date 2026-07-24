@@ -138,6 +138,29 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(looseSuspension, "A")).toBe("color");
   });
 
+  it("preserva alvo menor quando a dominante prolongada veio de preparacao menor", () => {
+    const halfDiminishedPreparation = {
+      chord: "A7",
+      previousChord: "A7sus4",
+      chordHistory: ["Em7b5", "A7sus4"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const minorSubdominantPreparation = {
+      chord: "C7",
+      previousChord: "C7sus4",
+      chordHistory: ["Bbm7", "C7sus4"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(halfDiminishedPreparation, "A")).toBe("D");
+    expect(contextualResolutionChord(halfDiminishedPreparation, "A", "D")).toBe("Dm");
+    expect(guideToneResolutions(["C#", "G"], "D", "Dm")).toEqual(["C#->D", "G->F"]);
+
+    expect(contextualResolutionTarget(minorSubdominantPreparation, "C")).toBe("F");
+    expect(contextualResolutionChord(minorSubdominantPreparation, "C", "F")).toBe("Fm");
+    expect(guideToneResolutions(["E", "Bb"], "F", "Fm")).toEqual(["E->F", "Bb->Ab"]);
+  });
+
   it("infere alvo regional local quando ii prepara SubV sem proximo acorde", () => {
     const preparedSubV = {
       chord: "Db7",
