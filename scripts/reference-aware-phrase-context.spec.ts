@@ -108,6 +108,25 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("treats planar structural-bass reference centers as open arrivals instead of false plagal cadences", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["Gmaj7", "Bb/A", "D9", "D/C", "Bbmaj7", "G/A", "G/B", "D"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "D",
+      mode: "major"
+    }));
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).not.toContain("cadência plagal IV-I confirma D maior");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "D",
+      cadenceType: "OPEN",
+      confidence: 0.72
+    });
+  });
+
   it("promotes written deceptive cadence evidence without changing the target center to vi", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),

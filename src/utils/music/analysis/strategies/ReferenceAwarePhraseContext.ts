@@ -58,10 +58,20 @@ function cadenceTypeFromReferenceEvidence(evidence: string[]): CadenceType {
 
 function referenceCadentialTarget(
   referenceCenter: { tonic: string; confidence: "weak" | "medium" | "strong"; evidence: string[] },
-  melodyCadentialTarget: CadentialTarget
+  melodyCadentialTarget: CadentialTarget,
+  alignOpenTargetWithReferenceCenter = false
 ): CadentialTarget {
   if (!hasExplicitReferenceCadence(referenceCenter.evidence)) {
-    return melodyCadentialTarget;
+    if (!alignOpenTargetWithReferenceCenter) return melodyCadentialTarget;
+
+    return {
+      targetPitch: referenceCenter.tonic,
+      cadenceType: "OPEN",
+      confidence: Math.max(
+        melodyCadentialTarget.cadenceType === "OPEN" ? melodyCadentialTarget.confidence : 0,
+        Math.min(referenceConfidenceValue(referenceCenter.confidence), 0.72)
+      )
+    };
   }
 
   const cadenceType = cadenceTypeFromReferenceEvidence(referenceCenter.evidence);
@@ -163,7 +173,15 @@ export function applyReferenceCenterToPhraseContext(
     selectedCenter: referenceCandidate,
     selectedCenterSource: "reference",
     selectedCenterEvidence: referenceCenter.evidence.map(formatReferenceCenterEvidence),
-    cadentialTarget: referenceCadentialTarget(referenceCenter, phraseContext.cadentialTarget),
+    cadentialTarget: referenceCadentialTarget(
+      referenceCenter,
+      phraseContext.cadentialTarget,
+      referenceAnalysis.directCadentialDependency === "low"
+        && (
+          referenceAnalysis.properties.includes("STRUCTURAL_BASS_GRAMMAR")
+          || referenceAnalysis.properties.includes("PLANAR_CHORD_MOTION")
+        )
+    ),
     tonalCenterCandidates: mergeCandidate(phraseContext.tonalCenterCandidates, referenceCandidate)
   };
 }
