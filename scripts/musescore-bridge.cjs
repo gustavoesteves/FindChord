@@ -636,7 +636,9 @@ function handleNewEvent(payload) {
 function broadcastMessage(message) {
   const messageStr = JSON.stringify(message);
   wss.clients.forEach((client) => {
-    if (client.role === 'plugin' && client.readyState === WebSocket.OPEN) {
+    if (client.role === 'plugin'
+      && client.readyState === WebSocket.OPEN
+      && isConsumableQueuedMessage(message, client.pluginSessionId || activePluginSessionId)) {
       client.send(messageStr);
     }
   });
@@ -705,7 +707,7 @@ wss.on('connection', (ws, req) => {
           if (client !== ws
             && client.role === 'plugin'
             && client.readyState === WebSocket.OPEN
-            && isQueuedMessageForPlugin(message, client.pluginSessionId || activePluginSessionId)) {
+            && isConsumableQueuedMessage(message, client.pluginSessionId || activePluginSessionId)) {
             client.send(messageStr);
           }
         });

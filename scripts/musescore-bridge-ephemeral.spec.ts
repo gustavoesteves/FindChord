@@ -89,6 +89,26 @@ function openDashboardSocket(wsEndpoint: string): Promise<import("ws")> {
   });
 }
 
+function openPluginSocket(baseUrl: string, sessionId: string, pluginToken: string, pluginSessionId: string): Promise<import("ws")> {
+  const wsEndpoint = `${baseUrl.replace("http:", "ws:")}/plugin?session=${sessionId}&token=${pluginToken}&pluginSessionId=${pluginSessionId}`;
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocketClient.WebSocket(wsEndpoint);
+    const timeout = setTimeout(() => {
+      socket.close();
+      reject(new Error("Plugin WebSocket did not open in time."));
+    }, 2000);
+
+    socket.once("open", () => {
+      clearTimeout(timeout);
+      resolve(socket);
+    });
+    socket.once("error", error => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
+
 function waitForSocketMessage(
   socket: import("ws"),
   predicate: (message: BridgeMessage) => boolean
@@ -108,6 +128,22 @@ function waitForSocketMessage(
     }
 
     socket.on("message", onMessage);
+  });
+}
+
+function collectSocketMessages(socket: import("ws"), durationMs = 150): Promise<BridgeMessage[]> {
+  return new Promise(resolve => {
+    const messages: BridgeMessage[] = [];
+
+    function onMessage(data: import("ws").RawData) {
+      messages.push(JSON.parse(data.toString()) as BridgeMessage);
+    }
+
+    socket.on("message", onMessage);
+    setTimeout(() => {
+      socket.off("message", onMessage);
+      resolve(messages);
+    }, durationMs);
   });
 }
 
@@ -253,6 +289,124 @@ describe("MuseScore bridge ephemeral server", () => {
       }));
       dashboardSocket.close();
     } finally {
+      await stopBridge(bridge.process);
+    }
+  }, 10000);
+
+  it("holds score-targeted mutations away from websocket and polling until the active score matches", async () => {
+    let bridge: Awaited<ReturnType<typeof waitForBridge>>;
+    try {
+      bridge = await waitForBridge();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("listen EPERM")) {
+        expect(message).toContain("listen EPERM");
+        return;
+      }
+      throw error;
+    }
+
+    let pluginSocket: import("ws") | undefined;
+    try {
+      const dashboardSession = await fetch(`${bridge.baseUrl}/api/v1/session`, {
+        headers: {
+          Origin: "http://localhost:5173",
+          "X-FindChord-Client": "compose-suite"
+        }
+      });
+      const dashboard = await dashboardSession.json() as {
+        dashboardToken: string;
+      };
+
+      const pluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
+      const plugin = await pluginSession.json() as {
+        sessionId: string;
+        pluginSessionId: string;
+        pluginToken: string;
+      };
+      pluginSocket = await openPluginSocket(bridge.baseUrl, plugin.sessionId, plugin.pluginToken, plugin.pluginSessionId);
+
+      const scoreA = await fetch(`${bridge.baseUrl}/api/v1/score`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-FindChord-Plugin-Token": plugin.pluginToken
+        },
+        body: JSON.stringify({
+          metadata: {
+            scoreId: "score-a",
+            title: "Score A"
+          },
+          harmonies: [],
+          notes: []
+        })
+      });
+      expect(scoreA.status).toBe(200);
+
+      const mutation = {
+        protocolVersion: "1.0",
+        messageType: "MUTATION",
+        payload: {
+          type: "MUTATION",
+          commandId: "cmd-score-b-only",
+          targetPluginSessionId: plugin.pluginSessionId,
+          targetScoreId: "score-b",
+          expiresAt: Date.now() + 8000,
+          action: "INSERT_CHORD",
+          targetTick: 0,
+          chordSymbol: "Fmaj7"
+        }
+      };
+      const send = await fetch(`${bridge.baseUrl}/api/v1/send`, {
+        method: "POST",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Content-Type": "application/json",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        },
+        body: JSON.stringify(mutation)
+      });
+      expect(send.status).toBe(200);
+
+      await expect(collectSocketMessages(pluginSocket)).resolves.toEqual([]);
+
+      const consumeA = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${plugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": plugin.pluginSessionId
+        }
+      });
+      expect(consumeA.status).toBe(200);
+      await expect(consumeA.json()).resolves.toEqual([]);
+
+      const scoreB = await fetch(`${bridge.baseUrl}/api/v1/score`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-FindChord-Plugin-Token": plugin.pluginToken
+        },
+        body: JSON.stringify({
+          metadata: {
+            scoreId: "score-b",
+            title: "Score B"
+          },
+          harmonies: [],
+          notes: []
+        })
+      });
+      expect(scoreB.status).toBe(200);
+
+      const consumeB = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${plugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": plugin.pluginToken,
+          "X-FindChord-Plugin-Session": plugin.pluginSessionId
+        }
+      });
+      expect(consumeB.status).toBe(200);
+      await expect(consumeB.json()).resolves.toEqual([mutation]);
+    } finally {
+      pluginSocket?.close();
       await stopBridge(bridge.process);
     }
   }, 10000);
