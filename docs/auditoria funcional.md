@@ -116,7 +116,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-01 — P1 — interpretações ambíguas não podem ser escolhidas
 
 - **Módulo/tab/jornada:** Escrever / Braço e tabs dependentes / B.
-- **Progresso:** o Writer agora preserva `score`, `confidence` e interpretações equivalentes no DTO da leitura; a tab “Leitura do acorde” mostra alternativas detectadas e chama `setSelectedChordIndex` para trocar a interpretação ativa. Regressão coberta em `writer-ambiguous-chord-selection.spec.ts`.
+- **Progresso:** o Writer agora preserva `score`, `confidence` e interpretações equivalentes no DTO da leitura; a tab “Leitura do acorde” mostra alternativas detectadas e chama `setSelectedChordIndex` para trocar a interpretação ativa. Regressão coberta em `writer-ambiguous-chord-selection.spec.ts`, incluindo escolha de `G6/D` e propagação para payload MuseScore e Materiais.
 - **Esperado:** mostrar alternativas, confiança e permitir que o músico escolha a interpretação.
 - **Observado:** o analisador retorna até oito candidatos, mas o Writer descarta `score`, `confidence` e equivalências; nenhuma UI chama `setSelectedChordIndex`; alterações sempre restauram o índice zero.
 - **Evidência:** [chordAnalyzer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/chordAnalyzer.ts:387>), [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:71>), [TranslationLayer.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/components/TranslationLayer.tsx:5>) e [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:127>).
@@ -124,7 +124,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 - **Impacto:** músico — materiais e exportação podem usar a interpretação indesejada; produto — Jornada B inexiste apesar de o motor já produzir as alternativas.
 - **Causa provável:** adaptação `ChordCandidate → DetectedChord` perde informação e a UI foi construída apenas para `activeChord`.
 - **Correção recomendada:** conservar IDs, score, confiança e equivalências; seletor explícito; persistir escolha por identidade, não por índice.
-- **Testes necessários:** escolher `G6/D` e verificar Leitura, Aberturas, Materiais e payload.
+- **Testes necessários:** clique/render real para Leitura e Aberturas; serviços puros já verificam escolha de `G6/D`, payload e Materiais.
 - **Confiança:** alta.
 
 ### FC-WR-02 — P1 — a exportação reparsa o estilo visual e pode alterar a cifra
