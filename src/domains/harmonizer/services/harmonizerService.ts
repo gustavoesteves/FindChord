@@ -824,29 +824,85 @@ function withInheritedVariantEvents(
 
   const sourceSlots = proposalChordSlots(source);
   const variantSlots = proposalChordSlots(variant);
-  if (sourceSlots.length !== variantSlots.length || source.events.length !== variantSlots.length) return variant;
+  if (sourceSlots.length === variantSlots.length && source.events.length === variantSlots.length) {
+    const sameTimelineShape = variantSlots.every((slot, index) => (
+      slot.measureIndex === sourceSlots[index]?.measureIndex
+      && slot.measureIndex === source.events?.[index]?.measureIndex
+    ));
 
-  const sameTimelineShape = variantSlots.every((slot, index) => (
-    slot.measureIndex === sourceSlots[index]?.measureIndex
-    && slot.measureIndex === source.events?.[index]?.measureIndex
-  ));
-  if (!sameTimelineShape) return variant;
-
-  return {
-    ...variant,
-    events: variantSlots.map((slot, index) => {
-      const sourceEvent = source.events![index];
+    if (sameTimelineShape) {
       return {
-        ...sourceEvent,
-        id: `${variant.id}-${sourceEvent.id}`,
-        measureIndex: slot.measureIndex,
-        chord: slot.chord,
-        chordIndex: slot.chordIndex,
-        occurrenceInMeasure: slot.chordIndex,
-        originalChord: sourceEvent.chord
+        ...variant,
+        events: variantSlots.map((slot, index) => {
+          const sourceEvent = source.events![index];
+          return {
+            ...sourceEvent,
+            id: `${variant.id}-${sourceEvent.id}`,
+            measureIndex: slot.measureIndex,
+            chord: slot.chord,
+            chordIndex: slot.chordIndex,
+            occurrenceInMeasure: slot.chordIndex,
+            originalChord: sourceEvent.chord
+          };
+        })
       };
-    })
-  };
+    }
+  }
+
+  const synthesizedEvents = synthesizeVariantEventsFromSourceTimeline(source, variant);
+  return synthesizedEvents.length > 0
+    ? { ...variant, events: synthesizedEvents }
+    : variant;
+}
+
+function synthesizeVariantEventsFromSourceTimeline(
+  source: ReharmonizationProposal,
+  variant: ReharmonizationProposal
+): ReharmonizationChordEvent[] {
+  if (!source.events || source.events.length === 0) return [];
+
+  const sourceEventsByMeasure = new Map<number, ReharmonizationChordEvent[]>();
+  for (const event of source.events) {
+    sourceEventsByMeasure.set(event.measureIndex, [
+      ...(sourceEventsByMeasure.get(event.measureIndex) || []),
+      event
+    ]);
+  }
+
+  const events: ReharmonizationChordEvent[] = [];
+  for (const measure of variant.measures) {
+    const sourceMeasureEvents = (sourceEventsByMeasure.get(measure.measureIndex) || [])
+      .sort((a, b) => a.tickStart - b.tickStart || a.chordIndex - b.chordIndex);
+    if (sourceMeasureEvents.length === 0) return [];
+
+    const tickStart = Math.min(...sourceMeasureEvents.map(event => event.tickStart));
+    const tickEnd = Math.max(...sourceMeasureEvents.map(event => event.tickEnd));
+    if (!Number.isFinite(tickStart) || !Number.isFinite(tickEnd) || tickEnd <= tickStart) return [];
+
+    const chordCount = Math.max(1, measure.chords.length);
+    const eventDuration = Math.max(1, Math.floor((tickEnd - tickStart) / chordCount));
+    const baseBeat = sourceMeasureEvents[0]?.beat || 1;
+    const beatStep = chordCount > 0 ? 4 / chordCount : 4;
+
+    measure.chords.forEach((chord, chordIndex) => {
+      const eventStart = tickStart + eventDuration * chordIndex;
+      const eventEnd = chordIndex === chordCount - 1 ? tickEnd : Math.min(tickEnd, eventStart + eventDuration);
+      events.push({
+        id: `${variant.id}-m${measure.measureIndex}-c${chordIndex}`,
+        measureIndex: measure.measureIndex,
+        beat: Math.round((baseBeat + beatStep * chordIndex) * 100) / 100,
+        chord,
+        chordIndex,
+        occurrenceInMeasure: chordIndex,
+        tickStart: eventStart,
+        tickEnd: eventEnd,
+        durationTicks: Math.max(1, eventEnd - eventStart),
+        originalChord: sourceMeasureEvents[Math.min(chordIndex, sourceMeasureEvents.length - 1)]?.chord
+      });
+    });
+  }
+
+  return events;
 }
 
 function regionKey(suggestion: SectionMaterialSuggestion): string {

@@ -678,6 +678,83 @@ describe("F119 janela temporal da melodia", () => {
     });
   });
 
+  it("gera eventos proprios para variantes com densidade ritmica diferente", () => {
+    const anchors = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "B", duration: 960 },
+      { measureIndex: 2, pitch: "C", duration: 960 }
+    ];
+    const phraseContext = {
+      ...PhraseAnalysisEngine.analyzePhrase(anchors, "C"),
+      selectedCenter: { tonic: "C", mode: "major" }
+    } as PhraseContext;
+    const sets = buildProposalMaterialSuggestionSets([
+      {
+        id: "basic",
+        kind: "validated-harmonization",
+        name: "Estratégia — Base",
+        presentationRole: "primary",
+        measures: [
+          { measureIndex: 1, chords: ["C"] },
+          { measureIndex: 2, chords: ["G7"] }
+        ],
+        events: [
+          {
+            id: "basic-m1-c0",
+            measureIndex: 1,
+            beat: 1,
+            chord: "C",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 0,
+            tickEnd: 1920,
+            durationTicks: 1920
+          },
+          {
+            id: "basic-m2-c0",
+            measureIndex: 2,
+            beat: 1,
+            chord: "G7",
+            chordIndex: 0,
+            occurrenceInMeasure: 0,
+            tickStart: 1920,
+            tickEnd: 3840,
+            durationTicks: 1920
+          }
+        ],
+        explanation: [],
+        bassLine: ["C", "G"],
+        colorVariants: [{
+          id: "basic-color-dense",
+          kind: "controlled-reharmonization",
+          name: "Variação — Preparação interna",
+          measures: [
+            { measureIndex: 1, chords: ["C"] },
+            { measureIndex: 2, chords: ["Dm7", "G7"] }
+          ],
+          explanation: [],
+          bassLine: ["C", "D", "G"]
+        }]
+      }
+    ], anchors, phraseContext);
+
+    const denseSet = sets.find(set => set.id === "basic-color-dense");
+    expect(denseSet?.suggestions.find(suggestion => suggestion.chord === "Dm7")).toMatchObject({
+      eventId: "basic-color-dense-m2-c0",
+      beat: 1,
+      tickStart: 1920,
+      tickEnd: 2880,
+      durationTicks: 960
+    });
+    expect(denseSet?.suggestions.find(suggestion => suggestion.chord === "G7")).toMatchObject({
+      eventId: "basic-color-dense-m2-c1",
+      beat: 3,
+      tickStart: 2880,
+      tickEnd: 3840,
+      durationTicks: 960
+    });
+  });
+
   it("identifica leitura regional quando um acorde sustenta varios compassos", () => {
     const anchors = [
       { measureIndex: 1, pitch: "E", duration: 960 },
