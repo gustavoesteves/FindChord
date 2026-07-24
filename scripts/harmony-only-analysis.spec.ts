@@ -132,4 +132,21 @@ describe("Harmony-only analysis", () => {
       confidence: 0.88
     });
   });
+
+  it("keeps a harmony-only phrygian half cadence as phrygian", () => {
+    const phraseContext = buildHarmonyOnlyPhraseContext(harmonies(["Dm/F", "E7"]));
+
+    expect(phraseContext).toEqual(expect.objectContaining({
+      selectedCenter: expect.objectContaining({
+        tonic: "A",
+        mode: "minor"
+      }),
+      selectedCenterSource: "reference",
+      cadentialTarget: {
+        targetPitch: "A",
+        cadenceType: "PHRYGIAN",
+        confidence: 0.76
+      }
+    }));
+  });
 });
