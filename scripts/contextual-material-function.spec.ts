@@ -138,6 +138,23 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(looseSuspension, "A")).toBe("color");
   });
 
+  it("trata dominante 9sus como prolongamento funcional quando ha preparacao", () => {
+    const preparedSuspendedNinth = {
+      chord: "A9sus",
+      previousChord: "Em7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSuspendedNinth = {
+      chord: "A9sus",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedSuspendedNinth, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(preparedSuspendedNinth, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSuspendedNinth, "A")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSuspendedNinth, "A")).toBe("color");
+  });
+
   it("preserva alvo menor quando a dominante prolongada veio de preparacao menor", () => {
     const halfDiminishedPreparation = {
       chord: "A7",

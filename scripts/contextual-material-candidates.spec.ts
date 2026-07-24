@@ -133,6 +133,25 @@ describe("F199 candidatas contextuais de material", () => {
     ]));
   });
 
+  it("classifica 9sus preparado como dominante contextual", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A9sus",
+      previousChord: "Em7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["G", "B"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.find(candidate => candidate.type === "mixolydian")).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toContain("G->F#");
+  });
+
   it("infere alvo regional local quando ii prepara SubV sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "Db7",

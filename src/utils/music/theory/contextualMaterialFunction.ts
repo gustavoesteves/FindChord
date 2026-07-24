@@ -22,7 +22,7 @@ export function transposePitchClass(root: string, interval: string): string | nu
 
 function isDominantLike(symbol: string): boolean {
   const resolved = resolveChordSymbol(symbol, "plain");
-  return ["7", "9", "11", "13", "7sus4", "13sus4", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
+  return ["7", "9", "11", "13", "7sus4", "9sus4", "13sus4", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
 }
 
 function isDiminishedLike(symbol: string): boolean {
