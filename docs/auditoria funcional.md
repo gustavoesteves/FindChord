@@ -148,7 +148,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 ### FC-WR-03 — P1 — escolher uma abertura pode remover a inversão
 
 - **Módulo/tab/jornada:** Escrever / Aberturas / A e B.
-- **Progresso:** o Writer passa `bassPC` para `generateVoicings`, a chave de cache inclui baixo/raiz/qualidade, e a regressão `writer-voicing-inversion.spec.ts` cobre inversão física preservada.
+- **Progresso:** o Writer passa `bassPC` para `generateVoicings`, a chave de cache inclui baixo/raiz/qualidade, e a regressão `writer-voicing-inversion.spec.ts` cobre inversão física preservada em `C/E`, `G7/B` e `Cdim7/Eb`.
 - **Esperado:** aberturas de `C/E` devem manter E no baixo ou declarar que são apenas formas de C.
 - **Observado:** `generateVoicings` recebe `bassPC=null`; ao carregar uma forma, o store recalcula e escolhe novamente o candidato zero.
 - **Evidência:** [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:121>) e [useChordStore.ts](</Volumes/Documents/Development/Find Chord/src/store/useChordStore.ts:181>).
@@ -156,7 +156,7 @@ Há também duplicação de regras musicais: dominante, nota-guia, distância ha
 - **Impacto:** músico — baixo estrutural e função podem mudar; produto — a tab quebra a identidade recebida da tab anterior.
 - **Causa provável:** baixo conhecido não participa do contrato do gerador.
 - **Correção recomendada:** passar o pitch class do baixo e remapear o resultado por raiz/qualidade/baixo.
-- **Testes necessários:** C/E, G7/B e Cdim7/Eb, incluindo clique e exportação.
+- **Testes necessários:** clique e exportação em UI/QML real para inversões; a matriz pura do gerador já cobre `C/E`, `G7/B` e `Cdim7/Eb`.
 - **Confiança:** alta.
 
 ### FC-WR-04 — P2 — Leitura e Materiais perdem semântica e fabricam dados simplificados

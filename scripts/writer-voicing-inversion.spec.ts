@@ -64,6 +64,47 @@ describe("writer voicing inversion search", () => {
     expect(results.every(shape => physicalBassPC(shape) === eBass)).toBe(true);
   });
 
+  it.each([
+    {
+      symbol: "C/E",
+      root: "C",
+      notes: ["C", "E", "G"],
+      quality: "major",
+      bass: "E"
+    },
+    {
+      symbol: "G7/B",
+      root: "G",
+      notes: ["G", "B", "D", "F"],
+      quality: "dominant7th",
+      bass: "B"
+    },
+    {
+      symbol: "Cdim7/Eb",
+      root: "C",
+      notes: ["C", "Eb", "Gb", "A"],
+      quality: "diminished7th",
+      bass: "Eb"
+    }
+  ])("preserves physical bass for $symbol generated alternatives", ({ symbol, root, notes, quality, bass }) => {
+    clearVoicingCache();
+
+    const pcs = notes.map(getPitchClass);
+    const bassPC = getPitchClass(bass);
+    const results = generateVoicings(
+      symbol,
+      root,
+      pcs,
+      standardTuning,
+      quality,
+      bassPC,
+      pcs
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every(shape => physicalBassPC(shape) === bassPC)).toBe(true);
+  });
+
   it("does not reuse a root-agnostic cache entry for an inversion-specific search", () => {
     clearVoicingCache();
 
