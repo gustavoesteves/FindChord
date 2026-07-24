@@ -65,6 +65,7 @@ export class WebSocketTransport {
 
             currentSocket.onclose = () => {
               if (this.socket !== currentSocket) return;
+              this.rejectPendingAcks("MuseScore bridge disconnected before command acknowledgement");
               this.setStatus("disconnected");
               this.triggerAutoReconnect();
             };
@@ -84,6 +85,7 @@ export class WebSocketTransport {
 
             currentSocket.onerror = () => {
               if (this.socket !== currentSocket) return;
+              this.rejectPendingAcks("MuseScore bridge connection failed before command acknowledgement");
               this.setStatus("disconnected");
             };
           })
@@ -155,7 +157,16 @@ export class WebSocketTransport {
       }
       this.socket = null;
     }
+    this.rejectPendingAcks("MuseScore bridge disconnected before command acknowledgement");
     this.setStatus("disconnected");
+  }
+
+  private rejectPendingAcks(message: string) {
+    for (const [commandId, pending] of this.pendingAcks.entries()) {
+      clearTimeout(pending.timeout);
+      pending.reject(new Error(`${message}: ${commandId}`));
+    }
+    this.pendingAcks.clear();
   }
 
   private resolveAck(message: BridgeMessage) {

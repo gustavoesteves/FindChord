@@ -140,4 +140,31 @@ describe("WebSocketTransport fault injection", () => {
       status: "accepted"
     }));
   });
+
+  it("rejects pending ACKs immediately when the socket closes before plugin confirmation", async () => {
+    const { transport, socket } = await connectedTransport();
+    const disconnected = transport.sendWithAck(mutationMessage, "cmd-1", 1000);
+    const disconnectedExpectation = expect(disconnected).rejects.toThrow(
+      "MuseScore bridge disconnected before command acknowledgement: cmd-1"
+    );
+
+    socket.close();
+
+    await disconnectedExpectation;
+
+    const reconnecting = transport.connect();
+    await vi.waitFor(() => expect(FakeWebSocket.instances).toHaveLength(2));
+    const nextSocket = FakeWebSocket.instances[1];
+    nextSocket.open();
+    await reconnecting;
+
+    const retry = transport.sendWithAck(mutationMessage, "cmd-1", 1000);
+    expect(nextSocket.sent).toEqual([JSON.stringify(mutationMessage)]);
+    nextSocket.receive(ack("cmd-1", "accepted"));
+
+    await expect(retry).resolves.toEqual(expect.objectContaining({
+      commandId: "cmd-1",
+      status: "accepted"
+    }));
+  });
 });
