@@ -882,7 +882,6 @@ function synthesizeVariantEventsFromSourceTimeline(
     const chordCount = Math.max(1, measure.chords.length);
     const eventDuration = Math.max(1, Math.floor((tickEnd - tickStart) / chordCount));
     const baseBeat = sourceMeasureEvents[0]?.beat || 1;
-    const beatStep = chordCount > 0 ? 4 / chordCount : 4;
 
     measure.chords.forEach((chord, chordIndex) => {
       const eventStart = tickStart + eventDuration * chordIndex;
@@ -890,7 +889,7 @@ function synthesizeVariantEventsFromSourceTimeline(
       events.push({
         id: `${variant.id}-m${measure.measureIndex}-c${chordIndex}`,
         measureIndex: measure.measureIndex,
-        beat: Math.round((baseBeat + beatStep * chordIndex) * 100) / 100,
+        beat: Math.round((baseBeat + ((eventStart - tickStart) / DEFAULT_BEAT_TICKS)) * 100) / 100,
         chord,
         chordIndex,
         occurrenceInMeasure: chordIndex,
@@ -979,6 +978,7 @@ const MELODIC_FIT_PRIORITY: Record<SectionLinearRoute["melodicFit"], number> = {
   neutral: 1,
   caution: 2
 };
+const DEFAULT_BEAT_TICKS = 480;
 
 function canCreateLinearRoute(suggestion: SectionMaterialSuggestion): boolean {
   const primary = suggestion.candidates[0];

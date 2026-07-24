@@ -755,6 +755,51 @@ describe("F119 janela temporal da melodia", () => {
     });
   });
 
+  it("calcula beat proporcional por ticks ao sintetizar variante densa em 3/4", () => {
+    const phraseContext = {
+      ...PhraseAnalysisEngine.analyzePhrase([{ measureIndex: 1, pitch: "C", duration: 1440 }], "C"),
+      selectedCenter: { tonic: "C", mode: "major" }
+    } as PhraseContext;
+    const sets = buildProposalMaterialSuggestionSets([
+      {
+        id: "three-four",
+        kind: "validated-harmonization",
+        name: "Estratégia — 3/4",
+        presentationRole: "primary",
+        measures: [{ measureIndex: 1, chords: ["G7"] }],
+        events: [{
+          id: "three-four-m1-c0",
+          measureIndex: 1,
+          beat: 1,
+          chord: "G7",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 1440,
+          durationTicks: 1440
+        }],
+        explanation: [],
+        bassLine: ["G"],
+        colorVariants: [{
+          id: "three-four-dense",
+          kind: "controlled-reharmonization",
+          name: "Variação — dois ataques",
+          measures: [{ measureIndex: 1, chords: ["Dm7", "G7"] }],
+          explanation: [],
+          bassLine: ["D", "G"]
+        }]
+      }
+    ], [], phraseContext);
+
+    expect(sets.find(set => set.id === "three-four-dense")?.suggestions.find(suggestion => suggestion.chord === "G7")).toMatchObject({
+      eventId: "three-four-dense-m1-c1",
+      beat: 2.5,
+      tickStart: 720,
+      tickEnd: 1440,
+      durationTicks: 720
+    });
+  });
+
   it("identifica leitura regional quando um acorde sustenta varios compassos", () => {
     const anchors = [
       { measureIndex: 1, pitch: "E", duration: 960 },
