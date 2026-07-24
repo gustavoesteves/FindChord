@@ -155,6 +155,23 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(looseSuspendedNinth, "A")).toBe("color");
   });
 
+  it("mantem dominante 13sus preparado na mesma familia funcional", () => {
+    const preparedSuspendedThirteenth = {
+      chord: "A13sus",
+      previousChord: "Em7",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseSuspendedThirteenth = {
+      chord: "A13sus",
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(preparedSuspendedThirteenth, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(preparedSuspendedThirteenth, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(looseSuspendedThirteenth, "A")).toBeUndefined();
+    expect(determineContextualHarmonicFunction(looseSuspendedThirteenth, "A")).toBe("color");
+  });
+
   it("preserva alvo menor quando a dominante prolongada veio de preparacao menor", () => {
     const halfDiminishedPreparation = {
       chord: "A7",
