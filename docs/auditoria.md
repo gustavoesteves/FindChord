@@ -6,19 +6,19 @@ Resultado: **0 P0, 9 P1, 12 P2 e 3 P3 confirmados**. Questões apenas estéticas
 
 ## Estado atual da remediação
 
-Atualizado após os commits até `050d15b`.
+Atualizado após os commits até `de991a9`. A remediação funcional/musical de longo prazo está sendo detalhada continuamente em [auditoria funcional.md](</Volumes/Documents/Development/Find Chord/docs/auditoria funcional.md:1>); este documento permanece como mapa consolidado da auditoria técnica original.
 
 | Grupo | Estado atual |
 |---|---|
 | P1 | Todos os 9 achados possuem remediação implementada ou guardrail operacional. Ainda falta validação real dentro do MuseScore para os fluxos QML/partitura. |
-| P2 | Todos os 12 achados possuem progresso registrado. P2-1 e P2-10 ainda têm pendências técnicas explícitas: remoção completa de fallbacks 4/4 e Worker/cancelamento para busca de voicings. |
+| P2 | Todos os 12 achados possuem progresso registrado. Timelines/measureTicks avançaram bastante; P2-10 ainda tem pendência técnica explícita de Worker/cancelamento para busca de voicings. |
 | P3 | Todos os 3 achados possuem progresso. P3-2 permanece parcialmente aberto porque ainda há acoplamentos de layout/adapter entre domínios. |
 
 Validações recentes recorrentes:
 
 - `npm run lint`
 - `npm run build`
-- `npm run test:curated`
+- `npm run test:curated` — estado recente: `144` arquivos aprovados, `2` ignorados; `826` testes aprovados, `6` ignorados
 - specs focadas por achado
 
 Observação: a suíte curada já passou repetidas vezes, mas alguns testes pesados ainda podem estourar timeout quando rodam sob carga e passar isolados em seguida. Isso permanece como risco de estabilidade de gate, não como regressão musical conhecida.
@@ -203,7 +203,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [musicxml-parser.cjs](</Volumes/Documents/Development/Find Chord/scripts/musicxml-parser.cjs:97>), [ScoreSnapshot.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/models/ScoreSnapshot.ts:40>), [HarmonicRegionResolver.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/analysis/engines/HarmonicRegionResolver.ts:19>).
 
-**Progresso:** F358 preservou `keyTimeline` e `timeTimeline` no snapshot. F359 iniciou o consumo dessas timelines pelo Harmonizar, por auditorias/calibrações reais, por chamadas diretas de `PhraseAnalysisEngine` com snapshot e por parte da geração temporal via `measureTicks` conservador. Ainda falta remover fallbacks 4/4 onde o motor não recebe `divisions/PPQ` explícito.
+**Progresso:** o snapshot preserva `keyTimeline` e `timeTimeline`; consumidores do Harmonizar, auditorias/calibrações reais e chamadas diretas de `PhraseAnalysisEngine` usam `keyContext` estruturado; `measureTicksForMetricContext` entrega mapas reais de compasso quando confiáveis, inclusive em 4/4; propostas e variantes preservam eventos com tick/beat/duração quando disponíveis. Ainda há fallbacks residuais em consumidores legados ou quando o MusicXML não fornece resolução confiável.
 
 **Evidência:** após `<backup>`, o parser guarda apenas o cursor final, não o maior cursor alcançado. Fixture válida com voz 1 até tick 1920, backup e voz 2 até 480 fez o compasso seguinte começar em 480. Só a primeira armadura é preservada; fórmula de compasso/modo não entram no snapshot; vários motores fixam 1920 ticks por compasso.
 
@@ -361,7 +361,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>), [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).
 
-**Progresso:** o workflow agora executa `npm run lint` e `npm run test:curated`; a suíte curada atual passa localmente com 126 arquivos aprovados, 2 ignorados, 662 testes aprovados e 6 ignorados. Ainda falta cobertura comportamental real de HTTP/WS, DOM e execução dentro do MuseScore.
+**Progresso:** o workflow executa `npm run lint`, `npm run test:curated` e build; a suíte curada recente passa localmente com `144` arquivos aprovados, `2` ignorados, `826` testes aprovados e `6` ignorados. Já há smoke React por render server para SuiteShell/Writer/Harmonizer, bridge real em porta efêmera quando o ambiente permite socket local, e fault injection do transporte. Ainda falta E2E interativo e execução dentro do MuseScore/QML real.
 
 **Evidência:** a suíte completa expirou duas vezes em 20 s; o teste levou 22–23 s, embora isolado passe em 12 s. O CI executa apenas build, não lint/testes. Não há cobertura configurada nem testes DOM; nenhuma spec exerce o servidor bridge. O teste QML verifica strings/ordem, não comportamento. ESLint aplica `rules:{}` ao CJS e ignora QML.
 
