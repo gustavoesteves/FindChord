@@ -102,11 +102,18 @@ describe("F202 funcao contextual de material", () => {
   it("trata dominante que permanece na mesma raiz como continuidade modal", () => {
     const sameRootDominant = {
       chord: "A7alt",
-      nextChord: "A13"
+      nextChord: "A13",
+      tonalCenter: { tonic: "D", mode: "major" as const }
+    };
+    const sameRootDominantWithExplicitTarget = {
+      ...sameRootDominant,
+      resolutionTarget: "D"
     };
 
     expect(contextualResolutionTarget(sameRootDominant, "A")).toBeUndefined();
     expect(determineContextualHarmonicFunction(sameRootDominant, "A")).toBe("modal");
+    expect(contextualResolutionTarget(sameRootDominantWithExplicitTarget, "A")).toBe("D");
+    expect(determineContextualHarmonicFunction(sameRootDominantWithExplicitTarget, "A")).toBe("dominant");
   });
 
   it("infere alvo regional local quando um ii prepara dominante sem proximo acorde", () => {

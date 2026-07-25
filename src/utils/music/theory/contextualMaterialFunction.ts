@@ -230,11 +230,13 @@ export function determineContextualHarmonicFunction(context: MaterialContext, ro
   const resolutionRoot = contextualResolutionTarget(context, root);
   const dominantLike = isDominantLike(context.chord);
   const diminishedLike = isDiminishedLike(context.chord);
+  const hasRealResolutionRoot = !!resolutionRoot && !rootsEqual(root, resolutionRoot);
 
   if (diminishedLike && (
     resolvesAsLeadingDiminished(context.chord, root, nextRoot)
     || resolvesAsLeadingDiminished(context.chord, root, resolutionRoot)
   )) return "dominant";
+  if (dominantLike && context.nextChord && rootsEqual(root, nextRoot) && !hasRealResolutionRoot) return "modal";
   if (dominantLike && (
     resolvesAsDominant(root, nextRoot)
     || resolvesAsDominant(root, resolutionRoot)

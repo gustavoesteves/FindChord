@@ -287,6 +287,7 @@ describe("F115 candidatas contextuais de material", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7(b9)",
       nextChord: "A13",
+      tonalCenter: { tonic: "D", mode: "major" },
       melody: ["C#", "G", "Bb"],
       resolutionTarget: "A"
     });
