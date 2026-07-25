@@ -7,6 +7,7 @@ interface WriterChordReadingInput {
   omissions?: string[];
   structuralRoles?: string[];
   voiceRoles?: string[];
+  outerVoices?: string[];
 }
 
 export interface WriterChordReadingField {
@@ -30,6 +31,7 @@ export function writerTensionReading(level: number): string {
 export function presentWriterChordReading(chord: WriterChordReadingInput): WriterChordReadingPresentation {
   const tensionText = chord.tensions.join(", ") || "Nenhuma";
   const structuralRolesText = chord.structuralRoles?.length ? chord.structuralRoles.join(", ") : null;
+  const outerVoicesText = chord.outerVoices?.length ? chord.outerVoices.join(", ") : null;
   const voiceRolesText = chord.voiceRoles?.length ? chord.voiceRoles.join(", ") : null;
   const omissionText = chord.omissions?.length ? chord.omissions.join(", ") : null;
   const fields = [
@@ -40,6 +42,9 @@ export function presentWriterChordReading(chord: WriterChordReadingInput): Write
   ];
   if (structuralRolesText) {
     fields.push({ label: "Notas estruturais", value: structuralRolesText, title: structuralRolesText });
+  }
+  if (outerVoicesText) {
+    fields.push({ label: "Vozes externas", value: outerVoicesText, title: outerVoicesText });
   }
   if (voiceRolesText) {
     fields.push({ label: "Papéis por corda", value: voiceRolesText, title: voiceRolesText });

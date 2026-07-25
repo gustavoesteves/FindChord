@@ -16,6 +16,7 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensionLevel: 0.15,
       omissions: [],
       structuralRoles: ["tônica", "terça maior", "quinta"],
+      outerVoices: ["baixo E4: terça maior", "topo C5: tônica"],
       voiceRoles: [
         "corda 1 C5: tônica",
         "corda 2 G4: quinta",
@@ -36,6 +37,7 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       tensionLevel: 0.15,
       omissions: ["quinta"],
       structuralRoles: ["tônica", "terça maior", "sétima menor"],
+      outerVoices: ["baixo E3: terça maior", "topo C4: tônica"],
       voiceRoles: [
         "corda 2 C4: tônica",
         "corda 3 Bb3: sétima menor",
@@ -98,6 +100,7 @@ describe("F231 leitura semantica do acorde no Writer", () => {
       voicingType: "Sem tônica",
       omissions: ["tônica"],
       structuralRoles: ["terça maior", "quinta", "sétima maior"],
+      outerVoices: ["baixo E4: terça maior", "topo B4: sétima maior"],
       voiceRoles: [
         "corda 1 E4: terça maior",
         "corda 2 G4: quinta",

@@ -18,6 +18,7 @@ export interface WriterChordReadingAnalysis {
   omissions: string[];
   structuralRoles: string[];
   voiceRoles: string[];
+  outerVoices: string[];
 }
 
 const VOICING_TYPE_LABELS: Record<VoicingClassification["shellType"], string> = {
@@ -155,6 +156,22 @@ function voiceRoleLabels(roles: VoiceRoleAnalysis): string[] {
     .filter((label): label is string => Boolean(label));
 }
 
+function outerVoiceLabels(roles: VoiceRoleAnalysis): string[] {
+  const orderedByPitch = roles.voices.slice().sort((a, b) => a.pitch - b.pitch);
+  const bass = orderedByPitch[0];
+  const soprano = orderedByPitch[orderedByPitch.length - 1];
+  if (!bass || !soprano) return [];
+
+  const bassLabel = voiceRoleLabel(bass.info || { role: bass.role });
+  const sopranoLabel = voiceRoleLabel(soprano.info || { role: soprano.role });
+  const labels = [
+    bassLabel ? `baixo ${bass.noteName}: ${bassLabel}` : null,
+    soprano !== bass && sopranoLabel ? `topo ${soprano.noteName}: ${sopranoLabel}` : null
+  ];
+
+  return labels.filter((label): label is string => Boolean(label));
+}
+
 export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput): WriterChordReadingAnalysis {
   const roles = analyzeVoiceRoles(input.selectedFrets, input.tuning, input.root, input.quality);
   const classification = classifyVoicing(input.selectedFrets, input.tuning, roles, input.root, input.quality);
@@ -170,6 +187,7 @@ export function analyzeWriterChordReading(input: WriterChordReadingAnalysisInput
       : tensionLevelForClassification(classification, input.tensions, input.quality),
     omissions: omissionLabels(roles),
     structuralRoles: structuralRoleLabels(roles),
-    voiceRoles: voiceRoleLabels(roles)
+    voiceRoles: voiceRoleLabels(roles),
+    outerVoices: outerVoiceLabels(roles)
   };
 }
