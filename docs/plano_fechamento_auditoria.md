@@ -102,6 +102,12 @@ Critério de aceite:
 
 Não abrir uma frente arquitetural grande agora. O objetivo é registrar o envelope suportado e validar dois casos operacionais.
 
+Progresso:
+
+- envelope operacional documentado em `docs/musescore_integration_envelope.md`;
+- limitações declaradas: uma instância, uma partitura ativa/sincronizada, ressincronizar ao trocar partitura, inserção de cifra sem diagrama de fretboard;
+- cobertura automatizada existente registrada como suporte, separada dos dois testes manuais que dependem do runtime real.
+
 Testes manuais mínimos:
 
 1. Sincronizar partitura A, ativar partitura B sem ressincronizar e tentar inserir acorde.

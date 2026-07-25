@@ -105,7 +105,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [TransportLayer.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/bridge/TransportLayer.ts:105>), `send`; [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:79>), `sendChord`; [musescore-bridge.cjs](</Volumes/Documents/Development/Find Chord/scripts/musescore-bridge.cjs:78>), `/consume`; [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:127>), polling/inserção.
 
-**Progresso:** mutações passaram a carregar `commandId`, `expiresAt` e ACK do plugin; o transporte aguarda `sendWithAck`, e o protocolo remove actions não suportadas (`REPLACE/DELETE`). Ainda falta validação real dentro do MuseScore.
+**Progresso:** mutações passaram a carregar `commandId`, `expiresAt` e ACK do plugin; o transporte aguarda `sendWithAck`, e o protocolo remove actions não suportadas (`REPLACE/DELETE`). O envelope operacional suportado foi registrado em [musescore_integration_envelope.md](</Volumes/Documents/Development/Find Chord/docs/musescore_integration_envelope.md:1>). Ainda falta validação real dentro do MuseScore.
 
 **Evidência:** `sendChord` retorna sucesso assim que `WebSocket.send` aceita os bytes. A fila é global, não possui sessão, score ID, TTL, idempotência ou ACK. `/consume` limpa antes do processamento; acima de 50 itens, o mais antigo é descartado. Erros QML são engolidos.
 
@@ -121,7 +121,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos/símbolos:** [FindChordBridge.qml](</Volumes/Documents/Development/Find Chord/plugins/FindChordBridge.qml:197>), `extractScoreSnapshot`; [useScoreSync.ts](</Volumes/Documents/Development/Find Chord/src/domains/harmonizer/hooks/useScoreSync.ts:19>); [musescoreAdapter.ts](</Volumes/Documents/Development/Find Chord/src/utils/musescoreAdapter.ts:106>).
 
-**Progresso:** o caminho fixo em `dist/findchord_sync.musicxml` foi removido; o bridge fornece `scoreUploadPath` temporário. A sincronização usa `requestId`, ignora respostas antigas e não encerra spinner por timeout fixo. Regressão coberta em `musescore-insertion-safety.spec.ts`.
+**Progresso:** o caminho fixo em `dist/findchord_sync.musicxml` foi removido; o bridge fornece `scoreUploadPath` temporário. A sincronização usa `requestId`, ignora respostas antigas e não encerra spinner por timeout fixo. O contrato atual declara uma partitura ativa/sincronizada por vez e exige ressincronização após troca de partitura. Regressão coberta em `musescore-insertion-safety.spec.ts`.
 
 **Evidência:** o plugin grava exclusivamente em `/Volumes/Documents/Development/Find Chord/dist/findchord_sync.musicxml`. `dist` é ignorado e `npm run dev` não o cria. A UI ignora o retorno booleano e encerra o spinner após 800 ms. O QML reutiliza o mesmo arquivo e libera a flag antes da resposta HTTP.
 
