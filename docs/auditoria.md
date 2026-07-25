@@ -6,7 +6,7 @@ Resultado: **0 P0, 9 P1, 12 P2 e 3 P3 confirmados**. Questões apenas estéticas
 
 ## Estado atual da remediação
 
-Atualizado após os commits até `de991a9`. A remediação funcional/musical de longo prazo está sendo detalhada continuamente em [auditoria funcional.md](</Volumes/Documents/Development/Find Chord/docs/auditoria funcional.md:1>); este documento permanece como mapa consolidado da auditoria técnica original.
+Atualizado continuamente durante a remediação. A remediação funcional/musical de longo prazo está sendo detalhada continuamente em [auditoria funcional.md](</Volumes/Documents/Development/Find Chord/docs/auditoria funcional.md:1>); este documento permanece como mapa consolidado da auditoria técnica original.
 
 | Grupo | Estado atual |
 |---|---|
@@ -18,7 +18,7 @@ Validações recentes recorrentes:
 
 - `npm run lint`
 - `npm run build`
-- `npm run test:curated` — estado recente: `144` arquivos aprovados, `2` ignorados; `826` testes aprovados, `6` ignorados
+- `npm run test:curated` — estado recente: `144` arquivos aprovados, `2` ignorados; `828` testes aprovados, `6` ignorados
 - specs focadas por achado
 
 Observação: a suíte curada já passou repetidas vezes, mas alguns testes pesados ainda podem estourar timeout quando rodam sob carga e passar isolados em seguida. Isso permanece como risco de estabilidade de gate, não como regressão musical conhecida.
@@ -361,7 +361,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [real-music-audit-report.spec.ts](</Volumes/Documents/Development/Find Chord/scripts/real-music-audit-report.spec.ts:9>), [vitest.curated.config.ts](</Volumes/Documents/Development/Find Chord/vitest.curated.config.ts:3>), [deploy.yml](</Volumes/Documents/Development/Find Chord/.github/workflows/deploy.yml:37>).
 
-**Progresso:** o workflow executa `npm run lint`, `npm run test:curated` e build; a suíte curada recente passa localmente com `144` arquivos aprovados, `2` ignorados, `826` testes aprovados e `6` ignorados. Já há smoke React por render server para SuiteShell/Writer/Harmonizer, bridge real em porta efêmera quando o ambiente permite socket local, e fault injection do transporte. Ainda falta E2E interativo e execução dentro do MuseScore/QML real.
+**Progresso:** o workflow executa `npm run lint`, `npm run test:curated` e build; a suíte curada recente passa localmente com `144` arquivos aprovados, `2` ignorados, `828` testes aprovados e `6` ignorados. Já há smoke React por render server para SuiteShell/Writer/Harmonizer, bridge real em porta efêmera quando o ambiente permite socket local, e fault injection do transporte. Ainda falta E2E interativo e execução dentro do MuseScore/QML real.
 
 **Evidência:** a suíte completa expirou duas vezes em 20 s; o teste levou 22–23 s, embora isolado passe em 12 s. O CI executa apenas build, não lint/testes. Não há cobertura configurada nem testes DOM; nenhuma spec exerce o servidor bridge. O teste QML verifica strings/ordem, não comportamento. ESLint aplica `rules:{}` ao CJS e ignora QML.
 

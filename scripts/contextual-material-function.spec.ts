@@ -65,13 +65,21 @@ describe("F202 funcao contextual de material", () => {
       chord: "G7",
       tonalCenter: { tonic: "C", mode: "major" as const }
     };
+    const minorPrimaryDominant = {
+      chord: "G7",
+      tonalCenter: { tonic: "C", mode: "minor" as const }
+    };
     const looseSecondaryDominant = {
       chord: "D7",
       tonalCenter: { tonic: "C", mode: "major" as const }
     };
 
     expect(contextualResolutionTarget(primaryDominant, "G")).toBe("C");
+    expect(contextualResolutionChord(primaryDominant, "G", "C")).toBeUndefined();
     expect(determineContextualHarmonicFunction(primaryDominant, "G")).toBe("dominant");
+    expect(contextualResolutionTarget(minorPrimaryDominant, "G")).toBe("C");
+    expect(contextualResolutionChord(minorPrimaryDominant, "G", "C")).toBe("Cm");
+    expect(guideToneResolutions(["B", "F"], "C", "Cm")).toEqual(["B->C", "F->Eb"]);
     expect(contextualResolutionTarget(looseSecondaryDominant, "D")).toBeUndefined();
     expect(determineContextualHarmonicFunction(looseSecondaryDominant, "D")).toBe("color");
     expect(contextualResolutionTarget({

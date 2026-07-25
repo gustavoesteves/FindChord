@@ -338,6 +338,26 @@ describe("F115 candidatas contextuais de material", () => {
     ]));
   });
 
+  it("infere alvo menor para dominante primaria sem proximo acorde explicito", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "G7",
+      tonalCenter: { tonic: "C", mode: "minor" },
+      melody: ["B", "F"]
+    });
+    const mixolydian = candidates.find(candidate => candidate.type === "mixolydian");
+
+    expect(mixolydian?.harmonicFunction).toBe("dominant");
+    expect(mixolydian?.resolutionTarget).toBe("C");
+    expect(mixolydian?.guideToneResolutions).toEqual(["B->C", "F->Eb"]);
+    expect(mixolydian?.melodicMaterials).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        label: "dominante natural / notas-guia",
+        cells: ["G-B-D-F", "B->C", "F->Eb"],
+        resolutionTargets: ["C"]
+      })
+    ]));
+  });
+
   it("oferece material bebop dominante com cromatismo b7-7-1", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "G7",

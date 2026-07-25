@@ -213,6 +213,14 @@ export function contextualResolutionChord(
     return `${targetRoot}m`;
   }
 
+  if (
+    context.tonalCenter?.mode === "minor"
+    && rootsEqual(targetRoot, context.tonalCenter.tonic)
+    && resolvesAsPrimaryDominant(root, targetRoot)
+  ) {
+    return `${targetRoot}m`;
+  }
+
   return undefined;
 }
 
