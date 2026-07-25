@@ -136,19 +136,6 @@ function buildRankedMaterialCandidate(input: {
   melodicMaterials?: ContextualMelodicMaterial[];
   confidenceOffset?: number;
 }): ContextualMaterialCandidate {
-  const scored = scoreMaterialCandidate(
-    input.source,
-    input.root,
-    input.chordTones,
-    input.weightedMelodyNotes,
-    input.harmonicFunction,
-    input.context.resolutionTarget,
-    input.index
-  );
-  const linearFragments = [
-    ...input.guideToneResolutionPairs,
-    ...passingNoteFragmentsFor(input.source, input.root, scored.passingNotes)
-  ];
   const melodicMaterials = input.melodicMaterials ?? buildContextualMelodicMaterials(
     input.source,
     input.root,
@@ -159,6 +146,19 @@ function buildRankedMaterialCandidate(input: {
   );
   const materialResolutionTarget = input.context.resolutionTarget
     ?? melodicMaterials.flatMap(material => material.resolutionTargets)[0];
+  const scored = scoreMaterialCandidate(
+    input.source,
+    input.root,
+    input.chordTones,
+    input.weightedMelodyNotes,
+    input.harmonicFunction,
+    materialResolutionTarget,
+    input.index
+  );
+  const linearFragments = [
+    ...input.guideToneResolutionPairs,
+    ...passingNoteFragmentsFor(input.source, input.root, scored.passingNotes)
+  ];
   const melodicFit = melodicFitFor({
     avoidNotes: scored.avoidNotes,
     linearFragments,
@@ -171,7 +171,7 @@ function buildRankedMaterialCandidate(input: {
     linearFragments,
     melodyMatches,
     passingNotes: scored.passingNotes,
-    resolutionTarget: input.context.resolutionTarget
+    resolutionTarget: materialResolutionTarget
   });
   const fitAdjustment = melodicFit === "aligned"
     ? supportRoleAdjustment(melodySupportRoles)
