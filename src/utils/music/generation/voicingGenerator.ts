@@ -115,6 +115,7 @@ export function generateVoicings(
   const results: VoicingShape[] = [];
   const seenShapes = new Set<string>();
   const req = getRequiredPitchClasses(activeQuality || "major", rootPC);
+  const mandatoryPCs = forceRequiredPCs || req.core;
 
   // Instanciar o estado de busca recursiva
   const context: SearchContext = {
@@ -129,9 +130,32 @@ export function generateVoicings(
 
   const currentNotes: string[] = Array(tuning.length).fill("x");
 
+  function coveredPitchClasses(): Set<number> {
+    return new Set(context.pitchClasses.filter((pc): pc is number => pc !== null));
+  }
+
+  function activeStringCount(): number {
+    return context.frets.filter(fret => fret !== null).length;
+  }
+
+  function canStillCoverMandatoryPitchClasses(stringIdx: number): boolean {
+    const covered = coveredPitchClasses();
+
+    return mandatoryPCs.every(pc => (
+      covered.has(pc)
+      || notesOnStrings.slice(stringIdx).some(stringNotes => (
+        stringNotes.some(note => note.pitchClass === pc)
+      ))
+    ));
+  }
+
   function search(stringIdx: number, frettedCount: number) {
     context.visitedNodes++;
     if (frettedCount > 4) return;
+
+    const remainingStrings = tuning.length - stringIdx;
+    if (activeStringCount() + remainingStrings < 3) return;
+    if (!canStillCoverMandatoryPitchClasses(stringIdx)) return;
 
     if (!isWithinAnatomicalStretch(context.lowestFret, context.highestFret)) {
       return;
@@ -146,7 +170,6 @@ export function generateVoicings(
       const currentFretting = [...context.frets];
       const coveredPCs = new Set(context.pitchClasses.filter((pc): pc is number => pc !== null));
 
-      const mandatoryPCs = forceRequiredPCs || req.core;
       for (const corePC of mandatoryPCs) {
         if (!coveredPCs.has(corePC)) return;
       }

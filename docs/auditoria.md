@@ -345,7 +345,7 @@ Pontos de entrada e fluxos principais:
 
 **Arquivos:** [WriterContext.tsx](</Volumes/Documents/Development/Find Chord/src/domains/writer/context/WriterContext.tsx:115>), [voicingGenerator.ts](</Volumes/Documents/Development/Find Chord/src/utils/music/generation/voicingGenerator.ts:78>).
 
-**Progresso:** mitigação parcial no gerador: deduplicação passou a usar chave por shape e a lista pública é mantida como top-k incremental de 60 voicings, evitando acumular e ordenar todos os candidatos antes do corte final. Regressão de limite/deduplicação coberta em `writer-voicing-inversion.spec.ts`. Ainda falta mover a busca para Worker/cancelamento real para eliminar bloqueio do main thread.
+**Progresso:** mitigação parcial no gerador: deduplicação passou a usar chave por shape e a lista pública é mantida como top-k incremental de 60 voicings, evitando acumular e ordenar todos os candidatos antes do corte final. A busca também possui poda conservadora para abandonar ramos que não conseguem alcançar três cordas ativas ou cobrir as pitch classes obrigatórias restantes; cordas soltas contam como ativas para preservar shapes reais. Regressão de limite/deduplicação coberta em `writer-voicing-inversion.spec.ts`, junto dos testes focados de leitura/aplicação/filtros do Writer. Ainda falta mover a busca para Worker/cancelamento real para eliminar bloqueio do main thread.
 
 **Evidência:** busca recursiva, deduplicação, scoring e sort são síncronos; somente depois o resultado é cortado para 60. A chamada ocorre em effect após alterações do acorde/afinação.
 
@@ -353,7 +353,7 @@ Pontos de entrada e fluxos principais:
 
 **Impacto:** congelamento perceptível após cliques, sobretudo em instrumentos de sete cordas.
 
-**Correção:** Web Worker com cancelamento, debounce, branch-and-bound/top-k precoce e deduplicação por `Set`.
+**Correção:** Web Worker com cancelamento e debounce se as medições reais continuarem indicando travamento perceptível; manter a poda/branch-and-bound e o top-k incremental como primeira linha de defesa.
 
 **Confiança:** alta; os tempos variam por máquina, o bloqueio síncrono é confirmado.
 

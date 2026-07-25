@@ -140,6 +140,12 @@ Antes de Worker, tentar:
 - orçamento explícito de busca;
 - limite de qualidade mínima por família de shape.
 
+Progresso aplicado:
+
+- poda conservadora no gerador: ramos são abandonados quando não conseguem mais alcançar três cordas ativas ou cobrir as pitch classes obrigatórias restantes;
+- a poda considera cordas soltas como cordas ativas, evitando perder aberturas reais de violão/guitarra;
+- testes focados do Writer continuam cobrindo inversões, aplicação de proposta, filtros de shape e leitura do acorde.
+
 ## E2E
 
 Rebaixar para P3/roadmap por enquanto.
