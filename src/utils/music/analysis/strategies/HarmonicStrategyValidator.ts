@@ -1,12 +1,11 @@
 import { Chord, Note } from "tonal";
 import type { MelodicAnchor } from "../models/ProjectionSet";
-import type { ReharmonizationMeasure } from "../models/ReharmonizationProposal";
+import type { ReharmonizationChordEvent, ReharmonizationMeasure } from "../models/ReharmonizationProposal";
 import { chordPitchClasses, chordRoot } from "../../theory/ChordSymbolResolver";
 import { analyzeApparentFunction } from "./ApparentFunctionAnalysis";
 import {
   noteCoveredByChordSymbol,
-  weightedMelodicCoverageByAnchor,
-  weightedMelodicCoverage
+  weightedMelodicCoverageByAnchor
 } from "./MelodicCoverage";
 import { analyzeModalBorrowingColor } from "./ModalBorrowingAnalysis";
 
@@ -48,6 +47,7 @@ export interface HarmonizationCandidate {
   strategy: HarmonicStrategyId;
   center: string;
   measures: ReharmonizationMeasure[];
+  events?: ReharmonizationChordEvent[];
   melody: MelodicAnchor[];
 }
 
@@ -382,7 +382,11 @@ function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
   if (candidate.measures.length > 4) {
     const measureCoverages = candidate.measures.map(measure => {
       const measureMelody = candidate.melody.filter(anchor => anchor.measureIndex === measure.measureIndex);
-      return weightedMelodyCoverage(measureMelody, measure.chords);
+      return weightedMelodicCoverageByAnchor(
+        measureMelody,
+        anchor => chordsForAnchor(candidate, anchor, measure.chords),
+        { markFinal: false }
+      );
     }).filter((coverage): coverage is number => coverage !== null);
 
     if (measureCoverages.length === 0) return 0;
@@ -393,23 +397,56 @@ function calculateMelodyCoverage(candidate: HarmonizationCandidate): number {
   return weightedCoverage ?? 0;
 }
 
-function weightedMelodyCoverage(anchors: MelodicAnchor[], chords: string[]): number | null {
-  return weightedMelodicCoverage(anchors, chords, { markFinal: false });
-}
-
 function weightedMelodicCoverageForCandidate(candidate: HarmonizationCandidate): number | null {
   return weightedMelodicCoverageByAnchor(candidate.melody, anchor => {
     const measure = candidate.measures.find(item => item.measureIndex === anchor.measureIndex);
-    return measure?.chords ?? [];
+    return chordsForAnchor(candidate, anchor, measure?.chords ?? []);
   });
 }
 
 function measureMelodyCoverages(candidate: HarmonizationCandidate): number[] {
   return candidate.measures.flatMap(measure => {
     const measureMelody = candidate.melody.filter(anchor => anchor.measureIndex === measure.measureIndex);
-    const coverage = weightedMelodyCoverage(measureMelody, measure.chords);
+    const coverage = weightedMelodicCoverageByAnchor(
+      measureMelody,
+      anchor => chordsForAnchor(candidate, anchor, measure.chords),
+      { markFinal: false }
+    );
     return coverage === null ? [] : [coverage];
   });
+}
+
+function anchorTickRange(anchor: MelodicAnchor): { start: number; end: number } | null {
+  if (anchor.startTick === undefined) return null;
+  const end = anchor.endTick ?? (anchor.duration === undefined ? undefined : anchor.startTick + anchor.duration);
+  if (end === undefined || end <= anchor.startTick) return null;
+  return { start: anchor.startTick, end };
+}
+
+function eventOverlapTicks(event: ReharmonizationChordEvent, range: { start: number; end: number }): number {
+  return Math.max(0, Math.min(event.tickEnd, range.end) - Math.max(event.tickStart, range.start));
+}
+
+function chordsForAnchor(
+  candidate: HarmonizationCandidate,
+  anchor: MelodicAnchor,
+  fallbackChords: string[]
+): string[] {
+  const range = anchorTickRange(anchor);
+  if (!range || !candidate.events?.length) return fallbackChords;
+
+  const overlapping = candidate.events
+    .filter(event => event.measureIndex === anchor.measureIndex)
+    .map(event => ({ event, overlap: eventOverlapTicks(event, range) }))
+    .filter(item => item.overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap || a.event.tickStart - b.event.tickStart);
+
+  if (overlapping.length === 0) return fallbackChords;
+
+  const strongestOverlap = overlapping[0].overlap;
+  return overlapping
+    .filter(item => item.overlap === strongestOverlap)
+    .map(item => item.event.chord);
 }
 
 function weakestMeasureMelodyCoverage(candidate: HarmonizationCandidate): number {

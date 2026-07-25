@@ -19,7 +19,7 @@ import { ContrapuntalGravityField } from "./fields/ContrapuntalGravityField";
 import { StrategyGuidedHarmonizer } from "../strategies/StrategyGuidedHarmonizer";
 import {
   melodicCoverageEntriesByAnchor,
-  weightedMelodicCoverage
+  weightedMelodicCoverageByAnchor
 } from "../strategies/MelodicCoverage";
 
 const GRAVITY_FIELD_EXPLORATION_RULE_IDS = ["FC-RULE-GRAVITY-FIELD-EXPLORATION"];
@@ -119,7 +119,9 @@ export class GravityFieldManager {
               continue;
             }
 
-            if (!this.passesMelodicCompatibilityGate(measures, anchors)) {
+            const events = this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks, anchors);
+
+            if (!this.passesMelodicCompatibilityGate(measures, anchors, events)) {
               rejectedExperimentalCount++;
               continue;
             }
@@ -129,7 +131,7 @@ export class GravityFieldManager {
               kind: "experimental-exploration",
               name: `Estratégia — ${field.name}`,
               measures,
-              events: this.proposalEventsFromMeasures(`prop_${pIdx}`, measures, options.measureTicks, anchors),
+              events,
               explanation: seed.explanation, 
               bassLine: bestPath.bassLine,
               ruleIds: GRAVITY_FIELD_EXPLORATION_RULE_IDS
@@ -283,7 +285,7 @@ export class GravityFieldManager {
 
     const entries = melodicCoverageEntriesByAnchor(anchors, anchor => {
       const measure = primaryProposal.measures.find(item => item.measureIndex === anchor.measureIndex);
-      return measure?.chords ?? [];
+      return this.chordsForAnchor(primaryProposal.events, anchor, measure?.chords ?? []);
     });
 
     const hasSuspensionResolution = entries.some(entry => entry.behavior === "suspension-resolution");
@@ -478,7 +480,8 @@ export class GravityFieldManager {
 
   private static passesMelodicCompatibilityGate(
     measures: ReharmonizationMeasure[],
-    anchors: MelodicAnchor[]
+    anchors: MelodicAnchor[],
+    events: ReharmonizationChordEvent[] = []
   ): boolean {
     if (measures.length === 0 || anchors.length === 0) return false;
 
@@ -486,19 +489,20 @@ export class GravityFieldManager {
     const sortedAnchors = [...anchors].sort((a, b) => a.measureIndex - b.measureIndex);
     const firstSegmentAnchors = this.anchorsForCompressedMeasure(sortedMeasures[0], sortedMeasures[1], sortedAnchors);
 
-    const overallCoverage = this.coverageForCompressedMeasures(sortedMeasures, sortedAnchors);
-    const firstSegmentCoverage = this.coverageForAnchors(firstSegmentAnchors, sortedMeasures[0].chords);
+    const overallCoverage = this.coverageForCompressedMeasures(sortedMeasures, sortedAnchors, events);
+    const firstSegmentCoverage = this.coverageForAnchors(firstSegmentAnchors, sortedMeasures[0].chords, events);
 
     return overallCoverage >= 0.65 && firstSegmentCoverage !== null && firstSegmentCoverage >= 0.5;
   }
 
   private static coverageForCompressedMeasures(
     measures: ReharmonizationMeasure[],
-    anchors: MelodicAnchor[]
+    anchors: MelodicAnchor[],
+    events: ReharmonizationChordEvent[] = []
   ): number {
     const segmentCoverages = measures.map((measure, index) => {
       const segmentAnchors = this.anchorsForCompressedMeasure(measure, measures[index + 1], anchors);
-      return this.coverageForAnchors(segmentAnchors, measure.chords);
+      return this.coverageForAnchors(segmentAnchors, measure.chords, events);
     }).filter(coverage => coverage !== null);
 
     if (segmentCoverages.length === 0) return 0;
@@ -518,8 +522,46 @@ export class GravityFieldManager {
 
   private static coverageForAnchors(
     anchors: MelodicAnchor[],
-    chords: string[]
+    chords: string[],
+    events: ReharmonizationChordEvent[] = []
   ): number | null {
-    return weightedMelodicCoverage(anchors, chords, { markFinal: false });
+    return weightedMelodicCoverageByAnchor(
+      anchors,
+      anchor => this.chordsForAnchor(events, anchor, chords),
+      { markFinal: false }
+    );
+  }
+
+  private static anchorTickRange(anchor: MelodicAnchor): { start: number; end: number } | null {
+    if (anchor.startTick === undefined) return null;
+    const end = anchor.endTick ?? (anchor.duration === undefined ? undefined : anchor.startTick + anchor.duration);
+    if (end === undefined || end <= anchor.startTick) return null;
+    return { start: anchor.startTick, end };
+  }
+
+  private static eventOverlapTicks(event: ReharmonizationChordEvent, range: { start: number; end: number }): number {
+    return Math.max(0, Math.min(event.tickEnd, range.end) - Math.max(event.tickStart, range.start));
+  }
+
+  private static chordsForAnchor(
+    events: ReharmonizationChordEvent[] | undefined,
+    anchor: MelodicAnchor,
+    fallbackChords: string[]
+  ): string[] {
+    const range = this.anchorTickRange(anchor);
+    if (!range || !events?.length) return fallbackChords;
+
+    const overlapping = events
+      .filter(event => event.measureIndex === anchor.measureIndex)
+      .map(event => ({ event, overlap: this.eventOverlapTicks(event, range) }))
+      .filter(item => item.overlap > 0)
+      .sort((a, b) => b.overlap - a.overlap || a.event.tickStart - b.event.tickStart);
+
+    if (overlapping.length === 0) return fallbackChords;
+
+    const strongestOverlap = overlapping[0].overlap;
+    return overlapping
+      .filter(item => item.overlap === strongestOverlap)
+      .map(item => item.event.chord);
   }
 }

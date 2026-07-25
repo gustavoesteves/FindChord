@@ -57,9 +57,14 @@ Critério de aceite:
 
 Objetivo: fechar a coerência temporal das propostas densas.
 
+Progresso:
+
+- validação melódica estratégica, gate experimental e diagnósticos de compatibilidade agora usam o acorde temporizado com maior overlap quando `events` existem;
+- foi adicionada regressão para impedir que uma nota no segundo acorde do compasso seja validada por um acorde anterior apenas porque ambos estão agregados em `measure.chords`;
+- comparação proposta-referência já usava overlap temporal; este avanço levou a mesma lógica para a cobertura melódica.
+
 Problemas residuais:
 
-- validação melódica de propostas densas pode usar a união dos acordes do compasso, não o acorde simultâneo;
 - slots temporais do ramo experimental podem ser reconstruídos em vez de preservados diretamente;
 - referência curta versus proposta com acorde adicional dentro do compasso pode parecer `aligned` se a segunda metade for ignorada;
 - parte dos MusicXML ainda cai em fallback métrico;

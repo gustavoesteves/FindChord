@@ -104,6 +104,48 @@ describe("F26.3 Harmonic Strategy Property Tests", () => {
     expect(report.backbone).not.toEqual(["T", "PD", "D", "T"]);
   });
 
+  it("validates dense measures against the simultaneous timed chord", () => {
+    const candidate: HarmonizationCandidate = {
+      strategy: "EXPANSAO_FUNCIONAL_DIATONICA",
+      center: "C",
+      melody: [
+        { measureIndex: 1, pitch: "E", duration: 480, startTick: 960, endTick: 1440 }
+      ],
+      measures: [
+        { measureIndex: 1, chords: ["C", "G7"] }
+      ],
+      events: [
+        {
+          id: "m1-c0",
+          measureIndex: 1,
+          beat: 1,
+          chord: "C",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 960,
+          durationTicks: 960
+        },
+        {
+          id: "m1-c1",
+          measureIndex: 1,
+          beat: 3,
+          chord: "G7",
+          chordIndex: 1,
+          occurrenceInMeasure: 0,
+          tickStart: 960,
+          tickEnd: 1920,
+          durationTicks: 960
+        }
+      ]
+    };
+
+    const report = analyzeHarmonicStrategy(candidate);
+
+    expect(report.melodyCoverage).toBe(0);
+    expect(report.weakestMeasureMelodyCoverage).toBe(0);
+  });
+
   it("rejects long-form proposals with a weakly covered melodic segment", () => {
     const longMelody: MelodicAnchor[] = [
       { measureIndex: 1, pitch: "E" },
