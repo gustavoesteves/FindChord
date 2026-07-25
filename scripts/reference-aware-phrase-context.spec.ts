@@ -127,6 +127,25 @@ describe("F48 reference-aware phrase context", () => {
     });
   });
 
+  it("keeps a clean final plagal cadence even after a planar structural-bass passage", () => {
+    const refined = applyReferenceCenterToPhraseContext(
+      phraseContext("C"),
+      harmonies(["Gmaj7", "Bb/A", "D9", "D/C", "Bbmaj7", "G/A", "F", "C"])
+    );
+
+    expect(refined.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      mode: "major"
+    }));
+    expect(refined.selectedCenterSource).toBe("reference");
+    expect(refined.selectedCenterEvidence).toContain("cadência plagal IV-I confirma C maior");
+    expect(refined.cadentialTarget).toEqual({
+      targetPitch: "C",
+      cadenceType: "PLAGAL",
+      confidence: 0.8
+    });
+  });
+
   it("promotes written deceptive cadence evidence without changing the target center to vi", () => {
     const refined = applyReferenceCenterToPhraseContext(
       phraseContext("C"),

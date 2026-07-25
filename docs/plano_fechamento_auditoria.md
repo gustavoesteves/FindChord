@@ -81,9 +81,14 @@ Critério de aceite:
 
 Objetivo: melhorar centro/cadência sem voltar a fabricar repousos falsos.
 
+Progresso:
+
+- o bloqueio de cadência plagal em seções planares agora tem uma exceção local: uma plagal final limpa, sem baixo independente nos dois últimos acordes, continua sendo reconhecida;
+- referência planar tipo Bright Size Life permanece como chegada aberta, preservando o guardrail contra falso `IV-I`;
+- há regressões cobrindo os dois lados: plano estrutural aberto e plagal final real após passagem planar.
+
 Problemas residuais:
 
-- guardrail planar pode suprimir uma cadência plagal verdadeira se aplicado globalmente demais;
 - modos MusicXML como `dorian` e `mixolydian` ainda tendem a cair em maior/menor no contexto analítico.
 
 Critério de aceite:

@@ -275,6 +275,43 @@ function inferReferenceHarmonyCenter(
   };
 }
 
+function hasIndependentBassRelation(
+  bassGrammar: ReturnType<typeof analyzeStructuralBassGrammar>,
+  harmony: ScoreHarmonyEvent
+): boolean {
+  return bassGrammar.relations.some(relation => (
+    relation.relation === "INDEPENDENT_BASS"
+    && relation.measure === harmony.measure
+    && relation.chord === harmony.harmony
+  ));
+}
+
+function hasLocalFinalPlagalCadence(
+  harmonies: ScoreHarmonyEvent[],
+  bassGrammar: ReturnType<typeof analyzeStructuralBassGrammar>
+): boolean {
+  const ordered = [...harmonies].sort((a, b) => a.tickStart - b.tickStart);
+  const penultimate = ordered[ordered.length - 2];
+  const last = ordered[ordered.length - 1];
+  if (!penultimate || !last) return false;
+  if (hasIndependentBassRelation(bassGrammar, penultimate) || hasIndependentBassRelation(bassGrammar, last)) return false;
+
+  const penultimateRoot = normalizeRoot(penultimate.harmony);
+  const lastRoot = normalizeRoot(last.harmony);
+  const penultimateResolved = resolveChordSymbol(penultimate.harmony);
+  const lastResolved = resolveChordSymbol(last.harmony);
+  const penultimateBass = normalizeBass(penultimate.harmony);
+  const lastBass = normalizeBass(last.harmony);
+
+  return !!penultimateRoot
+    && !!lastRoot
+    && chromaticDistance(penultimateRoot, lastRoot) === 5
+    && (isMajorQuality(penultimateResolved.quality) || isMinorQuality(penultimateResolved.quality))
+    && (isMajorQuality(lastResolved.quality) || isMinorQuality(lastResolved.quality))
+    && penultimateBass === penultimateRoot
+    && lastBass === lastRoot;
+}
+
 function analyzeMinorModalBoundary(chords: string[], center: string): MinorModalBoundaryEvidence | null {
   const normalizedCenter = Note.pitchClass(center) || chordRoot(center);
   if (!normalizedCenter) return null;
@@ -371,7 +408,8 @@ export function analyzeReferenceHarmony(harmonies: ScoreHarmonyEvent[]): Referen
     && (
       bassGrammar.properties.includes("STRUCTURAL_BASS_GRAMMAR")
       || bassGrammar.properties.includes("PLANAR_CHORD_MOTION")
-    );
+    )
+    && !hasLocalFinalPlagalCadence(harmonies, bassGrammar);
   const referenceCenter = inferReferenceHarmonyCenter(harmonies, {
     suppressFinalPlagalCadence
   });
