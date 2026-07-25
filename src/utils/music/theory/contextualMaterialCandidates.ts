@@ -157,6 +157,8 @@ function buildRankedMaterialCandidate(input: {
     input.context.resolutionTarget,
     input.context.nextChord
   );
+  const materialResolutionTarget = input.context.resolutionTarget
+    ?? melodicMaterials.flatMap(material => material.resolutionTargets)[0];
   const melodicFit = melodicFitFor({
     avoidNotes: scored.avoidNotes,
     linearFragments,
@@ -189,7 +191,7 @@ function buildRankedMaterialCandidate(input: {
     melodyMatches,
     melodySupportRoles,
     melodyCoverage: scored.melodyCoverage,
-    resolutionTarget: input.context.resolutionTarget,
+    resolutionTarget: materialResolutionTarget,
     rankingEvidence: {
       ...scored.rankingEvidence,
       melodicFitAdjustment: fitAdjustment

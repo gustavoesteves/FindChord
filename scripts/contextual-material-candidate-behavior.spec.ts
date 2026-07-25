@@ -456,6 +456,7 @@ describe("F115 candidatas contextuais de material", () => {
     const locrianSharpTwo = candidates.find(candidate => candidate.type === "locrian #2");
 
     expect(locrianSharpTwo?.harmonicFunction).toBe("predominant");
+    expect(locrianSharpTwo?.resolutionTarget).toBe("E");
     expect(locrianSharpTwo?.melodicMaterials).toEqual([
       expect.objectContaining({
         label: "iiø lócrio #2",
