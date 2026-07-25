@@ -41,6 +41,9 @@ export function practiceHintForMaterialCandidate(candidate: ContextualMaterialCa
     return `Trate ${candidate.avoidNotes.join(", ")} como passagem ou suspensao.`;
   }
   if (candidate.harmonicFunction === "predominant") {
+    if (candidate.resolutionTarget) {
+      return `Construa movimento${guideText} para preparar ${candidate.resolutionTarget}${resolutionText}.`;
+    }
     return `Construa movimento${guideText} para preparar a proxima tensao.`;
   }
   if (candidate.harmonicFunction === "tonic") {

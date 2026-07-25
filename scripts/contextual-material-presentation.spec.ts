@@ -42,6 +42,27 @@ const dominantCandidate: ContextualMaterialCandidate = {
   melodicFit: "aligned"
 };
 
+const predominantCandidate: ContextualMaterialCandidate = {
+  ...dominantCandidate,
+  name: "B locrian #2",
+  type: "locrian #2",
+  chord: "Bm7b5",
+  role: "primary",
+  intent: "functional",
+  harmonicFunction: "predominant",
+  supportedTensions: ["C#"],
+  passingNotes: [],
+  melodyNotes: ["D"],
+  melodyMatches: ["D"],
+  melodySupportRoles: { D: ["guide-tone"] },
+  resolutionTarget: "E",
+  guideTones: ["D", "A"],
+  guideToneTargets: [],
+  guideToneResolutions: [],
+  linearFragments: [],
+  melodicMaterials: []
+};
+
 describe("F204 apresentacao contextual de material", () => {
   it("descreve funcao e cobertura melodica", () => {
     expect(describeMaterialCandidate(dominantCandidate)).toContain("tensao com alvo de resolucao");
@@ -51,5 +72,13 @@ describe("F204 apresentacao contextual de material", () => {
   it("gera dica pratica para dominante bebop", () => {
     expect(practiceHintForMaterialCandidate(dominantCandidate)).toContain("passagem cromatica");
     expect(practiceHintForMaterialCandidate(dominantCandidate)).toContain("B->C");
+  });
+
+  it("nomeia alvo quando material predominante tem direcao clara", () => {
+    expect(practiceHintForMaterialCandidate(predominantCandidate)).toContain("preparar E");
+    expect(practiceHintForMaterialCandidate({
+      ...predominantCandidate,
+      resolutionTarget: undefined
+    })).toContain("preparar a proxima tensao");
   });
 });
