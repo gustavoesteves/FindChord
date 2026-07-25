@@ -20,9 +20,34 @@ export function transposePitchClass(root: string, interval: string): string | nu
   return Note.pitchClass(transposed) || null;
 }
 
+const DOMINANT_RESOLVER_QUALITIES = new Set([
+  "7",
+  "9",
+  "11",
+  "13",
+  "7sus4",
+  "9sus4",
+  "13sus4",
+  "7alt",
+  "7_sharp5",
+  "7_b5",
+  "7_b9",
+  "7_sharp9",
+  "7_sharp11",
+  "7_b13",
+  "7_sharp9_b13",
+  "9_b5",
+  "9_sharp5",
+  "9_sharp9",
+  "9_sharp11",
+  "13_b9",
+  "13_sharp11",
+  "13_b9_sharp11"
+]);
+
 function isDominantLike(symbol: string): boolean {
   const resolved = resolveChordSymbol(symbol, "plain");
-  return ["7", "9", "11", "13", "7sus4", "9sus4", "13sus4", "7_b5", "7_b9", "7_sharp9", "7_sharp11", "7_b13", "7alt"].includes(resolved.quality);
+  return DOMINANT_RESOLVER_QUALITIES.has(resolved.quality);
 }
 
 function isDiminishedLike(symbol: string): boolean {

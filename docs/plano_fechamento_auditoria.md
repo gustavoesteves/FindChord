@@ -23,6 +23,13 @@ Não há P0 aberto. Os P1 principais já possuem remediação ou guardrail opera
 
 Objetivo: unificar a noção de dominante funcional e impedir que cifras dominantes alteradas válidas sejam tratadas como cor solta quando há alvo real.
 
+Progresso:
+
+- a matriz inicial de dominantes alteradas com alvo real já foi coberta por regressão;
+- `contextualMaterialFunction.ts` passou a usar a mesma lista de qualidades dominantes reconhecidas pelo resolvedor de cifras;
+- `7#5` e `9#5` deixaram de cair no fallback de tríade aumentada quando há contexto dominante, preservando terça e sétima como notas-guia;
+- o material de tons inteiros continua disponível para acordes aumentados sem sétima, separando cor aumentada de dominante alterada funcional.
+
 Casos a cobrir:
 
 - `G7(#5) -> C`

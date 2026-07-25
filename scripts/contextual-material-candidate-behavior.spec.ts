@@ -165,9 +165,9 @@ describe("F115 candidatas contextuais de material", () => {
     ]);
   });
 
-  it("oferece material de tons inteiros para acordes aumentados", () => {
+  it("oferece material de tons inteiros para acordes aumentados sem setima", () => {
     const candidates = buildContextualMaterialCandidates({
-      chord: "G7(#5)",
+      chord: "Gaug",
       melody: ["G", "B", "D#"]
     });
     const wholeTone = candidates.find(candidate => candidate.type === "whole tone");
@@ -180,6 +180,21 @@ describe("F115 candidatas contextuais de material", () => {
         resolutionTargets: []
       })
     ]);
+  });
+
+  it("mantem notas-guia dominantes em acorde 7#5 com alvo real", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "G7(#5)",
+      nextChord: "Cmaj7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["B", "F", "D#"],
+      resolutionTarget: "C"
+    });
+
+    expect(candidates[0]?.harmonicFunction).toBe("dominant");
+    expect(candidates[0]?.guideTones).toEqual(["B", "F"]);
+    expect(candidates[0]?.guideToneResolutions).toEqual(["B->B", "F->E"]);
+    expect(candidates.map(candidate => candidate.type)).not.toContain("major");
   });
 
   it("oferece material para menor com setima maior", () => {

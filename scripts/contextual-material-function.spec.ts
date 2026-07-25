@@ -46,6 +46,24 @@ describe("F202 funcao contextual de material", () => {
     }, "Db")).toBe("dominant");
   });
 
+  it.each([
+    "G7(#5)",
+    "G7(#9,b13)",
+    "G9(b5)",
+    "G9(#5)",
+    "G9(#9)",
+    "G9(#11)",
+    "G13(b9)",
+    "G13(#11)",
+    "G13(b9,#11)"
+  ])("reconhece dominante alterada %s com alvo real", chord => {
+    expect(determineContextualHarmonicFunction({
+      chord,
+      nextChord: "Cmaj7",
+      tonalCenter: { tonic: "C", mode: "major" }
+    }, "G")).toBe("dominant");
+  });
+
   it("usa alvo de resolucao quando nao ha proximo acorde explicito", () => {
     expect(determineContextualHarmonicFunction({
       chord: "A7",
