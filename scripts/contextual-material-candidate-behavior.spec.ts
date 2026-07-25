@@ -479,6 +479,19 @@ describe("F115 candidatas contextuais de material", () => {
     expect(locrian?.melodicMaterials).toEqual([]);
   });
 
+  it("nao oferece material iiø preparatorio quando o proximo acorde nao e dominante relacionada", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "Bm7b5",
+      nextChord: "Cmaj7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["B", "D", "F", "A"]
+    });
+    const locrianSharpTwo = candidates.find(candidate => candidate.type === "locrian #2");
+
+    expect(locrianSharpTwo?.melodicMaterials).toEqual([]);
+    expect(locrianSharpTwo?.resolutionTarget).toBeUndefined();
+  });
+
   it("oferece material de diminuto resolvido por semitom", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "G#dim7",

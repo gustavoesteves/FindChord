@@ -82,6 +82,14 @@ function targetThirdFor(nextChord: string | undefined, resolutionTarget: string 
   return transposePitchClass(resolutionTarget, isMinorTarget ? "3m" : "3M");
 }
 
+function directedSemitones(from: string | undefined, to: string | undefined): number | null {
+  if (!from || !to) return null;
+  const fromChroma = Note.chroma(from);
+  const toChroma = Note.chroma(to);
+  if (fromChroma === undefined || toChroma === undefined) return null;
+  return (toChroma - fromChroma + 12) % 12;
+}
+
 const EXPLICIT_ALTERED_DOMINANT_QUALITIES = new Set<ChordQuality>([
   "dominant7b5",
   "dominant7b9",
@@ -95,6 +103,22 @@ const NATURAL_DOMINANT_QUALITIES = new Set<ChordQuality>([
   "dominant9th",
   "dominant11th",
   "dominant13th"
+]);
+
+const FUNCTIONAL_DOMINANT_QUALITIES = new Set([
+  "7",
+  "9",
+  "11",
+  "13",
+  "7sus4",
+  "9sus4",
+  "13sus4",
+  "7_b5",
+  "7_b9",
+  "7_sharp9",
+  "7_sharp11",
+  "7_b13",
+  "7alt"
 ]);
 
 function hasRealResolutionTarget(root: string, resolutionTarget: string | undefined): boolean {
@@ -289,6 +313,15 @@ function halfDiminishedMinorPreparationMaterials(
   nextChord: string | undefined
 ): ContextualMelodicMaterial[] {
   if (scale.type !== "locrian #2") return [];
+  const resolvedNextChord = nextChord ? resolveChordSymbol(nextChord, "plain") : null;
+  const dominantRoot = displayNote(resolvedNextChord?.root || null);
+  const hasExplicitNextChord = !!nextChord;
+  const preparesRelatedDominant = !!resolvedNextChord
+    && !!dominantRoot
+    && FUNCTIONAL_DOMINANT_QUALITIES.has(resolvedNextChord.quality)
+    && directedSemitones(root, dominantRoot) === 5;
+  if (hasExplicitNextChord && !preparesRelatedDominant) return [];
+
   const arpeggio = [
     displayNote(root),
     displayNote(transposePitchClass(root, "3m")),
@@ -296,7 +329,6 @@ function halfDiminishedMinorPreparationMaterials(
     displayNote(transposePitchClass(root, "7m"))
   ].filter(Boolean).join("-");
   const naturalNine = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "2M")));
-  const dominantRoot = displayNote(chordRoot(nextChord) || null);
   const flatSeven = displayNote(transposePitchClass(root, "7m"));
   const minorThird = displayNote(transposePitchClass(root, "3m"));
   const dominantThird = displayNote(dominantRoot ? transposePitchClass(dominantRoot, "3M") : null);
