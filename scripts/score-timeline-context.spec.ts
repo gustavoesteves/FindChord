@@ -74,6 +74,37 @@ describe("score timeline context", () => {
       mode: "minor",
       label: "Ebm"
     });
+    expect(keyContextFromSignature("D dorian")).toEqual({
+      tonic: "D",
+      mode: "major",
+      declaredMode: "dorian",
+      label: "D dorian"
+    });
+  });
+
+  it("preserves declared modal modes while exposing a functional analysis mode", () => {
+    const snapshot: ScoreSnapshot = {
+      timestamp: 1,
+      harmonies: [],
+      notes: [],
+      metadata: {
+        keySignature: "D dorian",
+        timeSignature: "4/4",
+        keyTimeline: [
+          { measure: 1, tick: 0, fifths: 0, mode: "dorian", keySignature: "D" },
+          { measure: 5, tick: 7680, fifths: 0, mode: "mixolydian", keySignature: "G" }
+        ]
+      }
+    };
+
+    expect(timelineContextAtTick(snapshot, 0)).toMatchObject({
+      keySignature: "D dorian",
+      keyContext: { tonic: "D", mode: "major", declaredMode: "dorian", label: "D dorian" }
+    });
+    expect(timelineContextAtTick(snapshot, 8000)).toMatchObject({
+      keySignature: "G mixolydian",
+      keyContext: { tonic: "G", mode: "major", declaredMode: "mixolydian", label: "G mixolydian" }
+    });
   });
 
   it("resolves context from the active section start", () => {

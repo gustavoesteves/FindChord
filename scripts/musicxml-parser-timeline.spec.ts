@@ -171,4 +171,33 @@ describe("MusicXML parser timeline", () => {
       { measure: 2, startTick: 1920, endTick: 3360, timeSignature: "3/4" }
     ]);
   });
+
+  it("preserva tonica modal declarada pela armadura MusicXML", () => {
+    const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
+      <score-partwise version="4.0">
+        <part-list>
+          <score-part id="P1"><part-name>Music</part-name></score-part>
+        </part-list>
+        <part id="P1">
+          <measure number="1">
+            <attributes>
+              <divisions>480</divisions>
+              <key><fifths>0</fifths><mode>dorian</mode></key>
+            </attributes>
+            <note><pitch><step>D</step><octave>4</octave></pitch><duration>1920</duration></note>
+          </measure>
+          <measure number="2">
+            <attributes>
+              <key><fifths>0</fifths><mode>mixolydian</mode></key>
+            </attributes>
+            <note><pitch><step>G</step><octave>4</octave></pitch><duration>1920</duration></note>
+          </measure>
+        </part>
+      </score-partwise>`);
+
+    expect(snapshot.metadata.keyTimeline).toEqual([
+      { measure: 1, tick: 0, fifths: 0, mode: "dorian", keySignature: "D" },
+      { measure: 2, tick: 1920, fifths: 0, mode: "mixolydian", keySignature: "G" }
+    ]);
+  });
 });

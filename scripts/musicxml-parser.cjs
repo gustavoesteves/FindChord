@@ -38,11 +38,56 @@ const MINOR_KEY_BY_FIFTHS = {
   '7': 'A#'
 };
 
+const NOTE_CHROMA = {
+  C: 0,
+  'C#': 1,
+  Db: 1,
+  D: 2,
+  'D#': 3,
+  Eb: 3,
+  E: 4,
+  Fb: 4,
+  'E#': 5,
+  F: 5,
+  'F#': 6,
+  Gb: 6,
+  G: 7,
+  'G#': 8,
+  Ab: 8,
+  A: 9,
+  'A#': 10,
+  Bb: 10,
+  B: 11,
+  Cb: 11
+};
+const FLAT_CHROMATIC_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const SHARP_CHROMATIC_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const MODAL_OFFSET_BY_MODE = {
+  ionian: 0,
+  dorian: 2,
+  phrygian: 4,
+  lydian: 5,
+  mixolydian: 7,
+  aeolian: 9,
+  locrian: 11
+};
+
+function modalTonicForMajorKey(majorKey, mode) {
+  const normalizedMode = String(mode || 'major').toLowerCase();
+  const offset = MODAL_OFFSET_BY_MODE[normalizedMode];
+  if (offset === undefined) return majorKey;
+
+  const chroma = NOTE_CHROMA[majorKey];
+  if (chroma === undefined) return majorKey;
+  const spelling = /b/.test(majorKey) ? FLAT_CHROMATIC_NOTES : SHARP_CHROMATIC_NOTES;
+  return spelling[(chroma + offset) % spelling.length];
+}
+
 function keySignatureFor(fifths, mode) {
   const normalizedMode = String(mode || 'major').toLowerCase();
-  return normalizedMode === 'minor'
-    ? MINOR_KEY_BY_FIFTHS[fifths]
-    : MAJOR_KEY_BY_FIFTHS[fifths];
+  if (normalizedMode === 'minor') return MINOR_KEY_BY_FIFTHS[fifths];
+  if (normalizedMode === 'major') return MAJOR_KEY_BY_FIFTHS[fifths];
+  return modalTonicForMajorKey(MAJOR_KEY_BY_FIFTHS[fifths], normalizedMode);
 }
 
 function getFirstTag(obj, tagName) {

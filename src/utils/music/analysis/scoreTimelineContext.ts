@@ -22,6 +22,7 @@ export interface ScoreTimelineContext {
 export interface ScoreTonalKeyContext {
   tonic: string;
   mode: "major" | "minor";
+  declaredMode?: string;
   label: string;
 }
 
@@ -42,14 +43,34 @@ function normalizeMode(mode?: string): string | undefined {
   return mode?.trim().toLowerCase();
 }
 
-function isMinorModeLabel(mode?: string): boolean {
+function analysisModeForDeclaredMode(mode?: string): "major" | "minor" {
   const normalized = normalizeMode(mode);
-  return normalized === "minor" || normalized === "menor";
+  return normalized === "minor" || normalized === "menor" || normalized === "aeolian"
+    ? "minor"
+    : "major";
+}
+
+function labelForKeyContext(tonic: string, mode: "major" | "minor", declaredMode?: string): string {
+  if (declaredMode && declaredMode !== mode) return `${tonic} ${declaredMode}`;
+  return mode === "minor" ? `${tonic}m` : tonic;
 }
 
 export function keyContextFromSignature(keySignature?: string): ScoreTonalKeyContext | undefined {
   const normalized = keySignature?.trim();
   if (!normalized) return undefined;
+
+  const modalMatch = normalized.match(/^([A-G](?:#|b)?)\s+(ionian|dorian|phrygian|lydian|mixolydian|aeolian|locrian)$/i);
+  if (modalMatch) {
+    const tonic = modalMatch[1];
+    const declaredMode = modalMatch[2].toLowerCase();
+    const mode = analysisModeForDeclaredMode(declaredMode);
+    return {
+      tonic,
+      mode,
+      declaredMode,
+      label: labelForKeyContext(tonic, mode, declaredMode)
+    };
+  }
 
   const explicitMinor = /\b(?:minor|menor)\b/i.test(normalized);
   const explicitMajor = /\b(?:major|maior)\b/i.test(normalized);
@@ -65,7 +86,7 @@ export function keyContextFromSignature(keySignature?: string): ScoreTonalKeyCon
   return {
     tonic,
     mode,
-    label: mode === "minor" ? `${tonic}m` : tonic
+    label: labelForKeyContext(tonic, mode)
   };
 }
 
@@ -75,11 +96,13 @@ export function keyContextForAnalysis(
 ): ScoreTonalKeyContext | undefined {
   if (!entry?.keySignature) return keyContextFromSignature(fallbackKeySignature);
 
-  const mode = isMinorModeLabel(entry.mode) ? "minor" : "major";
+  const declaredMode = normalizeMode(entry.mode);
+  const mode = analysisModeForDeclaredMode(declaredMode);
   return {
     tonic: entry.keySignature,
     mode,
-    label: mode === "minor" ? `${entry.keySignature}m` : entry.keySignature
+    declaredMode: declaredMode && declaredMode !== mode ? declaredMode : undefined,
+    label: labelForKeyContext(entry.keySignature, mode, declaredMode)
   };
 }
 

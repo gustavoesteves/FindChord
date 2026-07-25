@@ -86,10 +86,11 @@ Progresso:
 - o bloqueio de cadência plagal em seções planares agora tem uma exceção local: uma plagal final limpa, sem baixo independente nos dois últimos acordes, continua sendo reconhecida;
 - referência planar tipo Bright Size Life permanece como chegada aberta, preservando o guardrail contra falso `IV-I`;
 - há regressões cobrindo os dois lados: plano estrutural aberto e plagal final real após passagem planar.
+- modos MusicXML explícitos como `dorian` e `mixolydian` agora preservam a tônica modal e o `declaredMode`, mantendo `major/minor` apenas como modo operacional para os motores funcionais existentes.
 
 Problemas residuais:
 
-- modos MusicXML como `dorian` e `mixolydian` ainda tendem a cair em maior/menor no contexto analítico.
+- ampliar a geração modal dedicada usando `declaredMode` como informação musical, sem misturar isso com a classificação funcional maior/menor.
 
 Critério de aceite:
 
