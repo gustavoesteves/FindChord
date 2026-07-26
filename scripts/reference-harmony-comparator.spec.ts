@@ -258,6 +258,66 @@ describe("F40 Reference Harmony Comparator", () => {
     ]);
   });
 
+  it("penalizes extra timed proposal chords against a single long reference chord", () => {
+    const comparison = compareProposalToReferenceHarmony(
+      timedProposal([
+        {
+          id: "c-half",
+          measureIndex: 1,
+          beat: 1,
+          chord: "C",
+          chordIndex: 0,
+          occurrenceInMeasure: 0,
+          tickStart: 0,
+          tickEnd: 960,
+          durationTicks: 960
+        },
+        {
+          id: "g-half",
+          measureIndex: 1,
+          beat: 3,
+          chord: "G7",
+          chordIndex: 1,
+          occurrenceInMeasure: 1,
+          tickStart: 960,
+          tickEnd: 1920,
+          durationTicks: 960
+        }
+      ]),
+      [
+        {
+          measure: 1,
+          beat: 1,
+          harmony: "C",
+          tickStart: 0,
+          tickEnd: 1920,
+          durationTicks: 1920
+        }
+      ],
+      "C",
+      { strictSingleReferenceEventOverlap: true }
+    );
+
+    expect(comparison.status).toBe("partially-aligned");
+    expect(comparison.comparedMeasures).toBe(2);
+    expect(comparison.functionAgreement).toBe(0.5);
+    expect(comparison.rootAgreement).toBe(0.5);
+    expect(comparison.points).toEqual([
+      expect.objectContaining({
+        proposalChord: "C",
+        referenceChord: "C",
+        durationWeight: 960
+      }),
+      expect.objectContaining({
+        proposalChord: "G7",
+        referenceChord: "C",
+        durationWeight: 960,
+        functionRelation: "different-function",
+        rootRelation: "different-root"
+      })
+    ]);
+  });
+
   it("matches dense timed chords by overlap instead of intra-measure index", () => {
     const comparison = compareProposalToReferenceHarmony(
       timedProposal([

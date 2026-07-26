@@ -66,6 +66,10 @@ export interface ReferenceHarmonyComparison {
   points: ReferenceHarmonyComparisonPoint[];
 }
 
+export interface ReferenceHarmonyComparisonOptions {
+  strictSingleReferenceEventOverlap?: boolean;
+}
+
 interface OrderedComparisonChord {
   measureIndex: number;
   chordIndex: number;
@@ -493,7 +497,8 @@ function evidenceFor(input: {
 export function compareProposalToReferenceHarmony(
   proposal: ReharmonizationProposal | undefined,
   referenceHarmonies: ScoreHarmonyEvent[],
-  center: string
+  center: string,
+  options: ReferenceHarmonyComparisonOptions = {}
 ): ReferenceHarmonyComparison {
   if (!proposal || referenceHarmonies.length === 0) {
     return {
@@ -539,6 +544,40 @@ export function compareProposalToReferenceHarmony(
     if (referenceChords.length === 1) {
       const referenceChord = referenceChords[0];
       const referenceContext = chordContext(orderedReference, { measureIndex, chordIndex: 0 });
+
+      const timedOverlaps = proposalChords
+        .map(proposalChord => ({
+          proposalChord,
+          overlap: overlapDuration(proposalChord, referenceChord),
+          point: buildComparisonPoint({
+            measureIndex,
+            proposalChord: proposalChord.chord,
+            referenceChord: referenceChord.chord,
+            proposalContext: chordContext(orderedProposal, { measureIndex, chordIndex: proposalChord.chordIndex }),
+            referenceContext,
+            center,
+            referenceCenter,
+            mode,
+            durationWeight: overlapDuration(proposalChord, referenceChord)
+          })
+        }))
+        .filter(item => item.overlap > 0);
+      const hasFunctionalDivergentInternalEvent = timedOverlaps.some(item => (
+        item.point.functionRelation === "different-function"
+        && item.point.rootRelation === "different-root"
+      ));
+
+      if (
+        options.strictSingleReferenceEventOverlap
+        && timedOverlaps.length > 1
+        && hasFunctionalDivergentInternalEvent
+      ) {
+        for (const { point } of timedOverlaps) {
+          points.push(point);
+        }
+        continue;
+      }
+
       const candidatePoints = proposalChords.map(proposalChord => ({
         point: buildComparisonPoint({
           measureIndex,

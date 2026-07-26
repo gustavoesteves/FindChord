@@ -64,11 +64,12 @@ Progresso:
 - validação melódica estratégica, gate experimental e diagnósticos de compatibilidade agora usam o acorde temporizado com maior overlap quando `events` existem;
 - foi adicionada regressão para impedir que uma nota no segundo acorde do compasso seja validada por um acorde anterior apenas porque ambos estão agregados em `measure.chords`;
 - comparação proposta-referência já usava overlap temporal; este avanço levou a mesma lógica para a cobertura melódica.
+- o comparador ganhou um modo estrito para auditoria temporal densa: quando a referência possui um acorde longo e a proposta possui eventos temporizados internos divergentes, ele pode ponderar cada evento pelo overlap real. Assim `C` por meio compasso + `Db7` por meio compasso contra `C` inteiro não aparece como alinhamento total nesse modo.
 
 Problemas residuais:
 
 - slots temporais do ramo experimental podem ser reconstruídos em vez de preservados diretamente;
-- referência curta versus proposta com acorde adicional dentro do compasso pode parecer `aligned` se a segunda metade for ignorada;
+- decidir onde ativar o modo estrito de overlap sem prejudicar calibrações musicais em que a divisão interna preserva função aparente;
 - parte dos MusicXML ainda cai em fallback métrico;
 - cifras importadas podem chegar com `beat: 1` quando o parser não preserva a posição real.
 

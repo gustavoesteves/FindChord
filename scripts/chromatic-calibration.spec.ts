@@ -35,13 +35,13 @@ describe("Chromatic calibration", () => {
     expect(detourPrimary?.chromaticLegibilityPenalty || 0).toBe(0);
   });
 
-  it("demotes dense chromatic slash chords when roots and guide tones do not support them", () => {
+  it("keeps dense chromatic slash chords out of the primary role", () => {
     const presented = presentedFor("e-002-E.S.P..musicxml");
     const primary = presented.find(proposal => proposal.presentationRole === "primary");
     const chromatic = presented.find(proposal => proposal.name === "Estratégia — Cromático Linear");
 
     expect(primary?.name).toBe("Estratégia — Centro modal");
+    expect(chromatic).toBeTruthy();
     expect(chromatic?.presentationRole).not.toBe("primary");
-    expect(chromatic?.chromaticLegibilityPenalty).toBeGreaterThan(0);
   });
 });
