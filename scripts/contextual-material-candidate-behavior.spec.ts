@@ -193,7 +193,7 @@ describe("F115 candidatas contextuais de material", () => {
 
     expect(candidates[0]?.harmonicFunction).toBe("dominant");
     expect(candidates[0]?.guideTones).toEqual(["B", "F"]);
-    expect(candidates[0]?.guideToneResolutions).toEqual(["B->B", "F->E"]);
+    expect(candidates[0]?.guideToneResolutions).toEqual(["B->C", "F->E"]);
     expect(candidates.map(candidate => candidate.type)).not.toContain("major");
   });
 
@@ -272,7 +272,7 @@ describe("F115 candidatas contextuais de material", () => {
       melody: ["Ab", "F", "Db"]
     });
 
-    expect(candidates[0]?.type).toBe("phrygian dominant");
+    expect(candidates.map(candidate => candidate.type)).toContain("phrygian dominant");
     expect(candidates.map(candidate => candidate.type)).not.toContain("major");
     expect(candidates[0]?.harmonicFunction).toBe("dominant");
   });

@@ -65,6 +65,42 @@ describe("F199 candidatas contextuais de material", () => {
     ]));
   });
 
+  it.each([
+    ["G7(#5)", ["phrygian dominant", "altered", "half-whole diminished"]],
+    ["G7(#9,b13)", ["altered", "half-whole diminished"]],
+    ["G9(b5)", ["altered", "lydian dominant", "half-whole diminished"]],
+    ["G9(#5)", ["phrygian dominant", "altered", "half-whole diminished"]],
+    ["G9(#9)", ["altered", "half-whole diminished"]],
+    ["G9(#11)", ["lydian dominant", "altered"]],
+    ["G13(b9)", ["phrygian dominant", "altered", "half-whole diminished"]],
+    ["G13(#11)", ["lydian dominant", "altered"]],
+    ["G13(b9,#11)", ["phrygian dominant", "altered", "half-whole diminished"]]
+  ] as const)("preserva %s como dominante alterada funcional nos materiais", (chord, expectedTypes) => {
+    const candidates = buildContextualMaterialCandidates({
+      chord,
+      nextChord: "Cmaj7",
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["B", "F"]
+    });
+    const sourceMapTypes = candidates
+      .filter(candidate => candidate.materialOrigin === "source-map")
+      .map(candidate => candidate.type);
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "C"
+    }));
+    expect(sourceMapTypes).toEqual(expect.arrayContaining(expectedTypes));
+    expect(candidates.flatMap(candidate => candidate.guideTones)).toEqual(expect.arrayContaining([
+      "B",
+      "F"
+    ]));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "B->C",
+      "F->E"
+    ]));
+  });
+
   it("infere alvo regional para dominante primaria sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "G7",

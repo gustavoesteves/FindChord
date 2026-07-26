@@ -28,9 +28,11 @@ Progresso:
 - a matriz inicial de dominantes alteradas com alvo real já foi coberta por regressão;
 - `contextualMaterialFunction.ts` passou a usar a mesma lista de qualidades dominantes reconhecidas pelo resolvedor de cifras;
 - `7#5` e `9#5` deixaram de cair no fallback de tríade aumentada quando há contexto dominante, preservando terça e sétima como notas-guia;
+- os candidatos de materiais agora herdam o próximo acorde como alvo real quando a função contextual é dominante, permitindo resoluções como `B->C` e `F->E` mesmo quando o alvo é `Cmaj7`;
+- `guideToneResolutions` deixou de tratar nota comum idêntica como resolução, evitando pseudo-resoluções como `B->B` em dominantes que apontam para C;
 - o material de tons inteiros continua disponível para acordes aumentados sem sétima, separando cor aumentada de dominante alterada funcional.
 
-Casos a cobrir:
+Casos cobertos:
 
 - `G7(#5) -> C`
 - `G7(#9,b13) -> C`
@@ -45,7 +47,7 @@ Casos a cobrir:
 Ponto técnico suspeito:
 
 - `contextualMaterialFunction.ts` possui predicados próprios de dominante.
-- `contextualMaterialChordContext.ts` pode reduzir `7_sharp5` a `augmented`, fazendo `G7(#5)` perder F como nota-guia.
+- `contextualMaterialChordContext.ts` agora preserva a família dominante interna para a matriz alterada coberta; o risco remanescente é manter essa matriz sincronizada com futuras qualidades do resolvedor.
 
 Critério de aceite:
 

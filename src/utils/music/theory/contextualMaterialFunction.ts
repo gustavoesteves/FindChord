@@ -339,7 +339,7 @@ export function guideToneResolutions(notes: string[], targetRoot: string | undef
   return notes.flatMap(note => {
     const target = targetNotes
       .map(candidate => ({ candidate, distance: semitoneDistance(note, candidate) }))
-      .filter(item => item.distance <= 2)
+      .filter(item => item.distance > 0 && item.distance <= 2)
       .sort((a, b) => a.distance - b.distance)[0]?.candidate;
     return target ? [`${note}->${target}`] : [];
   });
