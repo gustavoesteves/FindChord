@@ -89,12 +89,12 @@ Progresso:
 - o bloqueio de cadência plagal em seções planares agora tem uma exceção local: uma plagal final limpa, sem baixo independente nos dois últimos acordes, continua sendo reconhecida;
 - referência planar tipo Bright Size Life permanece como chegada aberta, preservando o guardrail contra falso `IV-I`;
 - há regressões cobrindo os dois lados: plano estrutural aberto e plagal final real após passagem planar.
-- modos MusicXML explícitos como `dorian` e `mixolydian` agora preservam a tônica modal e o `declaredMode`, mantendo `major/minor` apenas como modo operacional para os motores funcionais existentes.
-- a estratégia `Centro modal` passou a consumir `declaredMode`: dórico gera paleta `i-IV-bVII`, mixolídio gera `I-bVII-v`, enquanto o modo operacional continua maior/menor para os validadores funcionais.
+- modos MusicXML explícitos como `dorian`, `mixolydian`, `lydian`, `phrygian` e `aeolian` agora preservam a tônica modal e o `declaredMode`, mantendo `major/minor` apenas como modo operacional para os motores funcionais existentes.
+- a estratégia `Centro modal` passou a consumir `declaredMode`: dórico gera `i-IV-bVII`, mixolídio gera `I-bVII-v`, lídio gera `I-II-V`, frígio gera `i-bII-bVIIm` e eólio gera `i-bVI-bVII`, enquanto o modo operacional continua maior/menor para os validadores funcionais.
 
 Problemas residuais:
 
-- ampliar a geração modal dedicada para outros modos declarados/casos reais sem transformar toda cor modal em cadência funcional.
+- validar a geração modal dedicada contra casos reais de repertório sem transformar toda cor modal em cadência funcional.
 
 Critério de aceite:
 

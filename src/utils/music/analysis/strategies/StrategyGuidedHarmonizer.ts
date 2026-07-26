@@ -2274,13 +2274,13 @@ export class StrategyGuidedHarmonizer {
     phraseContext: PhraseContext
   ): ReharmonizationProposal[] {
     const center = Note.pitchClass(phraseContext.selectedCenter.tonic);
-    if (!center || !this.hasModalMelodicVocabulary(anchors, center)) return [];
+    const declaredMode = phraseContext.selectedCenter.declaredMode;
+    if (!center || !this.hasModalMelodicVocabulary(anchors, center, declaredMode)) return [];
     if (phraseContext.selectedCenter.mode === "minor" && this.hasFunctionalMinorMelodicDirection(anchors, center)) return [];
 
     const measureIndexes = this.getMeasureIndexes(anchors);
     if (measureIndexes.length < 4) return [];
 
-    const declaredMode = phraseContext.selectedCenter.declaredMode;
     const modalChords = this.modalChordPalette(center, declaredMode);
     const measures = measureIndexes.map(measureIndex => {
       const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndex);
@@ -2310,13 +2310,39 @@ export class StrategyGuidedHarmonizer {
     }];
   }
 
-  private static hasModalMelodicVocabulary(anchors: MelodicAnchor[], center: string): boolean {
+  private static hasModalMelodicVocabulary(anchors: MelodicAnchor[], center: string, declaredMode?: string): boolean {
     const notes = anchors.map(anchor => Note.pitchClass(anchor.pitch)).filter(Boolean);
     const centerCount = notes.filter(note => note === center).length;
+    const mode = declaredMode?.toLowerCase();
+    if (centerCount < 2) return false;
+
     const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
     const flatSix = Note.pitchClass(Note.transpose(`${center}4`, "6m"));
-    const hasModalColor = (!!flatSeven && notes.includes(flatSeven)) || (!!flatSix && notes.includes(flatSix));
-    return centerCount >= 2 && hasModalColor;
+    const naturalSix = Note.pitchClass(Note.transpose(`${center}4`, "6M"));
+    const sharpFour = Note.pitchClass(Note.transpose(`${center}4`, "4A"));
+    const flatSecond = Note.pitchClass(Note.transpose(`${center}4`, "2m"));
+
+    if (mode === "dorian") {
+      return (!!flatSeven && notes.includes(flatSeven)) || (!!naturalSix && notes.includes(naturalSix));
+    }
+
+    if (mode === "mixolydian") {
+      return !!flatSeven && notes.includes(flatSeven);
+    }
+
+    if (mode === "lydian") {
+      return !!sharpFour && notes.includes(sharpFour);
+    }
+
+    if (mode === "phrygian") {
+      return !!flatSecond && notes.includes(flatSecond);
+    }
+
+    if (mode === "aeolian") {
+      return (!!flatSix && notes.includes(flatSix)) || (!!flatSeven && notes.includes(flatSeven));
+    }
+
+    return (!!flatSeven && notes.includes(flatSeven)) || (!!flatSix && notes.includes(flatSix));
   }
 
   private static modalChordPalette(center: string, declaredMode?: string): string[] {
@@ -2340,6 +2366,15 @@ export class StrategyGuidedHarmonizer {
         `${center}`,
         flatSeven ? `${flatSeven}` : null,
         fifth ? `${fifth}m` : null
+      ].filter((chord): chord is string => chord !== null);
+    }
+
+    if (mode === "lydian") {
+      const second = Note.pitchClass(Note.transpose(`${center}4`, "2M"));
+      return [
+        `${center}`,
+        second ? `${second}` : null,
+        fifth ? `${fifth}` : null
       ].filter((chord): chord is string => chord !== null);
     }
 

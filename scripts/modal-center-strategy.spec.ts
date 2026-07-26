@@ -75,6 +75,75 @@ describe("F32.3 Modal Center Strategy", () => {
     expect(proposal?.explanation).toContain("usa o modo mixolydian declarado na partitura como campo de apoio");
   });
 
+  it("uses declared lydian mode to choose I-II-V around the #11 color", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 2, pitch: "D", duration: 960 },
+      { measureIndex: 2, pitch: "F#", duration: 960 },
+      { measureIndex: 3, pitch: "G", duration: 960 },
+      { measureIndex: 3, pitch: "B", duration: 960 },
+      { measureIndex: 4, pitch: "C", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "C lydian");
+
+    const proposal = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .find(candidate => candidate.name === "Estratégia — Centro modal");
+
+    expect(phraseContext.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "C",
+      declaredMode: "lydian"
+    }));
+    expect(proposal?.measures.map(measure => measure.chords[0])).toEqual(["C", "D", "G", "C"]);
+    expect(proposal?.explanation).toContain("usa o modo lydian declarado na partitura como campo de apoio");
+  });
+
+  it("uses declared phrygian mode to choose i-bII-bVII minor color", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "E", duration: 960 },
+      { measureIndex: 1, pitch: "G", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 2, pitch: "A", duration: 960 },
+      { measureIndex: 3, pitch: "D", duration: 960 },
+      { measureIndex: 3, pitch: "F", duration: 960 },
+      { measureIndex: 4, pitch: "E", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "E phrygian");
+
+    const proposal = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .find(candidate => candidate.name === "Estratégia — Centro modal");
+
+    expect(phraseContext.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "E",
+      declaredMode: "phrygian"
+    }));
+    expect(proposal?.measures.map(measure => measure.chords[0])).toEqual(["Em", "F", "Dm", "Em"]);
+    expect(proposal?.explanation).toContain("usa o modo phrygian declarado na partitura como campo de apoio");
+  });
+
+  it("uses declared aeolian mode to choose i-bVI-bVII without forcing a dominant cadence", () => {
+    const anchors: MelodicAnchor[] = [
+      { measureIndex: 1, pitch: "A", duration: 960 },
+      { measureIndex: 1, pitch: "C", duration: 960 },
+      { measureIndex: 2, pitch: "F", duration: 960 },
+      { measureIndex: 2, pitch: "A", duration: 960 },
+      { measureIndex: 3, pitch: "G", duration: 960 },
+      { measureIndex: 3, pitch: "B", duration: 960 },
+      { measureIndex: 4, pitch: "A", duration: 1920 }
+    ];
+    const phraseContext = PhraseAnalysisEngine.analyzePhrase(anchors, "A aeolian");
+
+    const proposal = StrategyGuidedHarmonizer.generateAcceptedProposals(anchors, phraseContext)
+      .find(candidate => candidate.name === "Estratégia — Centro modal");
+
+    expect(phraseContext.selectedCenter).toEqual(expect.objectContaining({
+      tonic: "A",
+      declaredMode: "aeolian"
+    }));
+    expect(proposal?.measures.map(measure => measure.chords[0])).toEqual(["Am", "F", "G", "Am"]);
+    expect(proposal?.explanation).toContain("usa o modo aeolian declarado na partitura como campo de apoio");
+  });
+
   it("does not add modal strategy to ordinary major-functional melodies", () => {
     const anchors: MelodicAnchor[] = [
       { measureIndex: 1, pitch: "C" },
