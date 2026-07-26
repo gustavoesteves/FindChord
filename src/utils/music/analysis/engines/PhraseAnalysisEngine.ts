@@ -17,6 +17,7 @@ export interface TonalCenterCandidate {
   tonic: string;
   mode: "major" | "minor";
   confidence: number;
+  declaredMode?: string;
 }
 
 export interface CadentialTarget {
@@ -66,7 +67,7 @@ export class PhraseAnalysisEngine {
     if (anchors.length === 0) {
       const keyContext = options.keyContext || keyContextFromSignature(keySignature);
       const defaultCenter: TonalCenterCandidate = keyContext
-        ? { tonic: keyContext.tonic, mode: keyContext.mode, confidence: 0.25 }
+        ? { tonic: keyContext.tonic, mode: keyContext.mode, confidence: 0.25, declaredMode: keyContext.declaredMode }
         : { tonic: "C", mode: "major", confidence: 0.1 };
       return {
         selectedCenter: defaultCenter,
@@ -232,7 +233,10 @@ export class PhraseAnalysisEngine {
       return {
         tonic: c.tonic,
         mode: c.mode,
-        confidence: Math.round(conf * 100) / 100
+        confidence: Math.round(conf * 100) / 100,
+        declaredMode: keyContext?.declaredMode && c.tonic === keySignatureTonic && c.mode === keySignatureMode
+          ? keyContext.declaredMode
+          : undefined
       };
     })
       .sort((a, b) => b.confidence - a.confidence)

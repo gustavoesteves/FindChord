@@ -2280,7 +2280,8 @@ export class StrategyGuidedHarmonizer {
     const measureIndexes = this.getMeasureIndexes(anchors);
     if (measureIndexes.length < 4) return [];
 
-    const modalChords = this.modalChordPalette(center);
+    const declaredMode = phraseContext.selectedCenter.declaredMode;
+    const modalChords = this.modalChordPalette(center, declaredMode);
     const measures = measureIndexes.map(measureIndex => {
       const measureAnchors = anchors.filter(anchor => anchor.measureIndex === measureIndex);
       return {
@@ -2299,7 +2300,9 @@ export class StrategyGuidedHarmonizer {
       measures,
       explanation: [
         "preserva centro recorrente sem depender de cadência dominante",
-        "usa bVII/bVI como cor modal estável",
+        declaredMode
+          ? `usa o modo ${declaredMode} declarado na partitura como campo de apoio`
+          : "usa bVII/bVI como cor modal estável",
         "mantém a harmonia próxima do campo modal sugerido pela melodia"
       ],
       bassLine: measures.flatMap(measure => measure.chords.map(chord => this.rootOfChord(chord) || chord)),
@@ -2316,9 +2319,46 @@ export class StrategyGuidedHarmonizer {
     return centerCount >= 2 && hasModalColor;
   }
 
-  private static modalChordPalette(center: string): string[] {
+  private static modalChordPalette(center: string, declaredMode?: string): string[] {
     const flatSeven = Note.pitchClass(Note.transpose(`${center}4`, "7m"));
     const flatSix = Note.pitchClass(Note.transpose(`${center}4`, "6m"));
+    const fourth = Note.pitchClass(Note.transpose(`${center}4`, "4P"));
+    const flatSecond = Note.pitchClass(Note.transpose(`${center}4`, "2m"));
+    const fifth = Note.pitchClass(Note.transpose(`${center}4`, "5P"));
+    const mode = declaredMode?.toLowerCase();
+
+    if (mode === "dorian") {
+      return [
+        `${center}m`,
+        fourth ? `${fourth}` : null,
+        flatSeven ? `${flatSeven}` : null
+      ].filter((chord): chord is string => chord !== null);
+    }
+
+    if (mode === "mixolydian") {
+      return [
+        `${center}`,
+        flatSeven ? `${flatSeven}` : null,
+        fifth ? `${fifth}m` : null
+      ].filter((chord): chord is string => chord !== null);
+    }
+
+    if (mode === "phrygian") {
+      return [
+        `${center}m`,
+        flatSecond ? `${flatSecond}` : null,
+        flatSeven ? `${flatSeven}m` : null
+      ].filter((chord): chord is string => chord !== null);
+    }
+
+    if (mode === "aeolian") {
+      return [
+        `${center}m`,
+        flatSix ? `${flatSix}` : null,
+        flatSeven ? `${flatSeven}` : null
+      ].filter((chord): chord is string => chord !== null);
+    }
+
     return [
       `${center}m`,
       flatSeven ? `${flatSeven}` : null,
