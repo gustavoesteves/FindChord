@@ -36,7 +36,8 @@ describe("Ranking calibration", () => {
     const donnaLee = primaryFor("d-025-Donna Lee.musicxml");
     const askMeNow = primaryFor("a-052-Ask me now.musicxml");
 
-    expect(donnaLee?.name).toBe("Estratégia — Harmonia básica I-IV-V");
+    expect(donnaLee?.name).toBe("Estratégia — Dominantes secundárias");
+    expect(donnaLee?.presentationLayer).toBe("basic");
     expect(donnaLee?.temporalCoverageRatio).toBe(1);
     expect(donnaLee?.unsupportedChromaticPenalty || 0).toBe(0);
     expect(askMeNow?.name).toBe("Estratégia — Harmonia básica I-IV-V");

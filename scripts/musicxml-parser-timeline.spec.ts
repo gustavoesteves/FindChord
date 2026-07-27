@@ -131,6 +131,72 @@ describe("MusicXML parser timeline", () => {
     ]);
   });
 
+  it("calcula beat de cifras pelo cursor temporal real do MusicXML", () => {
+    const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
+      <score-partwise version="4.0">
+        <part-list>
+          <score-part id="P1"><part-name>Music</part-name></score-part>
+        </part-list>
+        <part id="P1">
+          <measure number="1">
+            <attributes>
+              <divisions>480</divisions>
+              <time><beats>4</beats><beat-type>4</beat-type></time>
+            </attributes>
+            <harmony><root><root-step>C</root-step></root><kind>major</kind></harmony>
+            <forward><duration>960</duration></forward>
+            <harmony><root><root-step>G</root-step></root><kind>dominant</kind></harmony>
+            <forward><duration>960</duration></forward>
+          </measure>
+        </part>
+      </score-partwise>`);
+
+    expect(snapshot.harmonies.map((harmony: { harmony: string; beat: number; tickStart: number; tickEnd: number }) => ({
+      harmony: harmony.harmony,
+      beat: harmony.beat,
+      tickStart: harmony.tickStart,
+      tickEnd: harmony.tickEnd
+    }))).toEqual([
+      { harmony: "C", beat: 1, tickStart: 0, tickEnd: 960 },
+      { harmony: "G7", beat: 3, tickStart: 960, tickEnd: 1920 }
+    ]);
+  });
+
+  it("respeita offset de cifra sem mover o cursor da melodia", () => {
+    const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
+      <score-partwise version="4.0">
+        <part-list>
+          <score-part id="P1"><part-name>Music</part-name></score-part>
+        </part-list>
+        <part id="P1">
+          <measure number="1">
+            <attributes>
+              <divisions>480</divisions>
+              <time><beats>3</beats><beat-type>4</beat-type></time>
+            </attributes>
+            <harmony>
+              <root><root-step>D</root-step></root>
+              <kind>minor-seventh</kind>
+              <offset>480</offset>
+            </harmony>
+            <note><pitch><step>C</step><octave>4</octave></pitch><duration>1440</duration></note>
+          </measure>
+        </part>
+      </score-partwise>`);
+
+    expect(snapshot.harmonies[0]).toEqual(expect.objectContaining({
+      harmony: "Dm7",
+      beat: 2,
+      tickStart: 480,
+      tickEnd: 1440,
+      durationTicks: 960
+    }));
+    expect(snapshot.notes[0]).toEqual(expect.objectContaining({
+      tickStart: 0,
+      tickEnd: 1440
+    }));
+  });
+
   it("preserva timeline de armadura, modo e mudanca de metrica", () => {
     const snapshot = parseMusicXML(`<?xml version="1.0" encoding="UTF-8"?>
       <score-partwise version="4.0">

@@ -130,6 +130,16 @@ function stableScoreId(snapshot) {
   return crypto.createHash('sha1').update(identity).digest('hex').slice(0, 16);
 }
 
+function beatForTick(tick, measureStart, timeSignature) {
+  const [, beatTypeRaw] = String(timeSignature || '4/4').split('/');
+  const beatType = parseInt(beatTypeRaw || '4');
+  const beatTicks = Number.isFinite(beatType) && beatType > 0
+    ? 480 * (4 / beatType)
+    : 480;
+  const beat = 1 + ((tick - measureStart) / beatTicks);
+  return Math.round(beat * 100) / 100;
+}
+
 function parseMusicXML(xmlData) {
   const options = {
     ignoreAttributes: false,
@@ -264,14 +274,17 @@ function parseMusicXML(xmlData) {
         
         const fullChord = parseXMLHarmonyBlock(harmonyXml);
         if (fullChord) {
+          const offset = getText(el.harmony, 'offset');
+          const offsetTicks = offset ? parseInt(offset) * getTickScale() : 0;
+          const harmonyTick = measureCursor + offsetTicks;
           snapshot.harmonies.push({
             measure: mNumber,
-            beat: 1,
+            beat: beatForTick(harmonyTick, measureTickStart, currentTimeSignature),
             harmony: fullChord,
-            tickStart: measureCursor,
-            tickEnd: measureCursor // Will calculate after
+            tickStart: harmonyTick,
+            tickEnd: harmonyTick // Will calculate after
           });
-          measureMaxCursor = Math.max(measureMaxCursor, measureCursor);
+          measureMaxCursor = Math.max(measureMaxCursor, harmonyTick);
         }
       }
 

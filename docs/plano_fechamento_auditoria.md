@@ -68,13 +68,14 @@ Progresso:
 - foi adicionada regressão para impedir que uma nota no segundo acorde do compasso seja validada por um acorde anterior apenas porque ambos estão agregados em `measure.chords`;
 - comparação proposta-referência já usava overlap temporal; este avanço levou a mesma lógica para a cobertura melódica.
 - o comparador ganhou um modo estrito para auditoria temporal densa: quando a referência possui um acorde longo e a proposta possui eventos temporizados internos divergentes, ele pode ponderar cada evento pelo overlap real. Assim `C` por meio compasso + `Db7` por meio compasso contra `C` inteiro não aparece como alinhamento total nesse modo.
+- o parser MusicXML agora calcula `beat` de cifras a partir do cursor temporal real e respeita `<offset>` em `<harmony>`, preservando cifra em beat 3 após `<forward>` e beat 2 quando o offset desloca a cifra sem mover a melodia.
 
 Problemas residuais:
 
 - slots temporais do ramo experimental podem ser reconstruídos em vez de preservados diretamente;
 - decidir onde ativar o modo estrito de overlap sem prejudicar calibrações musicais em que a divisão interna preserva função aparente;
 - parte dos MusicXML ainda cai em fallback métrico;
-- cifras importadas podem chegar com `beat: 1` quando o parser não preserva a posição real.
+- cifras importadas ainda podem chegar com beat aproximado quando o MusicXML não traz posição confiável; quando há cursor/offset, o beat real já é preservado.
 
 Critério de aceite:
 
