@@ -31,6 +31,7 @@ Progresso:
 - os candidatos de materiais agora herdam o próximo acorde como alvo real quando a função contextual é dominante, permitindo resoluções como `B->C` e `F->E` mesmo quando o alvo é `Cmaj7`;
 - `guideToneResolutions` deixou de tratar nota comum idêntica como resolução, evitando pseudo-resoluções como `B->B` em dominantes que apontam para C;
 - o material de tons inteiros continua disponível para acordes aumentados sem sétima, separando cor aumentada de dominante alterada funcional.
+- o histórico curto de preparação agora atravessa diminutos de sensível intermediários: `Em7b5 -> G#dim7 -> A7` preserva alvo D menor e resolve `G->F`, sem transformar `G#dim7 -> A7` solto em D menor fabricado.
 
 Casos cobertos:
 
@@ -43,11 +44,13 @@ Casos cobertos:
 - `G13(b9) -> C`
 - `G13(#11) -> C`
 - `G13(b9,#11) -> C`
+- `Em7b5 -> G#dim7 -> A7 -> Dm` implícito
 
 Ponto técnico suspeito:
 
 - `contextualMaterialFunction.ts` possui predicados próprios de dominante.
 - `contextualMaterialChordContext.ts` agora preserva a família dominante interna para a matriz alterada coberta; o risco remanescente é manter essa matriz sincronizada com futuras qualidades do resolvedor.
+- o histórico contextual ainda é curto e deliberadamente conservador; novas inferências devem continuar exigindo preparação reconhecível para não capturar dominantes soltas.
 
 Critério de aceite:
 

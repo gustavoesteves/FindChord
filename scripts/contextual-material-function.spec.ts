@@ -330,6 +330,27 @@ describe("F202 funcao contextual de material", () => {
     expect(determineContextualHarmonicFunction(tonicDominantPreparedByLeadingDiminished, "C")).toBe("modal");
   });
 
+  it("preserva alvo menor quando iiø prepara dominante por diminuto de sensivel intermediario", () => {
+    const diminishedBridgeToMinorDominant = {
+      chord: "A7",
+      previousChord: "G#dim7",
+      chordHistory: ["Em7b5", "G#dim7"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+    const looseDiminishedBridge = {
+      chord: "A7",
+      previousChord: "G#dim7",
+      chordHistory: ["G#dim7"],
+      tonalCenter: { tonic: "C", mode: "major" as const }
+    };
+
+    expect(contextualResolutionTarget(diminishedBridgeToMinorDominant, "A")).toBe("D");
+    expect(contextualResolutionChord(diminishedBridgeToMinorDominant, "A", "D")).toBe("Dm");
+    expect(determineContextualHarmonicFunction(diminishedBridgeToMinorDominant, "A")).toBe("dominant");
+    expect(contextualResolutionTarget(looseDiminishedBridge, "A")).toBe("D");
+    expect(contextualResolutionChord(looseDiminishedBridge, "A", "D")).toBeUndefined();
+  });
+
   it("infere alvo menor quando iv prepara dominante sem proximo acorde", () => {
     const preparedMinorDominant = {
       chord: "C7",

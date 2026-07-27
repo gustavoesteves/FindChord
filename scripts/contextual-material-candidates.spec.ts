@@ -225,6 +225,26 @@ describe("F199 candidatas contextuais de material", () => {
     expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).not.toContain("G->F#");
   });
 
+  it("preserva resolucao menor quando iiø chega a dominante por diminuto de sensivel", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "A7",
+      previousChord: "G#dim7",
+      chordHistory: ["Em7b5", "G#dim7"],
+      tonalCenter: { tonic: "C", mode: "major" },
+      melody: ["C#", "G"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      harmonicFunction: "dominant",
+      resolutionTarget: "D"
+    }));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).toEqual(expect.arrayContaining([
+      "C#->D",
+      "G->F"
+    ]));
+    expect(candidates.flatMap(candidate => candidate.guideToneResolutions)).not.toContain("G->F#");
+  });
+
   it("infere alvo regional local quando IV prepara dominante sem proximo acorde", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "D7",

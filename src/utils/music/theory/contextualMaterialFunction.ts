@@ -116,12 +116,19 @@ function preparationChordCandidates(context: MaterialContext, root: string): str
   const history = context.chordHistory ?? [];
   const immediate = context.previousChord ?? history[history.length - 1];
   const immediateRoot = chordRoot(immediate);
-  if (!rootsEqual(immediateRoot, root)) return candidates;
+  const immediateBass = immediate ? chordBass(immediate) : undefined;
+  const immediateLeadsIntoRoot = !!immediate && isDiminishedLike(immediate)
+    && (
+      directedSemitones(immediateRoot, root) === 1
+      || directedSemitones(immediateBass, root) === 1
+    );
+  if (!rootsEqual(immediateRoot, root) && !immediateLeadsIntoRoot) return candidates;
 
   for (let index = history.length - 1; index >= 0; index--) {
     const chord = history[index];
     const historyRoot = chordRoot(chord);
     if (rootsEqual(historyRoot, root)) continue;
+    if (immediateLeadsIntoRoot && rootsEqual(historyRoot, immediateRoot)) continue;
     pushCandidate(chord);
     break;
   }
