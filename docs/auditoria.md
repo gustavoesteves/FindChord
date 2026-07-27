@@ -18,7 +18,7 @@ Validações recentes recorrentes:
 
 - `npm run lint`
 - `npm run build`
-- `npm run test:curated` — estado recente: `144` arquivos aprovados, `2` ignorados; `828` testes aprovados, `6` ignorados
+- `npm run test:curated` — estado recente: `144` arquivos aprovados, `2` ignorados; `870` testes aprovados, `6` ignorados
 - specs focadas por achado
 
 Observação: a suíte curada já passou repetidas vezes, mas alguns testes pesados ainda podem estourar timeout quando rodam sob carga e passar isolados em seguida. Isso permanece como risco de estabilidade de gate, não como regressão musical conhecida.

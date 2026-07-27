@@ -12,10 +12,10 @@ Não há P0 aberto. Os P1 principais já possuem remediação ou guardrail opera
 
 | Prioridade | Item | Estado real |
 |---|---|---|
-| 1 | `FC-HZ-12` | Ainda há risco de classificar dominantes alteradas válidas como `color` ou perder notas-guia por divergência entre resolvedor, registry e contexto. |
-| 2 | `FC-HZ-10` | Propostas densas ainda podem ser validadas/comparadas no tempo errado se a análise usar união por compasso em vez de overlap evento-nota. |
-| 3 | `FC-HZ-11` | Ainda falta separar melhor cadência real de baixo estrutural/planar e representar modos além de maior/menor quando o MusicXML trouxer essa informação. |
-| 4 | MuseScore | Happy path já foi usado na prática, mas restam testes manuais específicos de troca de partitura e renovação de sessão. |
+| 1 | MuseScore | Happy path já foi usado na prática, mas restam testes manuais específicos de troca de partitura e renovação de sessão. |
+| 2 | `FC-HZ-10` | Estrutura temporal está coberta para overlap, eventos e beat importado; resta calibrar intenção rítmica explícita em estratégias densas sem ataques melódicos suficientes. |
+| 3 | `FC-HZ-11` | Centro/cadência e modos declarados têm regressões; resta validar geração modal em repertório real quando houver MusicXML com `<mode>` modal explícito. |
+| 4 | `FC-HZ-12` | Dominantes alteradas, notas-guia e histórico curto têm regressões; novas inferências devem seguir conservadoras e orientadas por corpus. |
 | 5 | `P2-10` | Busca de voicings pode bloquear em sete cordas/acordes extensos; prioridade depende do uso real. |
 | 6 | E2E amplo | Importante para manutenção, mas deve ficar como P3/roadmap, não bloqueador do fechamento. |
 
@@ -52,6 +52,11 @@ Ponto técnico suspeito:
 - `contextualMaterialChordContext.ts` agora preserva a família dominante interna para a matriz alterada coberta; o risco remanescente é manter essa matriz sincronizada com futuras qualidades do resolvedor.
 - o histórico contextual ainda é curto e deliberadamente conservador; novas inferências devem continuar exigindo preparação reconhecível para não capturar dominantes soltas.
 
+Estado de fechamento:
+
+- o bloco possui regressões para a matriz crítica, notas-guia, alvo real, dominantes aumentadas/alteradas, dominantes soltas e recuperação conservadora de preparação recente;
+- novos avanços aqui devem ser guiados por falhas de corpus, não por expansão especulativa de regras.
+
 Critério de aceite:
 
 - Todo dominante alterado com alvo real deve ser `dominant`.
@@ -77,6 +82,11 @@ Problemas residuais:
 - parte dos MusicXML ainda cai em fallback métrico;
 - cifras importadas ainda podem chegar com beat aproximado quando o MusicXML não traz posição confiável; quando há cursor/offset, o beat real já é preservado.
 
+Estado de fechamento:
+
+- o bloco tem regressões para overlap evento-nota, comparação temporal estrita de auditoria, eventos gerados, aplicação no Writer e beat importado por cursor/offset;
+- a pendência real é qualitativa: quando a melodia não oferece ataques suficientes, a estratégia densa ainda precisa declarar intenção rítmica em vez de depender apenas de divisão proporcional.
+
 Critério de aceite:
 
 - comparação proposta-referência deve usar overlap temporal;
@@ -99,6 +109,11 @@ Progresso:
 Problemas residuais:
 
 - validar a geração modal dedicada contra casos reais de repertório sem transformar toda cor modal em cadência funcional.
+
+Estado de fechamento:
+
+- o bloco possui regressões locais para plagal planar versus plagal final, cadências não autênticas, centro declarado, modos explícitos e geração modal por `declaredMode`;
+- o catálogo atual não contém `<mode>` modal explícito em MusicXML real; a validação de repertório fica condicionada à entrada de arquivo real com esse dado.
 
 Critério de aceite:
 
@@ -180,9 +195,8 @@ A auditoria pode ser considerada fechada quando:
 
 ## Próxima sequência recomendada
 
-1. Fechar matriz de dominantes alteradas de `FC-HZ-12`.
-2. Corrigir nota-guia de `7_sharp5`/dominantes aumentadas.
-3. Criar comparação temporal por overlap para propostas densas de `FC-HZ-10`.
-4. Criar classificador local cadência versus baixo planar para `FC-HZ-11`.
-5. Executar e registrar os dois testes manuais MuseScore.
-6. Consolidar documentos e declarar E2E amplo/Worker como roadmap, se ainda não forem necessários para uso real.
+1. Executar e registrar os dois testes manuais MuseScore: troca de partitura sem ressincronizar e renovação de sessão após reiniciar a bridge.
+2. Calibrar intenção rítmica explícita para estratégias densas quando não houver ataques melódicos suficientes.
+3. Validar geração modal declarada em repertório real assim que houver MusicXML com `<mode>` modal explícito.
+4. Tratar novas falhas de `FC-HZ-12` apenas a partir de corpus ou caso musical concreto, mantendo o gate conservador contra dominantes soltas.
+5. Declarar E2E amplo e Worker/cancelamento de voicings como roadmap se não forem necessários para o uso real imediato.
