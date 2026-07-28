@@ -412,6 +412,90 @@ describe("MuseScore bridge ephemeral server", () => {
     }
   }, 10000);
 
+  it("keeps mutations scoped to the renewed plugin session", async () => {
+    let bridge: Awaited<ReturnType<typeof waitForBridge>>;
+    try {
+      bridge = await waitForBridge();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("listen EPERM")) {
+        expect(message).toContain("listen EPERM");
+        return;
+      }
+      throw error;
+    }
+
+    try {
+      const dashboardSession = await fetch(`${bridge.baseUrl}/api/v1/session`, {
+        headers: {
+          Origin: "http://localhost:5173",
+          "X-FindChord-Client": "compose-suite"
+        }
+      });
+      const dashboard = await dashboardSession.json() as {
+        dashboardToken: string;
+      };
+
+      const firstPluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
+      const firstPlugin = await firstPluginSession.json() as {
+        pluginSessionId: string;
+        pluginToken: string;
+      };
+
+      const renewedPluginSession = await fetch(`${bridge.baseUrl}/api/v1/plugin-session`);
+      const renewedPlugin = await renewedPluginSession.json() as {
+        pluginSessionId: string;
+        pluginToken: string;
+      };
+      expect(renewedPlugin.pluginSessionId).not.toBe(firstPlugin.pluginSessionId);
+
+      const mutation = {
+        protocolVersion: "1.0",
+        messageType: "MUTATION",
+        payload: {
+          type: "MUTATION",
+          commandId: "cmd-renewed-plugin-only",
+          targetPluginSessionId: renewedPlugin.pluginSessionId,
+          expiresAt: Date.now() + 8000,
+          action: "INSERT_CHORD",
+          targetTick: 0,
+          chordSymbol: "G7"
+        }
+      };
+      const send = await fetch(`${bridge.baseUrl}/api/v1/send`, {
+        method: "POST",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Content-Type": "application/json",
+          "X-FindChord-Client": "compose-suite",
+          "X-FindChord-Session": dashboard.dashboardToken
+        },
+        body: JSON.stringify(mutation)
+      });
+      expect(send.status).toBe(200);
+
+      const consumeOldSession = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${firstPlugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": firstPlugin.pluginToken,
+          "X-FindChord-Plugin-Session": firstPlugin.pluginSessionId
+        }
+      });
+      expect(consumeOldSession.status).toBe(200);
+      await expect(consumeOldSession.json()).resolves.toEqual([]);
+
+      const consumeRenewedSession = await fetch(`${bridge.baseUrl}/api/v1/consume?pluginSessionId=${renewedPlugin.pluginSessionId}`, {
+        headers: {
+          "X-FindChord-Plugin-Token": renewedPlugin.pluginToken,
+          "X-FindChord-Plugin-Session": renewedPlugin.pluginSessionId
+        }
+      });
+      expect(consumeRenewedSession.status).toBe(200);
+      await expect(consumeRenewedSession.json()).resolves.toEqual([mutation]);
+    } finally {
+      await stopBridge(bridge.process);
+    }
+  }, 10000);
+
   it("rejects command acknowledgements that were not leased to the plugin", async () => {
     let bridge: Awaited<ReturnType<typeof waitForBridge>>;
     try {

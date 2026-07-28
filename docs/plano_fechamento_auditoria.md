@@ -129,7 +129,8 @@ Progresso:
 
 - envelope operacional documentado em `docs/musescore_integration_envelope.md`;
 - limitações declaradas: uma instância, uma partitura ativa/sincronizada, ressincronizar ao trocar partitura, inserção de cifra sem diagrama de fretboard;
-- cobertura automatizada existente registrada como suporte, separada dos dois testes manuais que dependem do runtime real.
+- cobertura automatizada existente registrada como suporte, separada dos dois testes manuais que dependem do runtime real;
+- regressão efêmera garante que uma mutação endereçada à sessão renovada do plugin não é consumida pela sessão antiga, preservando o comando para o plugin ativo.
 
 Testes manuais mínimos:
 
@@ -195,7 +196,7 @@ A auditoria pode ser considerada fechada quando:
 
 ## Próxima sequência recomendada
 
-1. Executar e registrar os dois testes manuais MuseScore: troca de partitura sem ressincronizar e renovação de sessão após reiniciar a bridge.
+1. Executar e registrar os dois testes manuais MuseScore no runtime real: troca de partitura sem ressincronizar e renovação de sessão após reiniciar a bridge.
 2. Calibrar intenção rítmica explícita para estratégias densas quando não houver ataques melódicos suficientes.
 3. Validar geração modal declarada em repertório real assim que houver MusicXML com `<mode>` modal explícito.
 4. Tratar novas falhas de `FC-HZ-12` apenas a partir de corpus ou caso musical concreto, mantendo o gate conservador contra dominantes soltas.

@@ -34,6 +34,7 @@ Este documento registra o contrato operacional atual da integração Find Chord 
 - Bridge em porta efêmera.
 - Sessão de plugin com `pluginSessionId`.
 - Mutações endereçadas por `targetPluginSessionId` e `targetScoreId`.
+- Mutação endereçada à sessão renovada não é consumida pela sessão antiga.
 - ACK rejeitado quando vem de sessão diferente.
 - Comando endereçado ao score B não é entregue quando o score ativo conhecido é A.
 - Timeout, ACK rejeitado e queda de conexão cobertos por fault injection.
