@@ -79,6 +79,7 @@ export interface ReharmonizationProposal {
   routeDistanceEvidence?: string[];
   temporalCoverageRatio?: number;
   temporalCoveragePenalty?: number;
+  rhythmicUncertaintyPenalty?: number;
   unsupportedChromaticPenalty?: number;
   chromaticLegibilityPenalty?: number;
   directedChromaticRankBonus?: number;

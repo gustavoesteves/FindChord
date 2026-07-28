@@ -193,6 +193,7 @@ function routeAwareRankScore(proposal: ReharmonizationProposal): number {
   const bassBonus = proposal.bassLineRankBonus ?? 0;
   const apparentReferenceBonus = proposal.apparentFunctionReferenceBonus ?? 0;
   const temporalCoveragePenalty = proposal.temporalCoveragePenalty ?? 0;
+  const rhythmicUncertaintyPenalty = proposal.rhythmicUncertaintyPenalty ?? 0;
   const unsupportedChromaticPenalty = proposal.unsupportedChromaticPenalty ?? 0;
   const chromaticLegibilityPenalty = proposal.chromaticLegibilityPenalty ?? 0;
   const directedChromaticRankBonus = proposal.directedChromaticRankBonus ?? 0;
@@ -206,10 +207,33 @@ function routeAwareRankScore(proposal: ReharmonizationProposal): number {
     + directedChromaticRankBonus
     + dominantTensionRankBonus
     - temporalCoveragePenalty
+    - rhythmicUncertaintyPenalty
     - unsupportedChromaticPenalty
     - chromaticLegibilityPenalty
     - unsupportedDominantTensionPenalty
   ).toFixed(3));
+}
+
+function rhythmicUncertaintyPenalty(
+  proposal: ReharmonizationProposal
+): Pick<ReharmonizationProposal, "rhythmicUncertaintyPenalty"> & { evidence: string[] } {
+  const hasReferenceSupport = (proposal.apparentFunctionReferenceBonus || 0) > 0
+    || proposal.kind === "reference"
+    || proposal.referenceRelation === "reference-rhythm-preserved";
+  if (hasReferenceSupport) {
+    return { rhythmicUncertaintyPenalty: 0, evidence: [] };
+  }
+
+  const hasDenseMeasure = proposal.measures.some(measure => measure.chords.length > 1);
+  const hasUniformDenseEvent = (proposal.events || []).some(event => event.timingSource === "uniform-division");
+  if (!hasDenseMeasure || !hasUniformDenseEvent) {
+    return { rhythmicUncertaintyPenalty: 0, evidence: [] };
+  }
+
+  return {
+    rhythmicUncertaintyPenalty: 0.05,
+    evidence: ["Ranking: ritmo harmônico denso por divisão uniforme fica atrás de alternativas mais ancoradas"]
+  };
 }
 
 function temporalCoveragePenalty(
@@ -529,6 +553,7 @@ export function annotateProposalVoiceLeading(
     referenceRootAgreement: referenceBonus.referenceRootAgreement
   };
   const temporalCoverage = temporalCoveragePenalty(withRankingContext, anchors);
+  const rhythmicUncertainty = rhythmicUncertaintyPenalty(withRankingContext);
   const unsupportedChromatic = unsupportedChromaticPenalty(withRankingContext);
   const chromaticLegibility = chromaticLegibilityPenalty(withRankingContext, transitionReports);
   const directedChromatic = directedChromaticRanking(withRankingContext, transitionReports);
@@ -545,6 +570,7 @@ export function annotateProposalVoiceLeading(
     ...apparentEvidence.slice(0, 2),
     ...referenceBonus.evidence,
     ...temporalCoverage.evidence,
+    ...rhythmicUncertainty.evidence,
     ...unsupportedChromatic.evidence,
     ...chromaticLegibility.evidence,
     ...directedChromatic.evidence,
@@ -563,6 +589,7 @@ export function annotateProposalVoiceLeading(
     ...routeDistance,
     temporalCoverageRatio: temporalCoverage.temporalCoverageRatio,
     temporalCoveragePenalty: temporalCoverage.temporalCoveragePenalty,
+    rhythmicUncertaintyPenalty: rhythmicUncertainty.rhythmicUncertaintyPenalty,
     unsupportedChromaticPenalty: unsupportedChromatic.unsupportedChromaticPenalty,
     chromaticLegibilityPenalty: chromaticLegibility.chromaticLegibilityPenalty,
     directedChromaticRankBonus: directedChromatic.directedChromaticRankBonus,

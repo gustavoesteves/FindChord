@@ -368,6 +368,71 @@ describe("F28 Voice Leading Proposal Ranking", () => {
     expect(ranked[0].voiceLeadingScore || 0).toBeGreaterThan(ranked[1].voiceLeadingScore || 0);
   });
 
+  it("keeps uniformly split dense rhythm behind melodically anchored rhythm", () => {
+    const denseMeasures = [
+      { measureIndex: 1, chords: ["Dm7", "G7"] },
+      { measureIndex: 2, chords: ["Cmaj7"] }
+    ];
+    const denseEvents = (timingSource: "uniform-division" | "melodic-attack") => [
+      {
+        id: `${timingSource}-m1-c0`,
+        measureIndex: 1,
+        beat: 1,
+        chord: "Dm7",
+        chordIndex: 0,
+        occurrenceInMeasure: 0,
+        tickStart: 0,
+        tickEnd: 960,
+        durationTicks: 960,
+        timingSource
+      },
+      {
+        id: `${timingSource}-m1-c1`,
+        measureIndex: 1,
+        beat: 3,
+        chord: "G7",
+        chordIndex: 1,
+        occurrenceInMeasure: 1,
+        tickStart: 960,
+        tickEnd: 1920,
+        durationTicks: 960,
+        timingSource
+      },
+      {
+        id: `${timingSource}-m2-c0`,
+        measureIndex: 2,
+        beat: 1,
+        chord: "Cmaj7",
+        chordIndex: 2,
+        occurrenceInMeasure: 0,
+        tickStart: 1920,
+        tickEnd: 3840,
+        durationTicks: 1920,
+        timingSource: "measure-level" as const
+      }
+    ];
+
+    const ranked = rankReharmonizationProposalsByVoiceLeading([
+      {
+        ...controlledProposal("uniform-dense", "Estratégia — ii-V compacto", ["Dm7", "G7", "Cmaj7"]),
+        measures: denseMeasures,
+        events: denseEvents("uniform-division")
+      },
+      {
+        ...controlledProposal("anchored-dense", "Estratégia — ii-V compacto", ["Dm7", "G7", "Cmaj7"]),
+        measures: denseMeasures,
+        events: denseEvents("melodic-attack")
+      }
+    ], phraseContext, anchors);
+
+    const uniform = ranked.find(item => item.id === "uniform-dense");
+    expect(ranked[0].id).toBe("anchored-dense");
+    expect(uniform?.rhythmicUncertaintyPenalty).toBeGreaterThan(0);
+    expect(uniform?.explanation).toContain(
+      "Ranking: ritmo harmônico denso por divisão uniforme fica atrás de alternativas mais ancoradas"
+    );
+  });
+
   it("compares original dominant, SubV7, and ii-SubV7 cadences by voice leading", () => {
     const ranked = rankReharmonizationProposalsByVoiceLeading([
       proposal("subv7", ["C", "F", "Db7", "C"]),

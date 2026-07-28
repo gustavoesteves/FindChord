@@ -75,6 +75,7 @@ Progresso:
 - o comparador ganhou um modo estrito para auditoria temporal densa: quando a referência possui um acorde longo e a proposta possui eventos temporizados internos divergentes, ele pode ponderar cada evento pelo overlap real. Assim `C` por meio compasso + `Db7` por meio compasso contra `C` inteiro não aparece como alinhamento total nesse modo.
 - o parser MusicXML agora calcula `beat` de cifras a partir do cursor temporal real e respeita `<offset>` em `<harmony>`, preservando cifra em beat 3 após `<forward>` e beat 2 quando o offset desloca a cifra sem mover a melodia.
 - eventos temporais gerados agora carregam `timingSource`: `reference`, `measure-level`, `melodic-attack`, `uniform-division` ou `source-timeline`, separando evidência rítmica real de divisão proporcional.
+- o ranking aplica uma penalidade leve quando uma proposta densa depende de `uniform-division`, preferindo alternativas com ritmo ancorado por melodia ou referência quando o restante empata.
 
 Problemas residuais:
 
@@ -86,7 +87,7 @@ Problemas residuais:
 Estado de fechamento:
 
 - o bloco tem regressões para overlap evento-nota, comparação temporal estrita de auditoria, eventos gerados, aplicação no Writer e beat importado por cursor/offset;
-- a pendência real é qualitativa: quando a melodia não oferece ataques suficientes, a estratégia densa já marca `uniform-division`, mas ainda precisa transformar essa informação em decisão musical/ranking/apresentação.
+- a pendência real é qualitativa: quando a melodia não oferece ataques suficientes, a estratégia densa já marca e penaliza levemente `uniform-division`, mas ainda precisa transformar essa informação em apresentação clara para o compositor.
 
 Critério de aceite:
 
