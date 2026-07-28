@@ -39,4 +39,26 @@ describe("F228 painel ativo de material do acorde", () => {
     expect(panel.studyLine).toBeUndefined();
     expect(panel.theory.desc).toBeTruthy();
   });
+
+  it("prioriza uma linha tocavel perto do shape desenhado", () => {
+    const panel = buildWriterActiveMaterialPanel({
+      sourceType: "lydian",
+      chordRoot: "C",
+      sourceNotes: ["C", "D", "E", "F#", "G", "A", "B"],
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(panel.studyLine).toMatchObject({
+      name: "Linha perto da forma",
+      theoryDesc: "Usa o shape desenhado como ponto de partida e percorre notas do material na mesma região da mão."
+    });
+    expect(panel.studyLine?.notes.every(note => /\d$/.test(note))).toBe(true);
+    expect(panel.studyLine?.positions?.every(position => position.fret >= 7 && position.fret <= 12)).toBe(true);
+    expect(panel.studyLine?.positions?.some(position => (
+      [[0, 8], [1, 8], [2, 9], [3, 10]].some(([stringIndex, fret]) => (
+        position.stringIndex === stringIndex && position.fret === fret
+      ))
+    ))).toBe(true);
+  });
 });

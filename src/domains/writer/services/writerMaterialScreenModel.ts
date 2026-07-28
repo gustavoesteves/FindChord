@@ -20,6 +20,8 @@ export interface WriterMaterialScreenModelInput {
   notationStyle: WriterNotationStyle;
   preferredRouteId: WriterMaterialRouteId;
   selectedMaterialSource: MaterialSourceMap | null;
+  tuning?: string[];
+  selectedFrets?: (number | null)[];
 }
 
 export function chordNameForWriterMaterialScreen(
@@ -47,6 +49,9 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
     ? buildWriterActiveMaterialPanel({
         sourceType: focusedMaterialSource.type,
         chordRoot: input.activeChord.root,
+        sourceNotes: focusedMaterialSource.notes,
+        tuning: input.tuning,
+        selectedFrets: input.selectedFrets,
         candidate: materialCandidateByType.get(focusedMaterialSource.type)
       })
     : null;

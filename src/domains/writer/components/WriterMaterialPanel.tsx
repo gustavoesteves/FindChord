@@ -61,7 +61,9 @@ export default function WriterMaterialPanel() {
     activeChord,
     notationStyle,
     preferredRouteId: activeRouteId,
-    selectedMaterialSource
+    selectedMaterialSource,
+    tuning,
+    selectedFrets
   });
 
   const selectMaterialSource = (source: MaterialSourceMap) => {

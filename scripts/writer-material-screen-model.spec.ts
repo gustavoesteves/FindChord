@@ -101,4 +101,22 @@ describe("F253 modelo da tela de materiais do acorde", () => {
       buttonLabel: "Ouvir ideia"
     });
   });
+
+  it("usa o shape desenhado para criar a acao tocavel do material", () => {
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cmaj7,
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "Linha perto da forma",
+      eyebrowLabel: "Tocar agora",
+      buttonLabel: "Ouvir ideia"
+    });
+    expect(model.activeMaterialAction?.notes.every(note => /\d$/.test(note))).toBe(true);
+  });
 });
