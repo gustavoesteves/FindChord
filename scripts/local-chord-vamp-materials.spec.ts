@@ -63,6 +63,20 @@ function minorAdd9Chord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   });
 }
 
+function minorThirteenthChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "minor13th",
+    intervals: ["1P", "3m", "5P", "7m", "9M", "11P", "13M"],
+    notes: ["C", "Eb", "G", "Bb", "D", "F", "A"],
+    drawnNotes: ["C", "Eb", "G", "Bb", "D", "F", "A"],
+    notationInternational: "Cm13",
+    notationBrazilian: "Cm7(13)",
+    notationAcademic: "C-13",
+    ...partial
+  });
+}
+
 function susChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "G",
@@ -143,6 +157,20 @@ function majorChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
     notationInternational: "Cmaj7",
     notationBrazilian: "C7M",
     notationAcademic: "CΔ7",
+    ...partial
+  });
+}
+
+function majorThirteenthChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "major13th",
+    intervals: ["1P", "3M", "5P", "7M", "9M", "11P", "13M"],
+    notes: ["C", "E", "G", "B", "D", "F", "A"],
+    drawnNotes: ["C", "E", "G", "B", "D", "F", "A"],
+    notationInternational: "Cmaj13",
+    notationBrazilian: "C7M(13)",
+    notationAcademic: "CΔ13",
     ...partial
   });
 }
@@ -314,6 +342,29 @@ describe("F304 vocabulario local de vamp", () => {
     ]);
   });
 
+  it("oferece extensoes menores com b7 preservada como gestos de retorno", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(minorThirteenthChord());
+    const colors = candidates.find(candidate => candidate.type === "minor seventh color resolutions");
+
+    expect(colors).toMatchObject({
+      intent: "functional",
+      name: "C cores menores com setima"
+    });
+    expect(colors?.melodicMaterials[0]).toMatchObject({
+      label: "m9/m13 / cores com b7",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9->b3", "13->5", "b7 preservada"],
+      resolutionTargets: ["Eb", "G"]
+    });
+    expect(colors?.melodicMaterials[0]?.cells).toEqual([
+      "C-Eb-G-Bb",
+      "D->Eb",
+      "A->G",
+      "Bb-D-Eb-A-G"
+    ]);
+  });
+
   it("oferece material quartal pentatonico para vamp sus", () => {
     const candidates = buildLocalChordVampMaterialCandidates(susChord());
     const susMaterial = candidates.find(candidate => candidate.type === "sus quartal pentatonic");
@@ -461,6 +512,29 @@ describe("F304 vocabulario local de vamp", () => {
       "A->G",
       "D->E",
       "A-D-E-G"
+    ]);
+  });
+
+  it("oferece extensoes maiores com 7M preservada como gestos de retorno", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(majorThirteenthChord());
+    const colors = candidates.find(candidate => candidate.type === "major seventh color resolutions");
+
+    expect(colors).toMatchObject({
+      intent: "functional",
+      name: "C cores maiores com setima"
+    });
+    expect(colors?.melodicMaterials[0]).toMatchObject({
+      label: "maj9/maj13 / cores com 7M",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9->3", "13->5", "7M preservada"],
+      resolutionTargets: ["E", "G"]
+    });
+    expect(colors?.melodicMaterials[0]?.cells).toEqual([
+      "C-E-G-B",
+      "D->E",
+      "A->G",
+      "B-D-E-A-G"
     ]);
   });
 

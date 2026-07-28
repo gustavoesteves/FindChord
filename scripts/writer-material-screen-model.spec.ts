@@ -472,6 +472,90 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
   });
 
+  it("expõe maj13 como 9 retornando para a terça com 7M preservada", () => {
+    const activeChord = cChord({
+      quality: "major13th",
+      intervals: ["1P", "3M", "5P", "7M", "9M", "11P", "13M"],
+      notes: ["C", "E", "G", "B", "D", "F", "A"],
+      drawnNotes: ["C", "E", "G", "B", "D", "F", "A"],
+      notationInternational: "Cmaj13"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const colors = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "major seventh color resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: colors?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("major seventh color resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->E",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "maj9/maj13 / cores com 7M",
+      realizedCell: {
+        notation: "D->E"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "E"]);
+  });
+
+  it("expõe m13 como 9 retornando para b3 com b7 preservada", () => {
+    const activeChord = cChord({
+      quality: "minor13th",
+      intervals: ["1P", "3m", "5P", "7m", "9M", "11P", "13M"],
+      notes: ["C", "Eb", "G", "Bb", "D", "F", "A"],
+      drawnNotes: ["C", "Eb", "G", "Bb", "D", "F", "A"],
+      notationInternational: "Cm13"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const colors = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "minor seventh color resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: colors?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 8, 8, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("minor seventh color resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->Eb",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "m9/m13 / cores com b7",
+      realizedCell: {
+        notation: "D->Eb"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({

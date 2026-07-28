@@ -47,6 +47,11 @@ const MINOR_ADDED_COLOR_QUALITIES = new Set<ChordQuality>([
   "minorAdd9"
 ]);
 
+const MINOR_SEVENTH_COLOR_QUALITIES = new Set<ChordQuality>([
+  "minor9th",
+  "minor13th"
+]);
+
 const SUS_VAMP_QUALITIES = new Set<ChordQuality>([
   "sus4",
   "sus2",
@@ -81,6 +86,11 @@ const MAJOR_ADDED_COLOR_QUALITIES = new Set<ChordQuality>([
   "major6th",
   "add9",
   "69"
+]);
+
+const MAJOR_SEVENTH_COLOR_QUALITIES = new Set<ChordQuality>([
+  "major9th",
+  "major13th"
 ]);
 
 const NATURAL_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
@@ -362,6 +372,50 @@ function minorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
   };
 }
 
+function minorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!MINOR_SEVENTH_COLOR_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const minorThird = pitch(chord.root, "3m");
+  const fifth = pitch(chord.root, "5P");
+  const flatSeven = pitch(chord.root, "7m");
+  const ninth = pitch(chord.root, "9M");
+  const thirteenth = pitch(chord.root, "13M");
+  const cells = [
+    noteCell([root, minorThird, fifth, flatSeven]),
+    directedCell(ninth, minorThird),
+    chord.quality === "minor13th" ? directedCell(thirteenth, fifth) : "",
+    chord.quality === "minor13th" ? noteCell([flatSeven, ninth, minorThird, thirteenth, fifth]) : ""
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} cores menores com setima`, "minor seventh color resolutions", cells);
+  const practiceHint = `Preserve b3 e b7 de ${chord.notationInternational}; use 9 e 13 como cores que retornam para b3 ou 5.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "functional",
+    confidence: 0.76,
+    melodicMaterials: [{
+      label: "m9/m13 / cores com b7",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: [
+        "9->b3",
+        ...(chord.quality === "minor13th" ? ["13->5"] : []),
+        "b7 preservada"
+      ],
+      resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
 function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!SUS_VAMP_QUALITIES.has(chord.quality)) return null;
 
@@ -610,6 +664,50 @@ function majorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
   };
 }
 
+function majorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!MAJOR_SEVENTH_COLOR_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const third = pitch(chord.root, "3M");
+  const fifth = pitch(chord.root, "5P");
+  const majorSeven = pitch(chord.root, "7M");
+  const ninth = pitch(chord.root, "9M");
+  const thirteenth = pitch(chord.root, "13M");
+  const cells = [
+    noteCell([root, third, fifth, majorSeven]),
+    directedCell(ninth, third),
+    chord.quality === "major13th" ? directedCell(thirteenth, fifth) : "",
+    chord.quality === "major13th" ? noteCell([majorSeven, ninth, third, thirteenth, fifth]) : ""
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} cores maiores com setima`, "major seventh color resolutions", cells);
+  const practiceHint = `Preserve 3 e 7M de ${chord.notationInternational}; use 9 e 13 como cores que retornam para 3 ou 5.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "functional",
+    confidence: 0.76,
+    melodicMaterials: [{
+      label: "maj9/maj13 / cores com 7M",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: [
+        "9->3",
+        ...(chord.quality === "major13th" ? ["13->5"] : []),
+        "7M preservada"
+      ],
+      resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
 function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!NATURAL_DOMINANT_VAMP_QUALITIES.has(chord.quality)) return null;
 
@@ -832,6 +930,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     build: minorAddedColorResolutionCandidate
   },
   {
+    id: "minor-seventh-color-resolutions",
+    sourceType: "minor seventh color resolutions",
+    label: "m9/m13 / cores com b7",
+    qualities: Array.from(MINOR_SEVENTH_COLOR_QUALITIES),
+    intent: "functional",
+    build: minorSeventhColorResolutionCandidate
+  },
+  {
     id: "sus-quartal-pentatonic",
     sourceType: "sus quartal pentatonic",
     label: "sus quartal / pentatônico",
@@ -878,6 +984,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     qualities: Array.from(MAJOR_ADDED_COLOR_QUALITIES),
     intent: "functional",
     build: majorAddedColorResolutionCandidate
+  },
+  {
+    id: "major-seventh-color-resolutions",
+    sourceType: "major seventh color resolutions",
+    label: "maj9/maj13 / cores com 7M",
+    qualities: Array.from(MAJOR_SEVENTH_COLOR_QUALITIES),
+    intent: "functional",
+    build: majorSeventhColorResolutionCandidate
   },
   {
     id: "dominant-upper-triad-colors",
