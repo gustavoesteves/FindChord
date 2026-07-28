@@ -389,12 +389,16 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(susMaterial?.melodicMaterials[0]).toMatchObject({
       label: "sus quartal / pentatônico",
-      resolutionTargets: []
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["4 suspensa", "4->5", "b7 preservada", "sem terça"],
+      resolutionTargets: ["G", "D"]
     });
     expect(susMaterial?.melodicMaterials[0]?.cells).toEqual([
       "G-C-F",
-      "A-D-G",
-      "D-G-C"
+      "C->D",
+      "A->G",
+      "F-A-C-D"
     ]);
   });
 

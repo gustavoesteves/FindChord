@@ -425,15 +425,23 @@ function minorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChord
 function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!SUS_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const root = simplifyNote(chord.root);
+  const second = pitch(chord.root, "2M");
+  const fourth = pitch(chord.root, "4P");
+  const fifth = pitch(chord.root, "5P");
+  const flatSeven = pitch(chord.root, "7m");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "4P"), pitch(chord.root, "7m")]),
-    noteCell([pitch(chord.root, "2M"), pitch(chord.root, "5P"), chord.root]),
-    noteCell([pitch(chord.root, "5P"), chord.root, pitch(chord.root, "4P")])
+    chord.quality === "sus2"
+      ? noteCell([root, second, fifth])
+      : noteCell([root, fourth, chord.quality === "dominant7sus4" ? flatSeven : fifth]),
+    chord.quality !== "sus2" ? directedCell(fourth, fifth) : "",
+    chord.quality !== "sus4" ? directedCell(second, root) : "",
+    chord.quality === "dominant7sus4" ? noteCell([flatSeven, second, fourth, fifth]) : ""
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} quartal sus pentatonico`, "sus quartal pentatonic", cells);
-  const practiceHint = `Empilhe quartas e pentatonica sus sobre ${chord.root}; mantenha a quarta como identidade em vez de resolver rapido para a terca.`;
+  const practiceHint = `Mantenha a suspensão de ${chord.notationInternational}; use 2 e 4 como tensão estável e retorne para 1 ou 5 sem definir terça.`;
 
   return {
     ...source,
@@ -445,8 +453,12 @@ function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMat
       source: "pentatonic",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["4 suspensa", "9", "b7 como cor mixolídia"],
-      resolutionTargets: [],
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: chord.quality === "sus2"
+        ? ["2 suspensa", "2->1", "sem terça"]
+        : ["4 suspensa", "4->5", ...(chord.quality === "dominant7sus4" ? ["b7 preservada"] : []), "sem terça"],
+      resolutionTargets: uniqueNotes([root, fifth].filter((note): note is string => !!note)),
       practiceHint
     }],
     practiceHint

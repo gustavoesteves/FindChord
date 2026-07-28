@@ -601,6 +601,53 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "B"]);
   });
 
+  it("expõe dominante sus como suspensão que retorna para a quinta sem terça", () => {
+    const activeChord = cChord({
+      root: "G",
+      quality: "dominant7sus4",
+      intervals: ["1P", "4P", "5P", "7m"],
+      notes: ["G", "C", "D", "F"],
+      drawnNotes: ["G", "C", "D", "F"],
+      notationInternational: "G7sus4",
+      notationBrazilian: "G7sus4",
+      notationAcademic: "G7sus4"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: null
+    });
+    const sus = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "sus quartal pentatonic"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: sus?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [3, 3, 5, 3, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("sus quartal pentatonic");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "C->D",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "sus quartal / pentatônico",
+      realizedCell: {
+        notation: "C->D"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("B");
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("Bb");
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["C", "D"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
