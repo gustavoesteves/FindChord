@@ -77,13 +77,14 @@ export function classifyLocalMaterialNote(
   const structuralChordPCs = structuralChordNotes.map(note => getPitchClass(note));
   const distance = (notePC - rootPC + 12) % 12;
   const chordToneLabels: Record<number, string> = {
+    2: "9",
     3: "3a",
     4: "3a",
-    5: "5a",
-    6: "5a",
+    5: "4a",
+    6: "b5",
     7: "5a",
-    8: "5a",
-    9: "7a",
+    8: "#5",
+    9: "6a",
     10: "7a",
     11: "7a"
   };

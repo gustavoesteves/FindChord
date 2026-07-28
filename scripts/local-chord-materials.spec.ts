@@ -50,4 +50,66 @@ describe("F207 materiais locais do acorde", () => {
     expect(intents.indexOf("tension")).toBeLessThan(intents.indexOf("outside"));
     expect(readings.at(-1)?.source.type).toBe("side slip minor pentatonic");
   });
+
+  it("prioriza o mapa que preserva a alteracao escrita do acorde", () => {
+    expect(buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "dominant7#9",
+      notes: ["C", "E", "G", "Bb", "D#"],
+      drawnNotes: ["C", "E", "G", "Bb", "D#"],
+      notationInternational: "C7#9"
+    }))[0]?.source.type).toBe("altered");
+
+    expect(buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "dominant7#11",
+      notes: ["C", "E", "G", "Bb", "D", "F#"],
+      drawnNotes: ["C", "E", "G", "Bb", "D", "F#"],
+      notationInternational: "C7#11"
+    }))[0]?.source.type).toBe("lydian dominant");
+
+    expect(buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "major7#11",
+      intervals: ["1P", "3M", "5P", "7M", "9M", "11A"],
+      notes: ["C", "E", "G", "B", "D", "F#"],
+      drawnNotes: ["C", "E", "G", "B", "D", "F#"],
+      notationInternational: "Cmaj7#11"
+    }))[0]?.source.type).toBe("lydian");
+  });
+
+  it("mantem suspensos e power chords sem definir terca por padrao", () => {
+    const sus4 = buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "sus4",
+      intervals: ["1P", "4P", "5P"],
+      notes: ["C", "F", "G"],
+      drawnNotes: ["C", "F", "G"],
+      notationInternational: "Csus4"
+    }))[0];
+    expect(sus4?.source.type).toBe("sus4 pentatonic");
+    expect(sus4?.source.notes).not.toContain("E");
+
+    const sus2 = buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "sus2",
+      intervals: ["1P", "2M", "5P"],
+      notes: ["C", "D", "G"],
+      drawnNotes: ["C", "D", "G"],
+      notationInternational: "Csus2"
+    }))[0];
+    expect(sus2?.source.type).toBe("sus2 pentatonic");
+    expect(sus2?.source.notes).not.toContain("Eb");
+
+    const power = buildLocalChordMaterialReadings(chord({
+      root: "C",
+      quality: "power",
+      intervals: ["1P", "5P"],
+      notes: ["C", "G"],
+      drawnNotes: ["C", "G"],
+      notationInternational: "C5"
+    }))[0];
+    expect(power?.source.type).toBe("power neutral pentatonic");
+    expect(power?.source.notes).not.toContain("E");
+  });
 });

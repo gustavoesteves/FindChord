@@ -8,6 +8,7 @@ import type {
   ContextualMelodicMaterial
 } from "./contextualMaterialTypes";
 import type { MaterialSourceMap } from "./musicTheory";
+import type { ChordQuality } from "../constants/chordRegistry";
 
 export interface LocalChordMaterialReading {
   source: MaterialSourceMap;
@@ -23,11 +24,23 @@ const LOCAL_INTENT_PRIORITY: Record<ContextualMaterialIntent, number> = {
   outside: 100
 };
 
-function materialPriorityFor(reading: LocalChordMaterialReading): number {
+const QUALITY_FOCUS_SOURCE_TYPE: Partial<Record<ChordQuality, string>> = {
+  "major7#11": "lydian",
+  "dominant7#9": "altered",
+  "dominant7#11": "lydian dominant",
+  sus4: "sus4 pentatonic",
+  sus2: "sus2 pentatonic",
+  power: "power neutral pentatonic",
+  diminished: "whole-half diminished",
+  diminished7th: "whole-half diminished"
+};
+
+function materialPriorityFor(reading: LocalChordMaterialReading, quality: ChordQuality): number {
   const materialCount = reading.candidate?.melodicMaterials.length || 0;
   const confidence = reading.candidate?.confidence || 0;
   const intent = reading.candidate?.intent || "functional";
-  return LOCAL_INTENT_PRIORITY[intent] + confidence + materialCount * 0.01;
+  const qualityFocusBonus = QUALITY_FOCUS_SOURCE_TYPE[quality] === reading.source.type ? 600 : 0;
+  return qualityFocusBonus + LOCAL_INTENT_PRIORITY[intent] + confidence + materialCount * 0.01;
 }
 
 export function buildLocalChordMaterialReadings(chord: ChordCandidate): LocalChordMaterialReading[] {
@@ -47,7 +60,7 @@ export function buildLocalChordMaterialReadings(chord: ChordCandidate): LocalCho
       };
     })
     .sort((a, b) => (
-      materialPriorityFor(b) - materialPriorityFor(a)
+      materialPriorityFor(b, chord.quality) - materialPriorityFor(a, chord.quality)
       || a.source.name.localeCompare(b.source.name)
     ));
 }

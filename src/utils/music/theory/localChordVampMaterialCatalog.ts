@@ -50,6 +50,7 @@ const HALF_DIMINISHED_VAMP_QUALITIES = new Set<ChordQuality>([
 ]);
 
 const DIMINISHED_VAMP_QUALITIES = new Set<ChordQuality>([
+  "diminished",
   "diminished7th"
 ]);
 
@@ -485,13 +486,13 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
 
   const cells = [
     noteCell([chord.root, pitch(chord.root, "5P"), pitch(chord.root, "8P")]),
-    minorPentatonicCell(chord.root),
-    majorPentatonicCell(chord.root)
+    noteCell([chord.root, pitch(chord.root, "2M"), pitch(chord.root, "4P"), pitch(chord.root, "5P"), pitch(chord.root, "7m")]),
+    noteCell([pitch(chord.root, "5P"), chord.root, pitch(chord.root, "2M"), pitch(chord.root, "4P")])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} eixo pentatonico power`, "power riff pentatonic axis", cells);
-  const practiceHint = `Use ${chord.root} e quinta como eixo; alterne pentatonica menor e maior sem fixar a terca do acorde.`;
+  const practiceHint = `Use ${chord.root} e quinta como eixo; mantenha a pentatonica sem terca ate decidir se a cor sera maior ou menor.`;
 
   return {
     ...source,
@@ -503,7 +504,7 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
       source: "pentatonic",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["1", "5", "b3/3 como escolha expressiva", "b7/6"],
+      tensionProfile: ["1", "5", "2/4/b7 como cor neutra", "sem terca definida"],
       resolutionTargets: [],
       practiceHint
     }],

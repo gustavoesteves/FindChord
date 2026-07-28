@@ -17,6 +17,18 @@ const CUSTOM_SCALE_TYPES: Record<string, { intervals: string[]; label: string }>
   "bebop dominant": {
     label: "bebop dominant",
     intervals: ["1P", "2M", "3M", "4P", "5P", "6M", "7m", "7M"]
+  },
+  "sus2 pentatonic": {
+    label: "sus2 pentatonic",
+    intervals: ["1P", "2M", "4P", "5P", "7m"]
+  },
+  "sus4 pentatonic": {
+    label: "sus4 pentatonic",
+    intervals: ["1P", "2M", "4P", "5P", "7m"]
+  },
+  "power neutral pentatonic": {
+    label: "power neutral pentatonic",
+    intervals: ["1P", "2M", "4P", "5P", "7m"]
   }
 };
 
@@ -58,13 +70,13 @@ const MATERIAL_SOURCE_MAP_TYPES: Partial<Record<ChordQuality, string[]>> = {
   dominant7b13: ["phrygian dominant", "altered", "half-whole diminished"],
 
   halfDiminished: ["locrian #2", "locrian"],
-  diminished: ["half-whole diminished"],
+  diminished: ["whole-half diminished"],
   diminished7th: ["whole-half diminished"],
   augmented: ["whole tone"],
 
-  sus4: ["mixolydian", "major pentatonic"],
-  sus2: ["major pentatonic", "dorian"],
-  power: ["major pentatonic", "minor pentatonic"]
+  sus4: ["sus4 pentatonic"],
+  sus2: ["sus2 pentatonic"],
+  power: ["power neutral pentatonic", "major pentatonic", "minor pentatonic"]
 };
 
 export function getMaterialSourceMapTypes(quality: ChordQuality): string[] {

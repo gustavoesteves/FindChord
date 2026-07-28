@@ -77,6 +77,20 @@ function diminishedChord(partial: Partial<ChordCandidate> = {}): ChordCandidate 
   });
 }
 
+function diminishedTriadChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "diminished",
+    intervals: ["1P", "3m", "5d"],
+    notes: ["C", "Eb", "Gb"],
+    drawnNotes: ["C", "Eb", "Gb"],
+    notationInternational: "Cdim",
+    notationBrazilian: "Cdim",
+    notationAcademic: "Co",
+    ...partial
+  });
+}
+
 function augmentedChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "C",
@@ -283,6 +297,14 @@ describe("F304 vocabulario local de vamp", () => {
     ]);
   });
 
+  it("nao injeta terca maior em vamp diminuto triadico", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(diminishedTriadChord());
+    const cycle = candidates.find(candidate => candidate.type === "diminished symmetric cycle");
+
+    expect(cycle?.melodicMaterials[0]?.cells[0]).toBe("C-Eb-Gb-A");
+    expect(cycle?.melodicMaterials[0]?.cells.join("-")).not.toContain("E-");
+  });
+
   it("oferece ciclo de tons inteiros para vamp aumentado", () => {
     const candidates = buildLocalChordVampMaterialCandidates(augmentedChord());
     const cycle = candidates.find(candidate => candidate.type === "augmented whole tone cycle");
@@ -374,8 +396,8 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(powerAxis?.melodicMaterials[0]?.cells).toEqual([
       "C-G-C",
-      "C-Eb-F-G-Bb",
-      "C-D-E-G-A"
+      "C-D-F-G-Bb",
+      "G-C-D-F"
     ]);
   });
 });

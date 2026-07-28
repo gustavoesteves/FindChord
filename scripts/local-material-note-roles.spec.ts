@@ -38,6 +38,22 @@ describe("F209 papeis de nota em materiais locais", () => {
     });
   });
 
+  it("nomeia corretamente graus estruturais suspensos, sexta e add9", () => {
+    expect(classifyLocalMaterialNote("F", "C", ["C", "F", "G"], "sus4 pentatonic")).toMatchObject({
+      category: "chordTone",
+      label: "4a (Acorde)"
+    });
+    expect(classifyLocalMaterialNote("A", "C", ["C", "E", "G", "A"], "major")).toMatchObject({
+      category: "chordTone",
+      label: "6a (Acorde)"
+    });
+    expect(classifyLocalMaterialNote("D", "C", ["C", "E", "G", "D"], "major pentatonic")).toMatchObject({
+      category: "chordTone",
+      label: "9 (Acorde)"
+    });
+  });
+
+
   it("distingue nota estrutural implicita de tensao melodica", () => {
     expect(classifyLocalMaterialNote(
       "D",
