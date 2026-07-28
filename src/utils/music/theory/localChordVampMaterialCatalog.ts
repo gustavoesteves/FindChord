@@ -42,6 +42,11 @@ const MINOR_VAMP_QUALITIES = new Set<ChordQuality>([
   "minorAdd9"
 ]);
 
+const MINOR_ADDED_COLOR_QUALITIES = new Set<ChordQuality>([
+  "minor6th",
+  "minorAdd9"
+]);
+
 const SUS_VAMP_QUALITIES = new Set<ChordQuality>([
   "sus4",
   "sus2",
@@ -310,6 +315,47 @@ function minorDorianPentatonicStackCandidate(chord: ChordCandidate): LocalChordV
       preferredRhythmArchetype: "syncopated",
       tensionProfile: ["pentatônica menor da tônica", "pentatônica menor da quinta", "pentatônica menor do 2º grau"],
       resolutionTargets: [],
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
+function minorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!MINOR_ADDED_COLOR_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const minorThird = pitch(chord.root, "3m");
+  const fifth = pitch(chord.root, "5P");
+  const sixth = pitch(chord.root, "6M");
+  const ninth = pitch(chord.root, "9M");
+  const cells = [
+    noteCell([root, minorThird, fifth]),
+    chord.quality === "minor6th" ? directedCell(sixth, fifth) : "",
+    chord.quality === "minorAdd9" ? directedCell(ninth, minorThird) : ""
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} cores menores adicionadas`, "minor added color resolutions", cells);
+  const practiceHint = `Use a cor adicionada de ${chord.notationInternational} como gesto curto e retorne para b3 ou 5 sem perder a identidade menor.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "functional",
+    confidence: 0.77,
+    melodicMaterials: [{
+      label: "m6/madd9 / cores resolvidas",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: [
+        ...(chord.quality === "minorAdd9" ? ["9->b3"] : []),
+        ...(chord.quality === "minor6th" ? ["6->5"] : [])
+      ],
+      resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
       practiceHint
     }],
     practiceHint
@@ -776,6 +822,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     qualities: Array.from(MINOR_VAMP_QUALITIES),
     intent: "functional",
     build: minorDorianPentatonicStackCandidate
+  },
+  {
+    id: "minor-added-color-resolutions",
+    sourceType: "minor added color resolutions",
+    label: "m6/madd9 / cores resolvidas",
+    qualities: Array.from(MINOR_ADDED_COLOR_QUALITIES),
+    intent: "functional",
+    build: minorAddedColorResolutionCandidate
   },
   {
     id: "sus-quartal-pentatonic",

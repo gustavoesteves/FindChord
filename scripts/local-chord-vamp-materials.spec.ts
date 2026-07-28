@@ -35,6 +35,34 @@ function minorChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   });
 }
 
+function minorSixthChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "minor6th",
+    intervals: ["1P", "3m", "5P", "6M"],
+    notes: ["C", "Eb", "G", "A"],
+    drawnNotes: ["C", "Eb", "G", "A"],
+    notationInternational: "Cm6",
+    notationBrazilian: "Cm6",
+    notationAcademic: "C-6",
+    ...partial
+  });
+}
+
+function minorAdd9Chord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "minorAdd9",
+    intervals: ["1P", "3m", "5P", "9M"],
+    notes: ["C", "Eb", "G", "D"],
+    drawnNotes: ["C", "Eb", "G", "D"],
+    notationInternational: "Cm(add9)",
+    notationBrazilian: "Cm(add9)",
+    notationAcademic: "C-add9",
+    ...partial
+  });
+}
+
 function susChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "G",
@@ -252,6 +280,37 @@ describe("F304 vocabulario local de vamp", () => {
       "C-Eb-F-G-Bb",
       "G-Bb-C-D-F",
       "D-F-G-A-C"
+    ]);
+  });
+
+  it("oferece cores menores adicionadas como gestos de retorno", () => {
+    const minorSixth = buildLocalChordVampMaterialCandidates(minorSixthChord())
+      .find(candidate => candidate.type === "minor added color resolutions");
+    const minorAdd9 = buildLocalChordVampMaterialCandidates(minorAdd9Chord())
+      .find(candidate => candidate.type === "minor added color resolutions");
+
+    expect(minorSixth).toMatchObject({
+      intent: "functional",
+      name: "C cores menores adicionadas"
+    });
+    expect(minorSixth?.melodicMaterials[0]).toMatchObject({
+      label: "m6/madd9 / cores resolvidas",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["6->5"],
+      resolutionTargets: ["Eb", "G"]
+    });
+    expect(minorSixth?.melodicMaterials[0]?.cells).toEqual([
+      "C-Eb-G",
+      "A->G"
+    ]);
+    expect(minorAdd9?.melodicMaterials[0]).toMatchObject({
+      tensionProfile: ["9->b3"],
+      resolutionTargets: ["Eb", "G"]
+    });
+    expect(minorAdd9?.melodicMaterials[0]?.cells).toEqual([
+      "C-Eb-G",
+      "D->Eb"
     ]);
   });
 

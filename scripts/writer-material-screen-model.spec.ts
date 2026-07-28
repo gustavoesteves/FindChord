@@ -430,6 +430,48 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "G"]);
   });
 
+  it("expõe madd9 menor como 9 retornando para a terça menor", () => {
+    const activeChord = cChord({
+      quality: "minorAdd9",
+      intervals: ["1P", "3m", "5P", "9M"],
+      notes: ["C", "Eb", "G", "D"],
+      drawnNotes: ["C", "Eb", "G", "D"],
+      notationInternational: "Cm(add9)"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const addedColors = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "minor added color resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: addedColors?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 8, 10, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("minor added color resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->Eb",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "m6/madd9 / cores resolvidas",
+      realizedCell: {
+        notation: "D->Eb"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
