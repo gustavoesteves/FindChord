@@ -1,5 +1,8 @@
 import { Note } from "tonal";
-import type { ChordQuality } from "../constants/chordRegistry";
+import {
+  CHORD_REGISTRY,
+  type ChordQuality
+} from "../constants/chordRegistry";
 import type { ChordCandidate } from "../models/ChordCandidate";
 import { simplifyNote } from "../core/pitch";
 import { guideTonesFor } from "./contextualMaterialFunction";
@@ -76,6 +79,14 @@ const NATURAL_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
   "dominant13th"
 ]);
 
+const WRITTEN_ALTERED_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
+  "dominant7b5",
+  "dominant7b9",
+  "dominant7#9",
+  "dominant7#11",
+  "dominant7b13"
+]);
+
 const MINOR_MAJOR_VAMP_QUALITIES = new Set<ChordQuality>([
   "minorMajor7th"
 ]);
@@ -83,6 +94,8 @@ const MINOR_MAJOR_VAMP_QUALITIES = new Set<ChordQuality>([
 const POWER_VAMP_QUALITIES = new Set<ChordQuality>([
   "power"
 ]);
+
+const ALL_CHORD_QUALITIES = Object.keys(CHORD_REGISTRY) as ChordQuality[];
 
 function pitch(root: string, interval: string): string | null {
   const transposed = Note.transpose(root, interval);
@@ -93,12 +106,19 @@ function uniqueNotes(notes: string[]): string[] {
   return Array.from(new Set(notes.map(note => simplifyNote(note))));
 }
 
+function notesInMaterialCell(cell: string): string[] {
+  return cell
+    .split(/->|-/)
+    .map(note => simplifyNote(note.trim()))
+    .filter(Boolean);
+}
+
 function materialSource(name: string, type: string, cells: string[]): MaterialSourceMap {
   return {
     name,
     type,
     intervals: [],
-    notes: uniqueNotes(cells.flatMap(cell => cell.split("-")))
+    notes: uniqueNotes(cells.flatMap(notesInMaterialCell))
   };
 }
 
@@ -133,6 +153,53 @@ function minorPentatonicCell(root: string): string {
 
 function noteCell(notes: Array<string | null>): string {
   return notes.filter((note): note is string => !!note).map(note => simplifyNote(note)).join("-");
+}
+
+function directedCell(from: string | null, to: string | null): string {
+  if (!from || !to) return "";
+  return `${simplifyNote(from)}->${simplifyNote(to)}`;
+}
+
+function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  const definition = CHORD_REGISTRY[chord.quality];
+  const chordTones = uniqueNotes(
+    definition.intervals
+      .map(interval => pitch(chord.root, interval))
+      .filter((note): note is string => !!note)
+  );
+  if (chordTones.length === 0) return null;
+
+  const cells = [
+    chordTones.join("-"),
+    [...chordTones].reverse().join("-")
+  ].filter((cell, index, allCells) => allCells.indexOf(cell) === index);
+  const source: MaterialSourceMap = {
+    name: `${chord.root} nucleo de notas do acorde`,
+    type: "chord tone core",
+    intervals: [...definition.intervals],
+    notes: chordTones
+  };
+  const practiceHint = `Comece pelas notas exatas de ${chord.notationInternational}; este nucleo nao acrescenta notas externas ao acorde.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    chordTones,
+    intent: "inside",
+    confidence: 0.9,
+    melodicMaterials: [{
+      label: "núcleo de notas do acorde",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 0,
+      preferredRhythmArchetype: "straight",
+      tensionProfile: [...definition.intervals],
+      resolutionTargets: [],
+      practiceHint
+    }],
+    practiceHint
+  };
 }
 
 function dominantDiminishedAxisCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
@@ -308,6 +375,7 @@ function halfDiminishedUpperStructureCandidate(chord: ChordCandidate): LocalChor
 function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!DIMINISHED_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const isDiminishedTriad = chord.quality === "diminished";
   const cycleRoots = [
     chord.root,
     pitch(chord.root, "3m"),
@@ -317,10 +385,13 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
   const cells = cycleRoots.map((_, index) => (
     [...cycleRoots.slice(index), ...cycleRoots.slice(0, index)].join("-")
   ));
-  if (cells.length === 0) return null;
+  if (cycleRoots.length !== 4 || cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} ciclo diminuto simetrico`, "diminished symmetric cycle", cells);
-  const practiceHint = `Repita o arpejo diminuto de ${chord.root} por terças menores; a simetria cria tensao controlada sem precisar de destino imediato.`;
+  const optionalDiminishedSeventh = cycleRoots[3];
+  const practiceHint = isDiminishedTriad
+    ? `Acrescente ${optionalDiminishedSeventh} como bb7 apenas quando quiser expandir a tríade de ${chord.root} para uma tensão dim7 opcional.`
+    : `Repita o arpejo diminuto de ${chord.root} por terças menores; a simetria cria tensao controlada sem precisar de destino imediato.`;
 
   return {
     ...source,
@@ -328,11 +399,15 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
     intent: "tension",
     confidence: 0.76,
     melodicMaterials: [{
-      label: "ciclo diminuto por terças menores",
+      label: isDiminishedTriad
+        ? "extensão dim7 opcional"
+        : "ciclo diminuto por terças menores",
       source: "arpeggio",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["simetria", "terças menores", "inversões equivalentes"],
+      tensionProfile: isDiminishedTriad
+        ? ["bb7 opcional", "simetria", "terças menores"]
+        : ["simetria", "terças menores", "inversões equivalentes"],
       resolutionTargets: [],
       practiceHint
     }],
@@ -446,6 +521,87 @@ function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVam
   };
 }
 
+function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!WRITTEN_ALTERED_DOMINANT_VAMP_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const third = pitch(chord.root, "3M");
+  const fifth = pitch(chord.root, "5P");
+  const flatFifth = pitch(chord.root, "5d");
+  const flatSeven = pitch(chord.root, "7m");
+  const flatNine = pitch(chord.root, "9m");
+  const sharpNine = pitch(chord.root, "9A");
+  const sharpEleven = pitch(chord.root, "11A");
+  const flatThirteen = pitch(chord.root, "13m");
+  const writtenAlterationCells: string[] = [];
+  const tensionProfile: string[] = [];
+  const resolutionTargets: string[] = [];
+
+  if (chord.quality === "dominant7b9") {
+    writtenAlterationCells.push(directedCell(flatNine, root));
+    writtenAlterationCells.push(noteCell([third, flatSeven, flatNine, root]));
+    tensionProfile.push("b9");
+    resolutionTargets.push(root);
+  }
+
+  if (chord.quality === "dominant7#9") {
+    writtenAlterationCells.push(directedCell(sharpNine, third));
+    writtenAlterationCells.push(noteCell([flatSeven, sharpNine, third, fifth]));
+    tensionProfile.push("#9");
+    if (third) resolutionTargets.push(third);
+  }
+
+  if (chord.quality === "dominant7#11") {
+    writtenAlterationCells.push(directedCell(sharpEleven, fifth));
+    writtenAlterationCells.push(noteCell([third, sharpEleven, flatSeven, root]));
+    tensionProfile.push("#11");
+    if (fifth) resolutionTargets.push(fifth);
+  }
+
+  if (chord.quality === "dominant7b13") {
+    writtenAlterationCells.push(directedCell(flatThirteen, fifth));
+    writtenAlterationCells.push(noteCell([flatSeven, flatThirteen, fifth, third]));
+    tensionProfile.push("b13");
+    if (fifth) resolutionTargets.push(fifth);
+  }
+
+  if (chord.quality === "dominant7b5") {
+    writtenAlterationCells.push(noteCell([root, third, flatFifth, flatSeven]));
+    writtenAlterationCells.push(noteCell([third, flatFifth, flatSeven, root]));
+    tensionProfile.push("b5");
+    if (third) resolutionTargets.push(third);
+    if (flatSeven) resolutionTargets.push(flatSeven);
+  }
+
+  const cells = [
+    noteCell([root, third, flatSeven]),
+    ...writtenAlterationCells
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} alteracoes escritas resolvidas`, "written altered dominant resolutions", cells);
+  const practiceHint = `Toque a alteração escrita de ${chord.notationInternational} como tensão consciente e resolva curto para um apoio do próprio dominante.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "tension",
+    confidence: 0.84,
+    melodicMaterials: [{
+      label: "alteração escrita / resolução curta",
+      source: "chromatic-approach",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile,
+      resolutionTargets: uniqueNotes(resolutionTargets),
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
 function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!MINOR_MAJOR_VAMP_QUALITIES.has(chord.quality)) return null;
 
@@ -511,6 +667,14 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
 }
 
 export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEntry[] = [
+  {
+    id: "chord-tone-core",
+    sourceType: "chord tone core",
+    label: "núcleo de notas do acorde",
+    qualities: ALL_CHORD_QUALITIES,
+    intent: "inside",
+    build: chordToneCoreCandidate
+  },
   {
     id: "dominant-diminished-axis",
     sourceType: "dominant diminished axis",
@@ -582,6 +746,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     qualities: Array.from(NATURAL_DOMINANT_VAMP_QUALITIES),
     intent: "functional",
     build: dominantUpperTriadColorsCandidate
+  },
+  {
+    id: "written-altered-dominant-resolutions",
+    sourceType: "written altered dominant resolutions",
+    label: "alteração escrita / resolução curta",
+    qualities: Array.from(WRITTEN_ALTERED_DOMINANT_VAMP_QUALITIES),
+    intent: "tension",
+    build: writtenAlteredDominantResolutionCandidate
   },
   {
     id: "minor-major-melodic-colors",

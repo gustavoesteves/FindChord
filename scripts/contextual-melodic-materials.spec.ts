@@ -50,6 +50,58 @@ describe("F201 materiais melódicos contextuais", () => {
     expect(relatedTwo?.practiceHint).toContain("Fm");
   });
 
+  it("mantém a tríade diminuta estrutural e nomeia bb7 apenas como extensão opcional", () => {
+    const materials = buildContextualMelodicMaterials(
+      {
+        name: "C whole-half diminished",
+        type: "whole-half diminished",
+        intervals: [],
+        notes: ["C", "D", "Eb", "F", "Gb", "Ab", "A", "B"]
+      },
+      "C",
+      "diminished",
+      "color",
+      undefined,
+      undefined
+    );
+
+    expect(materials[0]).toMatchObject({
+      label: "Tríade diminuta / núcleo",
+      cells: ["C-Eb-Gb"],
+      tensionProfile: ["b3", "b5", "resolução por semitom"]
+    });
+    expect(materials[0]?.cells.join("-")).not.toContain("A");
+    expect(materials[1]).toMatchObject({
+      label: "Extensão dim7 opcional",
+      cells: ["C-Eb-Gb-A"],
+      tensionProfile: ["bb7 opcional", "simetria por terças menores"]
+    });
+    expect(materials[1]?.practiceHint).toContain("bb7");
+  });
+
+  it("preserva o ciclo completo como estrutura de um acorde dim7", () => {
+    const materials = buildContextualMelodicMaterials(
+      {
+        name: "C whole-half diminished",
+        type: "whole-half diminished",
+        intervals: [],
+        notes: ["C", "D", "Eb", "F", "Gb", "Ab", "A", "B"]
+      },
+      "C",
+      "diminished7th",
+      "color",
+      undefined,
+      undefined
+    );
+
+    expect(materials).toHaveLength(1);
+    expect(materials[0]).toMatchObject({
+      label: "Diminuto resolvido",
+      cells: ["C-Eb-Gb-A"],
+      tensionProfile: ["dim7", "simetria", "resolução por semitom"]
+    });
+  });
+
   it.each([
     {
       type: "power neutral pentatonic",

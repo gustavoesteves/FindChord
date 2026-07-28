@@ -50,6 +50,35 @@ describe("F257 realizacao de celulas de material perto do shape", () => {
     expect(gesture?.events.every(event => event.fret >= 7 && event.fret <= 12)).toBe(true);
   });
 
+  it("permite escolher deliberadamente outra celula do mesmo material", () => {
+    const gesture = realizeWriterMaterialCellNearShape({
+      chordRoot: "C",
+      chordNotes: ["C", "E", "G", "B"],
+      tuning,
+      selectedFrets: cmaj7Shape,
+      melodicMaterials: [
+        material("maj / tríades superiores", ["C-E-G-B", "D-F#-A", "F#->G"], 1)
+      ],
+      intent: "functional",
+      preferredSelection: {
+        materialIndex: 0,
+        cellIndex: 0
+      }
+    });
+
+    expect(gesture?.realizedCell).toMatchObject({
+      materialIndex: 0,
+      cellIndex: 0,
+      notation: "C-E-G-B"
+    });
+    expect(gesture?.events.slice(0, 4).map(event => event.displayNote)).toEqual([
+      "C",
+      "E",
+      "G",
+      "B"
+    ]);
+  });
+
   it("realiza a celula externa completa antes de voltar ao dominante", () => {
     const gesture = realizeWriterMaterialCellNearShape({
       chordRoot: "C",

@@ -299,11 +299,17 @@ describe("F304 vocabulario local de vamp", () => {
     ]);
   });
 
-  it("nao injeta terca maior em vamp diminuto triadico", () => {
+  it("trata o ciclo dim7 como extensão opcional no vamp diminuto triádico", () => {
     const candidates = buildLocalChordVampMaterialCandidates(diminishedTriadChord());
     const cycle = candidates.find(candidate => candidate.type === "diminished symmetric cycle");
 
+    expect(cycle?.chordTones).toEqual(["C", "Eb", "Gb"]);
+    expect(cycle?.melodicMaterials[0]).toMatchObject({
+      label: "extensão dim7 opcional",
+      tensionProfile: ["bb7 opcional", "simetria", "terças menores"]
+    });
     expect(cycle?.melodicMaterials[0]?.cells[0]).toBe("C-Eb-Gb-A");
+    expect(cycle?.melodicMaterials[0]?.practiceHint).toContain("bb7");
     expect(cycle?.melodicMaterials[0]?.cells.join("-")).not.toContain("E-");
   });
 
@@ -404,4 +410,43 @@ describe("F304 vocabulario local de vamp", () => {
       "G-C-D-F"
     ]);
   });
+
+  it.each([
+    {
+      quality: "sus2" as const,
+      sourceType: "sus2 pentatonic",
+      notes: ["C", "D", "G"],
+      notation: "Csus2"
+    },
+    {
+      quality: "sus4" as const,
+      sourceType: "sus4 pentatonic",
+      notes: ["C", "F", "G"],
+      notation: "Csus4"
+    },
+    {
+      quality: "power" as const,
+      sourceType: "power neutral pentatonic",
+      notes: ["C", "G"],
+      notation: "C5"
+    }
+  ])(
+    "classifica $sourceType como material inside sem definir terca",
+    ({ quality, sourceType, notes, notation }) => {
+      const candidates = buildLocalChordVampMaterialCandidates(chord({
+        root: "C",
+        quality,
+        notes,
+        drawnNotes: notes,
+        notationInternational: notation,
+        notationBrazilian: notation,
+        notationAcademic: notation
+      }));
+      const neutral = candidates.find(candidate => candidate.type === sourceType);
+
+      expect(neutral?.intent).toBe("inside");
+      expect(neutral?.notes).not.toContain("E");
+      expect(neutral?.notes).not.toContain("Eb");
+    }
+  );
 });

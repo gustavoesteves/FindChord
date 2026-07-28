@@ -36,7 +36,10 @@ const LOCAL_INSIDE_SOURCE_TYPES = new Set([
   "mixolydian",
   "bebop dominant",
   "major pentatonic",
-  "minor pentatonic"
+  "minor pentatonic",
+  "sus4 pentatonic",
+  "sus2 pentatonic",
+  "power neutral pentatonic"
 ]);
 
 const DOMINANT_QUALITIES = new Set<ChordQuality>([

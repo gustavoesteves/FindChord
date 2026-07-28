@@ -60,13 +60,15 @@ describe("F207 materiais locais do acorde", () => {
       notationInternational: "C7#9"
     }))[0]?.source.type).toBe("altered");
 
-    expect(buildLocalChordMaterialReadings(chord({
+    const sharpEleven = buildLocalChordMaterialReadings(chord({
       root: "C",
       quality: "dominant7#11",
       notes: ["C", "E", "G", "Bb", "D", "F#"],
       drawnNotes: ["C", "E", "G", "Bb", "D", "F#"],
       notationInternational: "C7#11"
-    }))[0]?.source.type).toBe("lydian dominant");
+    }))[0];
+    expect(sharpEleven?.source.type).toBe("chord tone core");
+    expect(sharpEleven?.source.notes).toContain("F#");
 
     expect(buildLocalChordMaterialReadings(chord({
       root: "C",
@@ -112,4 +114,77 @@ describe("F207 materiais locais do acorde", () => {
     expect(power?.source.type).toBe("power neutral pentatonic");
     expect(power?.source.notes).not.toContain("E");
   });
+
+  it.each([
+    {
+      quality: "major" as const,
+      intervals: ["1P", "3M", "5P"],
+      notes: ["C", "E", "G"],
+      notation: "C"
+    },
+    {
+      quality: "major6th" as const,
+      intervals: ["1P", "3M", "5P", "6M"],
+      notes: ["C", "E", "G", "A"],
+      notation: "C6"
+    },
+    {
+      quality: "major7th" as const,
+      intervals: ["1P", "3M", "5P", "7M"],
+      notes: ["C", "E", "G", "B"],
+      notation: "Cmaj7"
+    },
+    {
+      quality: "major9th" as const,
+      intervals: ["1P", "3M", "5P", "7M", "9M"],
+      notes: ["C", "E", "G", "B", "D"],
+      notation: "Cmaj9"
+    },
+    {
+      quality: "major13th" as const,
+      intervals: ["1P", "3M", "5P", "7M", "9M", "11P", "13M"],
+      notes: ["C", "E", "G", "B", "D", "F", "A"],
+      notation: "Cmaj13"
+    },
+    {
+      quality: "69" as const,
+      intervals: ["1P", "3M", "5P", "6M", "9M"],
+      notes: ["C", "E", "G", "A", "D"],
+      notation: "C6/9"
+    },
+    {
+      quality: "dominant7b9" as const,
+      intervals: ["1P", "3M", "5P", "7m", "9m"],
+      notes: ["C", "E", "G", "Bb", "Db"],
+      notation: "C7b9"
+    },
+    {
+      quality: "dominant7#11" as const,
+      intervals: ["1P", "3M", "5P", "7m", "9M", "11A"],
+      notes: ["C", "E", "G", "Bb", "D", "F#"],
+      notation: "C7#11"
+    },
+    {
+      quality: "dominant7b13" as const,
+      intervals: ["1P", "3M", "5P", "7m", "9M", "13m"],
+      notes: ["C", "E", "G", "Bb", "D", "Ab"],
+      notation: "C7b13"
+    }
+  ])(
+    "prioriza o nucleo exato sobre o fallback generico de $quality",
+    ({ quality, intervals, notes, notation }) => {
+      const firstReading = buildLocalChordMaterialReadings(chord({
+        root: "C",
+        quality,
+        intervals: [...intervals],
+        notes: [...notes],
+        drawnNotes: [...notes],
+        notationInternational: notation
+      }))[0];
+
+      expect(firstReading?.source.type).toBe("chord tone core");
+      expect(firstReading?.candidate?.intent).toBe("inside");
+      expect(firstReading?.primaryMaterial?.cells[0]).toBe(notes.join("-"));
+    }
+  );
 });

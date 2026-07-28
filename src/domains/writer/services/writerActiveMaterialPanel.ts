@@ -13,6 +13,7 @@ import {
 } from "../../../utils/music/theory/localMaterialPresentation";
 import {
   realizeWriterMaterialCellNearShape,
+  type WriterMaterialCellSelection,
   type WriterMaterialGestureEvent,
   type WriterRealizedMaterialCell
 } from "./writerMaterialCellRealization";
@@ -43,6 +44,7 @@ export interface WriterActiveMaterialPanelInput {
     melodicMaterials: ContextualMelodicMaterial[];
     intent?: ContextualMaterialIntent;
   };
+  preferredCellSelection?: WriterMaterialCellSelection;
 }
 
 function displayNote(noteName: string): string {
@@ -79,7 +81,8 @@ function playableShapeMaterialLine(input: WriterActiveMaterialPanelInput): Write
     tuning: input.tuning,
     selectedFrets: input.selectedFrets,
     melodicMaterials: input.candidate?.melodicMaterials || [],
-    intent: input.candidate?.intent
+    intent: input.candidate?.intent,
+    preferredSelection: input.preferredCellSelection
   });
   if (realizedCell) {
     return {

@@ -4,10 +4,6 @@ import {
   type FretboardGeometry,
   type FretboardStringGeometry
 } from "../../../../utils/music/presentation/fretboardGeometry";
-import {
-  resolveFretboardRendererViewport,
-  type FretboardRendererViewport
-} from "./fretboardRendererViewport";
 
 export interface FretboardRenderedString extends FretboardStringGeometry {
   isVibrating?: boolean;
@@ -51,7 +47,6 @@ export interface FretboardRendererProps {
   minWidthClassName?: string;
   woodClassName?: string;
   theme?: Partial<FretboardRendererTheme>;
-  viewport?: FretboardRendererViewport;
   onFretClick?: (stringIndex: number, fret: number) => void;
   onNoteClick?: (note: FretboardRenderedNote) => void;
 }
@@ -75,26 +70,13 @@ export function FretboardRenderer({
   geometry,
   strings,
   notes,
-  minWidthClassName,
+  minWidthClassName = "min-w-[1360px]",
   woodClassName = "fretboard-wood",
   theme,
-  viewport,
   onFretClick,
   onNoteClick
 }: FretboardRendererProps) {
   const resolvedTheme = { ...DEFAULT_THEME, ...theme };
-  const resolvedViewport = viewport
-    ? resolveFretboardRendererViewport(geometry, viewport)
-    : undefined;
-  const renderedWidth = resolvedViewport?.width ?? geometry.width;
-  const resolvedMinWidthClassName = minWidthClassName
-    ?? (resolvedViewport ? "" : "min-w-[1360px]");
-  const rendererClassName = [
-    resolvedMinWidthClassName,
-    resolvedViewport ? "mx-auto" : "",
-    "relative",
-    woodClassName
-  ].filter(Boolean).join(" ");
   const notesByString = new Map<number, FretboardRenderedNote[]>();
   notes.forEach(note => {
     const stringNotes = notesByString.get(note.stringIndex) || [];
@@ -103,15 +85,12 @@ export function FretboardRenderer({
   });
 
   return (
-    <div
-      className={rendererClassName}
-      style={resolvedViewport ? { width: renderedWidth } : undefined}
-    >
+    <div className={`${minWidthClassName} relative ${woodClassName}`}>
       <svg
-        width={renderedWidth}
+        width={geometry.width}
         height={geometry.height}
-        viewBox={`${resolvedViewport?.x ?? 0} 0 ${renderedWidth} ${geometry.height}`}
-        className={resolvedViewport ? "overflow-hidden" : "overflow-visible"}
+        viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+        className="overflow-visible"
       >
         <defs>
           <linearGradient id={`${resolvedTheme.idPrefix}-wood-grad`} x1="0%" y1="0%" x2="0%" y2="100%">

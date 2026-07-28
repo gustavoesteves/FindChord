@@ -1,8 +1,15 @@
 import { Play, Repeat2, Sparkles, Square } from "lucide-react";
 import type { WriterMaterialAction, WriterMaterialActionStep } from "../services/writerMaterialAction";
+import type {
+  WriterMaterialImprovisationMove,
+  WriterMaterialImprovisationMoveKind
+} from "../services/writerMaterialImprovisationMoves";
 
 export interface WriterMaterialActionBlockProps {
   action: WriterMaterialAction;
+  improvisationMoves?: WriterMaterialImprovisationMove[];
+  activeMoveId?: string | null;
+  onSelectMove?: (moveId: string) => void;
   onPlay: (steps: WriterMaterialActionStep[]) => void;
   onStop?: () => void;
   onToggleLoop?: () => void;
@@ -24,8 +31,19 @@ function displayCellNotation(notation: string): string {
   return notation.replaceAll("->", " → ").replaceAll("-", " – ");
 }
 
+const MOVE_STYLE_BY_KIND: Record<WriterMaterialImprovisationMoveKind, string> = {
+  support: "border-emerald-400/35 bg-emerald-400/5 text-emerald-100",
+  color: "border-sky-400/35 bg-sky-400/5 text-sky-100",
+  tension: "border-amber-400/35 bg-amber-400/5 text-amber-100",
+  outside: "border-fuchsia-400/35 bg-fuchsia-400/5 text-fuchsia-100",
+  return: "border-violet-400/35 bg-violet-400/5 text-violet-100"
+};
+
 export function WriterMaterialActionBlock({
   action,
+  improvisationMoves = [],
+  activeMoveId = null,
+  onSelectMove,
   onPlay,
   onStop,
   onToggleLoop,
@@ -61,6 +79,44 @@ export function WriterMaterialActionBlock({
               Ritmo: <span className="text-violet-200">{action.rhythm.label}</span>
             </span>
           </div>
+          {improvisationMoves.length > 1 && (
+            <div className="mt-1 flex flex-col gap-1.5" aria-label="Gestos para experimentar">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[8px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                  Gestos para experimentar
+                </span>
+                <span className="text-[8.5px] font-semibold text-zinc-600">
+                  escolha uma célula; mapa e escuta acompanham
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {improvisationMoves.map(move => {
+                  const isActive = move.id === activeMoveId;
+                  return (
+                    <button
+                      key={move.id}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => onSelectMove?.(move.id)}
+                      title={`${move.materialLabel}: ${move.practiceHint}`}
+                      className={`flex min-w-[8.5rem] flex-col items-start rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer active:scale-[0.98] ${
+                        isActive
+                          ? "border-sky-200 bg-sky-300/20 text-zinc-50 shadow-[0_0_0_1px_rgba(186,230,253,0.18)]"
+                          : `${MOVE_STYLE_BY_KIND[move.kind]} hover:border-current hover:bg-white/[0.06]`
+                      }`}
+                    >
+                      <span className="text-[7.5px] font-black uppercase tracking-wide opacity-65">
+                        {move.actionLabel}
+                      </span>
+                      <span className="text-[9px] font-black">
+                        {displayCellNotation(move.notation)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <ol className="flex flex-wrap gap-1 mt-1" aria-label="Caminho da frase no braço">
             {action.steps.map((step, idx) => {
               const isActive = activeStepIndex === idx;

@@ -38,6 +38,12 @@ export interface WriterMaterialCellRealizationInput {
   selectedFrets: (number | null)[];
   melodicMaterials: ContextualMelodicMaterial[];
   intent?: ContextualMaterialIntent;
+  preferredSelection?: WriterMaterialCellSelection;
+}
+
+export interface WriterMaterialCellSelection {
+  materialIndex: number;
+  cellIndex: number;
 }
 
 interface PhysicalNotePosition {
@@ -194,7 +200,8 @@ function realizeOrderedNotes(
 
 function selectMaterialAndCell(
   materials: ContextualMelodicMaterial[],
-  chordPitchClasses: Set<number>
+  chordPitchClasses: Set<number>,
+  preferredSelection?: WriterMaterialCellSelection
 ): {
   material: ContextualMelodicMaterial;
   materialIndex: number;
@@ -202,6 +209,21 @@ function selectMaterialAndCell(
   notes: string[];
   desiredPitchMovements: Array<number | undefined>;
 } | undefined {
+  if (preferredSelection) {
+    const material = materials[preferredSelection.materialIndex];
+    const cell = material?.cells[preferredSelection.cellIndex];
+    const notes = cell ? notesInWriterMaterialCell(cell) : [];
+    if (material && cell && notes.length > 0) {
+      return {
+        material,
+        materialIndex: preferredSelection.materialIndex,
+        cellIndex: preferredSelection.cellIndex,
+        notes,
+        desiredPitchMovements: desiredPitchMovementsForCell(cell, notes)
+      };
+    }
+  }
+
   for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
     const material = materials[materialIndex];
     const preferredCellIndex = material.preferredCellIndex;
@@ -286,7 +308,11 @@ export function realizeWriterMaterialCellNearShape(
   if (!fretWindow.hasShape || input.tuning.length !== input.selectedFrets.length) return undefined;
 
   const chordPitchClasses = new Set(input.chordNotes.map(note => getPitchClass(note)));
-  const selected = selectMaterialAndCell(input.melodicMaterials, chordPitchClasses);
+  const selected = selectMaterialAndCell(
+    input.melodicMaterials,
+    chordPitchClasses,
+    input.preferredSelection
+  );
   if (!selected) return undefined;
 
   const positions = physicalPositions(input);

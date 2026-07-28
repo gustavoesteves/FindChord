@@ -3,6 +3,10 @@ import { buildLocalChordMaterialReadings } from "../../../utils/music/theory/loc
 import type { ChordCandidate } from "../../../utils/music/models/ChordCandidate";
 import { buildWriterActiveMaterialPanel } from "./writerActiveMaterialPanel";
 import { buildWriterMaterialAction } from "./writerMaterialAction";
+import {
+  buildWriterMaterialImprovisationMoves,
+  resolveWriterMaterialImprovisationMove
+} from "./writerMaterialImprovisationMoves";
 import { buildWriterMaterialPalette } from "./writerMaterialPalette";
 import { resolveWriterMaterialFocus } from "./writerMaterialFocus";
 import {
@@ -21,6 +25,7 @@ export interface WriterMaterialScreenModelInput {
   activeChord: ChordCandidate;
   notationStyle: WriterNotationStyle;
   preferredRouteId?: WriterMaterialRouteId | null;
+  preferredMoveId?: string | null;
   selectedMaterialSource: MaterialSourceMap | null;
   tuning?: string[];
   selectedFrets?: (number | null)[];
@@ -57,6 +62,20 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
   const focusedMaterialSource = resolveWriterMaterialFocus(input.selectedMaterialSource, routedMaterialPalette);
   const focusedPaletteItem =
     routedMaterialPalette.find(item => item.source.name === focusedMaterialSource?.name) || null;
+  const focusedMaterialCandidate = focusedMaterialSource
+    ? materialCandidateByType.get(focusedMaterialSource.type)
+    : undefined;
+  const improvisationMoves = focusedMaterialCandidate
+    ? buildWriterMaterialImprovisationMoves({
+        melodicMaterials: focusedMaterialCandidate.melodicMaterials,
+        chordNotes: input.activeChord.notes,
+        intent: focusedMaterialCandidate.intent
+      })
+    : [];
+  const focusedImprovisationMove = resolveWriterMaterialImprovisationMove(
+    improvisationMoves,
+    input.preferredMoveId
+  );
   const activeMaterialPanel = focusedMaterialSource
     ? buildWriterActiveMaterialPanel({
         sourceType: focusedMaterialSource.type,
@@ -65,7 +84,13 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
         sourceNotes: focusedMaterialSource.notes,
         tuning: input.tuning,
         selectedFrets: input.selectedFrets,
-        candidate: materialCandidateByType.get(focusedMaterialSource.type)
+        candidate: focusedMaterialCandidate,
+        preferredCellSelection: focusedImprovisationMove
+          ? {
+              materialIndex: focusedImprovisationMove.materialIndex,
+              cellIndex: focusedImprovisationMove.cellIndex
+            }
+          : undefined
       })
     : null;
   const activeMaterialAction = buildWriterMaterialAction({
@@ -84,6 +109,8 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
     routePresentation,
     focusedMaterialSource,
     focusedPaletteItem,
+    improvisationMoves,
+    focusedImprovisationMove,
     activeMaterialPanel,
     activeMaterialAction
   };

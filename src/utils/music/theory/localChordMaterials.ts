@@ -39,8 +39,19 @@ function materialPriorityFor(reading: LocalChordMaterialReading, quality: ChordQ
   const materialCount = reading.candidate?.melodicMaterials.length || 0;
   const confidence = reading.candidate?.confidence || 0;
   const intent = reading.candidate?.intent || "functional";
-  const qualityFocusBonus = QUALITY_FOCUS_SOURCE_TYPE[quality] === reading.source.type ? 600 : 0;
-  return qualityFocusBonus + LOCAL_INTENT_PRIORITY[intent] + confidence + materialCount * 0.01;
+  const hasStructuredMaterial = materialCount > 0;
+  const qualityFocusBonus = (
+    hasStructuredMaterial
+    && QUALITY_FOCUS_SOURCE_TYPE[quality] === reading.source.type
+  ) ? 600 : 0;
+  const structuredMaterialBonus = hasStructuredMaterial ? 1 : 0;
+  return (
+    qualityFocusBonus
+    + LOCAL_INTENT_PRIORITY[intent]
+    + structuredMaterialBonus
+    + confidence
+    + materialCount * 0.01
+  );
 }
 
 export function buildLocalChordMaterialReadings(chord: ChordCandidate): LocalChordMaterialReading[] {

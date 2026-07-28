@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { WriterMaterialActionBlock } from "../src/domains/writer/components/WriterMaterialActionBlock";
 import type { WriterMaterialAction } from "../src/domains/writer/services/writerMaterialAction";
+import type { WriterMaterialImprovisationMove } from "../src/domains/writer/services/writerMaterialImprovisationMoves";
 
 describe("F258 bloco visual da acao de material", () => {
   it("mostra celula, caminho ordenado, posicao e passo ativo", () => {
@@ -70,9 +71,42 @@ describe("F258 bloco visual da acao de material", () => {
       },
       buttonLabel: "Ouvir ideia"
     };
+    const improvisationMoves: WriterMaterialImprovisationMove[] = [
+      {
+        id: "0:1",
+        materialIndex: 0,
+        cellIndex: 1,
+        kind: "color",
+        actionLabel: "Abrir uma cor",
+        materialLabel: "maj / tríades superiores",
+        notation: "D-F#-A",
+        notes: ["D", "F#", "A"],
+        practiceHint: "Experimente a tríade do II grau.",
+        tensionProfile: ["9", "#11", "13"],
+        resolutionTargets: ["C", "E", "G", "B"],
+        isPreferred: true
+      },
+      {
+        id: "0:0",
+        materialIndex: 0,
+        cellIndex: 0,
+        kind: "support",
+        actionLabel: "Apoiar o acorde",
+        materialLabel: "maj / tríades superiores",
+        notation: "C-E-G-B",
+        notes: ["C", "E", "G", "B"],
+        practiceHint: "Comece pelo arpejo.",
+        tensionProfile: [],
+        resolutionTargets: ["C", "E", "G", "B"],
+        isPreferred: false
+      }
+    ];
 
     const html = renderToStaticMarkup(createElement(WriterMaterialActionBlock, {
       action,
+      improvisationMoves,
+      activeMoveId: "0:1",
+      onSelectMove: () => undefined,
       onPlay: () => undefined,
       onStop: () => undefined,
       onToggleLoop: () => undefined,
@@ -89,6 +123,11 @@ describe("F258 bloco visual da acao de material", () => {
     expect(html).toContain("Síncope curta");
     expect(html).toContain('aria-current="step"');
     expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain("Gestos para experimentar");
+    expect(html).toContain("Abrir uma cor");
+    expect(html).toContain("Apoiar o acorde");
+    expect(html).toContain("C – E – G – B");
+    expect(html).toContain('title="maj / tríades superiores: Experimente a tríade do II grau."');
     expect(html).toContain("3ª corda, casa 11");
     expect(html).toContain("Parar");
     expect(html).toContain('role="alert"');

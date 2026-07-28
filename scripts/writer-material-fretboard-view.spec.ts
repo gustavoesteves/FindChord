@@ -21,7 +21,7 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     });
 
     expect(view.geometry.height).toBe(182);
-    expect(view.viewport).toBeUndefined();
+    expect(view).not.toHaveProperty("viewport");
     expect(view.strings).toHaveLength(6);
     expect(view.notes.length).toBeGreaterThan(0);
     expect(view.notes.find(note => note.displayLabel === "R")).toMatchObject({
@@ -87,11 +87,7 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     });
 
     expect(view.fretWindow).toEqual({ startFret: 7, endFret: 12, hasShape: true });
-    expect(view.viewport).toEqual({
-      startFret: 7,
-      endFret: 12,
-      horizontalPadding: 12
-    });
+    expect(view).not.toHaveProperty("viewport");
     expect(view.notes.every(note => note.fret >= 7 && note.fret <= 12)).toBe(true);
     expect(view.notes.some(note => note.isChordShapeTone)).toBe(true);
     expect(view.notes.find(note => note.stringIndex === 0 && note.fret === 8)).toMatchObject({
@@ -118,7 +114,7 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     });
 
     expect(view.fretWindow).toEqual({ startFret: 0, endFret: 5, hasShape: true });
-    expect(view.viewport).toMatchObject({ startFret: 0, endFret: 5 });
+    expect(view).not.toHaveProperty("viewport");
     expect(view.notes.every(note => note.fret <= 5)).toBe(true);
   });
 

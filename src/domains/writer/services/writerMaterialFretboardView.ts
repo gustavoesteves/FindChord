@@ -12,7 +12,6 @@ import type {
   FretboardRenderedNote,
   FretboardRenderedString
 } from "../components/fretboard/FretboardRenderer";
-import type { FretboardRendererViewport } from "../components/fretboard/fretboardRendererViewport";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import { getPitchClass } from "../../../utils/music/core/pitch";
 import {
@@ -66,7 +65,6 @@ const PHRASE_ROLE_LABEL: Partial<Record<WriterMaterialGestureRole, string>> = {
 export interface WriterMaterialFretboardView {
   geometry: ReturnType<typeof buildLocalMaterialFretboardGeometry>;
   fretWindow: WriterMaterialFretboardWindow;
-  viewport?: FretboardRendererViewport;
   strings: FretboardRenderedString[];
   notes: FretboardRenderedNote[];
 }
@@ -180,13 +178,6 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
   return {
     geometry,
     fretWindow,
-    viewport: fretWindow.hasShape
-      ? {
-          startFret: fretWindow.startFret,
-          endFret: fretWindow.endFret,
-          horizontalPadding: 12
-        }
-      : undefined,
     strings,
     notes
   };

@@ -373,21 +373,68 @@ function semitoneResolutionsToChord(note: string, targetChord: string | undefine
 function resolvedDiminishedMaterials(
   scale: MaterialSourceMap,
   root: string,
+  quality: ChordQuality,
   nextChord: string | undefined
 ): ContextualMelodicMaterial[] {
-  if (scale.type !== "whole-half diminished") return [];
-  const dimArpeggio = [
+  if (
+    scale.type !== "whole-half diminished"
+    || !["diminished", "diminished7th"].includes(quality)
+  ) return [];
+
+  const diminishedTriadNotes = [
     displayNote(root),
     displayNote(transposePitchClass(root, "3m")),
-    displayNote(transposePitchClass(root, "5d")),
-    displayNote(transposePitchClass(root, "6M"))
-  ].filter(Boolean).join("-");
-  const arpeggioNotes = dimArpeggio.split("-").filter(Boolean);
-  const resolutions = arpeggioNotes.flatMap(note => semitoneResolutionsToChord(note, nextChord));
-  const cells = [dimArpeggio, ...resolutions].filter(Boolean);
+    displayNote(transposePitchClass(root, "5d"))
+  ].filter((note): note is string => !!note);
+  const optionalDiminishedSeventh = displayNote(transposePitchClass(root, "6M"));
+  const completeDiminishedNotes = [
+    ...diminishedTriadNotes,
+    optionalDiminishedSeventh
+  ].filter((note): note is string => !!note);
   const targetRoot = displayNote(chordRoot(nextChord) || null);
 
-  if (cells.length === 0) return [];
+  if (diminishedTriadNotes.length === 0) return [];
+
+  if (quality === "diminished") {
+    const triadResolutions = diminishedTriadNotes.flatMap(note => (
+      semitoneResolutionsToChord(note, nextChord)
+    ));
+    const triadMaterial: ContextualMelodicMaterial = {
+      label: "Tríade diminuta / núcleo",
+      source: "arpeggio",
+      sourceScale: scale.name,
+      cells: [diminishedTriadNotes.join("-"), ...triadResolutions],
+      tensionProfile: ["b3", "b5", "resolução por semitom"],
+      resolutionTargets: targetRoot ? [targetRoot] : [],
+      practiceHint: targetRoot
+        ? `Afirme a tríade diminuta e resolva suas notas por semitom em ${targetRoot}.`
+        : "Afirme 1-b3-b5; a sétima diminuta não pertence à tríade escrita."
+    };
+
+    if (!optionalDiminishedSeventh) return [triadMaterial];
+
+    const optionalResolution = semitoneResolutionsToChord(
+      optionalDiminishedSeventh,
+      nextChord
+    );
+    return [
+      triadMaterial,
+      {
+        label: "Extensão dim7 opcional",
+        source: "arpeggio",
+        sourceScale: scale.name,
+        cells: [completeDiminishedNotes.join("-"), ...optionalResolution],
+        tensionProfile: ["bb7 opcional", "simetria por terças menores"],
+        resolutionTargets: targetRoot ? [targetRoot] : [],
+        practiceHint: `Acrescente ${optionalDiminishedSeventh} como bb7 apenas para transformar a tríade em tensão dim7 opcional.`
+      }
+    ];
+  }
+
+  const resolutions = completeDiminishedNotes.flatMap(note => (
+    semitoneResolutionsToChord(note, nextChord)
+  ));
+  const cells = [completeDiminishedNotes.join("-"), ...resolutions];
 
   return [{
     label: "Diminuto resolvido",
@@ -720,7 +767,7 @@ export function buildContextualMelodicMaterials(
     ...relatedTwoMinorDominantMaterials(scale, root, quality),
     ...lydianDominantSubVMaterials(scale, root, resolutionTarget, nextChord),
     ...halfDiminishedMinorPreparationMaterials(scale, root, nextChord),
-    ...resolvedDiminishedMaterials(scale, root, nextChord),
+    ...resolvedDiminishedMaterials(scale, root, quality, nextChord),
     ...modalMinorMaterials(scale, root),
     ...majorLydianMaterials(scale, root),
     ...suspendedDominantMaterials(scale, root, quality, nextChord),

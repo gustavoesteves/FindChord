@@ -38,6 +38,10 @@ export default function WriterMaterialPanel() {
 
   const [selectedMaterialSource, setSelectedMaterialSource] = useState<MaterialSourceMap | null>(null);
   const [activeRouteId, setActiveRouteId] = useState<WriterMaterialRouteId | null>(null);
+  const [selectedImprovisationMove, setSelectedImprovisationMove] = useState<{
+    chordIdentity: string;
+    moveId: string;
+  } | null>(null);
   const [labelMode, setLabelMode] = useState<LocalMaterialFretboardLabelMode>("position");
   const [isSupportMapOpen, setIsSupportMapOpen] = useState(false);
   const [activePlaybackIdentity, setActivePlaybackIdentity] = useState<string | null>(null);
@@ -51,13 +55,21 @@ export default function WriterMaterialPanel() {
     defaultWriterMaterialCategoryVisibility
   );
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
-  const materialPlaybackIdentity = [
+  const materialChordIdentity = [
     activeChord?.notationInternational || "sem-acorde",
-    activeChord?.notes.join(",") || "",
+    activeChord?.notes.join(",") || ""
+  ].join("|");
+  const selectedImprovisationMoveId =
+    selectedImprovisationMove?.chordIdentity === materialChordIdentity
+      ? selectedImprovisationMove.moveId
+      : null;
+  const materialPlaybackIdentity = [
+    materialChordIdentity,
     selectedFrets.map(fret => fret ?? "x").join(","),
     tuning.join(","),
     activeRouteId || "rota-automatica",
-    selectedMaterialSource?.name || "material-automatico"
+    selectedMaterialSource?.name || "material-automatico",
+    selectedImprovisationMoveId || "gesto-automatico"
   ].join("|");
 
   const toggleCategoryVisibility = (category: LocalMaterialNoteCategory) => {
@@ -111,19 +123,29 @@ export default function WriterMaterialPanel() {
     notationStyle,
     preferredRouteId: activeRouteId,
     selectedMaterialSource,
+    preferredMoveId: selectedImprovisationMoveId,
     tuning,
     selectedFrets
   });
 
   const selectMaterialSource = (source: MaterialSourceMap) => {
     stopStudyLine();
+    setSelectedImprovisationMove(null);
     setSelectedMaterialSource(source);
   };
 
   const selectRoute = (routeId: WriterMaterialRouteId) => {
     stopStudyLine();
     setActiveRouteId(routeId);
+    setSelectedImprovisationMove(null);
     setSelectedMaterialSource(null);
+  };
+  const selectImprovisationMove = (moveId: string) => {
+    stopStudyLine();
+    setSelectedImprovisationMove({
+      chordIdentity: materialChordIdentity,
+      moveId
+    });
   };
   const effectiveVisibleCategories = effectiveWriterMaterialCategoryVisibility(
     materialScreen.effectiveRouteId,
@@ -140,6 +162,7 @@ export default function WriterMaterialPanel() {
           hasSelectedMaterial={Boolean(selectedMaterialSource)}
           onClearSelection={() => {
             stopStudyLine();
+            setSelectedImprovisationMove(null);
             setSelectedMaterialSource(null);
           }}
         />
@@ -158,6 +181,9 @@ export default function WriterMaterialPanel() {
               {materialScreen.activeMaterialAction && (
                 <WriterMaterialActionBlock
                   action={materialScreen.activeMaterialAction}
+                  improvisationMoves={materialScreen.improvisationMoves}
+                  activeMoveId={materialScreen.focusedImprovisationMove?.id}
+                  onSelectMove={selectImprovisationMove}
                   onPlay={playStudyLine}
                   onStop={stopStudyLine}
                   onToggleLoop={() => playbackControllerRef.current?.setLoop(!playbackState.loop)}
