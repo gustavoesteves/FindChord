@@ -629,11 +629,16 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(powerAxis?.melodicMaterials[0]).toMatchObject({
       label: "power / eixo pentatônico",
-      preferredRhythmArchetype: "straight",
-      resolutionTargets: []
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["1 e 5 como eixo", "2->1", "4->5", "b7->1", "sem terca definida"],
+      resolutionTargets: ["C", "G"]
     });
     expect(powerAxis?.melodicMaterials[0]?.cells).toEqual([
       "C-G-C",
+      "D->C",
+      "F->G",
+      "Bb->C",
       "C-D-F-G-Bb",
       "G-C-D-F"
     ]);

@@ -923,15 +923,24 @@ function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVamp
 function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!POWER_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const root = simplifyNote(chord.root);
+  const second = pitch(chord.root, "2M");
+  const fourth = pitch(chord.root, "4P");
+  const fifth = pitch(chord.root, "5P");
+  const flatSeven = pitch(chord.root, "7m");
+  const octave = pitch(chord.root, "8P");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "5P"), pitch(chord.root, "8P")]),
-    noteCell([chord.root, pitch(chord.root, "2M"), pitch(chord.root, "4P"), pitch(chord.root, "5P"), pitch(chord.root, "7m")]),
-    noteCell([pitch(chord.root, "5P"), chord.root, pitch(chord.root, "2M"), pitch(chord.root, "4P")])
+    noteCell([root, fifth, octave]),
+    directedCell(second, root),
+    directedCell(fourth, fifth),
+    directedCell(flatSeven, root),
+    noteCell([root, second, fourth, fifth, flatSeven]),
+    noteCell([fifth, root, second, fourth])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} eixo pentatonico power`, "power riff pentatonic axis", cells);
-  const practiceHint = `Use ${chord.root} e quinta como eixo; mantenha a pentatonica sem terca ate decidir se a cor sera maior ou menor.`;
+  const practiceHint = `Use ${chord.root} e quinta como eixo; trate 2, 4 e b7 como cores neutras que voltam para 1 ou 5.`;
 
   return {
     ...source,
@@ -944,9 +953,9 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
       sourceScale: source.name,
       cells,
       preferredCellIndex: 1,
-      preferredRhythmArchetype: "straight",
-      tensionProfile: ["1", "5", "2/4/b7 como cor neutra", "sem terca definida"],
-      resolutionTargets: [],
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["1 e 5 como eixo", "2->1", "4->5", "b7->1", "sem terca definida"],
+      resolutionTargets: uniqueNotes([root, fifth].filter((note): note is string => !!note)),
       practiceHint
     }],
     practiceHint

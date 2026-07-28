@@ -180,6 +180,50 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.steps.every(step => step.position)).toBe(true);
   });
 
+  it("expõe power chord como cor neutra retornando para o eixo 1-5", () => {
+    const activeChord = cChord({
+      quality: "power",
+      intervals: ["1P", "5P"],
+      notes: ["C", "G"],
+      drawnNotes: ["C", "G"],
+      notationInternational: "C5"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: null
+    });
+    const powerAxis = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "power riff pentatonic axis"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: powerAxis?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, null, 10, 10, 8]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("power riff pentatonic axis");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->C",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "power / eixo pentatônico",
+      realizedCell: {
+        notation: "D->C"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("E");
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("Eb");
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "C"]);
+  });
+
   it("preserva uma rota escolhida explicitamente mesmo quando o foco global esta em outra rota", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
