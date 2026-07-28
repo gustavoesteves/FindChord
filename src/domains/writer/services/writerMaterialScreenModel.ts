@@ -49,6 +49,7 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
     ? buildWriterActiveMaterialPanel({
         sourceType: focusedMaterialSource.type,
         chordRoot: input.activeChord.root,
+        chordNotes: input.activeChord.notes,
         sourceNotes: focusedMaterialSource.notes,
         tuning: input.tuning,
         selectedFrets: input.selectedFrets,
