@@ -47,6 +47,66 @@ describe("F199 candidatas contextuais de material", () => {
     }));
   });
 
+  it.each([
+    {
+      chord: "C6/9",
+      type: "major added color resolutions",
+      label: "6/add9 / cores resolvidas",
+      cells: ["C-E-G", "A->G", "D->E", "A-D-E-G"]
+    },
+    {
+      chord: "Cmaj13",
+      type: "major seventh color resolutions",
+      label: "maj9/maj13 / cores com 7M",
+      cells: ["C-E-G-B", "D->E", "A->G", "B-D-E-A-G"]
+    },
+    {
+      chord: "Cm13",
+      type: "minor seventh color resolutions",
+      label: "m9/m13 / cores com b7",
+      cells: ["C-Eb-G-Bb", "D->Eb", "A->G", "Bb-D-Eb-A-G"]
+    },
+    {
+      chord: "Cmaj7#11",
+      type: "major upper triad colors",
+      label: "maj7 lídio / tríade do II",
+      cells: ["C-E-G-B", "D-F#-A", "F#->G"]
+    },
+    {
+      chord: "G13",
+      type: "dominant natural extension resolutions",
+      label: "9/11/13 dominante / retorno",
+      cells: ["G-B-D-F", "A->B", "C->B", "E->D", "F-A-B-E-D"]
+    },
+    {
+      chord: "CmM7",
+      type: "minor major melodic colors",
+      label: "m(maj7) / cores melódicas",
+      cells: ["C-Eb-G-B", "D->Eb", "A->G", "Eb-B-D-A-G"]
+    },
+    {
+      chord: "C5",
+      type: "power riff pentatonic axis",
+      label: "power / eixo pentatônico",
+      cells: ["C-G-C", "D->C", "F->G", "Bb->C", "C-D-F-G-Bb", "G-C-D-F"]
+    }
+  ])(
+    "preserva vocabulario tocavel de $chord para o Improviso do Harmonizar",
+    ({ chord, type, label, cells }) => {
+      const candidates = buildContextualMaterialCandidates({ chord });
+      const curated = candidates.find(candidate => candidate.type === type);
+
+      expect(curated).toEqual(expect.objectContaining({
+        materialOrigin: "curated-catalog",
+        intent: expect.any(String)
+      }));
+      expect(curated?.melodicMaterials[0]).toEqual(expect.objectContaining({
+        label,
+        cells
+      }));
+    }
+  );
+
   it("trata dominante final com alvo de resolucao como material funcional", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7",

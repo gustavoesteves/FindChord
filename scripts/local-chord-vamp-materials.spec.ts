@@ -189,6 +189,20 @@ function majorThirteenthChord(partial: Partial<ChordCandidate> = {}): ChordCandi
   });
 }
 
+function majorSharpElevenChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "major7#11",
+    intervals: ["1P", "3M", "5P", "7M", "11A"],
+    notes: ["C", "E", "G", "B", "F#"],
+    drawnNotes: ["C", "E", "G", "B", "F#"],
+    notationInternational: "Cmaj7#11",
+    notationBrazilian: "C7M(#11)",
+    notationAcademic: "CΔ7(#11)",
+    ...partial
+  });
+}
+
 function sixNineChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "C",
@@ -507,6 +521,28 @@ describe("F304 vocabulario local de vamp", () => {
       "C-E-G-B",
       "D-F#-A",
       "G-B-D"
+    ]);
+  });
+
+  it("preserva #11 escrito como gesto lidio retornavel", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(majorSharpElevenChord());
+    const upperTriads = candidates.find(candidate => candidate.type === "major upper triad colors");
+
+    expect(upperTriads).toMatchObject({
+      intent: "functional",
+      name: "C triades superiores maiores"
+    });
+    expect(upperTriads?.melodicMaterials[0]).toMatchObject({
+      label: "maj7 lídio / tríade do II",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9", "#11", "13", "7M"],
+      resolutionTargets: ["G"]
+    });
+    expect(upperTriads?.melodicMaterials[0]?.cells).toEqual([
+      "C-E-G-B",
+      "D-F#-A",
+      "F#->G"
     ]);
   });
 

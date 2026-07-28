@@ -610,15 +610,22 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
 function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!MAJOR_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const isWrittenLydian = chord.quality === "major7#11";
+  const fifth = pitch(chord.root, "5P");
+  const sharpEleven = pitch(chord.root, "4A");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "3M"), pitch(chord.root, "5P"), pitch(chord.root, "7M")]),
-    noteCell([pitch(chord.root, "2M"), pitch(chord.root, "4A"), pitch(chord.root, "6M")]),
-    noteCell([pitch(chord.root, "5P"), pitch(chord.root, "7M"), pitch(chord.root, "9M")])
+    noteCell([chord.root, pitch(chord.root, "3M"), fifth, pitch(chord.root, "7M")]),
+    noteCell([pitch(chord.root, "2M"), sharpEleven, pitch(chord.root, "6M")]),
+    isWrittenLydian
+      ? directedCell(sharpEleven, fifth)
+      : noteCell([fifth, pitch(chord.root, "7M"), pitch(chord.root, "9M")])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} triades superiores maiores`, "major upper triad colors", cells);
-  const practiceHint = `Use a triade do II grau para brilho lidio e a triade do V grau para repouso luminoso sobre ${chord.root}.`;
+  const practiceHint = isWrittenLydian
+    ? `Use a triade do II grau para revelar o #11 escrito e retorne ${sharpEleven} para ${fifth} quando quiser estabilizar ${chord.root}.`
+    : `Use a triade do II grau para brilho lidio e a triade do V grau para repouso luminoso sobre ${chord.root}.`;
 
   return {
     ...source,
@@ -626,14 +633,14 @@ function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMa
     intent: "functional",
     confidence: 0.69,
     melodicMaterials: [{
-      label: "maj / tríades superiores",
+      label: isWrittenLydian ? "maj7 lídio / tríade do II" : "maj / tríades superiores",
       source: "arpeggio",
       sourceScale: source.name,
       cells,
       preferredCellIndex: 1,
-      preferredRhythmArchetype: "syncopated",
+      preferredRhythmArchetype: isWrittenLydian ? "space-response" : "syncopated",
       tensionProfile: ["9", "#11", "13", "7M"],
-      resolutionTargets: [],
+      resolutionTargets: isWrittenLydian && fifth ? [fifth] : [],
       practiceHint
     }],
     practiceHint
