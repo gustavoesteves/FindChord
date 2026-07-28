@@ -1,9 +1,9 @@
 import { Play, Sparkles } from "lucide-react";
-import type { WriterMaterialAction } from "../services/writerMaterialAction";
+import type { WriterMaterialAction, WriterMaterialActionStep } from "../services/writerMaterialAction";
 
 export interface WriterMaterialActionBlockProps {
   action: WriterMaterialAction;
-  onPlay: (notes: string[]) => void;
+  onPlay: (steps: WriterMaterialActionStep[]) => void;
 }
 
 export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActionBlockProps) {
@@ -33,7 +33,7 @@ export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActi
         </div>
         <button
           type="button"
-          onClick={() => onPlay(action.notes)}
+          onClick={() => onPlay(action.steps)}
           className="flex items-center justify-center gap-1.5 text-[9px] font-black px-4 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(125,211,252,0.2)] hover:scale-105"
         >
           <Play className="h-3 w-3 fill-current" />

@@ -22,6 +22,7 @@ import {
   DEFAULT_WRITER_MATERIAL_ROUTE_ID,
   type WriterMaterialRouteId
 } from "../services/writerMaterialRoutes";
+import type { WriterMaterialActionStep } from "../services/writerMaterialAction";
 
 export default function WriterMaterialPanel() {
   const {
@@ -47,8 +48,8 @@ export default function WriterMaterialPanel() {
     }));
   };
 
-  const playStudyLine = (notes: string[]) => {
-    notes.forEach((note, idx) => playGuitarNote(note, idx * 280));
+  const playStudyLine = (steps: WriterMaterialActionStep[]) => {
+    steps.forEach(step => playGuitarNote(step.note, step.delayMs));
   };
 
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;

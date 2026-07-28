@@ -8,7 +8,15 @@ export interface WriterMaterialAction {
   theoryDesc: string;
   notes: string[];
   displayNotes: string[];
+  steps: WriterMaterialActionStep[];
   buttonLabel: string;
+}
+
+export interface WriterMaterialActionStep {
+  note: string;
+  displayNote: string;
+  delayMs: number;
+  accent?: boolean;
 }
 
 export interface WriterMaterialActionInput {
@@ -21,6 +29,16 @@ export function playableWriterMaterialNote(note: string, fallbackOctave = 4): st
   return /\d$/.test(note) ? note : `${note}${fallbackOctave}`;
 }
 
+function actionSteps(notes: string[], displayNotes: string[]): WriterMaterialActionStep[] {
+  const lastIndex = notes.length - 1;
+  return notes.map((note, index) => ({
+    note,
+    displayNote: displayNotes[index] || note.replace(/\d/, ""),
+    delayMs: index === 0 ? 0 : 220 + (index - 1) * 180,
+    accent: index === 0 || index === lastIndex
+  }));
+}
+
 export function buildWriterMaterialAction(input: WriterMaterialActionInput): WriterMaterialAction | null {
   if (input.activePanel?.studyLine) {
     return {
@@ -29,6 +47,7 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
       theoryDesc: input.activePanel.studyLine.theoryDesc,
       notes: input.activePanel.studyLine.notes,
       displayNotes: input.activePanel.studyLine.displayNotes,
+      steps: actionSteps(input.activePanel.studyLine.notes, input.activePanel.studyLine.displayNotes),
       buttonLabel: "Ouvir ideia"
     };
   }
@@ -43,6 +62,7 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
     theoryDesc: input.focusedPaletteItem.subtitle,
     notes: displayNotes.map(note => playableWriterMaterialNote(note)),
     displayNotes,
+    steps: actionSteps(displayNotes.map(note => playableWriterMaterialNote(note)), displayNotes),
     buttonLabel: "Ouvir material"
   };
 }

@@ -49,6 +49,11 @@ describe("F246 acao tocavel do material ativo", () => {
       name: "Gravidade Lidia",
       eyebrowLabel: "Tocar agora",
       notes: ["C4", "E4", "F#4"],
+      steps: [
+        { note: "C4", displayNote: "C", delayMs: 0, accent: true },
+        { note: "E4", displayNote: "E", delayMs: 220, accent: false },
+        { note: "F#4", displayNote: "F#", delayMs: 400, accent: true }
+      ],
       buttonLabel: "Ouvir ideia"
     });
   });
@@ -70,8 +75,13 @@ describe("F246 acao tocavel do material ativo", () => {
       theoryDesc: "Mantenha a leitura conectada ao contorno da melodia.",
       displayNotes: ["A", "B", "C#", "D#", "E", "F#", "G"],
       notes: ["A4", "B4", "C#4", "D#4", "E4", "F#4", "G4"],
+      steps: expect.arrayContaining([
+        expect.objectContaining({ note: "A4", delayMs: 0, accent: true }),
+        expect.objectContaining({ note: "G4", accent: true })
+      ]),
       buttonLabel: "Ouvir material"
     });
+    expect(action?.steps.map(step => step.delayMs)).toEqual([0, 220, 400, 580, 760, 940, 1120]);
   });
 
   it("nao cria acao sem fonte e item em foco", () => {
