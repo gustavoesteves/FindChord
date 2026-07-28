@@ -344,15 +344,24 @@ function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMat
 function halfDiminishedUpperStructureCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!HALF_DIMINISHED_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const root = simplifyNote(chord.root);
+  const minorThird = pitch(chord.root, "3m");
+  const flatFifth = pitch(chord.root, "5d");
+  const flatSeven = pitch(chord.root, "7m");
+  const naturalNine = pitch(chord.root, "9M");
+  const eleventh = pitch(chord.root, "11P");
+  const flatThirteen = pitch(chord.root, "6m");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "3m"), pitch(chord.root, "5d"), pitch(chord.root, "7m")]),
-    noteCell([pitch(chord.root, "2M"), pitch(chord.root, "4P"), pitch(chord.root, "6m"), chord.root]),
-    noteCell([pitch(chord.root, "3m"), pitch(chord.root, "5d"), pitch(chord.root, "7m"), pitch(chord.root, "2M")])
+    noteCell([root, minorThird, flatFifth, flatSeven]),
+    directedCell(naturalNine, minorThird),
+    directedCell(eleventh, flatFifth),
+    directedCell(flatThirteen, flatFifth),
+    noteCell([minorThird, flatFifth, flatSeven, naturalNine])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} estruturas meio-diminutas`, "half diminished upper structures", cells);
-  const practiceHint = `Use o arpejo meio-diminuto de ${chord.root} e abra a 9 natural como cor, sem depender de um dominante de chegada.`;
+  const practiceHint = `Use o arpejo meio-diminuto de ${chord.root}; abra 9, 11 e b13 como cores breves e volte para b3 ou b5.`;
 
   return {
     ...source,
@@ -364,8 +373,10 @@ function halfDiminishedUpperStructureCandidate(chord: ChordCandidate): LocalChor
       source: "arpeggio",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["9 natural", "11", "b13", "b5"],
-      resolutionTargets: [],
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9 natural", "11", "b13", "retorno para b3/b5"],
+      resolutionTargets: uniqueNotes([minorThird, flatFifth].filter((note): note is string => !!note)),
       practiceHint
     }],
     practiceHint

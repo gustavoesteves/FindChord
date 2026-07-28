@@ -270,11 +270,16 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(upperStructures?.melodicMaterials[0]).toMatchObject({
       label: "ø7 / estruturas superiores",
-      resolutionTargets: []
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9 natural", "11", "b13", "retorno para b3/b5"],
+      resolutionTargets: ["Eb", "Gb"]
     });
     expect(upperStructures?.melodicMaterials[0]?.cells).toEqual([
       "C-Eb-Gb-Bb",
-      "D-F-Ab-C",
+      "D->Eb",
+      "F->Gb",
+      "Ab->Gb",
       "Eb-Gb-Bb-D"
     ]);
   });

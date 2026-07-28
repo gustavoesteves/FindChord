@@ -247,6 +247,53 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D#", "E"]);
   });
 
+  it("expõe meio-diminuto como cor breve que retorna ao núcleo do acorde", () => {
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "halfDiminished",
+        intervals: ["1P", "3m", "5d", "7m"],
+        notes: ["C", "Eb", "Gb", "Bb"],
+        drawnNotes: ["C", "Eb", "Gb", "Bb"],
+        notationInternational: "Cm7b5"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const halfDiminishedColor = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "half diminished upper structures"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "halfDiminished",
+        intervals: ["1P", "3m", "5d", "7m"],
+        notes: ["C", "Eb", "Gb", "Bb"],
+        drawnNotes: ["C", "Eb", "Gb", "Bb"],
+        notationInternational: "Cm7b5"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: halfDiminishedColor?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 7, 8, 8, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("half diminished upper structures");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->Eb",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "ø7 / estruturas superiores",
+      realizedCell: {
+        notation: "D->Eb"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
