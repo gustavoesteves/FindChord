@@ -311,9 +311,16 @@ describe("F304 vocabulario local de vamp", () => {
     expect(cycle?.chordTones).toEqual(["C", "Eb", "Gb"]);
     expect(cycle?.melodicMaterials[0]).toMatchObject({
       label: "extensão dim7 opcional",
-      tensionProfile: ["bb7 opcional", "simetria", "terças menores"]
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["bb7 opcional", "retorno para a tônica", "sem terça maior implícita"],
+      resolutionTargets: ["C"]
     });
-    expect(cycle?.melodicMaterials[0]?.cells[0]).toBe("C-Eb-Gb-A");
+    expect(cycle?.melodicMaterials[0]?.cells).toEqual([
+      "C-Eb-Gb",
+      "A->C",
+      "C-Eb-Gb-A"
+    ]);
     expect(cycle?.melodicMaterials[0]?.practiceHint).toContain("bb7");
     expect(cycle?.melodicMaterials[0]?.cells.join("-")).not.toContain("E-");
   });

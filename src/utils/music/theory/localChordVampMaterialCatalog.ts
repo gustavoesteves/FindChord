@@ -393,9 +393,15 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
     pitch(chord.root, "5d"),
     pitch(chord.root, "6M")
   ].filter((note): note is string => !!note);
-  const cells = cycleRoots.map((_, index) => (
-    [...cycleRoots.slice(index), ...cycleRoots.slice(0, index)].join("-")
-  ));
+  const cells = isDiminishedTriad
+    ? [
+        cycleRoots.slice(0, 3).join("-"),
+        directedCell(cycleRoots[3], cycleRoots[0]),
+        cycleRoots.join("-")
+      ].filter(Boolean)
+    : cycleRoots.map((_, index) => (
+        [...cycleRoots.slice(index), ...cycleRoots.slice(0, index)].join("-")
+      ));
   if (cycleRoots.length !== 4 || cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} ciclo diminuto simetrico`, "diminished symmetric cycle", cells);
@@ -416,10 +422,14 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
       source: "arpeggio",
       sourceScale: source.name,
       cells,
+      preferredCellIndex: isDiminishedTriad ? 1 : 0,
+      preferredRhythmArchetype: isDiminishedTriad ? "space-response" : "syncopated",
       tensionProfile: isDiminishedTriad
-        ? ["bb7 opcional", "simetria", "terças menores"]
+        ? ["bb7 opcional", "retorno para a tônica", "sem terça maior implícita"]
         : ["simetria", "terças menores", "inversões equivalentes"],
-      resolutionTargets: [],
+      resolutionTargets: isDiminishedTriad
+        ? [cycleRoots[0]]
+        : [],
       practiceHint
     }],
     practiceHint

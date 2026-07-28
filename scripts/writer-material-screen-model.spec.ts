@@ -294,6 +294,53 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
   });
 
+  it("expõe tríade diminuta com bb7 opcional voltando para a tônica", () => {
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "diminished",
+        intervals: ["1P", "3m", "5d"],
+        notes: ["C", "Eb", "Gb"],
+        drawnNotes: ["C", "Eb", "Gb"],
+        notationInternational: "Cdim"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: null
+    });
+    const diminishedCycle = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "diminished symmetric cycle"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "diminished",
+        intervals: ["1P", "3m", "5d"],
+        notes: ["C", "Eb", "Gb"],
+        drawnNotes: ["C", "Eb", "Gb"],
+        notationInternational: "Cdim"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: diminishedCycle?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 7, 8, null, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("diminished symmetric cycle");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "A->C",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "extensão dim7 opcional",
+      realizedCell: {
+        notation: "A->C"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "C"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
