@@ -341,6 +341,53 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "C"]);
   });
 
+  it("expõe aumentado com #11 retornando para a #5 escrita", () => {
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "augmented",
+        intervals: ["1P", "3M", "5A"],
+        notes: ["C", "E", "G#"],
+        drawnNotes: ["C", "E", "G#"],
+        notationInternational: "Caug"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: null
+    });
+    const augmentedCycle = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "augmented whole tone cycle"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "augmented",
+        intervals: ["1P", "3M", "5A"],
+        notes: ["C", "E", "G#"],
+        drawnNotes: ["C", "E", "G#"],
+        notationInternational: "Caug"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: augmentedCycle?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 9, 9, null, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("augmented whole tone cycle");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "F#->G#",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "ciclo aumentado / tons inteiros",
+      realizedCell: {
+        notation: "F#->G#"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["F#", "G#"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({

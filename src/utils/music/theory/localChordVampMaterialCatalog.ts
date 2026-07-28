@@ -439,22 +439,29 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
 function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!AUGMENTED_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const root = simplifyNote(chord.root);
+  const third = pitch(chord.root, "3M");
+  const sharpFive = pitch(chord.root, "5A");
+  const ninth = pitch(chord.root, "2M");
+  const sharpEleven = pitch(chord.root, "4A");
+  const flatSeven = pitch(chord.root, "7m");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "3M"), pitch(chord.root, "5A")]),
-    noteCell([pitch(chord.root, "2M"), pitch(chord.root, "4A"), pitch(chord.root, "7m")]),
+    noteCell([root, third, sharpFive]),
+    noteCell([ninth, sharpEleven, flatSeven]),
+    directedCell(sharpEleven, sharpFive),
     noteCell([
-      chord.root,
-      pitch(chord.root, "2M"),
-      pitch(chord.root, "3M"),
-      pitch(chord.root, "4A"),
-      pitch(chord.root, "5A"),
-      pitch(chord.root, "7m")
+      root,
+      ninth,
+      third,
+      sharpEleven,
+      sharpFive,
+      flatSeven
     ])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} ciclo de tons inteiros`, "augmented whole tone cycle", cells);
-  const practiceHint = `Alterne a triade aumentada de ${chord.root} com a triade um tom acima; a cor fica simetrica e suspensa.`;
+  const practiceHint = `Afirme a triade aumentada de ${chord.root}; use a triade um tom acima como cor e volte para a #5 escrita.`;
 
   return {
     ...source,
@@ -466,8 +473,10 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
       source: "arpeggio",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["tríades aumentadas", "tons inteiros", "#5", "#11"],
-      resolutionTargets: [],
+      preferredCellIndex: 2,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["tríade aumentada", "tríade um tom acima", "#11", "retorno para #5"],
+      resolutionTargets: sharpFive ? [sharpFive] : [],
       practiceHint
     }],
     practiceHint
