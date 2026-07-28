@@ -70,6 +70,12 @@ describe("F325 catalogo versionavel de materiais locais", () => {
         intent: "functional"
       }),
       expect.objectContaining({
+        id: "dominant-natural-extension-resolutions",
+        sourceType: "dominant natural extension resolutions",
+        qualities: expect.arrayContaining(["dominant9th", "dominant11th", "dominant13th"]),
+        intent: "functional"
+      }),
+      expect.objectContaining({
         id: "power-riff-pentatonic-axis",
         sourceType: "power riff pentatonic axis",
         qualities: ["power"],

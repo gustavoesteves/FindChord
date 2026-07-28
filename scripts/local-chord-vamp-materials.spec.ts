@@ -21,6 +21,20 @@ function chord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   };
 }
 
+function dominantThirteenthChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "G",
+    quality: "dominant13th",
+    intervals: ["1P", "3M", "5P", "7m", "9M", "11P", "13M"],
+    notes: ["G", "B", "D", "F", "A", "C", "E"],
+    drawnNotes: ["G", "B", "D", "F", "A", "C", "E"],
+    notationInternational: "G13",
+    notationBrazilian: "G7(13)",
+    notationAcademic: "G13",
+    ...partial
+  });
+}
+
 function minorChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "C",
@@ -555,6 +569,30 @@ describe("F304 vocabulario local de vamp", () => {
       "D-F-A",
       "F-A-C",
       "A-C-E"
+    ]);
+  });
+
+  it("oferece extensoes dominantes naturais como gestos de retorno", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(dominantThirteenthChord());
+    const colors = candidates.find(candidate => candidate.type === "dominant natural extension resolutions");
+
+    expect(colors).toMatchObject({
+      intent: "functional",
+      name: "G extensoes dominantes naturais"
+    });
+    expect(colors?.melodicMaterials[0]).toMatchObject({
+      label: "9/11/13 dominante / retorno",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9->3", "11->3", "13->5", "b7 preservada"],
+      resolutionTargets: ["B", "D"]
+    });
+    expect(colors?.melodicMaterials[0]?.cells).toEqual([
+      "G-B-D-F",
+      "A->B",
+      "C->B",
+      "E->D",
+      "F-A-B-E-D"
     ]);
   });
 

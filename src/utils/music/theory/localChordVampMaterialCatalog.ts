@@ -100,6 +100,12 @@ const NATURAL_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
   "dominant13th"
 ]);
 
+const NATURAL_DOMINANT_EXTENSION_QUALITIES = new Set<ChordQuality>([
+  "dominant9th",
+  "dominant11th",
+  "dominant13th"
+]);
+
 const WRITTEN_ALTERED_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
   "dominant7b5",
   "dominant7b9",
@@ -743,6 +749,53 @@ function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVam
   };
 }
 
+function dominantNaturalExtensionResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!NATURAL_DOMINANT_EXTENSION_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const third = pitch(chord.root, "3M");
+  const fifth = pitch(chord.root, "5P");
+  const flatSeven = pitch(chord.root, "7m");
+  const ninth = pitch(chord.root, "9M");
+  const eleventh = pitch(chord.root, "11P");
+  const thirteenth = pitch(chord.root, "13M");
+  const cells = [
+    noteCell([root, third, fifth, flatSeven]),
+    directedCell(ninth, third),
+    chord.quality !== "dominant9th" ? directedCell(eleventh, third) : "",
+    chord.quality === "dominant13th" ? directedCell(thirteenth, fifth) : "",
+    chord.quality === "dominant13th" ? noteCell([flatSeven, ninth, third, thirteenth, fifth]) : ""
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} extensoes dominantes naturais`, "dominant natural extension resolutions", cells);
+  const practiceHint = `Preserve 3 e b7 de ${chord.notationInternational}; use 9, 11 e 13 como cores que retornam para 3 ou 5.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "functional",
+    confidence: 0.77,
+    melodicMaterials: [{
+      label: "9/11/13 dominante / retorno",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: [
+        "9->3",
+        ...(chord.quality !== "dominant9th" ? ["11->3"] : []),
+        ...(chord.quality === "dominant13th" ? ["13->5"] : []),
+        "b7 preservada"
+      ],
+      resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
 function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!WRITTEN_ALTERED_DOMINANT_VAMP_QUALITIES.has(chord.quality)) return null;
 
@@ -1000,6 +1053,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     qualities: Array.from(NATURAL_DOMINANT_VAMP_QUALITIES),
     intent: "functional",
     build: dominantUpperTriadColorsCandidate
+  },
+  {
+    id: "dominant-natural-extension-resolutions",
+    sourceType: "dominant natural extension resolutions",
+    label: "9/11/13 dominante / retorno",
+    qualities: Array.from(NATURAL_DOMINANT_EXTENSION_QUALITIES),
+    intent: "functional",
+    build: dominantNaturalExtensionResolutionCandidate
   },
   {
     id: "written-altered-dominant-resolutions",

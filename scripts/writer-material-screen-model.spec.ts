@@ -556,6 +556,51 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
   });
 
+  it("expõe 13 dominante como extensão natural que retorna para a terça", () => {
+    const activeChord = cChord({
+      root: "G",
+      quality: "dominant13th",
+      intervals: ["1P", "3M", "5P", "7m", "9M", "11P", "13M"],
+      notes: ["G", "B", "D", "F", "A", "C", "E"],
+      drawnNotes: ["G", "B", "D", "F", "A", "C", "E"],
+      notationInternational: "G13",
+      notationBrazilian: "G7(13)",
+      notationAcademic: "G13"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const colors = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "dominant natural extension resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: colors?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [3, 3, 4, 3, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("dominant natural extension resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "A->B",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "9/11/13 dominante / retorno",
+      realizedCell: {
+        notation: "A->B"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "B"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
