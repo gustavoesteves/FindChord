@@ -892,15 +892,22 @@ function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): Local
 function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!MINOR_MAJOR_VAMP_QUALITIES.has(chord.quality)) return null;
 
+  const root = simplifyNote(chord.root);
+  const minorThird = pitch(chord.root, "3m");
+  const fifth = pitch(chord.root, "5P");
+  const majorSeven = pitch(chord.root, "7M");
+  const ninth = pitch(chord.root, "9M");
+  const sixth = pitch(chord.root, "6M");
   const cells = [
-    noteCell([chord.root, pitch(chord.root, "3m"), pitch(chord.root, "5P"), pitch(chord.root, "7M")]),
-    noteCell([pitch(chord.root, "2M"), pitch(chord.root, "4P"), pitch(chord.root, "6M")]),
-    noteCell([pitch(chord.root, "5P"), pitch(chord.root, "7M"), pitch(chord.root, "9M")])
+    noteCell([root, minorThird, fifth, majorSeven]),
+    directedCell(ninth, minorThird),
+    directedCell(sixth, fifth),
+    noteCell([minorThird, majorSeven, ninth, sixth, fifth])
   ].filter(Boolean);
   if (cells.length === 0) return null;
 
   const source = materialSource(`${chord.root} cores menor-maior melodicas`, "minor major melodic colors", cells);
-  const practiceHint = `Preserve a tensao entre a terca menor e a setima maior de ${chord.root}; use as triades de II menor e V maior como abertura melodica.`;
+  const practiceHint = `Preserve a tensão entre b3 e 7M de ${chord.notationInternational}; use 9 e 6 como cores que voltam para b3 e 5.`;
 
   return {
     ...source,
@@ -912,8 +919,10 @@ function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVamp
       source: "arpeggio",
       sourceScale: source.name,
       cells,
-      tensionProfile: ["7M", "9", "11", "13"],
-      resolutionTargets: [],
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["b3 + 7M preservadas", "9->b3", "6->5"],
+      resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
       practiceHint
     }],
     practiceHint

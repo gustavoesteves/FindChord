@@ -610,12 +610,16 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(melodicColors?.melodicMaterials[0]).toMatchObject({
       label: "m(maj7) / cores melódicas",
-      resolutionTargets: []
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["b3 + 7M preservadas", "9->b3", "6->5"],
+      resolutionTargets: ["Eb", "G"]
     });
     expect(melodicColors?.melodicMaterials[0]?.cells).toEqual([
       "C-Eb-G-B",
-      "D-F-A",
-      "G-B-D"
+      "D->Eb",
+      "A->G",
+      "Eb-B-D-A-G"
     ]);
   });
 

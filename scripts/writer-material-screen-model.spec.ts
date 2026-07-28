@@ -224,6 +224,48 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "C"]);
   });
 
+  it("expõe menor-maior como 9 retornando para b3 com 7M preservada", () => {
+    const activeChord = cChord({
+      quality: "minorMajor7th",
+      intervals: ["1P", "3m", "5P", "7M"],
+      notes: ["C", "Eb", "G", "B"],
+      drawnNotes: ["C", "Eb", "G", "B"],
+      notationInternational: "Cm(maj7)"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const minorMajor = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "minor major melodic colors"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: minorMajor?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 8, 9, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("minor major melodic colors");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D->Eb",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "m(maj7) / cores melódicas",
+      realizedCell: {
+        notation: "D->Eb"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D", "Eb"]);
+  });
+
   it("preserva uma rota escolhida explicitamente mesmo quando o foco global esta em outra rota", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({
