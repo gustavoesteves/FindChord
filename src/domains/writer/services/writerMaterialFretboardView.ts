@@ -12,8 +12,14 @@ import type {
   FretboardRenderedNote,
   FretboardRenderedString
 } from "../components/fretboard/FretboardRenderer";
+import type { FretboardRendererViewport } from "../components/fretboard/fretboardRendererViewport";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import { getPitchClass } from "../../../utils/music/core/pitch";
+import {
+  fretWindowForWriterMaterialShape,
+  type WriterMaterialFretWindow
+} from "./writerMaterialFretWindow";
+import type { WriterMaterialGestureRole } from "./writerMaterialCellRealization";
 
 export interface WriterMaterialFretboardChordContext {
   root: string;
@@ -31,37 +37,38 @@ export interface WriterMaterialFretboardViewInput {
   source: WriterMaterialFretboardSourceContext;
   activeChord: WriterMaterialFretboardChordContext;
   selectedFrets?: (number | null)[];
+  sequenceSteps?: ReadonlyArray<{
+    position?: { stringIndex: number; fret: number };
+    phraseRole?: WriterMaterialGestureRole;
+    displayNote?: string;
+  }>;
+  activeStepIndex?: number | null;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;
   labelMode: LocalMaterialFretboardLabelMode;
 }
 
-export interface WriterMaterialFretboardWindow {
-  startFret: number;
-  endFret: number;
-  hasShape: boolean;
+export type WriterMaterialFretboardWindow = WriterMaterialFretWindow;
+
+interface WriterMaterialSequenceVisit {
+  stepIndex: number;
+  phraseRole?: WriterMaterialGestureRole;
+  displayNote?: string;
 }
+
+const PHRASE_ROLE_LABEL: Partial<Record<WriterMaterialGestureRole, string>> = {
+  anchor: "partida",
+  cell: "célula",
+  color: "cor",
+  outside: "fora",
+  return: "chegada"
+};
 
 export interface WriterMaterialFretboardView {
   geometry: ReturnType<typeof buildLocalMaterialFretboardGeometry>;
   fretWindow: WriterMaterialFretboardWindow;
+  viewport?: FretboardRendererViewport;
   strings: FretboardRenderedString[];
   notes: FretboardRenderedNote[];
-}
-
-function fretWindowForShape(selectedFrets: (number | null)[] | undefined, fretCount: number): WriterMaterialFretboardWindow {
-  const fretted = (selectedFrets || [])
-    .filter((fret): fret is number => typeof fret === "number" && fret > 0 && fret <= fretCount);
-  if (fretted.length === 0) return { startFret: 0, endFret: fretCount, hasShape: false };
-
-  const minFret = Math.min(...fretted);
-  const maxFret = Math.max(...fretted);
-  let startFret = Math.max(0, minFret - 1);
-  let endFret = Math.min(fretCount, maxFret + 2);
-
-  while (endFret - startFret < 5 && endFret < fretCount) endFret += 1;
-  while (endFret - startFret < 5 && startFret > 0) startFret -= 1;
-
-  return { startFret, endFret, hasShape: true };
 }
 
 function isFretVisibleInWindow(fret: number, window: WriterMaterialFretboardWindow): boolean {
@@ -83,37 +90,87 @@ function sourceNotesWithShapeNote(sourceNotes: string[], baseNote: string, fret:
 
 export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardViewInput): WriterMaterialFretboardView {
   const geometry = buildLocalMaterialFretboardGeometry(input.tuning.length);
-  const fretWindow = fretWindowForShape(input.selectedFrets, geometry.fretCount);
+  const fretWindow = fretWindowForWriterMaterialShape(input.selectedFrets, geometry.fretCount);
   const strings = input.tuning.map((_, idx) => localMaterialStringGeometry(idx));
+  const sequenceVisits = new Map<string, WriterMaterialSequenceVisit[]>();
+  input.sequenceSteps?.forEach((step, stepIndex) => {
+    if (!step.position) return;
+    const key = `${step.position.stringIndex}:${step.position.fret}`;
+    sequenceVisits.set(key, [
+      ...(sequenceVisits.get(key) || []),
+      {
+        stepIndex,
+        phraseRole: step.phraseRole,
+        displayNote: step.displayNote
+      }
+    ]);
+  });
+  const allCategoriesVisible: Record<LocalMaterialNoteCategory, boolean> = {
+    root: true,
+    chordTone: true,
+    characteristic: true,
+    tension: true,
+    avoid: true
+  };
   const notes = input.tuning.flatMap((baseNote, stringIndex) => {
     return Array.from({ length: geometry.fretCount + 1 }).flatMap((_, fret) => {
       if (!isFretVisibleInWindow(fret, fretWindow)) return [];
+      const visits = sequenceVisits.get(`${stringIndex}:${fret}`) || [];
+      const stepIndexes = visits.map(visit => visit.stepIndex);
+      const isSequencePosition = visits.length > 0;
       const isChordShapeTone = isSelectedShapeFret(input.selectedFrets, stringIndex, fret);
       const fretboardNote = buildLocalMaterialFretboardNote({
         baseNote,
         fret,
-        sourceNotes: sourceNotesWithShapeNote(input.source.notes, baseNote, fret, isChordShapeTone),
+        sourceNotes: sourceNotesWithShapeNote(
+          input.source.notes,
+          baseNote,
+          fret,
+          isChordShapeTone || isSequencePosition
+        ),
         chordRoot: input.activeChord.root,
         chordNotes: input.activeChord.notes,
         chordQuality: input.activeChord.quality,
         sourceType: input.source.type,
-        visibleCategories: input.visibleCategories,
+        visibleCategories: isSequencePosition ? allCategoriesVisible : input.visibleCategories,
         labelMode: input.labelMode
       });
       if (!fretboardNote) return [];
 
+      const activeVisit = visits.find(visit => visit.stepIndex === input.activeStepIndex);
+      const sequenceDisplayNote = visits.find(visit => visit.displayNote)?.displayNote;
+      const visitDescriptions = visits.map(visit => {
+        const role = visit.phraseRole ? PHRASE_ROLE_LABEL[visit.phraseRole] : undefined;
+        return `passo ${visit.stepIndex + 1}${role ? `, ${role}` : ""}`;
+      });
       return [{
         stringIndex,
         fret,
         noteName: fretboardNote.noteName,
-        displayLabel: fretboardNote.displayLabel,
+        displayLabel: input.labelMode === "note" && sequenceDisplayNote
+          ? sequenceDisplayNote
+          : fretboardNote.displayLabel,
         color: fretboardNote.role.color,
         tooltip: fretboardNote.tooltip,
         isChordShapeTone,
-        strokeClassName: isChordShapeTone
+        stepNumbers: stepIndexes.map(stepIndex => stepIndex + 1),
+        activeStepNumber: activeVisit === undefined ? undefined : activeVisit.stepIndex + 1,
+        isCurrentStep: activeVisit !== undefined,
+        ariaLabel: visits.length > 0
+          ? `${sequenceDisplayNote || fretboardNote.noteName}, corda ${stringIndex + 1}, casa ${fret}, ${visitDescriptions.join("; ")}${activeVisit ? ", passo ativo" : ""}`
+          : fretboardNote.tooltip,
+        strokeClassName: activeVisit !== undefined
+          ? "stroke-white"
+          : isSequencePosition
+            ? "stroke-sky-300"
+            : isChordShapeTone
           ? "stroke-white"
           : fretboardNote.role.category === "characteristic" ? "stroke-amber-300" : "stroke-zinc-950",
-        glowRadius: isChordShapeTone
+        glowRadius: activeVisit !== undefined
+          ? 12
+          : isSequencePosition
+            ? 9
+            : isChordShapeTone
           ? 9
           : fretboardNote.role.category === "characteristic" ? 7 : 4
       }];
@@ -123,6 +180,13 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
   return {
     geometry,
     fretWindow,
+    viewport: fretWindow.hasShape
+      ? {
+          startFret: fretWindow.startFret,
+          endFret: fretWindow.endFret,
+          horizontalPadding: 12
+        }
+      : undefined,
     strings,
     notes
   };

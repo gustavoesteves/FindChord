@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChordStore } from "../../../store/useChordStore";
 import type { MaterialSourceMap } from "../../../utils/music/theory/musicTheory";
 import {
@@ -19,10 +19,13 @@ import {
 } from "../services/writerMaterialCategoryVisibility";
 import { buildWriterMaterialScreenModel } from "../services/writerMaterialScreenModel";
 import {
-  DEFAULT_WRITER_MATERIAL_ROUTE_ID,
   type WriterMaterialRouteId
 } from "../services/writerMaterialRoutes";
 import type { WriterMaterialActionStep } from "../services/writerMaterialAction";
+import {
+  createWriterMaterialPlaybackController,
+  type WriterMaterialPlaybackState
+} from "../services/writerMaterialPlaybackController";
 
 export default function WriterMaterialPanel() {
   const {
@@ -34,12 +37,28 @@ export default function WriterMaterialPanel() {
   } = useChordStore();
 
   const [selectedMaterialSource, setSelectedMaterialSource] = useState<MaterialSourceMap | null>(null);
-  const [activeRouteId, setActiveRouteId] = useState<WriterMaterialRouteId>(DEFAULT_WRITER_MATERIAL_ROUTE_ID);
+  const [activeRouteId, setActiveRouteId] = useState<WriterMaterialRouteId | null>(null);
   const [labelMode, setLabelMode] = useState<LocalMaterialFretboardLabelMode>("position");
   const [isSupportMapOpen, setIsSupportMapOpen] = useState(false);
+  const [activePlaybackIdentity, setActivePlaybackIdentity] = useState<string | null>(null);
+  const [playbackState, setPlaybackState] = useState<WriterMaterialPlaybackState>({
+    status: "stopped",
+    stepIndex: null,
+    loop: false
+  });
+  const playbackControllerRef = useRef<ReturnType<typeof createWriterMaterialPlaybackController> | null>(null);
   const [visibleCategories, setVisibleCategories] = useState<Record<LocalMaterialNoteCategory, boolean>>(
     defaultWriterMaterialCategoryVisibility
   );
+  const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
+  const materialPlaybackIdentity = [
+    activeChord?.notationInternational || "sem-acorde",
+    activeChord?.notes.join(",") || "",
+    selectedFrets.map(fret => fret ?? "x").join(","),
+    tuning.join(","),
+    activeRouteId || "rota-automatica",
+    selectedMaterialSource?.name || "material-automatico"
+  ].join("|");
 
   const toggleCategoryVisibility = (category: LocalMaterialNoteCategory) => {
     setVisibleCategories(prev => ({
@@ -48,11 +67,40 @@ export default function WriterMaterialPanel() {
     }));
   };
 
-  const playStudyLine = (steps: WriterMaterialActionStep[]) => {
-    steps.forEach(step => playGuitarNote(step.note, step.delayMs));
+  useEffect(() => {
+    const controller = createWriterMaterialPlaybackController({
+      playStep: step => playGuitarNote(step.note, 0, {
+        durationMs: step.durationMs,
+        velocity: step.accent ? 1 : 0.78
+      }),
+      onStateChange: state => {
+        setPlaybackState(state);
+        if (state.status === "stopped") setActivePlaybackIdentity(null);
+      }
+    });
+    playbackControllerRef.current = controller;
+
+    return () => {
+      if (playbackControllerRef.current === controller) {
+        playbackControllerRef.current = null;
+      }
+      controller.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    playbackControllerRef.current?.stop();
+  }, [materialPlaybackIdentity]);
+
+  const stopStudyLine = () => {
+    playbackControllerRef.current?.stop();
   };
 
-  const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
+  const playStudyLine = (steps: WriterMaterialActionStep[]) => {
+    if (steps.length === 0) return;
+    setActivePlaybackIdentity(materialPlaybackIdentity);
+    playbackControllerRef.current?.play(steps);
+  };
 
   if (!activeChord) {
     return <WriterMaterialNoChordState />;
@@ -68,10 +116,12 @@ export default function WriterMaterialPanel() {
   });
 
   const selectMaterialSource = (source: MaterialSourceMap) => {
+    stopStudyLine();
     setSelectedMaterialSource(source);
   };
 
   const selectRoute = (routeId: WriterMaterialRouteId) => {
+    stopStudyLine();
     setActiveRouteId(routeId);
     setSelectedMaterialSource(null);
   };
@@ -79,13 +129,19 @@ export default function WriterMaterialPanel() {
     materialScreen.effectiveRouteId,
     visibleCategories
   );
+  const visibleActiveStepIndex = activePlaybackIdentity === materialPlaybackIdentity
+    ? playbackState.stepIndex
+    : null;
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4">
         <WriterMaterialPanelHeader
           hasSelectedMaterial={Boolean(selectedMaterialSource)}
-          onClearSelection={() => setSelectedMaterialSource(null)}
+          onClearSelection={() => {
+            stopStudyLine();
+            setSelectedMaterialSource(null);
+          }}
         />
 
         <div className="flex flex-col gap-4">
@@ -100,7 +156,18 @@ export default function WriterMaterialPanel() {
               />
 
               {materialScreen.activeMaterialAction && (
-                <WriterMaterialActionBlock action={materialScreen.activeMaterialAction} onPlay={playStudyLine} />
+                <WriterMaterialActionBlock
+                  action={materialScreen.activeMaterialAction}
+                  onPlay={playStudyLine}
+                  onStop={stopStudyLine}
+                  onToggleLoop={() => playbackControllerRef.current?.setLoop(!playbackState.loop)}
+                  activeStepIndex={visibleActiveStepIndex}
+                  isPlaying={playbackState.status === "playing"}
+                  loopEnabled={playbackState.loop}
+                  playbackError={playbackState.error === "audio-unavailable"
+                    ? "Não foi possível iniciar o áudio neste navegador."
+                    : undefined}
+                />
               )}
 
               <WriterMaterialFretboardPanel
@@ -108,6 +175,8 @@ export default function WriterMaterialPanel() {
                 source={materialScreen.focusedMaterialSource}
                 activeChord={activeChord}
                 selectedFrets={selectedFrets}
+                sequenceSteps={materialScreen.activeMaterialAction?.steps}
+                activeStepIndex={visibleActiveStepIndex}
                 focusedTitle={materialScreen.focusedPaletteItem?.title}
                 visibleCategories={effectiveVisibleCategories}
                 labelMode={labelMode}

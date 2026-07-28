@@ -64,4 +64,36 @@ describe("F228 painel ativo de material do acorde", () => {
       ))
     ))).toBe(true);
   });
+
+  it("preserva a identidade e a ordem da celula estruturada sobre o shape", () => {
+    const panel = buildWriterActiveMaterialPanel({
+      sourceType: "major upper triad colors",
+      chordRoot: "C",
+      chordNotes: ["C", "E", "G", "B"],
+      sourceNotes: ["C", "D", "E", "F#", "G", "A", "B"],
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null],
+      candidate: {
+        intent: "functional",
+        melodicMaterials: [{
+          label: "maj / tríades superiores",
+          source: "arpeggio",
+          cells: ["C-E-G-B", "D-F#-A", "G-B-D"],
+          preferredCellIndex: 1,
+          tensionProfile: ["9", "#11", "13"],
+          resolutionTargets: [],
+          practiceHint: "Use a tríade do II grau e retorne ao acorde."
+        }]
+      }
+    });
+
+    expect(panel.studyLine?.name).toBe("maj / tríades superiores");
+    expect(panel.studyLine?.realizedCell).toMatchObject({
+      cellIndex: 1,
+      notation: "D-F#-A"
+    });
+    expect(panel.studyLine?.displayNotes.slice(0, 3)).toEqual(["D", "F#", "A"]);
+    expect(panel.studyLine?.events?.map(event => event.displayNote)).toEqual(panel.studyLine?.displayNotes);
+    expect(panel.studyLine?.positions).toHaveLength(panel.studyLine?.notes.length);
+  });
 });

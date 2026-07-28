@@ -49,4 +49,56 @@ describe("F201 materiais melódicos contextuais", () => {
     expect(relatedTwo?.cells).toContain("F-Ab-C-Eb");
     expect(relatedTwo?.practiceHint).toContain("Fm");
   });
+
+  it.each([
+    {
+      type: "power neutral pentatonic",
+      quality: "power" as const,
+      label: "power / pentatônica neutra",
+      cell: "C-D-F-G-Bb",
+      preferredCellIndex: 1
+    },
+    {
+      type: "sus2 pentatonic",
+      quality: "sus2" as const,
+      label: "sus2 / eixo 1–2–5",
+      cell: "C-D-G",
+      preferredCellIndex: 0
+    },
+    {
+      type: "sus4 pentatonic",
+      quality: "sus4" as const,
+      label: "sus4 / eixo 1–4–b7",
+      cell: "C-F-Bb",
+      preferredCellIndex: 0
+    }
+  ])("estrutura a colecao neutra $type sem terca", ({
+    type,
+    quality,
+    label,
+    cell,
+    preferredCellIndex
+  }) => {
+    const materials = buildContextualMelodicMaterials(
+      {
+        name: `C ${type}`,
+        type,
+        intervals: ["1P", "2M", "4P", "5P", "7m"],
+        notes: ["C", "D", "F", "G", "Bb"]
+      },
+      "C",
+      quality,
+      "color",
+      undefined,
+      undefined
+    );
+
+    expect(materials[0]).toMatchObject({
+      label,
+      preferredCellIndex,
+      preferredRhythmArchetype: "straight"
+    });
+    expect(materials[0]?.cells).toContain(cell);
+    expect(materials[0]?.cells.join("-")).not.toMatch(/(^|-)E(b)?($|-)/);
+  });
 });

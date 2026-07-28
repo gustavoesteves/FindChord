@@ -64,6 +64,21 @@ const SOURCE_DESCRIPTIONS: Record<string, LocalMaterialSourceDescription> = {
     mood: "Direta, expressiva e concentrada.",
     tip: "A terça menor pode funcionar como cor expressiva ou aproximação para a terça maior do acorde de fundo."
   },
+  "sus2 pentatonic": {
+    desc: "Pentatônica sus2 — Coleção sem terça construída sobre 1, 2, 4, 5 e b7.",
+    mood: "Aberta, suspensa e modal.",
+    tip: "Use 2 e 5 como apoios principais e trate a 4 e a b7 como expansão sem definir maior ou menor."
+  },
+  "sus4 pentatonic": {
+    desc: "Pentatônica sus4 — Coleção sem terça construída sobre 1, 2, 4, 5 e b7.",
+    mood: "Ampla, suspensa e afirmativa.",
+    tip: "Sustente a 4 como identidade e use 2 e b7 para movimentar a frase sem resolver para uma terça."
+  },
+  "power neutral pentatonic": {
+    desc: "Pentatônica neutra power — Tônica e quinta com 2, 4 e b7, sem terça maior ou menor.",
+    mood: "Física, aberta e harmonicamente neutra.",
+    tip: "Mantenha 1 e 5 como eixo; 2, 4 e b7 criam movimento sem decidir o modo do acorde."
+  },
   blues: {
     desc: "Escala de Blues — Pentatônica menor enriquecida pela blue note (b5).",
     mood: "Sofrida, maliciosa, expressiva, clássica e autêntica.",
@@ -160,13 +175,28 @@ const SOURCE_DESCRIPTIONS: Record<string, LocalMaterialSourceDescription> = {
     tip: "Preserve a tensão entre b3 e 7M. Abra 9, 11 e 13 como cor melódica sem transformar o acorde em menor dórico."
   },
   "power riff pentatonic axis": {
-    desc: "Eixo pentatônico power — Tônica e quinta como âncora, com pentatônicas maior e menor como escolhas expressivas.",
-    mood: "Direto, físico e ambíguo entre maior e menor.",
-    tip: "Mantenha 1 e 5 como centro. Use b3 ou 3 como cor de frase, não como definição obrigatória do acorde."
+    desc: "Eixo pentatônico power — Tônica e quinta como âncora, com 2, 4 e b7 como cores sem terça definida.",
+    mood: "Direto, físico e harmonicamente aberto.",
+    tip: "Mantenha 1 e 5 como centro. Use 2, 4 e b7 para variar o riff sem decidir entre maior e menor."
   }
 };
 
 const SUGGESTED_LINES: Record<string, LocalMaterialSuggestedLine> = {
+  "sus2 pentatonic": {
+    name: "Eixo suspenso da 2ª",
+    theoryDesc: "Afirma 1, 2 e 5 e abre 4 e b7 sem introduzir terça.",
+    intervals: ["1P", "2M", "5P", "7m", "4P", "2M", "1P"]
+  },
+  "sus4 pentatonic": {
+    name: "Eixo suspenso da 4ª",
+    theoryDesc: "Mantém a quarta como identidade e circula por 2, 5 e b7 sem introduzir terça.",
+    intervals: ["1P", "4P", "7m", "2M", "5P", "4P", "1P"]
+  },
+  "power neutral pentatonic": {
+    name: "Riff power neutro",
+    theoryDesc: "Parte de 1 e 5 e abre 2, 4 e b7 sem introduzir terça maior ou menor.",
+    intervals: ["1P", "5P", "8P", "7m", "5P", "4P", "1P", "2M", "4P", "5P", "1P"]
+  },
   major: {
     name: "Contorno maior descendente",
     theoryDesc: "Conecta a sétima maior descendo linearmente até a terça, com a 11 como passagem rápida.",
@@ -254,8 +284,8 @@ const SUGGESTED_LINES: Record<string, LocalMaterialSuggestedLine> = {
   },
   "power riff pentatonic axis": {
     name: "Riff pentatônico power",
-    theoryDesc: "Afirma tônica e quinta, toca a cor menor e responde com a cor maior sem fechar a terça do acorde.",
-    intervals: ["1P", "5P", "8P", "7m", "5P", "3m", "1P", "2M", "3M", "5P", "1P"]
+    theoryDesc: "Afirma tônica e quinta e responde com 2, 4 e b7 sem introduzir terça maior ou menor.",
+    intervals: ["1P", "5P", "8P", "7m", "5P", "4P", "1P", "2M", "4P", "5P", "1P"]
   }
 };
 

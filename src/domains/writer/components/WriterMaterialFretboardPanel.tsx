@@ -12,12 +12,15 @@ import {
   buildWriterMaterialFretboardView,
   type WriterMaterialFretboardChordContext
 } from "../services/writerMaterialFretboardView";
+import type { WriterMaterialActionStep } from "../services/writerMaterialAction";
 
 export interface WriterMaterialFretboardPanelProps {
   tuning: string[];
   source: MaterialSourceMap | null;
   activeChord: WriterMaterialFretboardChordContext;
   selectedFrets?: (number | null)[];
+  sequenceSteps?: WriterMaterialActionStep[];
+  activeStepIndex?: number | null;
   focusedTitle?: string;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;
   labelMode: LocalMaterialFretboardLabelMode;
@@ -30,6 +33,8 @@ export function WriterMaterialFretboardPanel({
   source,
   activeChord,
   selectedFrets,
+  sequenceSteps,
+  activeStepIndex,
   focusedTitle,
   visibleCategories,
   labelMode,
@@ -43,6 +48,8 @@ export function WriterMaterialFretboardPanel({
     source,
     activeChord,
     selectedFrets,
+    sequenceSteps,
+    activeStepIndex,
     visibleCategories,
     labelMode
   });
@@ -128,6 +135,7 @@ export function WriterMaterialFretboardPanel({
           geometry={materialFretboardView.geometry}
           strings={materialFretboardView.strings}
           notes={materialFretboardView.notes}
+          viewport={materialFretboardView.viewport}
           woodClassName=""
           theme={{
             idPrefix: "local-material-fretboard",

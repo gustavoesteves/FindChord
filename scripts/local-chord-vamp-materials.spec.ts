@@ -211,6 +211,7 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(sideSlip?.melodicMaterials[0]).toMatchObject({
       label: "side slip pentatônico",
+      preferredRhythmArchetype: "space-response",
       resolutionTargets: []
     });
     expect(sideSlip?.melodicMaterials[0]?.cells).toEqual([
@@ -230,6 +231,7 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(stack?.melodicMaterials[0]).toMatchObject({
       label: "pilha pentatônica dórica",
+      preferredRhythmArchetype: "syncopated",
       resolutionTargets: []
     });
     expect(stack?.melodicMaterials[0]?.cells).toEqual([
@@ -334,6 +336,7 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(upperTriads?.melodicMaterials[0]).toMatchObject({
       label: "maj / tríades superiores",
+      preferredRhythmArchetype: "syncopated",
       resolutionTargets: []
     });
     expect(upperTriads?.melodicMaterials[0]?.cells).toEqual([
@@ -392,6 +395,7 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(powerAxis?.melodicMaterials[0]).toMatchObject({
       label: "power / eixo pentatônico",
+      preferredRhythmArchetype: "straight",
       resolutionTargets: []
     });
     expect(powerAxis?.melodicMaterials[0]?.cells).toEqual([

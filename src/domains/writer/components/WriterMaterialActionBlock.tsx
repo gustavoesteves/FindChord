@@ -1,12 +1,39 @@
-import { Play, Sparkles } from "lucide-react";
+import { Play, Repeat2, Sparkles, Square } from "lucide-react";
 import type { WriterMaterialAction, WriterMaterialActionStep } from "../services/writerMaterialAction";
 
 export interface WriterMaterialActionBlockProps {
   action: WriterMaterialAction;
   onPlay: (steps: WriterMaterialActionStep[]) => void;
+  onStop?: () => void;
+  onToggleLoop?: () => void;
+  activeStepIndex?: number | null;
+  isPlaying?: boolean;
+  loopEnabled?: boolean;
+  playbackError?: string;
 }
 
-export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActionBlockProps) {
+const PHRASE_ROLE_LABEL: Record<NonNullable<WriterMaterialActionStep["phraseRole"]>, string> = {
+  anchor: "partida",
+  cell: "célula",
+  color: "cor",
+  outside: "fora",
+  return: "chegada"
+};
+
+function displayCellNotation(notation: string): string {
+  return notation.replaceAll("->", " → ").replaceAll("-", " – ");
+}
+
+export function WriterMaterialActionBlock({
+  action,
+  onPlay,
+  onStop,
+  onToggleLoop,
+  activeStepIndex = null,
+  isPlaying = false,
+  loopEnabled = false,
+  playbackError
+}: WriterMaterialActionBlockProps) {
   return (
     <div className="rounded-2xl border border-sky-300/45 bg-sky-400/10 p-4 text-zinc-300 shadow-inner select-none animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-start">
@@ -23,22 +50,89 @@ export function WriterMaterialActionBlock({ action, onPlay }: WriterMaterialActi
               {action.theoryDesc}
             </p>
           </div>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {action.displayNotes.map((note, idx) => (
-              <span key={`${note}-${idx}`} className="text-[8.5px] font-black px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-sky-200">
-                {note}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-bold text-zinc-500">
+            {action.realizedCell && (
+              <span>
+                Célula realizada:{" "}
+                <span className="text-sky-200">{displayCellNotation(action.realizedCell.notation)}</span>
               </span>
-            ))}
+            )}
+            <span title={action.rhythm.description}>
+              Ritmo: <span className="text-violet-200">{action.rhythm.label}</span>
+            </span>
           </div>
+          <ol className="flex flex-wrap gap-1 mt-1" aria-label="Caminho da frase no braço">
+            {action.steps.map((step, idx) => {
+              const isActive = activeStepIndex === idx;
+              const roleLabel = step.phraseRole ? PHRASE_ROLE_LABEL[step.phraseRole] : undefined;
+              const positionLabel = step.position
+                ? `${step.position.stringIndex + 1}ª corda, casa ${step.position.fret}`
+                : undefined;
+              return (
+                <li
+                  key={`${step.note}-${idx}`}
+                  aria-current={isActive ? "step" : undefined}
+                  title={[roleLabel, positionLabel].filter(Boolean).join(" · ") || undefined}
+                  className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[8.5px] font-black transition ${
+                    isActive
+                      ? "border-sky-100 bg-sky-200 text-zinc-950"
+                      : "border-zinc-800 bg-zinc-950 text-sky-200"
+                  }`}
+                >
+                  <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[7px] ${
+                    isActive ? "bg-zinc-950 text-sky-100" : "bg-sky-400/15 text-sky-300"
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <span>{step.displayNote}</span>
+                  {step.accent && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-violet-300" aria-label="acentuada" />
+                  )}
+                  {roleLabel && <span className="font-semibold text-current opacity-60">{roleLabel}</span>}
+                </li>
+              );
+            })}
+          </ol>
         </div>
-        <button
-          type="button"
-          onClick={() => onPlay(action.steps)}
-          className="flex items-center justify-center gap-1.5 text-[9px] font-black px-4 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-zinc-950 transition cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(125,211,252,0.2)] hover:scale-105"
-        >
-          <Play className="h-3 w-3 fill-current" />
-          {action.buttonLabel}
-        </button>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-pressed={loopEnabled}
+              onClick={onToggleLoop}
+              className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-[9px] font-black transition cursor-pointer active:scale-95 ${
+                loopEnabled
+                  ? "border-violet-300 bg-violet-300/15 text-violet-100"
+                  : "border-zinc-700 bg-zinc-950/70 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              }`}
+              title={loopEnabled ? "Desativar repetição" : "Repetir a frase em loop"}
+            >
+              <Repeat2 className="h-3 w-3" />
+              Repetir
+            </button>
+            <button
+              type="button"
+              onClick={() => isPlaying ? onStop?.() : onPlay(action.steps)}
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-[9px] font-black transition cursor-pointer active:scale-95 hover:scale-105 ${
+                isPlaying
+                  ? "border border-rose-300/70 bg-rose-300/15 text-rose-100"
+                  : "bg-sky-300 text-zinc-950 shadow-[0_0_8px_rgba(125,211,252,0.2)] hover:bg-sky-200"
+              }`}
+            >
+              {isPlaying ? (
+                <Square className="h-3 w-3 fill-current" />
+              ) : (
+                <Play className="h-3 w-3 fill-current" />
+              )}
+              {isPlaying ? "Parar" : action.buttonLabel}
+            </button>
+          </div>
+          {playbackError && (
+            <span role="alert" className="max-w-52 text-right text-[8.5px] font-bold text-rose-200">
+              {playbackError}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

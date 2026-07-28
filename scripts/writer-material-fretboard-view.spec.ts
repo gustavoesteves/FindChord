@@ -21,6 +21,7 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     });
 
     expect(view.geometry.height).toBe(182);
+    expect(view.viewport).toBeUndefined();
     expect(view.strings).toHaveLength(6);
     expect(view.notes.length).toBeGreaterThan(0);
     expect(view.notes.find(note => note.displayLabel === "R")).toMatchObject({
@@ -86,6 +87,11 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     });
 
     expect(view.fretWindow).toEqual({ startFret: 7, endFret: 12, hasShape: true });
+    expect(view.viewport).toEqual({
+      startFret: 7,
+      endFret: 12,
+      horizontalPadding: 12
+    });
     expect(view.notes.every(note => note.fret >= 7 && note.fret <= 12)).toBe(true);
     expect(view.notes.some(note => note.isChordShapeTone)).toBe(true);
     expect(view.notes.find(note => note.stringIndex === 0 && note.fret === 8)).toMatchObject({
@@ -93,6 +99,27 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
       strokeClassName: "stroke-white",
       glowRadius: 9
     });
+  });
+
+  it("trata um shape inteiramente aberto como forma desenhada", () => {
+    const view = buildWriterMaterialFretboardView({
+      tuning,
+      source: {
+        type: "major",
+        notes: ["C", "D", "E", "F", "G", "A", "B"]
+      },
+      activeChord: {
+        root: "C",
+        notes: ["C", "E", "G", "B"]
+      },
+      selectedFrets: [0, 0, 0, 0, 0, 0],
+      visibleCategories: defaultLocalMaterialNoteCategoryVisibility(),
+      labelMode: "position"
+    });
+
+    expect(view.fretWindow).toEqual({ startFret: 0, endFret: 5, hasShape: true });
+    expect(view.viewport).toMatchObject({ startFret: 0, endFret: 5 });
+    expect(view.notes.every(note => note.fret <= 5)).toBe(true);
   });
 
   it("sobrepoe notas do acorde desenhado mesmo quando a fonte nao as contem", () => {
@@ -119,5 +146,48 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
         isChordShapeTone: true
       })
     ]));
+  });
+
+  it("mantem a sequencia visivel, numerada e com visitas repetidas", () => {
+    const view = buildWriterMaterialFretboardView({
+      tuning: ["E4"],
+      source: {
+        type: "major",
+        notes: ["C", "D", "E"]
+      },
+      activeChord: {
+        root: "C",
+        notes: ["C", "E", "G"]
+      },
+      selectedFrets: [3],
+      sequenceSteps: [
+        { displayNote: "Gb", position: { stringIndex: 0, fret: 2 }, phraseRole: "outside" },
+        { displayNote: "G", position: { stringIndex: 0, fret: 3 }, phraseRole: "return" },
+        { displayNote: "Gb", position: { stringIndex: 0, fret: 2 }, phraseRole: "outside" }
+      ],
+      activeStepIndex: 2,
+      visibleCategories: {
+        root: false,
+        chordTone: false,
+        characteristic: false,
+        tension: false,
+        avoid: false
+      },
+      labelMode: "note"
+    });
+
+    expect(view.notes.find(note => note.fret === 2)).toMatchObject({
+      noteName: "F#4",
+      displayLabel: "Gb",
+      stepNumbers: [1, 3],
+      activeStepNumber: 3,
+      isCurrentStep: true,
+      strokeClassName: "stroke-white"
+    });
+    expect(view.notes.find(note => note.fret === 2)?.ariaLabel).toContain("passo 3, fora, passo ativo");
+    expect(view.notes.find(note => note.fret === 3)).toMatchObject({
+      noteName: "G4",
+      stepNumbers: [2]
+    });
   });
 });

@@ -7,6 +7,7 @@ export type ContextualMaterialIntent = "inside" | "functional" | "tension" | "ou
 export type ContextualMelodicFit = "aligned" | "neutral" | "caution";
 export type ContextualMaterialOrigin = "source-map" | "curated-catalog";
 export type MelodySupportRole = "guide-tone" | "resolution-target" | "passing-tone" | "linear-fragment";
+export type ContextualMaterialRhythmArchetype = "straight" | "syncopated" | "space-response";
 
 export interface MaterialContext {
   chord: string;
@@ -37,6 +38,8 @@ export interface ContextualMelodicMaterial {
   source: "scale" | "guide-tones" | "arpeggio" | "chromatic-approach" | "pentatonic";
   sourceScale?: string;
   cells: string[];
+  preferredCellIndex?: number;
+  preferredRhythmArchetype?: ContextualMaterialRhythmArchetype;
   tensionProfile: string[];
   resolutionTargets: string[];
   practiceHint: string;

@@ -39,6 +39,13 @@ const g7: ChordCandidate = {
   isIncomplete: false
 };
 
+function cChord(partial: Partial<ChordCandidate>): ChordCandidate {
+  return {
+    ...cmaj7,
+    ...partial
+  };
+}
+
 describe("F253 modelo da tela de materiais do acorde", () => {
   it("resolve nome do acorde conforme estilo de notacao", () => {
     expect(chordNameForWriterMaterialScreen(cmaj7, "International")).toBe("Cmaj7");
@@ -50,7 +57,6 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cmaj7,
       notationStyle: "Brazilian",
-      preferredRouteId: "inside",
       selectedMaterialSource: null
     });
 
@@ -62,6 +68,153 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedPaletteItem).toBeTruthy();
     expect(model.activeMaterialPanel).toBeTruthy();
     expect(model.activeMaterialAction).toBeTruthy();
+  });
+
+  it.each([
+    {
+      chord: cChord({
+        quality: "major7#11",
+        intervals: ["1P", "3M", "5P", "7M", "9M", "11A"],
+        notes: ["C", "E", "G", "B", "D", "F#"],
+        drawnNotes: ["C", "E", "G", "B", "D", "F#"],
+        notationInternational: "Cmaj7#11"
+      }),
+      expectedRouteId: "color",
+      expectedSourceType: "lydian"
+    },
+    {
+      chord: cChord({
+        quality: "dominant7#9",
+        intervals: ["1P", "3M", "5P", "7m", "9A"],
+        notes: ["C", "E", "G", "Bb", "D#"],
+        drawnNotes: ["C", "E", "G", "Bb", "D#"],
+        notationInternational: "C7#9"
+      }),
+      expectedRouteId: "tension",
+      expectedSourceType: "altered"
+    },
+    {
+      chord: cChord({
+        quality: "dominant7#11",
+        intervals: ["1P", "3M", "5P", "7m", "9M", "11A"],
+        notes: ["C", "E", "G", "Bb", "D", "F#"],
+        drawnNotes: ["C", "E", "G", "Bb", "D", "F#"],
+        notationInternational: "C7#11"
+      }),
+      expectedRouteId: "tension",
+      expectedSourceType: "lydian dominant"
+    },
+    {
+      chord: cChord({
+        quality: "power",
+        intervals: ["1P", "5P"],
+        notes: ["C", "G"],
+        drawnNotes: ["C", "G"],
+        notationInternational: "C5"
+      }),
+      expectedRouteId: "color",
+      expectedSourceType: "power neutral pentatonic"
+    }
+  ])(
+    "deriva o foco inicial global para $expectedSourceType",
+    ({ chord, expectedRouteId, expectedSourceType }) => {
+      const model = buildWriterMaterialScreenModel({
+        activeChord: chord,
+        notationStyle: "International",
+        selectedMaterialSource: null
+      });
+
+      expect(model.effectiveRouteId).toBe(expectedRouteId);
+      expect(model.focusedMaterialSource?.type).toBe(expectedSourceType);
+      expect(model.focusedPaletteItem?.source.type).toBe(expectedSourceType);
+      expect(model.activeMaterialPanel?.sourceType).toBe(expectedSourceType);
+      expect(model.activeMaterialAction).toBeTruthy();
+    }
+  );
+
+  it("mantem a colecao neutra de C5 sem terca maior ou menor no modelo completo", () => {
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "power",
+        intervals: ["1P", "5P"],
+        notes: ["C", "G"],
+        drawnNotes: ["C", "G"],
+        notationInternational: "C5"
+      }),
+      notationStyle: "International",
+      selectedMaterialSource: null
+    });
+
+    expect(model.focusedMaterialSource).toMatchObject({
+      type: "power neutral pentatonic"
+    });
+    expect(model.focusedMaterialSource?.notes).not.toContain("E");
+    expect(model.focusedMaterialSource?.notes).not.toContain("Eb");
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("E");
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("Eb");
+  });
+
+  it("realiza a celula neutra de C5 no shape sem introduzir terca", () => {
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "power",
+        intervals: ["1P", "5P"],
+        notes: ["C", "G"],
+        drawnNotes: ["C", "G"],
+        notationInternational: "C5"
+      }),
+      notationStyle: "International",
+      selectedMaterialSource: null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, null, 10, 10, 8]
+    });
+
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "power / pentatônica neutra",
+      realizedCell: {
+        notation: "C-D-F-G-Bb"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("E");
+    expect(model.activeMaterialAction?.displayNotes).not.toContain("Eb");
+    expect(model.activeMaterialAction?.steps.every(step => step.position)).toBe(true);
+  });
+
+  it("preserva uma rota escolhida explicitamente mesmo quando o foco global esta em outra rota", () => {
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "dominant7#9",
+        intervals: ["1P", "3M", "5P", "7m", "9A"],
+        notes: ["C", "E", "G", "Bb", "D#"],
+        drawnNotes: ["C", "E", "G", "Bb", "D#"],
+        notationInternational: "C7#9"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "inside",
+      selectedMaterialSource: null
+    });
+
+    expect(model.effectiveRouteId).toBe("inside");
+    expect(model.focusedMaterialSource?.type).toBe("mixolydian");
+    expect(model.routedMaterialPalette.every(item => item.intent === "inside")).toBe(true);
+  });
+
+  it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cChord({
+        quality: "major7#11",
+        intervals: ["1P", "3M", "5P", "7M", "9M", "11A"],
+        notes: ["C", "E", "G", "B", "D", "F#"],
+        drawnNotes: ["C", "E", "G", "B", "D", "F#"],
+        notationInternational: "Cmaj7#11"
+      }),
+      notationStyle: "International",
+      preferredRouteId: "outside",
+      selectedMaterialSource: null
+    });
+
+    expect(model.effectiveRouteId).toBe("color");
+    expect(model.focusedMaterialSource?.type).toBe("lydian");
   });
 
   it("descarta fonte escolhida quando ela nao pertence a rota efetiva", () => {
@@ -118,5 +271,37 @@ describe("F253 modelo da tela de materiais do acorde", () => {
       buttonLabel: "Ouvir ideia"
     });
     expect(model.activeMaterialAction?.notes.every(note => /\d$/.test(note))).toBe(true);
+  });
+
+  it("mantem a mesma identidade entre card, celula e acao realizada no shape", () => {
+    const colorRoute = buildWriterMaterialScreenModel({
+      activeChord: cmaj7,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const upperTriads = colorRoute.routedMaterialPalette.find(item => (
+      item.source.type === "major upper triad colors"
+    ));
+    expect(upperTriads).toBeTruthy();
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cmaj7,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: upperTriads?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(model.focusedPaletteItem?.title).toBe("maj / tríades superiores");
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "maj / tríades superiores",
+      realizedCell: {
+        notation: "D-F#-A"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 3)).toEqual(["D", "F#", "A"]);
+    expect(model.activeMaterialAction?.steps.every(step => step.position)).toBe(true);
   });
 });

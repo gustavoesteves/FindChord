@@ -4,6 +4,10 @@ import {
   type FretboardGeometry,
   type FretboardStringGeometry
 } from "../../../../utils/music/presentation/fretboardGeometry";
+import {
+  resolveFretboardRendererViewport,
+  type FretboardRendererViewport
+} from "./fretboardRendererViewport";
 
 export interface FretboardRenderedString extends FretboardStringGeometry {
   isVibrating?: boolean;
@@ -19,6 +23,10 @@ export interface FretboardRenderedNote {
   isChordShapeTone?: boolean;
   strokeClassName?: string;
   glowRadius?: number;
+  stepNumbers?: number[];
+  activeStepNumber?: number;
+  isCurrentStep?: boolean;
+  ariaLabel?: string;
 }
 
 export interface FretboardRendererTheme {
@@ -43,6 +51,7 @@ export interface FretboardRendererProps {
   minWidthClassName?: string;
   woodClassName?: string;
   theme?: Partial<FretboardRendererTheme>;
+  viewport?: FretboardRendererViewport;
   onFretClick?: (stringIndex: number, fret: number) => void;
   onNoteClick?: (note: FretboardRenderedNote) => void;
 }
@@ -66,13 +75,26 @@ export function FretboardRenderer({
   geometry,
   strings,
   notes,
-  minWidthClassName = "min-w-[1360px]",
+  minWidthClassName,
   woodClassName = "fretboard-wood",
   theme,
+  viewport,
   onFretClick,
   onNoteClick
 }: FretboardRendererProps) {
   const resolvedTheme = { ...DEFAULT_THEME, ...theme };
+  const resolvedViewport = viewport
+    ? resolveFretboardRendererViewport(geometry, viewport)
+    : undefined;
+  const renderedWidth = resolvedViewport?.width ?? geometry.width;
+  const resolvedMinWidthClassName = minWidthClassName
+    ?? (resolvedViewport ? "" : "min-w-[1360px]");
+  const rendererClassName = [
+    resolvedMinWidthClassName,
+    resolvedViewport ? "mx-auto" : "",
+    "relative",
+    woodClassName
+  ].filter(Boolean).join(" ");
   const notesByString = new Map<number, FretboardRenderedNote[]>();
   notes.forEach(note => {
     const stringNotes = notesByString.get(note.stringIndex) || [];
@@ -81,12 +103,15 @@ export function FretboardRenderer({
   });
 
   return (
-    <div className={`${minWidthClassName} relative ${woodClassName}`}>
+    <div
+      className={rendererClassName}
+      style={resolvedViewport ? { width: renderedWidth } : undefined}
+    >
       <svg
-        width={geometry.width}
+        width={renderedWidth}
         height={geometry.height}
-        viewBox={`0 0 ${geometry.width} ${geometry.height}`}
-        className="overflow-visible"
+        viewBox={`${resolvedViewport?.x ?? 0} 0 ${renderedWidth} ${geometry.height}`}
+        className={resolvedViewport ? "overflow-hidden" : "overflow-visible"}
       >
         <defs>
           <linearGradient id={`${resolvedTheme.idPrefix}-wood-grad`} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -230,7 +255,20 @@ export function FretboardRenderer({
                     key={`note-${note.stringIndex}-${note.fret}-${note.displayLabel}`}
                     className={onNoteClick ? "cursor-pointer transition-transform duration-150 hover:scale-115 active:scale-95" : "pointer-events-none"}
                     style={{ transformOrigin: `${x}px ${stringGeometry.y}px` }}
+                    role={onNoteClick ? "button" : note.ariaLabel ? "img" : undefined}
+                    tabIndex={onNoteClick ? (note.stepNumbers?.length ? 0 : -1) : undefined}
+                    aria-label={note.ariaLabel}
+                    aria-current={note.isCurrentStep ? "step" : undefined}
                     onClick={() => onNoteClick?.(note)}
+                    onKeyDown={event => {
+                      if (
+                        !onNoteClick
+                        || !note.stepNumbers?.length
+                        || (event.key !== "Enter" && event.key !== " ")
+                      ) return;
+                      event.preventDefault();
+                      onNoteClick(note);
+                    }}
                   >
                     {onNoteClick && (
                       <circle
@@ -238,6 +276,16 @@ export function FretboardRenderer({
                         cy={stringGeometry.y}
                         r={resolvedTheme.noteClickRadius}
                         fill="transparent"
+                      />
+                    )}
+                    {note.activeStepNumber !== undefined && (
+                      <circle
+                        cx={x}
+                        cy={stringGeometry.y}
+                        r={resolvedTheme.noteRadius + 4}
+                        fill="none"
+                        stroke="#E0F2FE"
+                        strokeWidth="2.5"
                       />
                     )}
                     <circle
@@ -260,6 +308,28 @@ export function FretboardRenderer({
                     >
                       {note.displayLabel}
                     </text>
+                    {note.stepNumbers && note.stepNumbers.length > 0 && (
+                      <g aria-hidden="true">
+                        <circle
+                          cx={x + resolvedTheme.noteRadius * 0.72}
+                          cy={stringGeometry.y - resolvedTheme.noteRadius * 0.72}
+                          r={7}
+                          fill={note.activeStepNumber !== undefined ? "#E0F2FE" : "#38BDF8"}
+                          stroke="#09090B"
+                          strokeWidth="1.5"
+                        />
+                        <text
+                          x={x + resolvedTheme.noteRadius * 0.72}
+                          y={stringGeometry.y - resolvedTheme.noteRadius * 0.72 + 2.5}
+                          textAnchor="middle"
+                          fontSize={note.stepNumbers.length > 1 ? 5 : 7}
+                          fontWeight="900"
+                          fill="#09090B"
+                        >
+                          {note.stepNumbers.join("/")}
+                        </text>
+                      </g>
+                    )}
                     {note.tooltip && <title>{note.tooltip}</title>}
                   </g>
                 );

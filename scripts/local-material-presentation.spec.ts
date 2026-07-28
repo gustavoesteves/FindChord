@@ -213,7 +213,7 @@ describe("F210 apresentacao de materiais locais", () => {
 
   it("descreve e toca eixo pentatonico para power chord", () => {
     expect(describeLocalMaterialSource("power riff pentatonic axis")).toMatchObject({
-      mood: expect.stringContaining("ambíguo")
+      mood: expect.stringContaining("aberto")
     });
     expect(suggestedLineForLocalMaterial("power riff pentatonic axis")).toMatchObject({
       name: "Riff pentatônico power"
@@ -224,13 +224,25 @@ describe("F210 apresentacao de materiais locais", () => {
       "C5",
       "Bb4",
       "G4",
-      "Eb4",
+      "F4",
       "C4",
       "D4",
-      "E4",
+      "F4",
       "G4",
       "C4"
     ]);
+  });
+
+  it("descreve a colecao power neutra sem cair em pentatonica maior", () => {
+    expect(describeLocalMaterialSource("power neutral pentatonic")).toMatchObject({
+      desc: expect.stringContaining("sem terça maior ou menor"),
+      mood: expect.stringContaining("neutra")
+    });
+    const line = suggestedLineForLocalMaterial("power neutral pentatonic");
+    expect(line?.name).toBe("Riff power neutro");
+    expect(notesForLocalMaterialLine("C", line?.intervals || [])).not.toEqual(
+      expect.arrayContaining(["E4", "Eb4"])
+    );
   });
 
   it("mantem fallback para fontes ainda nao documentadas", () => {

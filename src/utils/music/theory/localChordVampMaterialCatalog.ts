@@ -131,16 +131,6 @@ function minorPentatonicCell(root: string): string {
   ].filter((note): note is string => !!note).join("-");
 }
 
-function majorPentatonicCell(root: string): string {
-  return [
-    simplifyNote(root),
-    pitch(root, "2M"),
-    pitch(root, "3M"),
-    pitch(root, "5P"),
-    pitch(root, "6M")
-  ].filter((note): note is string => !!note).join("-");
-}
-
 function noteCell(notes: Array<string | null>): string {
   return notes.filter((note): note is string => !!note).map(note => simplifyNote(note)).join("-");
 }
@@ -208,6 +198,8 @@ function dominantSideSlipCandidate(chord: ChordCandidate): LocalChordVampMateria
       source: "pentatonic",
       sourceScale: source.name,
       cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
       tensionProfile: ["pentatônica interna", "meio tom abaixo", "meio tom acima"],
       resolutionTargets: [],
       practiceHint
@@ -241,6 +233,8 @@ function minorDorianPentatonicStackCandidate(chord: ChordCandidate): LocalChordV
       source: "pentatonic",
       sourceScale: source.name,
       cells,
+      preferredCellIndex: 2,
+      preferredRhythmArchetype: "syncopated",
       tensionProfile: ["pentatônica menor da tônica", "pentatônica menor da quinta", "pentatônica menor do 2º grau"],
       resolutionTargets: [],
       practiceHint
@@ -407,6 +401,8 @@ function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMa
       source: "arpeggio",
       sourceScale: source.name,
       cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "syncopated",
       tensionProfile: ["9", "#11", "13", "7M"],
       resolutionTargets: [],
       practiceHint
@@ -504,6 +500,8 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
       source: "pentatonic",
       sourceScale: source.name,
       cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "straight",
       tensionProfile: ["1", "5", "2/4/b7 como cor neutra", "sem terca definida"],
       resolutionTargets: [],
       practiceHint

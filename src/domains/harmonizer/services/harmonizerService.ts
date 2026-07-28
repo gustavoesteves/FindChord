@@ -225,7 +225,7 @@ function harmonyEventsToProposalEvents(
   const occurrenceByMeasure = new Map<number, number>();
 
   return harmonies
-    .map((harmony, chordIndex) => {
+    .map((harmony, chordIndex): ReharmonizationChordEvent => {
       const occurrenceInMeasure = occurrenceByMeasure.get(harmony.measure) || 0;
       occurrenceByMeasure.set(harmony.measure, occurrenceInMeasure + 1);
       const originalChord = originalHarmonies?.[chordIndex]?.harmony;

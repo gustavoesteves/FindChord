@@ -6,10 +6,12 @@ import { buildWriterMaterialAction } from "./writerMaterialAction";
 import { buildWriterMaterialPalette } from "./writerMaterialPalette";
 import { resolveWriterMaterialFocus } from "./writerMaterialFocus";
 import {
+  DEFAULT_WRITER_MATERIAL_ROUTE_ID,
   buildWriterMaterialRoutes,
   itemsForWriterMaterialRoute,
   presentWriterMaterialRoute,
   resolveWriterMaterialRoute,
+  routeForWriterMaterialItem,
   type WriterMaterialRouteId
 } from "./writerMaterialRoutes";
 
@@ -18,7 +20,7 @@ export type WriterNotationStyle = "International" | "Brazilian" | "Academic";
 export interface WriterMaterialScreenModelInput {
   activeChord: ChordCandidate;
   notationStyle: WriterNotationStyle;
-  preferredRouteId: WriterMaterialRouteId;
+  preferredRouteId?: WriterMaterialRouteId | null;
   selectedMaterialSource: MaterialSourceMap | null;
   tuning?: string[];
   selectedFrets?: (number | null)[];
@@ -38,7 +40,17 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
   const materialCandidateByType = new Map(materialReadings.map(reading => [reading.source.type, reading.candidate]));
   const materialPalette = buildWriterMaterialPalette(materialReadings);
   const materialRoutes = buildWriterMaterialRoutes(materialPalette);
-  const effectiveRouteId = resolveWriterMaterialRoute(input.preferredRouteId, materialRoutes);
+  const globallyPrioritizedItem = materialPalette[0];
+  const globallyPrioritizedRouteId = globallyPrioritizedItem
+    ? routeForWriterMaterialItem(globallyPrioritizedItem)
+    : DEFAULT_WRITER_MATERIAL_ROUTE_ID;
+  const requestedRoute = input.preferredRouteId
+    ? materialRoutes.find(route => route.id === input.preferredRouteId)
+    : undefined;
+  const preferredRouteId = requestedRoute?.items.length
+    ? requestedRoute.id
+    : globallyPrioritizedRouteId;
+  const effectiveRouteId = resolveWriterMaterialRoute(preferredRouteId, materialRoutes);
   const effectiveRoute = materialRoutes.find(route => route.id === effectiveRouteId);
   const routedMaterialPalette = itemsForWriterMaterialRoute(materialPalette, effectiveRouteId);
   const routePresentation = presentWriterMaterialRoute(routedMaterialPalette);

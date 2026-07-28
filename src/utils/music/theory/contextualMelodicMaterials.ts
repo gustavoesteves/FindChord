@@ -634,6 +634,60 @@ function powerChordPentatonicMaterials(scale: MaterialSourceMap, root: string, q
   }];
 }
 
+function neutralSuspendedPentatonicMaterials(
+  scale: MaterialSourceMap,
+  root: string,
+  quality: ChordQuality
+): ContextualMelodicMaterial[] {
+  const validSourceForQuality = (
+    (quality === "power" && scale.type === "power neutral pentatonic")
+    || (quality === "sus2" && scale.type === "sus2 pentatonic")
+    || (quality === "sus4" && scale.type === "sus4 pentatonic")
+  );
+  if (!validSourceForQuality) return [];
+
+  const rootNote = displayNote(root);
+  const second = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "2M")));
+  const fourth = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "4P")));
+  const fifth = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "5P")));
+  const flatSeven = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "7m")));
+  const cells = quality === "power"
+    ? [
+        [rootNote, fifth, rootNote].filter(Boolean).join("-"),
+        [rootNote, second, fourth, fifth, flatSeven].filter(Boolean).join("-"),
+        [fifth, rootNote, second, fourth].filter(Boolean).join("-")
+      ]
+    : quality === "sus2"
+      ? [
+          [rootNote, second, fifth].filter(Boolean).join("-"),
+          [second, fourth, flatSeven].filter(Boolean).join("-"),
+          [fifth, rootNote, second].filter(Boolean).join("-")
+        ]
+      : [
+          [rootNote, fourth, flatSeven].filter(Boolean).join("-"),
+          [second, fifth, rootNote].filter(Boolean).join("-"),
+          [fifth, rootNote, fourth].filter(Boolean).join("-")
+        ];
+
+  return [{
+    label: quality === "power"
+      ? "power / pentatônica neutra"
+      : quality === "sus2"
+        ? "sus2 / eixo 1–2–5"
+        : "sus4 / eixo 1–4–b7",
+    source: "pentatonic",
+    sourceScale: scale.name,
+    cells,
+    preferredCellIndex: quality === "power" ? 1 : 0,
+    preferredRhythmArchetype: "straight",
+    tensionProfile: ["1", "2", "4", "5", "b7", "sem terça definida"],
+    resolutionTargets: [],
+    practiceHint: quality === "power"
+      ? "Use 1 e 5 como eixo e abra 2, 4 e b7 sem decidir entre maior e menor."
+      : "Preserve a suspensão como identidade e evite introduzir uma terça na frase."
+  }];
+}
+
 export function buildContextualMelodicMaterials(
   scale: MaterialSourceMap,
   root: string,
@@ -656,6 +710,7 @@ export function buildContextualMelodicMaterials(
     && !["melodic minor", "harmonic minor"].includes(scale.type)
     && !(quality === "add9" && ["major", "major pentatonic"].includes(scale.type))
     && !(quality === "power" && ["major pentatonic", "minor pentatonic"].includes(scale.type))
+    && !["sus2 pentatonic", "sus4 pentatonic", "power neutral pentatonic"].includes(scale.type)
     && !(scale.type === "mixolydian" && ["sus4", "sus2", "dominant7sus4"].includes(quality))
   ) return [];
   return [
@@ -672,6 +727,7 @@ export function buildContextualMelodicMaterials(
     ...wholeToneAugmentedMaterials(scale, root, quality),
     ...minorMajorMaterials(scale, root, quality),
     ...majorAddNineMaterials(scale, root, quality),
-    ...powerChordPentatonicMaterials(scale, root, quality)
+    ...powerChordPentatonicMaterials(scale, root, quality),
+    ...neutralSuspendedPentatonicMaterials(scale, root, quality)
   ];
 }

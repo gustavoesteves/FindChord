@@ -1,4 +1,7 @@
-import type { ContextualMelodicMaterial } from "../../../utils/music/theory/contextualMaterialTypes";
+import type {
+  ContextualMaterialIntent,
+  ContextualMelodicMaterial
+} from "../../../utils/music/theory/contextualMaterialTypes";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import { getPitchClass } from "../../../utils/music/core/pitch";
 import {
@@ -8,11 +11,18 @@ import {
   type LocalMaterialSourceDescription,
   type LocalMaterialSuggestedLine
 } from "../../../utils/music/theory/localMaterialPresentation";
+import {
+  realizeWriterMaterialCellNearShape,
+  type WriterMaterialGestureEvent,
+  type WriterRealizedMaterialCell
+} from "./writerMaterialCellRealization";
 
 export interface WriterActiveMaterialLine extends LocalMaterialSuggestedLine {
   notes: string[];
   displayNotes: string[];
   positions?: Array<{ stringIndex: number; fret: number }>;
+  events?: WriterMaterialGestureEvent[];
+  realizedCell?: WriterRealizedMaterialCell;
 }
 
 export interface WriterActiveMaterialPanel {
@@ -29,7 +39,10 @@ export interface WriterActiveMaterialPanelInput {
   sourceNotes?: string[];
   tuning?: string[];
   selectedFrets?: (number | null)[];
-  candidate?: { melodicMaterials: ContextualMelodicMaterial[] };
+  candidate?: {
+    melodicMaterials: ContextualMelodicMaterial[];
+    intent?: ContextualMaterialIntent;
+  };
 }
 
 function displayNote(noteName: string): string {
@@ -60,6 +73,30 @@ function characteristicPitchClasses(sourceType: string, chordRoot: string): numb
 
 function playableShapeMaterialLine(input: WriterActiveMaterialPanelInput): WriterActiveMaterialLine | undefined {
   if (!input.tuning || !input.selectedFrets || !input.sourceNotes) return undefined;
+  const realizedCell = realizeWriterMaterialCellNearShape({
+    chordRoot: input.chordRoot,
+    chordNotes: input.chordNotes || [input.chordRoot],
+    tuning: input.tuning,
+    selectedFrets: input.selectedFrets,
+    melodicMaterials: input.candidate?.melodicMaterials || [],
+    intent: input.candidate?.intent
+  });
+  if (realizedCell) {
+    return {
+      name: realizedCell.name,
+      theoryDesc: realizedCell.theoryDesc,
+      intervals: [],
+      notes: realizedCell.events.map(event => event.note),
+      displayNotes: realizedCell.events.map(event => event.displayNote),
+      positions: realizedCell.events.map(event => ({
+        stringIndex: event.stringIndex,
+        fret: event.fret
+      })),
+      events: realizedCell.events,
+      realizedCell: realizedCell.realizedCell
+    };
+  }
+
   const fretted = input.selectedFrets
     .map((fret, stringIndex) => ({ fret, stringIndex }))
     .filter((item): item is { fret: number; stringIndex: number } => (
