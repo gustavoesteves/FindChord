@@ -240,7 +240,8 @@ function harmonyEventsToProposalEvents(
         tickStart: harmony.tickStart,
         tickEnd: harmony.tickEnd,
         durationTicks: harmony.durationTicks,
-        originalChord: originalChord && originalChord !== harmony.harmony ? originalChord : undefined
+        originalChord: originalChord && originalChord !== harmony.harmony ? originalChord : undefined,
+        timingSource: "reference"
       };
     })
     .sort((a, b) => a.tickStart - b.tickStart || a.chordIndex - b.chordIndex);
@@ -843,7 +844,8 @@ function withInheritedVariantEvents(
             chord: slot.chord,
             chordIndex: slot.chordIndex,
             occurrenceInMeasure: slot.chordIndex,
-            originalChord: sourceEvent.chord
+            originalChord: sourceEvent.chord,
+            timingSource: "source-timeline"
           };
         })
       };
@@ -897,7 +899,8 @@ function synthesizeVariantEventsFromSourceTimeline(
         tickStart: eventStart,
         tickEnd: eventEnd,
         durationTicks: Math.max(1, eventEnd - eventStart),
-        originalChord: sourceMeasureEvents[Math.min(chordIndex, sourceMeasureEvents.length - 1)]?.chord
+        originalChord: sourceMeasureEvents[Math.min(chordIndex, sourceMeasureEvents.length - 1)]?.chord,
+        timingSource: "source-timeline"
       });
     });
   }

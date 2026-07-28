@@ -38,14 +38,16 @@ describe("Generated proposal temporal events", () => {
         chord: "C",
         tickStart: 0,
         tickEnd: 1440,
-        durationTicks: 1440
+        durationTicks: 1440,
+        timingSource: "measure-level"
       }),
       expect.objectContaining({
         id: "strategy_i_iv_v-m2-c0",
         measureIndex: 2,
         tickStart: 1440,
         tickEnd: 2880,
-        durationTicks: 1440
+        durationTicks: 1440,
+        timingSource: "measure-level"
       })
     ]));
     expect(proposal?.events).toHaveLength(4);
@@ -67,6 +69,7 @@ describe("Generated proposal temporal events", () => {
     expect(events?.length).toBe(denseMeasure?.chords.length);
     expect(events?.[0]?.tickStart).toBeLessThan(events?.[1]?.tickStart ?? 0);
     expect(events?.every(event => event.durationTicks > 0)).toBe(true);
+    expect(events?.every(event => event.timingSource === "uniform-division")).toBe(true);
   });
 
   it("uses internal melodic attacks as split points for dense generated measures", () => {
@@ -96,5 +99,6 @@ describe("Generated proposal temporal events", () => {
     expect(measureRange).toBeTruthy();
     expect(events?.[1]?.tickStart).toBe((measureRange?.startTick ?? 0) + 480);
     expect(events?.[1]?.beat).toBe(2);
+    expect(events?.every(event => event.timingSource === "melodic-attack")).toBe(true);
   });
 });

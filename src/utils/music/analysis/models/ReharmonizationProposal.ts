@@ -16,6 +16,7 @@ export interface ReharmonizationChordEvent {
   tickEnd: number;
   durationTicks: number;
   originalChord?: string;
+  timingSource?: "reference" | "melodic-attack" | "uniform-division" | "measure-level" | "source-timeline";
 }
 
 export type ReharmonizationProposalKind =

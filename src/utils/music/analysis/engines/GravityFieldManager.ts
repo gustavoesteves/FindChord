@@ -185,7 +185,7 @@ export class GravityFieldManager {
       const measureDuration = Math.max(1, tickEnd - tickStart);
       const chordCount = Math.max(1, measure.chords.length);
       const eventDuration = Math.max(1, Math.floor(measureDuration / chordCount));
-      const boundaries = this.eventBoundariesForMeasure(
+      const timedMeasure = this.eventBoundariesForMeasure(
         measure.measureIndex,
         chordCount,
         tickStart,
@@ -195,9 +195,9 @@ export class GravityFieldManager {
       );
 
       return measure.chords.map((chord, chordIndex) => {
-        const eventStart = boundaries[chordIndex] ?? (tickStart + eventDuration * chordIndex);
+        const eventStart = timedMeasure.boundaries[chordIndex] ?? (tickStart + eventDuration * chordIndex);
         const isLast = chordIndex === measure.chords.length - 1;
-        const eventEnd = isLast ? tickEnd : Math.min(tickEnd, boundaries[chordIndex + 1] ?? eventStart + eventDuration);
+        const eventEnd = isLast ? tickEnd : Math.min(tickEnd, timedMeasure.boundaries[chordIndex + 1] ?? eventStart + eventDuration);
         const beat = this.eventBeat(eventStart, tickStart, measureDuration, measureRange?.timeSignature);
         return {
           id: `${proposalId}-m${measure.measureIndex}-c${chordIndex}`,
@@ -208,7 +208,8 @@ export class GravityFieldManager {
           occurrenceInMeasure: chordIndex,
           tickStart: eventStart,
           tickEnd: eventEnd,
-          durationTicks: Math.max(1, eventEnd - eventStart)
+          durationTicks: Math.max(1, eventEnd - eventStart),
+          timingSource: timedMeasure.timingSource
         };
       });
     });
@@ -221,8 +222,10 @@ export class GravityFieldManager {
     tickEnd: number,
     eventDuration: number,
     anchors: MelodicAnchor[]
-  ): number[] {
-    if (chordCount <= 1) return [tickStart, tickEnd];
+  ): { boundaries: number[]; timingSource: ReharmonizationChordEvent["timingSource"] } {
+    if (chordCount <= 1) {
+      return { boundaries: [tickStart, tickEnd], timingSource: "measure-level" };
+    }
 
     const internalAnchorStarts = Array.from(new Set(
       anchors
@@ -236,11 +239,18 @@ export class GravityFieldManager {
         ))
     )).sort((a, b) => a - b);
 
-    const splitPoints = internalAnchorStarts.length >= chordCount - 1
-      ? internalAnchorStarts.slice(0, chordCount - 1)
-      : Array.from({ length: chordCount - 1 }, (_, index) => tickStart + eventDuration * (index + 1));
+    if (internalAnchorStarts.length >= chordCount - 1) {
+      return {
+        boundaries: [tickStart, ...internalAnchorStarts.slice(0, chordCount - 1), tickEnd],
+        timingSource: "melodic-attack"
+      };
+    }
 
-    return [tickStart, ...splitPoints, tickEnd];
+    const splitPoints = Array.from({ length: chordCount - 1 }, (_, index) => tickStart + eventDuration * (index + 1));
+    return {
+      boundaries: [tickStart, ...splitPoints, tickEnd],
+      timingSource: "uniform-division"
+    };
   }
 
   private static eventBeat(
