@@ -16,6 +16,7 @@ export interface FretboardRenderedNote {
   displayLabel: string;
   color: string;
   tooltip?: string;
+  isChordShapeTone?: boolean;
   strokeClassName?: string;
   glowRadius?: number;
 }

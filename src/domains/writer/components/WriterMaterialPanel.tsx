@@ -28,7 +28,8 @@ export default function WriterMaterialPanel() {
     detectedChords,
     selectedChordIndex,
     notationStyle,
-    tuning
+    tuning,
+    selectedFrets
   } = useChordStore();
 
   const [selectedMaterialSource, setSelectedMaterialSource] = useState<MaterialSourceMap | null>(null);
@@ -103,6 +104,7 @@ export default function WriterMaterialPanel() {
                 tuning={tuning}
                 source={materialScreen.focusedMaterialSource}
                 activeChord={activeChord}
+                selectedFrets={selectedFrets}
                 focusedTitle={materialScreen.focusedPaletteItem?.title}
                 visibleCategories={effectiveVisibleCategories}
                 labelMode={labelMode}

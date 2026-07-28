@@ -68,4 +68,56 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
       glowRadius: 7
     });
   });
+
+  it("limita o mapa a uma janela ao redor do shape desenhado", () => {
+    const view = buildWriterMaterialFretboardView({
+      tuning,
+      source: {
+        type: "major",
+        notes: ["C", "D", "E", "F", "G", "A", "B"]
+      },
+      activeChord: {
+        root: "C",
+        notes: ["C", "E", "G", "B"]
+      },
+      selectedFrets: [8, 8, 9, 10, null, null],
+      visibleCategories: defaultLocalMaterialNoteCategoryVisibility(),
+      labelMode: "position"
+    });
+
+    expect(view.fretWindow).toEqual({ startFret: 7, endFret: 12, hasShape: true });
+    expect(view.notes.every(note => note.fret >= 7 && note.fret <= 12)).toBe(true);
+    expect(view.notes.some(note => note.isChordShapeTone)).toBe(true);
+    expect(view.notes.find(note => note.stringIndex === 0 && note.fret === 8)).toMatchObject({
+      isChordShapeTone: true,
+      strokeClassName: "stroke-white",
+      glowRadius: 9
+    });
+  });
+
+  it("sobrepoe notas do acorde desenhado mesmo quando a fonte nao as contem", () => {
+    const view = buildWriterMaterialFretboardView({
+      tuning: ["E4"],
+      source: {
+        type: "outside",
+        notes: ["D"]
+      },
+      activeChord: {
+        root: "C",
+        notes: ["C", "E", "G", "B"]
+      },
+      selectedFrets: [8],
+      visibleCategories: defaultLocalMaterialNoteCategoryVisibility(),
+      labelMode: "note"
+    });
+
+    expect(view.notes).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        fret: 8,
+        noteName: "C5",
+        displayLabel: "C",
+        isChordShapeTone: true
+      })
+    ]));
+  });
 });

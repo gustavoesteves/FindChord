@@ -17,6 +17,7 @@ export interface WriterMaterialFretboardPanelProps {
   tuning: string[];
   source: MaterialSourceMap | null;
   activeChord: WriterMaterialFretboardChordContext;
+  selectedFrets?: (number | null)[];
   focusedTitle?: string;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;
   labelMode: LocalMaterialFretboardLabelMode;
@@ -28,6 +29,7 @@ export function WriterMaterialFretboardPanel({
   tuning,
   source,
   activeChord,
+  selectedFrets,
   focusedTitle,
   visibleCategories,
   labelMode,
@@ -40,6 +42,7 @@ export function WriterMaterialFretboardPanel({
     tuning,
     source,
     activeChord,
+    selectedFrets,
     visibleCategories,
     labelMode
   });
@@ -57,6 +60,11 @@ export function WriterMaterialFretboardPanel({
             </div>
             <div className="flex items-center gap-2 text-[9px] font-bold text-zinc-500">
               <span className="text-zinc-300">{focusedTitle || source.name}</span>
+              {materialFretboardView.fretWindow.hasShape && (
+                <span className="text-zinc-500">
+                  casas {materialFretboardView.fretWindow.startFret}-{materialFretboardView.fretWindow.endFret}
+                </span>
+              )}
             </div>
           </div>
 
