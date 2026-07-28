@@ -119,6 +119,20 @@ function majorChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   });
 }
 
+function sixNineChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
+  return chord({
+    root: "C",
+    quality: "69",
+    intervals: ["1P", "3M", "5P", "6M", "9M"],
+    notes: ["C", "E", "G", "A", "D"],
+    drawnNotes: ["C", "E", "G", "A", "D"],
+    notationInternational: "C6/9",
+    notationBrazilian: "C6/9",
+    notationAcademic: "C6/9",
+    ...partial
+  });
+}
+
 function minorMajorChord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return chord({
     root: "C",
@@ -365,6 +379,29 @@ describe("F304 vocabulario local de vamp", () => {
       "C-E-G-B",
       "D-F#-A",
       "G-B-D"
+    ]);
+  });
+
+  it("oferece cores adicionadas de 6/9 como gestos de retorno", () => {
+    const candidates = buildLocalChordVampMaterialCandidates(sixNineChord());
+    const addedColors = candidates.find(candidate => candidate.type === "major added color resolutions");
+
+    expect(addedColors).toMatchObject({
+      intent: "functional",
+      name: "C cores maiores adicionadas"
+    });
+    expect(addedColors?.melodicMaterials[0]).toMatchObject({
+      label: "6/add9 / cores resolvidas",
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["9->3", "6->5"],
+      resolutionTargets: ["E", "G"]
+    });
+    expect(addedColors?.melodicMaterials[0]?.cells).toEqual([
+      "C-E-G",
+      "A->G",
+      "D->E",
+      "A-D-E-G"
     ]);
   });
 

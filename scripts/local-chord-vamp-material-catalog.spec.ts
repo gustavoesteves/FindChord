@@ -80,6 +80,12 @@ describe("F325 catalogo versionavel de materiais locais", () => {
         sourceType: "written altered dominant resolutions",
         qualities: expect.arrayContaining(["dominant7b9", "dominant7#9", "dominant7#11", "dominant7b13"]),
         intent: "tension"
+      }),
+      expect.objectContaining({
+        id: "major-added-color-resolutions",
+        sourceType: "major added color resolutions",
+        qualities: expect.arrayContaining(["major6th", "add9", "69"]),
+        intent: "functional"
       })
     ]));
   });

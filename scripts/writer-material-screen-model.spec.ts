@@ -388,6 +388,48 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["F#", "G#"]);
   });
 
+  it("expõe 6/9 maior como cores adicionadas que retornam ao acorde", () => {
+    const activeChord = cChord({
+      quality: "69",
+      intervals: ["1P", "3M", "5P", "6M", "9M"],
+      notes: ["C", "E", "G", "A", "D"],
+      drawnNotes: ["C", "E", "G", "A", "D"],
+      notationInternational: "C6/9"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const addedColors = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "major added color resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: addedColors?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("major added color resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "A->G",
+      kind: "return",
+      actionLabel: "Voltar ao acorde"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "6/add9 / cores resolvidas",
+      realizedCell: {
+        notation: "A->G"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["A", "G"]);
+  });
+
   it("volta ao foco musical global quando a rota explicita nao existe para o novo acorde", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cChord({

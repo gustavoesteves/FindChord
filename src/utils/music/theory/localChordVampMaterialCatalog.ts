@@ -72,6 +72,12 @@ const MAJOR_VAMP_QUALITIES = new Set<ChordQuality>([
   "69"
 ]);
 
+const MAJOR_ADDED_COLOR_QUALITIES = new Set<ChordQuality>([
+  "major6th",
+  "add9",
+  "69"
+]);
+
 const NATURAL_DOMINANT_VAMP_QUALITIES = new Set<ChordQuality>([
   "dominant7th",
   "dominant9th",
@@ -516,6 +522,48 @@ function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMa
   };
 }
 
+function majorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
+  if (!MAJOR_ADDED_COLOR_QUALITIES.has(chord.quality)) return null;
+
+  const root = simplifyNote(chord.root);
+  const third = pitch(chord.root, "3M");
+  const fifth = pitch(chord.root, "5P");
+  const sixth = pitch(chord.root, "6M");
+  const ninth = pitch(chord.root, "9M");
+  const cells = [
+    noteCell([root, third, fifth]),
+    chord.quality !== "add9" ? directedCell(sixth, fifth) : "",
+    chord.quality !== "major6th" ? directedCell(ninth, third) : "",
+    chord.quality === "69" ? noteCell([sixth, ninth, third, fifth]) : ""
+  ].filter(Boolean);
+  if (cells.length <= 1) return null;
+
+  const source = materialSource(`${chord.root} cores maiores adicionadas`, "major added color resolutions", cells);
+  const practiceHint = `Use as cores adicionadas de ${chord.notationInternational} como gestos curtos: 9 volta para 3 e 6 volta para 5.`;
+
+  return {
+    ...source,
+    ...candidateBase(chord),
+    intent: "functional",
+    confidence: 0.78,
+    melodicMaterials: [{
+      label: "6/add9 / cores resolvidas",
+      source: "arpeggio",
+      sourceScale: source.name,
+      cells,
+      preferredCellIndex: 1,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: [
+        ...(chord.quality !== "major6th" ? ["9->3"] : []),
+        ...(chord.quality !== "add9" ? ["6->5"] : [])
+      ],
+      resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
+      practiceHint
+    }],
+    practiceHint
+  };
+}
+
 function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   if (!NATURAL_DOMINANT_VAMP_QUALITIES.has(chord.quality)) return null;
 
@@ -768,6 +816,14 @@ export const LOCAL_CHORD_VAMP_MATERIAL_CATALOG: LocalChordVampMaterialCatalogEnt
     qualities: Array.from(MAJOR_VAMP_QUALITIES),
     intent: "functional",
     build: majorUpperTriadColorsCandidate
+  },
+  {
+    id: "major-added-color-resolutions",
+    sourceType: "major added color resolutions",
+    label: "6/add9 / cores resolvidas",
+    qualities: Array.from(MAJOR_ADDED_COLOR_QUALITIES),
+    intent: "functional",
+    build: majorAddedColorResolutionCandidate
   },
   {
     id: "dominant-upper-triad-colors",
