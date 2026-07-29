@@ -47,6 +47,12 @@ describe("F302 mapas-fonte de material por qualidade", () => {
     }
   });
 
+  it("preserva #11 escrito em acorde maior sem oferecer jonio generico", () => {
+    const types = getMaterialSourceMaps(chord("major7#11")).map(source => source.type);
+
+    expect(types).toEqual(["lydian"]);
+  });
+
   it("nao trata meio-diminuto como diminuto de tons inteiros", () => {
     const types = getMaterialSourceMaps(chord("halfDiminished")).map(source => source.type);
 

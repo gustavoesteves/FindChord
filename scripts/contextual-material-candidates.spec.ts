@@ -107,6 +107,19 @@ describe("F199 candidatas contextuais de material", () => {
     }
   );
 
+  it("mantem #11 escrito como leitura lidia primaria mesmo com melodia favoravel ao jonio", () => {
+    const candidates = buildContextualMaterialCandidates({
+      chord: "C(#11)",
+      melody: ["C", "E", "G", "A"]
+    });
+
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      type: "lydian",
+      harmonicFunction: "color"
+    }));
+    expect(candidates.map(candidate => candidate.type)).not.toContain("major");
+  });
+
   it("trata dominante final com alvo de resolucao como material funcional", () => {
     const candidates = buildContextualMaterialCandidates({
       chord: "A7",

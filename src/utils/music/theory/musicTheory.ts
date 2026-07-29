@@ -45,7 +45,7 @@ const MATERIAL_SOURCE_MAP_TYPES: Partial<Record<ChordQuality, string[]>> = {
   major7th: ["major", "lydian", "major pentatonic", "bebop major"],
   major9th: ["major", "lydian", "major pentatonic"],
   major13th: ["major", "lydian", "major pentatonic"],
-  "major7#11": ["lydian", "major", "lydian dominant"],
+  "major7#11": ["lydian"],
   add9: ["major", "major pentatonic"],
   "69": ["major", "major pentatonic", "lydian"],
 
