@@ -117,6 +117,10 @@ const QUALITY_INTERVALS: Record<ChordQuality, string[]> = {
   add9: ["1P", "3M", "5P", "9M"]
 };
 
+export function intervalsForResolvedChordQuality(quality: ChordQuality): string[] {
+  return [...QUALITY_INTERVALS[quality]];
+}
+
 const TENSION_ORDER: ChordTension[] = ["b5", "#5", "b9", "9", "#9", "11", "#11", "b13", "13"];
 
 function normalizeInput(raw: string): string {

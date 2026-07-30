@@ -9,6 +9,7 @@ export default defineConfig({
       "scripts/almada-example-comparison.spec.ts",
       "scripts/altered-dominant-strategy.spec.ts",
       "scripts/material-source-maps.spec.ts",
+      "scripts/material-chord-integrity.spec.ts",
       "scripts/material-intent-presentation.spec.ts",
       "scripts/contextual-material-candidates.spec.ts",
       "scripts/contextual-material-chord-context.spec.ts",
