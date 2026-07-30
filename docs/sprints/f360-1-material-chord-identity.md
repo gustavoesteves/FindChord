@@ -25,6 +25,13 @@ partir de uma qualidade reduzida.
   `sourceType`.
 - O mapa de materiais do `Escrever` agora propaga a identidade do
   `ChordCandidate` ativo ate `localMaterialFretboardNotes`.
+- `LocalChordVampMaterialCandidate` agora carrega `materialIdentity`; o catalogo
+  curado recebe a identidade completa e mantem `quality` apenas como indice de
+  familia.
+- O candidato `chord tone core` usa `structuralNotes` da identidade, preservando
+  notas estruturais omitidas pelo shape.
+- O adapter de `ChordCandidate` usa a formula da qualidade na DSL como estrutura
+  harmonica; `drawnNotes`/`notes` informam o que esta soando no shape.
 
 ## Casos cobertos
 
@@ -42,6 +49,10 @@ partir de uma qualidade reduzida.
   cifra, nao como identidade modal generica.
 - `C7b5` exibido em material lidio dominante mostra `b5` como alteracao
   estrutural, nao como ponto de repouso.
+- `Cmaj7(no5)` no catalogo local mantem `G` no nucleo estrutural mesmo que o
+  shape esteja soando apenas `C-E-B`.
+- `dominant7#11` preserva `9` e `#11` mesmo se o `ChordCandidate` carregar
+  intervalos defasados de uma dominante natural.
 
 ## Validacao parcial
 
@@ -68,6 +79,18 @@ npx vitest run --config vitest.curated.config.ts \
 20 testes aprovados
 ```
 
+Terceiro encaixe validado com:
+
+```text
+npx vitest run --config vitest.curated.config.ts \
+  scripts/local-chord-vamp-material-catalog.spec.ts \
+  scripts/local-chord-vamp-materials.spec.ts \
+  scripts/contextual-material-candidates.spec.ts
+
+3 specs aprovadas
+88 testes aprovados
+```
+
 A auditoria contextual manteve:
 
 ```text
@@ -80,7 +103,5 @@ genericAlteredFallback: 0
 
 ## Proximo encaixe
 
-- Fazer o catalogo local receber a identidade completa mantendo `quality` apenas
-  como indice de familia.
 - Expandir o uso da identidade para `writerMaterialImprovisationMoves` e para a
   semantica de gesto da F360.2.

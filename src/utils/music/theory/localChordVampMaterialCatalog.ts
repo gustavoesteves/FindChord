@@ -9,6 +9,7 @@ import { guideTonesFor } from "./contextualMaterialFunction";
 import type { ContextualMaterialIntent } from "./contextualMaterialTypes";
 import type { MaterialSourceMap } from "./musicTheory";
 import type { LocalChordVampMaterialCandidate } from "./localChordVampMaterials";
+import { materialChordIdentityFromChordCandidate } from "./materialChordIdentity";
 
 export interface LocalChordVampMaterialCatalogEntry {
   id: string;
@@ -151,10 +152,12 @@ function materialSource(name: string, type: string, cells: string[]): MaterialSo
 
 function candidateBase(
   chord: ChordCandidate
-): Pick<LocalChordVampMaterialCandidate, "chord" | "chordTones" | "guideTones"> {
+): Pick<LocalChordVampMaterialCandidate, "chord" | "chordTones" | "materialIdentity" | "guideTones"> {
+  const materialIdentity = materialChordIdentityFromChordCandidate(chord);
   return {
     chord: chord.notationInternational,
     chordTones: chord.notes.map(note => simplifyNote(note)),
+    materialIdentity,
     guideTones: guideTonesFor(chord.root, chord.quality)
   };
 }
@@ -188,12 +191,9 @@ function directedCell(from: string | null, to: string | null): string {
 }
 
 function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
-  const definition = CHORD_REGISTRY[chord.quality];
-  const chordTones = uniqueNotes(
-    definition.intervals
-      .map(interval => pitch(chord.root, interval))
-      .filter((note): note is string => !!note)
-  );
+  const base = candidateBase(chord);
+  const definition = CHORD_REGISTRY[base.materialIdentity.quality];
+  const chordTones = base.materialIdentity.structuralNotes;
   if (chordTones.length === 0) return null;
 
   const cells = [
@@ -210,7 +210,7 @@ function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCa
 
   return {
     ...source,
-    ...candidateBase(chord),
+    ...base,
     chordTones,
     intent: "inside",
     confidence: 0.9,

@@ -10,10 +10,15 @@ import type {
 import { guideTonesFor } from "./contextualMaterialFunction";
 import { getMaterialSourceMaps, type MaterialSourceMap } from "./musicTheory";
 import { buildLocalChordVampSupplementalCandidates } from "./localChordVampMaterialCatalog";
+import {
+  materialChordIdentityFromChordCandidate,
+  type MaterialChordIdentity
+} from "./materialChordIdentity";
 
 export interface LocalChordVampMaterialCandidate extends MaterialSourceMap {
   chord: string;
   chordTones: string[];
+  materialIdentity: MaterialChordIdentity;
   guideTones: string[];
   intent: ContextualMaterialIntent;
   melodicMaterials: ContextualMelodicMaterial[];
@@ -88,6 +93,7 @@ function localVampPracticeHint(candidate: LocalChordVampMaterialCandidate): stri
 export function buildLocalChordVampMaterialCandidates(chord: ChordCandidate): LocalChordVampMaterialCandidate[] {
   const harmonicFunction = localVampFunctionForQuality(chord.quality);
   const chordTones = chord.notes.map(note => simplifyNote(note));
+  const materialIdentity = materialChordIdentityFromChordCandidate(chord);
   const guideTones = guideTonesFor(chord.root, chord.quality);
 
   const sourceCandidates = getMaterialSourceMaps(chord).map((source, index) => {
@@ -95,6 +101,7 @@ export function buildLocalChordVampMaterialCandidates(chord: ChordCandidate): Lo
       ...source,
       chord: chord.notationInternational,
       chordTones,
+      materialIdentity,
       guideTones,
       intent: localVampIntentForSource(source, chord.quality),
       confidence: Math.max(0.1, 1 - index * 0.05),

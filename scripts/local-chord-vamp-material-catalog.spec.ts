@@ -224,6 +224,35 @@ describe("F325 catalogo versionavel de materiais locais", () => {
     }
   });
 
+  it("carrega identidade harmonica completa no catalogo mantendo qualidade como indice de familia", () => {
+    const incomplete = buildLocalChordVampSupplementalCandidates(chord({
+      root: "C",
+      quality: "major7th",
+      intervals: ["1P", "3M", "5P", "7M"],
+      notes: ["C", "E", "B"],
+      drawnNotes: ["C", "E", "B"],
+      omissions: ["5"],
+      notationInternational: "Cmaj7(no5)",
+      notationBrazilian: "C7M(no5)",
+      notationAcademic: "CΔ7(no5)",
+      isIncomplete: true
+    })).find(material => material.type === "chord tone core");
+
+    expect(incomplete?.materialIdentity).toMatchObject({
+      origin: "shape",
+      provenance: "shape-inferred",
+      quality: "major7th",
+      structuralNotes: ["C", "E", "G", "B"],
+      soundingNotes: ["C", "E", "B"],
+      omissions: ["5"]
+    });
+    expect(incomplete?.chordTones).toEqual(["C", "E", "G", "B"]);
+    expect(incomplete?.materialIdentity.degrees.find(degree => degree.degree === "5")).toMatchObject({
+      role: "structural-support",
+      sounding: false
+    });
+  });
+
   it.each([
     ["major6th", [9]],
     ["minor6th", [9]],

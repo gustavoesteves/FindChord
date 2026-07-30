@@ -110,6 +110,25 @@ describe("F360.1 identidade harmonica de materiais", () => {
     });
   });
 
+  it("usa a formula da qualidade como estrutura quando o shape traz intervalos defasados", () => {
+    const identity = materialChordIdentityFromChordCandidate(chord({
+      quality: "dominant7#11",
+      intervals: ["1P", "3M", "5P", "7m"],
+      notes: ["C", "E", "G", "Bb", "D", "F#"],
+      drawnNotes: ["C", "E", "G", "Bb", "D", "F#"],
+      notationInternational: "C7#11",
+      notationBrazilian: "C7(#11)",
+      notationAcademic: "C7#11"
+    }));
+
+    expect(identity.structuralNotes).toEqual(["C", "E", "G", "Bb", "D", "F#"]);
+    expect(identity.writtenDegrees).toEqual(expect.arrayContaining(["9", "#11"]));
+    expect(identity.degrees.find(degree => degree.degree === "#11")).toMatchObject({
+      role: "written-tension",
+      sounding: true
+    });
+  });
+
   it("distingue alteracao estrutural de ponto estavel em shapes b5 e aumentados", () => {
     const dominantFlatFive = materialChordIdentityFromChordCandidate(chord({
       quality: "dominant7b5",

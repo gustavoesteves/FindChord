@@ -270,7 +270,7 @@ export function materialChordIdentityFromChordCandidate(
   provenance: MaterialChordIdentityProvenance = "shape-inferred"
 ): MaterialChordIdentity {
   const definition = CHORD_REGISTRY[chord.quality];
-  const intervals = chord.intervals.length > 0 ? chord.intervals : definition.intervals;
+  const intervals = definition.intervals;
   const structuralNotes = uniqueNotes(
     intervals.map(interval => noteForInterval(chord.root, interval))
   );
