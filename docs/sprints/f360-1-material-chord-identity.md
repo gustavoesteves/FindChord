@@ -20,6 +20,11 @@ partir de uma qualidade reduzida.
   `intervalsForResolvedChordQuality`.
 - `resolveMaterialChordQuality` passou a consumir a identidade harmonica em vez
   de manter outro mapa paralelo de qualidade resolvida para qualidade interna.
+- `localMaterialNoteRoles` passou a aceitar `MaterialChordIdentity` para
+  classificar alteracoes e tensoes escritas antes das heuristicas por
+  `sourceType`.
+- O mapa de materiais do `Escrever` agora propaga a identidade do
+  `ChordCandidate` ativo ate `localMaterialFretboardNotes`.
 
 ## Casos cobertos
 
@@ -33,6 +38,10 @@ partir de uma qualidade reduzida.
 - `Csus4` preserva `4` como suspensao estrutural.
 - Shape `Cmaj7(no5)` conserva a quinta estrutural omitida separada das notas
   soando.
+- `Cmaj7(#11)` exibido em material lidio mostra `#11` como tensao escrita da
+  cifra, nao como identidade modal generica.
+- `C7b5` exibido em material lidio dominante mostra `b5` como alteracao
+  estrutural, nao como ponto de repouso.
 
 ## Validacao parcial
 
@@ -47,6 +56,18 @@ npx vitest run --config vitest.curated.config.ts \
 109 testes aprovados
 ```
 
+Segundo encaixe validado com:
+
+```text
+npx vitest run --config vitest.curated.config.ts \
+  scripts/local-material-note-roles.spec.ts \
+  scripts/local-material-fretboard-notes.spec.ts \
+  scripts/writer-material-fretboard-view.spec.ts
+
+3 specs aprovadas
+20 testes aprovados
+```
+
 A auditoria contextual manteve:
 
 ```text
@@ -59,9 +80,7 @@ genericAlteredFallback: 0
 
 ## Proximo encaixe
 
-- Fazer `localMaterialNoteRoles` consumir `MaterialChordIdentity` para abandonar
-  inferencias por substring de `sourceType`.
-- Propagar a identidade para `localMaterialFretboardNotes` e para o screen model
-  do `Escrever`.
 - Fazer o catalogo local receber a identidade completa mantendo `quality` apenas
   como indice de familia.
+- Expandir o uso da identidade para `writerMaterialImprovisationMoves` e para a
+  semantica de gesto da F360.2.

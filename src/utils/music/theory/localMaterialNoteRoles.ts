@@ -1,4 +1,8 @@
 import { getPitchClass } from "../core/pitch";
+import {
+  materialNoteRoleFor,
+  type MaterialChordIdentity
+} from "./materialChordIdentity";
 
 export type LocalMaterialNoteCategory = "root" | "chordTone" | "characteristic" | "tension" | "avoid";
 
@@ -69,7 +73,8 @@ export function classifyLocalMaterialNote(
   chordRoot: string,
   chordNotes: string[],
   sourceType: string,
-  structuralChordNotes: string[] = chordNotes
+  structuralChordNotes: string[] = chordNotes,
+  materialIdentity?: MaterialChordIdentity
 ): LocalMaterialNoteRole {
   const notePC = getPitchClass(noteName);
   const rootPC = getPitchClass(chordRoot);
@@ -96,6 +101,26 @@ export function classifyLocalMaterialNote(
       color: "#0165e7",
       tooltip: "Repouso: centro de estabilidade do acorde."
     };
+  }
+
+  if (materialIdentity) {
+    const semanticRole = materialNoteRoleFor(materialIdentity, noteName, sourceType);
+    if (semanticRole.role === "written-tension") {
+      return {
+        category: "tension",
+        label: semanticRole.degree,
+        color: "#FF9900",
+        tooltip: "Tensao escrita na cifra: preserve esta cor como parte da identidade do acorde."
+      };
+    }
+    if (semanticRole.role === "voicing-alteration") {
+      return {
+        category: "tension",
+        label: semanticRole.degree,
+        color: "#FF9900",
+        tooltip: "Alteracao estrutural do acorde: trate como cor definida pela cifra, nao como apoio neutro."
+      };
+    }
   }
 
   if (sourceType.includes("lydian") && distance === 6) {

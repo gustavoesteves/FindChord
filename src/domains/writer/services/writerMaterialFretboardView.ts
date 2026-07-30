@@ -19,11 +19,13 @@ import {
   type WriterMaterialFretWindow
 } from "./writerMaterialFretWindow";
 import type { WriterMaterialGestureRole } from "./writerMaterialCellRealization";
+import type { MaterialChordIdentity } from "../../../utils/music/theory/materialChordIdentity";
 
 export interface WriterMaterialFretboardChordContext {
   root: string;
   notes: string[];
   quality?: ChordQuality;
+  materialIdentity?: MaterialChordIdentity;
 }
 
 export interface WriterMaterialFretboardSourceContext {
@@ -129,6 +131,7 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
         chordRoot: input.activeChord.root,
         chordNotes: input.activeChord.notes,
         chordQuality: input.activeChord.quality,
+        materialIdentity: input.activeChord.materialIdentity,
         sourceType: input.source.type,
         visibleCategories: isSequencePosition ? allCategoriesVisible : input.visibleCategories,
         labelMode: input.labelMode

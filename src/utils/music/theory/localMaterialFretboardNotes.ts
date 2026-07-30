@@ -1,6 +1,7 @@
 import { getNoteAt } from "../core/notes";
 import { getPitchClass } from "../core/pitch";
 import { CHORD_REGISTRY, type ChordQuality } from "../constants/chordRegistry";
+import type { MaterialChordIdentity } from "./materialChordIdentity";
 import {
   classifyLocalMaterialNote,
   type LocalMaterialNoteCategory,
@@ -16,6 +17,7 @@ export interface LocalMaterialFretboardNoteInput {
   chordRoot: string;
   chordNotes: string[];
   chordQuality?: ChordQuality;
+  materialIdentity?: MaterialChordIdentity;
   sourceType: string;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;
   labelMode: LocalMaterialFretboardLabelMode;
@@ -51,7 +53,8 @@ export function buildLocalMaterialFretboardNote(input: LocalMaterialFretboardNot
     input.chordRoot,
     input.chordNotes,
     input.sourceType,
-    structuralNotesForChord(input.chordRoot, input.chordQuality)
+    structuralNotesForChord(input.chordRoot, input.chordQuality),
+    input.materialIdentity
   );
   if (!input.visibleCategories[role.category]) return null;
 

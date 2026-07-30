@@ -26,6 +26,7 @@ import {
   createWriterMaterialPlaybackController,
   type WriterMaterialPlaybackState
 } from "../services/writerMaterialPlaybackController";
+import { materialChordIdentityFromChordCandidate } from "../../../utils/music/theory/materialChordIdentity";
 
 export default function WriterMaterialPanel() {
   const {
@@ -55,6 +56,9 @@ export default function WriterMaterialPanel() {
     defaultWriterMaterialCategoryVisibility
   );
   const activeChord = selectedChordIndex !== null ? detectedChords[selectedChordIndex] : null;
+  const activeMaterialChordIdentity = activeChord
+    ? materialChordIdentityFromChordCandidate(activeChord)
+    : null;
   const materialChordIdentity = [
     activeChord?.notationInternational || "sem-acorde",
     activeChord?.notes.join(",") || ""
@@ -199,7 +203,12 @@ export default function WriterMaterialPanel() {
               <WriterMaterialFretboardPanel
                 tuning={tuning}
                 source={materialScreen.focusedMaterialSource}
-                activeChord={activeChord}
+                activeChord={{
+                  root: activeChord.root,
+                  notes: activeChord.notes,
+                  quality: activeChord.quality,
+                  materialIdentity: activeMaterialChordIdentity || undefined
+                }}
                 selectedFrets={selectedFrets}
                 sequenceSteps={materialScreen.activeMaterialAction?.steps}
                 activeStepIndex={visibleActiveStepIndex}

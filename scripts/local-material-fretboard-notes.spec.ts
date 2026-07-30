@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildLocalMaterialFretboardNote } from "../src/utils/music/theory/localMaterialFretboardNotes";
 import { defaultLocalMaterialNoteCategoryVisibility } from "../src/utils/music/theory/localMaterialNoteRoles";
+import { resolveChordSymbol } from "../src/utils/music/theory/ChordSymbolResolver";
+import { materialChordIdentityFromResolvedSymbol } from "../src/utils/music/theory/materialChordIdentity";
 
 describe("F213 notas do braco para materiais locais", () => {
   const visibleCategories = defaultLocalMaterialNoteCategoryVisibility();
@@ -76,6 +78,30 @@ describe("F213 notas do braco para materiais locais", () => {
       role: {
         category: "chordTone",
         label: "3a (Impl.)"
+      }
+    });
+  });
+
+  it("usa identidade harmonica para exibir #11 escrito como tensao da cifra", () => {
+    const materialIdentity = materialChordIdentityFromResolvedSymbol(resolveChordSymbol("Cmaj7(#11)", "plain"));
+
+    expect(buildLocalMaterialFretboardNote({
+      baseNote: "E",
+      fret: 2,
+      sourceNotes: ["C", "D", "E", "F#", "G", "A", "B"],
+      chordRoot: "C",
+      chordNotes: ["C", "E", "G", "B", "F#"],
+      chordQuality: "major7#11",
+      materialIdentity: materialIdentity || undefined,
+      sourceType: "lydian",
+      visibleCategories,
+      labelMode: "position"
+    })).toMatchObject({
+      noteName: "F#",
+      displayLabel: "#11",
+      role: {
+        category: "tension",
+        label: "#11"
       }
     });
   });
