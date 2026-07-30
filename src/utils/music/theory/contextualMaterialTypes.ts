@@ -1,4 +1,8 @@
 import type { MelodicAnchor } from "../analysis/models/ProjectionSet";
+import type {
+  BaseMelodicCell,
+  MelodicCellRhythmArchetype
+} from "../models/MelodicCell";
 import type { MaterialSourceMap } from "./musicTheory";
 
 export type ContextualMaterialRole = "primary" | "color" | "resolution";
@@ -7,7 +11,7 @@ export type ContextualMaterialIntent = "inside" | "functional" | "tension" | "ou
 export type ContextualMelodicFit = "aligned" | "neutral" | "caution";
 export type ContextualMaterialOrigin = "source-map" | "curated-catalog";
 export type MelodySupportRole = "guide-tone" | "resolution-target" | "passing-tone" | "linear-fragment";
-export type ContextualMaterialRhythmArchetype = "straight" | "syncopated" | "space-response";
+export type ContextualMaterialRhythmArchetype = MelodicCellRhythmArchetype;
 
 export interface MaterialContext {
   chord: string;
@@ -34,10 +38,14 @@ export interface MaterialRankingEvidence {
 }
 
 export interface ContextualMelodicMaterial {
+  id?: string;
   label: string;
   source: "scale" | "guide-tones" | "arpeggio" | "chromatic-approach" | "pentatonic";
   sourceScale?: string;
   cells: string[];
+  cellsStructured?: BaseMelodicCell[];
+  preferredCellId?: string;
+  // Legacy bridge while catalogs still declare cells as notation strings.
   preferredCellIndex?: number;
   preferredRhythmArchetype?: ContextualMaterialRhythmArchetype;
   tensionProfile: string[];

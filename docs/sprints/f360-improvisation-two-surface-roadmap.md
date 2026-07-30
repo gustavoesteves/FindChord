@@ -220,8 +220,8 @@ de bridge/QML, ACK, idempotência, retry e validação no MuseScore real.
 
 | Fatia | Superfície | Entrega | Depende de |
 |---|---|---|---|
-| F360.1 | Compartilhada | Identidade harmônica e papéis exatos | — |
-| F360.2 | Compartilhada | Célula estruturada e semântica por gesto | F360.1 |
+| F360.1 | Compartilhada | Identidade harmônica e papéis exatos | concluida |
+| F360.2 | Compartilhada | Célula estruturada e semântica por gesto | entregue como contrato inicial |
 | F360.3 | Escrever | Remoção de pseudoideias sem célula | F360.2 |
 | F360.4 | Escrever | Identidade única entre gesto, ação e mapa | F360.2, F360.3 |
 | F360.5 | Escrever | Ritmo local simbólico em beats | F360.2 |
@@ -369,6 +369,8 @@ Novo módulo puro sugerido:
 **Superfície:** compartilhada
 **Tamanho:** L
 **Depende de:** F360.1
+**Status:** entregue como contrato inicial em
+[`f360-2-melodic-cell-contract.md`](./f360-2-melodic-cell-contract.md)
 
 ### Objetivo
 

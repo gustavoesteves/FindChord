@@ -74,6 +74,7 @@ describe("F258 bloco visual da acao de material", () => {
     const improvisationMoves: WriterMaterialImprovisationMove[] = [
       {
         id: "0:1",
+        cellId: "maj-triades-superiores:d-fsharp-a",
         materialIndex: 0,
         cellIndex: 1,
         kind: "color",
@@ -88,6 +89,7 @@ describe("F258 bloco visual da acao de material", () => {
       },
       {
         id: "0:0",
+        cellId: "maj-triades-superiores:c-e-g-b",
         materialIndex: 0,
         cellIndex: 0,
         kind: "support",

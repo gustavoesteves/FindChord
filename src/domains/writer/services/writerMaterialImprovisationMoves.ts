@@ -1,8 +1,12 @@
-import { getPitchClass, simplifyNote } from "../../../utils/music/core/pitch";
+import { getPitchClass } from "../../../utils/music/core/pitch";
 import type {
   ContextualMaterialIntent,
   ContextualMelodicMaterial
 } from "../../../utils/music/theory/contextualMaterialTypes";
+import {
+  preferredStructuredCellIdForMaterial,
+  structuredCellsForContextualMaterial
+} from "../../../utils/music/theory/melodicCellMaterialAdapter";
 import {
   materialNoteRoleFor,
   type MaterialChordIdentity
@@ -17,6 +21,7 @@ export type WriterMaterialImprovisationMoveKind =
 
 export interface WriterMaterialImprovisationMove {
   id: string;
+  cellId: string;
   materialIndex: number;
   cellIndex: number;
   kind: WriterMaterialImprovisationMoveKind;
@@ -52,14 +57,6 @@ export function writerMaterialImprovisationMoveId(
   return `${materialIndex}:${cellIndex}`;
 }
 
-function notesInCell(notation: string): string[] {
-  const separator = notation.includes("->") ? "->" : "-";
-  return notation
-    .split(separator)
-    .map(note => simplifyNote(note.trim()))
-    .filter(Boolean);
-}
-
 function moveKind(
   notation: string,
   notes: string[],
@@ -89,19 +86,30 @@ function moveKind(
 
 function preferredMoveId(
   melodicMaterials: ContextualMelodicMaterial[],
-  chordPitchClasses: Set<number>
+  chordPitchClasses: Set<number>,
+  materialIdentity: MaterialChordIdentity | undefined,
+  intent?: ContextualMaterialIntent
 ): string | null {
   for (let materialIndex = 0; materialIndex < melodicMaterials.length; materialIndex += 1) {
     const material = melodicMaterials[materialIndex];
-    const validCells = material.cells
-      .map((notation, cellIndex) => ({
+    const structuredCells = structuredCellsForContextualMaterial({
+      material,
+      intent,
+      materialIdentity
+    });
+    const validCells = structuredCells
+      .map((cell, cellIndex) => ({
         cellIndex,
-        notes: notesInCell(notation)
+        cellId: cell.id,
+        notes: cell.events.map(event => event.note)
       }))
       .filter(cell => cell.notes.length > 0);
     if (validCells.length === 0) continue;
 
-    const explicitCell = validCells.find(cell => cell.cellIndex === material.preferredCellIndex);
+    const preferredCellId = preferredStructuredCellIdForMaterial(material, structuredCells);
+    const explicitCell = preferredCellId
+      ? validCells.find(cell => cell.cellId === preferredCellId)
+      : null;
     if (explicitCell) {
       return writerMaterialImprovisationMoveId(materialIndex, explicitCell.cellIndex);
     }
@@ -125,16 +133,28 @@ export function buildWriterMaterialImprovisationMoves(
   input: WriterMaterialImprovisationMovesInput
 ): WriterMaterialImprovisationMove[] {
   const chordPitchClasses = new Set(input.chordNotes.map(note => getPitchClass(note)));
-  const preferredId = preferredMoveId(input.melodicMaterials, chordPitchClasses);
+  const preferredId = preferredMoveId(
+    input.melodicMaterials,
+    chordPitchClasses,
+    input.materialIdentity,
+    input.intent
+  );
 
   return input.melodicMaterials
-    .flatMap((material, materialIndex) => (
-      material.cells.map((notation, cellIndex) => {
-        const notes = notesInCell(notation);
+    .flatMap((material, materialIndex) => {
+      const structuredCells = structuredCellsForContextualMaterial({
+        material,
+        intent: input.intent,
+        materialIdentity: input.materialIdentity
+      });
+      return structuredCells.map((cell, cellIndex) => {
+        const notation = cell.notation;
+        const notes = cell.events.map(event => event.note);
         const kind = moveKind(notation, notes, chordPitchClasses, input.materialIdentity, input.intent);
 
         return {
           id: writerMaterialImprovisationMoveId(materialIndex, cellIndex),
+          cellId: cell.id,
           materialIndex,
           cellIndex,
           kind,
@@ -147,8 +167,8 @@ export function buildWriterMaterialImprovisationMoves(
           resolutionTargets: [...material.resolutionTargets],
           isPreferred: writerMaterialImprovisationMoveId(materialIndex, cellIndex) === preferredId
         };
-      })
-    ))
+      });
+    })
     .sort((left, right) => (
       Number(right.isPreferred) - Number(left.isPreferred)
       || left.materialIndex - right.materialIndex

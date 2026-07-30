@@ -1,6 +1,6 @@
 # F360.1 - Identidade harmonica para materiais
 
-**Status:** em andamento
+**Status:** concluido como fundacao compartilhada
 **Roadmap:** [F360](./f360-improvisation-two-surface-roadmap.md)
 **Base de entrada:** `baaace5`
 
@@ -119,7 +119,13 @@ lowMelodyCoverage: 253
 genericAlteredFallback: 0
 ```
 
+## Fechamento
+
+F360.1 entregou a identidade harmonica e os papeis de grau necessarios para
+F360.2. Os consumidores ainda podem aprofundar casos de grafia e nomenclatura,
+mas a base bloqueadora para celulas estruturadas esta pronta.
+
 ## Proximo encaixe
 
-- Iniciar F360.2: criar IDs e eventos estruturados de celula mantendo o adaptador
-  legado de `cells: string[]`.
+- Prosseguir em F360.2 e F360.3: usar IDs e eventos estruturados de celula sem
+  quebrar o adaptador legado de `cells: string[]`.
