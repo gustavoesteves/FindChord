@@ -5,6 +5,8 @@ import {
   writerMaterialImprovisationMoveId
 } from "../src/domains/writer/services/writerMaterialImprovisationMoves";
 import type { ContextualMelodicMaterial } from "../src/utils/music/theory/contextualMaterialTypes";
+import { resolveChordSymbol } from "../src/utils/music/theory/ChordSymbolResolver";
+import { materialChordIdentityFromResolvedSymbol } from "../src/utils/music/theory/materialChordIdentity";
 
 const lydianMaterials: ContextualMelodicMaterial[] = [
   {
@@ -80,6 +82,54 @@ describe("projeção de gestos de improvisação do Writer", () => {
       kind: "return",
       actionLabel: "Voltar ao acorde",
       notes: ["F#", "G"]
+    });
+  });
+
+  it("usa identidade harmonica para nao tratar tensao escrita como apoio neutro", () => {
+    const identity = materialChordIdentityFromResolvedSymbol(resolveChordSymbol("Cmaj7(#11)", "plain"));
+    const moves = buildWriterMaterialImprovisationMoves({
+      melodicMaterials: [{
+        label: "Lidio escrito",
+        source: "arpeggio",
+        cells: ["C-E-G-B", "C-E-G-B-F#"],
+        tensionProfile: ["#11"],
+        resolutionTargets: [],
+        practiceHint: "Preserve a cor escrita."
+      }],
+      chordNotes: ["C", "E", "G", "B", "F#"],
+      materialIdentity: identity || undefined,
+      intent: "functional"
+    });
+
+    expect(moves.find(move => move.notation === "C-E-G-B")).toMatchObject({
+      kind: "support",
+      actionLabel: "Apoiar o acorde"
+    });
+    expect(moves.find(move => move.notation === "C-E-G-B-F#")).toMatchObject({
+      kind: "tension",
+      actionLabel: "Criar tensão"
+    });
+  });
+
+  it("usa identidade harmonica para tratar b5 dominante como tensao de gesto", () => {
+    const identity = materialChordIdentityFromResolvedSymbol(resolveChordSymbol("C7b5", "plain"));
+    const [move] = buildWriterMaterialImprovisationMoves({
+      melodicMaterials: [{
+        label: "Alteracao estrutural",
+        source: "arpeggio",
+        cells: ["C-E-Gb-Bb"],
+        tensionProfile: ["b5"],
+        resolutionTargets: [],
+        practiceHint: "Mostre a alteracao."
+      }],
+      chordNotes: ["C", "E", "Gb", "Bb"],
+      materialIdentity: identity || undefined,
+      intent: "inside"
+    });
+
+    expect(move).toMatchObject({
+      kind: "tension",
+      actionLabel: "Criar tensão"
     });
   });
 

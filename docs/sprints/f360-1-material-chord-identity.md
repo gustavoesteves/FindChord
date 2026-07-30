@@ -32,6 +32,9 @@ partir de uma qualidade reduzida.
   notas estruturais omitidas pelo shape.
 - O adapter de `ChordCandidate` usa a formula da qualidade na DSL como estrutura
   harmonica; `drawnNotes`/`notes` informam o que esta soando no shape.
+- `writerMaterialImprovisationMoves` recebe a identidade do material focado e
+  classifica gestos que contêm tensao escrita ou alteracao estrutural como
+  `tension`, mesmo quando a nota pertence a formula do acorde.
 
 ## Casos cobertos
 
@@ -53,6 +56,10 @@ partir de uma qualidade reduzida.
   shape esteja soando apenas `C-E-B`.
 - `dominant7#11` preserva `9` e `#11` mesmo se o `ChordCandidate` carregar
   intervalos defasados de uma dominante natural.
+- Uma celula `C-E-G-B-F#` sobre `Cmaj7(#11)` deixa de ser classificada como
+  apoio neutro apenas porque `F#` esta contido na cifra.
+- Uma celula `C-E-Gb-Bb` sobre `C7b5` e tratada como tensao de gesto, preservando
+  a alteracao estrutural.
 
 ## Validacao parcial
 
@@ -91,6 +98,17 @@ npx vitest run --config vitest.curated.config.ts \
 88 testes aprovados
 ```
 
+Quarto encaixe validado com:
+
+```text
+npx vitest run --config vitest.curated.config.ts \
+  scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+2 specs aprovadas
+37 testes aprovados
+```
+
 A auditoria contextual manteve:
 
 ```text
@@ -103,5 +121,5 @@ genericAlteredFallback: 0
 
 ## Proximo encaixe
 
-- Expandir o uso da identidade para `writerMaterialImprovisationMoves` e para a
-  semantica de gesto da F360.2.
+- Iniciar F360.2: criar IDs e eventos estruturados de celula mantendo o adaptador
+  legado de `cells: string[]`.

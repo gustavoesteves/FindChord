@@ -69,6 +69,7 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
     ? buildWriterMaterialImprovisationMoves({
         melodicMaterials: focusedMaterialCandidate.melodicMaterials,
         chordNotes: input.activeChord.notes,
+        materialIdentity: focusedMaterialCandidate.materialIdentity,
         intent: focusedMaterialCandidate.intent
       })
     : [];

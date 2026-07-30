@@ -3,6 +3,10 @@ import type {
   ContextualMaterialIntent,
   ContextualMelodicMaterial
 } from "../../../utils/music/theory/contextualMaterialTypes";
+import {
+  materialNoteRoleFor,
+  type MaterialChordIdentity
+} from "../../../utils/music/theory/materialChordIdentity";
 
 export type WriterMaterialImprovisationMoveKind =
   | "support"
@@ -29,6 +33,7 @@ export interface WriterMaterialImprovisationMove {
 export interface WriterMaterialImprovisationMovesInput {
   melodicMaterials: ContextualMelodicMaterial[];
   chordNotes: string[];
+  materialIdentity?: MaterialChordIdentity;
   intent?: ContextualMaterialIntent;
 }
 
@@ -59,12 +64,20 @@ function moveKind(
   notation: string,
   notes: string[],
   chordPitchClasses: Set<number>,
+  materialIdentity: MaterialChordIdentity | undefined,
   intent?: ContextualMaterialIntent
 ): WriterMaterialImprovisationMoveKind {
   const returnsToChord = notation.includes("->")
     && notes.length > 1
     && chordPitchClasses.has(getPitchClass(notes.at(-1) || ""));
   if (returnsToChord) return "return";
+
+  const semanticRoles = materialIdentity
+    ? notes.map(note => materialNoteRoleFor(materialIdentity, note))
+    : [];
+  if (semanticRoles.some(role => role.role === "written-tension" || role.role === "voicing-alteration")) {
+    return "tension";
+  }
 
   const onlyUsesChordTones = notes.length > 0
     && notes.every(note => chordPitchClasses.has(getPitchClass(note)));
@@ -118,7 +131,7 @@ export function buildWriterMaterialImprovisationMoves(
     .flatMap((material, materialIndex) => (
       material.cells.map((notation, cellIndex) => {
         const notes = notesInCell(notation);
-        const kind = moveKind(notation, notes, chordPitchClasses, input.intent);
+        const kind = moveKind(notation, notes, chordPitchClasses, input.materialIdentity, input.intent);
 
         return {
           id: writerMaterialImprovisationMoveId(materialIndex, cellIndex),
