@@ -108,25 +108,5 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
   }
 
   if (!input.focusedSource || !input.focusedPaletteItem) return null;
-
-  const displayNotes = input.focusedSource.notes.slice(0, 7);
-  const rhythm = buildWriterMaterialRhythm({
-    stepCount: displayNotes.length,
-    intent: input.focusedPaletteItem.intent
-  });
-
-  return {
-    name: input.focusedPaletteItem.title,
-    eyebrowLabel: "Ouvir material",
-    theoryDesc: input.focusedPaletteItem.subtitle,
-    notes: displayNotes.map(note => playableWriterMaterialNote(note)),
-    displayNotes,
-    steps: actionSteps(
-      displayNotes.map(note => playableWriterMaterialNote(note)),
-      displayNotes,
-      rhythm
-    ),
-    rhythm,
-    buttonLabel: "Ouvir material"
-  };
+  return null;
 }

@@ -24,6 +24,7 @@ export interface WriterMaterialPaletteItem {
   title: string;
   subtitle: string;
   cells: string[];
+  hasPlayableIdea: boolean;
   extraMaterialCount: number;
   intent?: ContextualMaterialIntent;
   intentLabel: WriterMaterialIntentLabel;
@@ -69,7 +70,8 @@ export function buildWriterMaterialPalette(readings: LocalChordMaterialReading[]
       source: reading.source,
       title: reading.primaryMaterial?.label || reading.source.name,
       subtitle,
-      cells: reading.primaryMaterial?.cells.slice(0, 3) || reading.source.notes.slice(0, 4),
+      cells: reading.primaryMaterial?.cells.slice(0, 3) || [],
+      hasPlayableIdea: Boolean(reading.primaryMaterial?.cells.length),
       extraMaterialCount: reading.extraMaterialCount,
       intent: reading.candidate?.intent,
       intentLabel,

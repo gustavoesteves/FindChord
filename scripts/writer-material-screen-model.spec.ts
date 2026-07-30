@@ -785,7 +785,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
       actionLabel: "Sair e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
-      name: "Pentatônica fora e volta",
+      name: "side slip pentatônico",
       buttonLabel: "Ouvir ideia"
     });
   });

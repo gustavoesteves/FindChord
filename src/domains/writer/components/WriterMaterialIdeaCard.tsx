@@ -51,11 +51,17 @@ export function WriterMaterialIdeaCard({
       </div>
       {isActive && (
         <div className="mt-2 flex flex-wrap items-center gap-1">
-          {item.cells.map(cell => (
-            <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[8px] font-black text-sky-100">
-              {cell}
-            </span>
-          ))}
+          {item.cells.length > 0
+            ? item.cells.map(cell => (
+                <span key={cell} className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[8px] font-black text-sky-100">
+                  {cell}
+                </span>
+              ))
+            : (
+                <span className="rounded border border-zinc-800 bg-zinc-950/70 px-1.5 py-0.5 text-[8px] font-black text-zinc-500">
+                  mapa de apoio
+                </span>
+              )}
           {item.extraMaterialCount > 0 && (
             <span className="rounded border border-zinc-800 bg-zinc-900/70 px-1.5 py-0.5 text-[8px] font-black text-zinc-500">
               +{item.extraMaterialCount}
@@ -69,7 +75,7 @@ export function WriterMaterialIdeaCard({
       {isActive && (
         <div className="mt-2 flex items-center justify-between gap-2 text-[8.5px] font-black uppercase tracking-wider text-zinc-600">
           <span className="truncate">Base: {item.source.name}</span>
-          <span className="shrink-0">no braço</span>
+          <span className="shrink-0">{item.hasPlayableIdea ? "no braço" : "mapa"}</span>
         </div>
       )}
     </button>

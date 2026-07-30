@@ -28,6 +28,7 @@ export function writerMaterialTestItem(
     title: name,
     subtitle: "",
     cells: ["C"],
+    hasPlayableIdea: true,
     extraMaterialCount: 0,
     intentLabel: resolvedIntentLabel,
     actionLabel: overrides.actionLabel || actionLabelForWriterMaterialIntent(resolvedIntentLabel),

@@ -18,6 +18,7 @@ const paletteItem = writerMaterialTestItem("Funcional", "A lydian dominant", {
   source,
   subtitle: "Mantenha a leitura conectada ao contorno da melodia.",
   cells: ["A", "B", "C#", "D#"],
+  hasPlayableIdea: true,
   extraMaterialCount: 0,
   intent: "functional"
 });
@@ -59,7 +60,7 @@ describe("F246 acao tocavel do material ativo", () => {
     });
   });
 
-  it("usa as notas do material como fallback tocavel", () => {
+  it("não usa notas brutas do material como fallback tocável", () => {
     const action = buildWriterMaterialAction({
       activePanel: {
         sourceType: "lydian dominant",
@@ -70,19 +71,7 @@ describe("F246 acao tocavel do material ativo", () => {
       focusedPaletteItem: paletteItem
     });
 
-    expect(action).toMatchObject({
-      name: "A lydian dominant",
-      eyebrowLabel: "Ouvir material",
-      theoryDesc: "Mantenha a leitura conectada ao contorno da melodia.",
-      displayNotes: ["A", "B", "C#", "D#", "E", "F#", "G"],
-      notes: ["A4", "B4", "C#4", "D#4", "E4", "F#4", "G4"],
-      steps: expect.arrayContaining([
-        expect.objectContaining({ note: "A4", onsetMs: 0, accent: true }),
-        expect.objectContaining({ note: "G4", accent: true })
-      ]),
-      buttonLabel: "Ouvir material"
-    });
-    expect(action?.steps.map(step => step.onsetMs)).toEqual([0, 160, 440, 580, 820, 980, 1260]);
+    expect(action).toBeNull();
   });
 
   it("preserva celula, posicao e papel de cada evento realizado", () => {

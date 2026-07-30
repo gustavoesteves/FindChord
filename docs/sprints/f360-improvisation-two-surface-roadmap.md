@@ -222,7 +222,7 @@ de bridge/QML, ACK, idempotência, retry e validação no MuseScore real.
 |---|---|---|---|
 | F360.1 | Compartilhada | Identidade harmônica e papéis exatos | concluida |
 | F360.2 | Compartilhada | Célula estruturada e semântica por gesto | entregue como contrato inicial |
-| F360.3 | Escrever | Remoção de pseudoideias sem célula | F360.2 |
+| F360.3 | Escrever | Remoção de pseudoideias sem célula | iniciado |
 | F360.4 | Escrever | Identidade única entre gesto, ação e mapa | F360.2, F360.3 |
 | F360.5 | Escrever | Ritmo local simbólico em beats | F360.2 |
 | F360.6 | Escrever | Desenvolvimento motívico sobre vamp | F360.4, F360.5 |
@@ -483,6 +483,8 @@ Novo modelo sugerido:
 **Superfície:** Escrever
 **Tamanho:** M
 **Depende de:** F360.2
+**Status:** iniciado em
+[`f360-3-writer-playable-ideas.md`](./f360-3-writer-playable-ideas.md)
 
 ### Objetivo
 

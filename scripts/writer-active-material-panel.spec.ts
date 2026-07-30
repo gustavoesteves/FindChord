@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildWriterActiveMaterialPanel } from "../src/domains/writer/services/writerActiveMaterialPanel";
 
 describe("F228 painel ativo de material do acorde", () => {
-  it("reune materiais melodicos, frase de estudo e leitura teorica", () => {
+  it("reune materiais melodicos, celula tocavel e leitura teorica", () => {
     const panel = buildWriterActiveMaterialPanel({
       sourceType: "lydian",
       chordRoot: "C",
@@ -22,9 +22,13 @@ describe("F228 painel ativo de material do acorde", () => {
 
     expect(panel.melodicMaterials[0].label).toBe("Tríade com #11");
     expect(panel.studyLine).toMatchObject({
-      name: "Ascensão pela #11",
-      notes: ["C4", "E4", "F#4", "G4", "B4", "A4", "C5"],
-      displayNotes: ["C", "E", "F#", "G", "B", "A", "C"]
+      name: "Tríade com #11",
+      theoryDesc: "Use a #11 como cor suspensa.",
+      notes: ["C4", "E4", "F#4"],
+      displayNotes: ["C", "E", "F#"],
+      realizedCell: {
+        notation: "C-E-F#"
+      }
     });
     expect(panel.theory.desc).toContain("Lídio");
   });

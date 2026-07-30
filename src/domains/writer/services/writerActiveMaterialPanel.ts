@@ -17,6 +17,8 @@ import {
   type WriterMaterialGestureEvent,
   type WriterRealizedMaterialCell
 } from "./writerMaterialCellRealization";
+import { structuredCellsForContextualMaterial } from "../../../utils/music/theory/melodicCellMaterialAdapter";
+import type { MaterialChordIdentity } from "../../../utils/music/theory/materialChordIdentity";
 
 export interface WriterActiveMaterialLine extends LocalMaterialSuggestedLine {
   notes: string[];
@@ -43,6 +45,7 @@ export interface WriterActiveMaterialPanelInput {
   candidate?: {
     melodicMaterials: ContextualMelodicMaterial[];
     intent?: ContextualMaterialIntent;
+    materialIdentity?: MaterialChordIdentity;
   };
   preferredCellSelection?: WriterMaterialCellSelection;
 }
@@ -212,15 +215,50 @@ function playableShapeMaterialLine(input: WriterActiveMaterialPanelInput): Write
   };
 }
 
+function playableLocalCellLine(input: WriterActiveMaterialPanelInput): WriterActiveMaterialLine | undefined {
+  const materials = input.candidate?.melodicMaterials || [];
+  if (materials.length === 0) return undefined;
+  const preferredMaterialIndex = input.preferredCellSelection?.materialIndex ?? 0;
+  const material = materials[preferredMaterialIndex] || materials[0];
+  const materialIndex = materials.indexOf(material);
+  const structuredCells = structuredCellsForContextualMaterial({
+    material,
+    intent: input.candidate?.intent,
+    materialIdentity: input.candidate?.materialIdentity
+  });
+  const preferredCellIndex = input.preferredCellSelection?.cellIndex
+    ?? material.preferredCellIndex
+    ?? 0;
+  const cell = structuredCells[preferredCellIndex] || structuredCells[0];
+  if (!cell?.events.length) return undefined;
+
+  const displayNotes = cell.events.map(event => event.note);
+
+  return {
+    name: material.label,
+    theoryDesc: material.practiceHint,
+    intervals: [],
+    notes: displayNotes.map(note => `${note}4`),
+    displayNotes,
+    realizedCell: {
+      materialLabel: material.label,
+      materialIndex: materialIndex < 0 ? 0 : materialIndex,
+      cellIndex: preferredCellIndex,
+      notation: cell.notation
+    }
+  };
+}
+
 export function buildWriterActiveMaterialPanel(input: WriterActiveMaterialPanelInput): WriterActiveMaterialPanel {
   const shapeLine = playableShapeMaterialLine(input);
+  const cellLine = playableLocalCellLine(input);
   const studyLine = suggestedLineForLocalMaterial(input.sourceType);
   const studyLineNotes = studyLine ? notesForLocalMaterialLine(input.chordRoot, studyLine.intervals) : [];
 
   return {
     sourceType: input.sourceType,
     melodicMaterials: input.candidate?.melodicMaterials || [],
-    studyLine: shapeLine || (studyLine
+    studyLine: shapeLine || cellLine || (studyLine
       ? {
           ...studyLine,
           notes: studyLineNotes,

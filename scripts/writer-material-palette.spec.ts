@@ -43,13 +43,14 @@ describe("F227 paleta composicional de materiais do acorde", () => {
     expect(palette[0]).toMatchObject({
       title: "Tríade com #11",
       cells: ["C-E-F#", "E-G-B"],
+      hasPlayableIdea: true,
       extraMaterialCount: 2,
       intentLabel: "Funcional",
       actionLabel: "Colorir sem sair"
     });
   });
 
-  it("usa a fonte como fallback quando ainda nao ha material melodico", () => {
+  it("mantem fonte sem material melodico como mapa, nao como celula tocavel", () => {
     const palette = buildWriterMaterialPalette([
       {
         source: {
@@ -65,7 +66,8 @@ describe("F227 paleta composicional de materiais do acorde", () => {
     expect(palette[0]).toMatchObject({
       title: "C Major",
       subtitle: "Use como conjunto de notas, cores e células possíveis para este acorde.",
-      cells: ["C", "D", "E", "F"],
+      cells: [],
+      hasPlayableIdea: false,
       intentLabel: "Cor",
       actionLabel: "Explorar cor"
     });
