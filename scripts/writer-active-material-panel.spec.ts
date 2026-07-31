@@ -100,4 +100,64 @@ describe("F228 painel ativo de material do acorde", () => {
     expect(panel.studyLine?.events?.map(event => event.displayNote)).toEqual(panel.studyLine?.displayNotes);
     expect(panel.studyLine?.positions).toHaveLength(panel.studyLine?.notes.length);
   });
+
+  it("usa cellId como identidade preferencial quando o indice fica obsoleto", () => {
+    const panel = buildWriterActiveMaterialPanel({
+      sourceType: "lydian",
+      chordRoot: "C",
+      candidate: {
+        intent: "functional",
+        melodicMaterials: [{
+          label: "Cores estaveis",
+          source: "arpeggio",
+          cells: [],
+          cellsStructured: [
+            {
+              id: "core",
+              notation: "C-E-G",
+              events: [
+                { note: "C", intervalDegree: "R", harmonicRole: "support", gestureRole: "cell" },
+                { note: "E", intervalDegree: "3", harmonicRole: "support", gestureRole: "cell" },
+                { note: "G", intervalDegree: "5", harmonicRole: "support", gestureRole: "cell" }
+              ],
+              intent: "inside",
+              direction: "ascending",
+              contour: "ascending",
+              resolutionScope: "none",
+              localReturnDegrees: []
+            },
+            {
+              id: "color",
+              notation: "D-F#-A",
+              events: [
+                { note: "D", intervalDegree: "9", harmonicRole: "color", gestureRole: "cell" },
+                { note: "F#", intervalDegree: "#11", harmonicRole: "color", gestureRole: "cell" },
+                { note: "A", intervalDegree: "13", harmonicRole: "color", gestureRole: "cell" }
+              ],
+              intent: "functional",
+              direction: "ascending",
+              contour: "ascending",
+              resolutionScope: "none",
+              localReturnDegrees: []
+            }
+          ],
+          tensionProfile: ["9", "#11", "13"],
+          resolutionTargets: [],
+          practiceHint: "Escolha a cor pelo ID, nao pela posicao antiga."
+        }]
+      },
+      preferredCellSelection: {
+        cellId: "color",
+        cellIndex: 0,
+        materialIndex: 0
+      }
+    });
+
+    expect(panel.studyLine?.displayNotes).toEqual(["D", "F#", "A"]);
+    expect(panel.studyLine?.realizedCell).toMatchObject({
+      cellId: "color",
+      cellIndex: 1,
+      notation: "D-F#-A"
+    });
+  });
 });

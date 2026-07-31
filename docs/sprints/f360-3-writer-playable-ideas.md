@@ -28,6 +28,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - Quando uma selecao traz `cellId`, ele tem prioridade sobre o indice legado,
   evitando que a realizacao fisica toque outra celula se a ordem do catalogo
   mudar.
+- O painel ativo do `Escrever` tambem resolve a celula por `cellId` antes de
+  aceitar `cellIndex`, mantendo a escuta abstrata alinhada com a mesma
+  identidade usada no braco.
 
 ## Auditoria de cobertura
 
@@ -147,6 +150,17 @@ npx vitest run scripts/writer-playable-ideas-coverage.spec.ts \
 
 6 specs aprovadas
 110 testes aprovados
+```
+
+Setimo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-active-material-panel.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/melodic-cell-contract.spec.ts
+
+3 specs aprovadas
+20 testes aprovados
 ```
 
 ## Proximo encaixe

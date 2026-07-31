@@ -17,7 +17,10 @@ import {
   type WriterMaterialGestureEvent,
   type WriterRealizedMaterialCell
 } from "./writerMaterialCellRealization";
-import { structuredCellsForContextualMaterial } from "../../../utils/music/theory/melodicCellMaterialAdapter";
+import {
+  preferredStructuredCellIdForMaterial,
+  structuredCellsForContextualMaterial
+} from "../../../utils/music/theory/melodicCellMaterialAdapter";
 import type { MaterialChordIdentity } from "../../../utils/music/theory/materialChordIdentity";
 
 export interface WriterActiveMaterialLine extends LocalMaterialSuggestedLine {
@@ -227,11 +230,21 @@ function playableLocalCellLine(input: WriterActiveMaterialPanelInput): WriterAct
     intent: input.candidate?.intent,
     materialIdentity: input.candidate?.materialIdentity
   });
-  const preferredCellIndex = input.preferredCellSelection?.cellIndex
-    ?? material.preferredCellIndex
-    ?? 0;
-  const cell = structuredCells[preferredCellIndex] || structuredCells[0];
+  const selectedCellId = input.preferredCellSelection?.cellId;
+  const selectedCellIdIndex = selectedCellId
+    ? structuredCells.findIndex(candidate => candidate.id === selectedCellId)
+    : -1;
+  const materialPreferredCellId = preferredStructuredCellIdForMaterial(material, structuredCells);
+  const materialPreferredCellIndex = materialPreferredCellId
+    ? structuredCells.findIndex(candidate => candidate.id === materialPreferredCellId)
+    : -1;
+  const selectedIndex = selectedCellIdIndex >= 0
+    ? selectedCellIdIndex
+    : input.preferredCellSelection?.cellIndex
+      ?? (materialPreferredCellIndex >= 0 ? materialPreferredCellIndex : 0);
+  const cell = structuredCells[selectedIndex] || structuredCells[0];
   if (!cell?.events.length) return undefined;
+  const cellIndex = structuredCells.indexOf(cell);
 
   const displayNotes = cell.events.map(event => event.note);
 
@@ -245,7 +258,7 @@ function playableLocalCellLine(input: WriterActiveMaterialPanelInput): WriterAct
       cellId: cell.id,
       materialLabel: material.label,
       materialIndex: materialIndex < 0 ? 0 : materialIndex,
-      cellIndex: preferredCellIndex,
+      cellIndex,
       notation: cell.notation
     }
   };
