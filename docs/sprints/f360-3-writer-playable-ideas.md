@@ -39,16 +39,22 @@ Linha atual:
 ```text
 Qualidades: 33
 Itens de paleta: 188
-Ideias tocaveis: 143
-Mapas de apoio: 45
+Ideias tocaveis: 182
+Mapas de apoio: 6
 ```
 
 Leitura musical:
 
 - toda qualidade possui ao menos uma ideia tocavel;
-- os 45 itens restantes continuam disponiveis como mapa de apoio no braco;
+- os 6 itens restantes continuam disponiveis como mapa de apoio no braco;
 - esses mapas nao geram botao de escuta nem celula falsa;
 - `chord tone core` nao aparece entre os mapas sem celula.
+- os mapas restantes sao deliberadamente cautelosos: `altered` sobre dominante
+  natural e `mixolydian` sobre dominante explicitamente alterado.
+- o vocabulário novo entra apenas quando
+  `buildContextualMelodicMaterials(..., { surface: "local-vamp" })` e chamado
+  pelo `Escrever`; o caminho contextual do `Harmonizar` preserva as regras de
+  função e resolução.
 
 ## Invariantes
 
@@ -98,9 +104,22 @@ npx vitest run scripts/writer-material-cell-realization.spec.ts \
 52 testes aprovados
 ```
 
+Quarto encaixe validado com:
+
+```text
+npx vitest run scripts/writer-playable-ideas-coverage.spec.ts \
+  scripts/contextual-material-candidate-behavior.spec.ts \
+  scripts/contextual-melodic-materials.spec.ts \
+  scripts/local-chord-vamp-materials.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+5 specs aprovadas
+96 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Reduzir progressivamente os 45 mapas de apoio, comecando por fontes
-  musicalmente importantes que hoje so aparecem como colecao.
+- Decidir se os 6 mapas restantes devem continuar como mapas cautelosos ou
+  receber celulas mais claramente tensionais.
 - Remover dependencias restantes de `preferredCellIndex` nos catalogos,
   preenchendo `preferredCellId` de forma gradual.

@@ -12,6 +12,8 @@ describe("F360.3 cobertura de ideias tocáveis do Writer", () => {
     expect(report.qualities).toBe(Object.keys(CHORD_REGISTRY).length);
     expect(report.totalItems).toBeGreaterThan(0);
     expect(report.playableIdeas).toBeGreaterThan(0);
+    expect(report.playableIdeas).toBeGreaterThanOrEqual(182);
+    expect(report.supportMaps).toBeLessThanOrEqual(6);
     expect(report.rows.every(row => row.playableIdeas > 0)).toBe(true);
     expect(report.rows.every(row => (
       row.totalItems === row.playableIdeas + row.supportMaps
@@ -25,6 +27,14 @@ describe("F360.3 cobertura de ideias tocáveis do Writer", () => {
     expect(rowsWithSupportMaps.length).toBeGreaterThan(0);
     expect(rowsWithSupportMaps.every(row => row.supportMapSourceTypes.length === row.supportMaps)).toBe(true);
     expect(report.rows.flatMap(row => row.supportMapSourceTypes)).not.toContain("chord tone core");
+    expect(report.rows.flatMap(row => row.supportMapSourceTypes).sort()).toEqual([
+      "altered",
+      "altered",
+      "altered",
+      "altered",
+      "mixolydian",
+      "mixolydian"
+    ]);
   });
 
   it("renderiza um resumo rastreável para documentação", () => {

@@ -25,9 +25,21 @@ const LOCAL_INTENT_PRIORITY: Record<ContextualMaterialIntent, number> = {
 };
 
 const QUALITY_FOCUS_SOURCE_TYPE: Partial<Record<ChordQuality, string>> = {
+  major: "chord tone core",
+  major6th: "chord tone core",
+  major7th: "chord tone core",
+  major9th: "chord tone core",
+  major13th: "chord tone core",
+  "69": "chord tone core",
+  minor: "chord tone core",
+  minor6th: "chord tone core",
+  minor7th: "chord tone core",
+  minor9th: "chord tone core",
+  minor11th: "chord tone core",
+  minor13th: "chord tone core",
   "major7#11": "lydian",
   "dominant7#9": "altered",
-  "dominant7#11": "lydian dominant",
+  "dominant7#11": "chord tone core",
   sus4: "sus4 pentatonic",
   sus2: "sus2 pentatonic",
   power: "power neutral pentatonic",

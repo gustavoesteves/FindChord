@@ -111,7 +111,8 @@ export function buildLocalChordVampMaterialCandidates(chord: ChordCandidate): Lo
         chord.quality,
         harmonicFunction,
         undefined,
-        undefined
+        undefined,
+        { surface: "local-vamp" }
       ),
       practiceHint: ""
     };
