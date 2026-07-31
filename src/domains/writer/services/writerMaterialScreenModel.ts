@@ -89,7 +89,8 @@ export function buildWriterMaterialScreenModel(input: WriterMaterialScreenModelI
         preferredCellSelection: focusedImprovisationMove
           ? {
               materialIndex: focusedImprovisationMove.materialIndex,
-              cellIndex: focusedImprovisationMove.cellIndex
+              cellIndex: focusedImprovisationMove.cellIndex,
+              cellId: focusedImprovisationMove.cellId
             }
           : undefined
       })

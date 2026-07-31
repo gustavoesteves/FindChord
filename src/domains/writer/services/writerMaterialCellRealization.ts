@@ -4,6 +4,15 @@ import type {
 } from "../../../utils/music/theory/contextualMaterialTypes";
 import { getNoteAt } from "../../../utils/music/core/notes";
 import { getPitchClass, simplifyNote } from "../../../utils/music/core/pitch";
+import type {
+  BaseMelodicCell,
+  MelodicCellHarmonicRole
+} from "../../../utils/music/models/MelodicCell";
+import {
+  preferredStructuredCellIdForMaterial,
+  structuredCellsForContextualMaterial
+} from "../../../utils/music/theory/melodicCellMaterialAdapter";
+import type { MaterialChordIdentity } from "../../../utils/music/theory/materialChordIdentity";
 import { fretWindowForWriterMaterialShape } from "./writerMaterialFretWindow";
 
 export type WriterMaterialGestureRole = "anchor" | "cell" | "color" | "outside" | "return";
@@ -18,6 +27,7 @@ export interface WriterMaterialGestureEvent {
 }
 
 export interface WriterRealizedMaterialCell {
+  cellId: string;
   materialLabel: string;
   materialIndex: number;
   cellIndex: number;
@@ -38,12 +48,14 @@ export interface WriterMaterialCellRealizationInput {
   selectedFrets: (number | null)[];
   melodicMaterials: ContextualMelodicMaterial[];
   intent?: ContextualMaterialIntent;
+  materialIdentity?: MaterialChordIdentity;
   preferredSelection?: WriterMaterialCellSelection;
 }
 
 export interface WriterMaterialCellSelection {
   materialIndex: number;
   cellIndex: number;
+  cellId?: string;
 }
 
 interface PhysicalNotePosition {
@@ -201,54 +213,75 @@ function realizeOrderedNotes(
 function selectMaterialAndCell(
   materials: ContextualMelodicMaterial[],
   chordPitchClasses: Set<number>,
+  intent?: ContextualMaterialIntent,
+  materialIdentity?: MaterialChordIdentity,
   preferredSelection?: WriterMaterialCellSelection
 ): {
   material: ContextualMelodicMaterial;
   materialIndex: number;
   cellIndex: number;
+  cellId: string;
+  cell: BaseMelodicCell;
   notes: string[];
   desiredPitchMovements: Array<number | undefined>;
 } | undefined {
   if (preferredSelection) {
     const material = materials[preferredSelection.materialIndex];
-    const cell = material?.cells[preferredSelection.cellIndex];
-    const notes = cell ? notesInWriterMaterialCell(cell) : [];
-    if (material && cell && notes.length > 0) {
+    const structuredCells = material ? structuredCellsForContextualMaterial({
+      material,
+      intent,
+      materialIdentity
+    }) : [];
+    const selectedCell = preferredSelection.cellId
+      ? structuredCells.find(cell => cell.id === preferredSelection.cellId) || structuredCells[preferredSelection.cellIndex]
+      : structuredCells[preferredSelection.cellIndex];
+    const cellIndex = selectedCell
+      ? structuredCells.findIndex(cell => cell.id === selectedCell.id)
+      : -1;
+    const notes = selectedCell?.events.map(event => event.note) || [];
+    if (material && selectedCell && cellIndex >= 0 && notes.length > 0) {
       return {
         material,
         materialIndex: preferredSelection.materialIndex,
-        cellIndex: preferredSelection.cellIndex,
+        cellIndex,
+        cellId: selectedCell.id,
+        cell: selectedCell,
         notes,
-        desiredPitchMovements: desiredPitchMovementsForCell(cell, notes)
+        desiredPitchMovements: desiredPitchMovementsForCell(selectedCell.notation, notes)
       };
     }
   }
 
   for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
     const material = materials[materialIndex];
-    const preferredCellIndex = material.preferredCellIndex;
-    if (
-      preferredCellIndex !== undefined
-      && preferredCellIndex >= 0
-      && preferredCellIndex < material.cells.length
-    ) {
-      const notes = notesInWriterMaterialCell(material.cells[preferredCellIndex]);
+    const structuredCells = structuredCellsForContextualMaterial({
+      material,
+      intent,
+      materialIdentity
+    });
+    const preferredCellId = preferredStructuredCellIdForMaterial(material, structuredCells);
+    if (preferredCellId) {
+      const preferredCellIndex = structuredCells.findIndex(cell => cell.id === preferredCellId);
+      const preferredCell = structuredCells[preferredCellIndex];
+      const notes = preferredCell?.events.map(event => event.note) || [];
       if (notes.length > 0) {
         return {
           material,
           materialIndex,
           cellIndex: preferredCellIndex,
+          cellId: preferredCell.id,
+          cell: preferredCell,
           notes,
-          desiredPitchMovements: desiredPitchMovementsForCell(material.cells[preferredCellIndex], notes)
+          desiredPitchMovements: desiredPitchMovementsForCell(preferredCell.notation, notes)
         };
       }
     }
 
-    const rankedCells = material.cells
+    const rankedCells = structuredCells
       .map((cell, cellIndex) => {
-        const notes = notesInWriterMaterialCell(cell);
+        const notes = cell.events.map(event => event.note);
         const colorCount = notes.filter(note => !chordPitchClasses.has(getPitchClass(note))).length;
-        return { cellIndex, notes, colorCount };
+        return { cellIndex, cellId: cell.id, cell, notes, colorCount };
       })
       .filter(cell => cell.notes.length > 0)
       .sort((left, right) => right.colorCount - left.colorCount || left.cellIndex - right.cellIndex);
@@ -258,9 +291,11 @@ function selectMaterialAndCell(
         material,
         materialIndex,
         cellIndex: selected.cellIndex,
+        cellId: selected.cellId,
+        cell: selected.cell,
         notes: selected.notes,
         desiredPitchMovements: desiredPitchMovementsForCell(
-          material.cells[selected.cellIndex],
+          selected.cell.notation,
           selected.notes
         )
       };
@@ -301,6 +336,19 @@ function returnPosition(
     .sort((left, right) => left.cost - right.cost)[0]?.position;
 }
 
+function roleForCellEvent(input: {
+  eventRole: MelodicCellHarmonicRole;
+  isFirst: boolean;
+  isChordTone: boolean;
+  intent?: ContextualMaterialIntent;
+}): WriterMaterialGestureRole {
+  if (input.intent === "outside" || input.eventRole === "outside") return "outside";
+  if (input.eventRole === "tension" || input.eventRole === "color") return "color";
+  return input.isChordTone
+    ? input.isFirst ? "anchor" : "cell"
+    : "color";
+}
+
 export function realizeWriterMaterialCellNearShape(
   input: WriterMaterialCellRealizationInput
 ): WriterRealizedMaterialGesture | undefined {
@@ -311,6 +359,8 @@ export function realizeWriterMaterialCellNearShape(
   const selected = selectMaterialAndCell(
     input.melodicMaterials,
     chordPitchClasses,
+    input.intent,
+    input.materialIdentity,
     input.preferredSelection
   );
   if (!selected) return undefined;
@@ -330,16 +380,20 @@ export function realizeWriterMaterialCellNearShape(
   const events: WriterMaterialGestureEvent[] = selected.notes.map((displayNote, index) => {
     const position = realizedPositions[index];
     const isChordTone = chordPitchClasses.has(position.pitchClass);
+    const cellEvent = selected.cell.events[index];
     return {
       note: position.noteName,
       displayNote,
       stringIndex: position.stringIndex,
       fret: position.fret,
-      role: input.intent === "outside"
-        ? "outside"
-        : isChordTone
-          ? index === 0 ? "anchor" : "cell"
-          : "color",
+      role: cellEvent?.gestureRole === "return"
+        ? "return"
+        : roleForCellEvent({
+            eventRole: cellEvent?.harmonicRole || "color",
+            isFirst: index === 0,
+            isChordTone,
+            intent: input.intent
+          }),
       cellIndex: selected.cellIndex
     };
   });
@@ -365,15 +419,15 @@ export function realizeWriterMaterialCellNearShape(
     };
   }
 
-  const notation = selected.material.cells[selected.cellIndex];
   return {
     name: selected.material.label,
     theoryDesc: selected.material.practiceHint,
     realizedCell: {
+      cellId: selected.cellId,
       materialLabel: selected.material.label,
       materialIndex: selected.materialIndex,
       cellIndex: selected.cellIndex,
-      notation
+      notation: selected.cell.notation
     },
     events
   };

@@ -85,6 +85,7 @@ function playableShapeMaterialLine(input: WriterActiveMaterialPanelInput): Write
     selectedFrets: input.selectedFrets,
     melodicMaterials: input.candidate?.melodicMaterials || [],
     intent: input.candidate?.intent,
+    materialIdentity: input.candidate?.materialIdentity,
     preferredSelection: input.preferredCellSelection
   });
   if (realizedCell) {
@@ -241,6 +242,7 @@ function playableLocalCellLine(input: WriterActiveMaterialPanelInput): WriterAct
     notes: displayNotes.map(note => `${note}4`),
     displayNotes,
     realizedCell: {
+      cellId: cell.id,
       materialLabel: material.label,
       materialIndex: materialIndex < 0 ? 0 : materialIndex,
       cellIndex: preferredCellIndex,

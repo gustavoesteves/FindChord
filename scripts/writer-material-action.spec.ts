@@ -102,6 +102,7 @@ describe("F246 acao tocavel do material ativo", () => {
             { note: "G4", displayNote: "G", stringIndex: 1, fret: 8, role: "return" }
           ],
           realizedCell: {
+            cellId: "maj-triades-superiores:d-fsharp-a",
             materialLabel: "maj / tríades superiores",
             materialIndex: 0,
             cellIndex: 1,

@@ -23,6 +23,11 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - O shape realizado continua tendo prioridade sobre a linha abstrata.
 - A linha teorica generica continua disponivel apenas quando nao ha celula
   curada.
+- `realizeWriterMaterialCellNearShape` agora consome o adaptador de celulas
+  estruturadas e preserva `cellId` na celula realizada.
+- Quando uma selecao traz `cellId`, ele tem prioridade sobre o indice legado,
+  evitando que a realizacao fisica toque outra celula se a ordem do catalogo
+  mudar.
 
 ## Auditoria de cobertura
 
@@ -54,6 +59,8 @@ Leitura musical:
   celula e realizada perto da forma desenhada.
 - O nome da acao segue o material/celula em foco, favorecendo identidade entre
   card, gesto e escuta.
+- A realizacao perto do shape segue a identidade da celula; `cellIndex` continua
+  apenas como ponte de UI enquanto a migracao nao termina.
 
 ## Validacao parcial
 
@@ -77,9 +84,23 @@ npx vitest run scripts/writer-playable-ideas-coverage.spec.ts
 3 testes aprovados
 ```
 
+Terceiro encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-active-material-panel.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-action.spec.ts \
+  scripts/writer-material-action-block.spec.ts \
+  scripts/melodic-cell-contract.spec.ts
+
+6 specs aprovadas
+52 testes aprovados
+```
+
 ## Proximo encaixe
 
 - Reduzir progressivamente os 45 mapas de apoio, comecando por fontes
   musicalmente importantes que hoje so aparecem como colecao.
-- Remover dependencias restantes de `preferredCellIndex` no caminho do
-  `Escrever`, usando `preferredCellId` quando disponivel.
+- Remover dependencias restantes de `preferredCellIndex` nos catalogos,
+  preenchendo `preferredCellId` de forma gradual.

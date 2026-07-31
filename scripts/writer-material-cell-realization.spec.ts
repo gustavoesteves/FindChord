@@ -40,6 +40,7 @@ describe("F257 realizacao de celulas de material perto do shape", () => {
 
     expect(gesture?.realizedCell).toMatchObject({
       materialLabel: "maj / tríades superiores",
+      cellId: "arpeggio-maj-triades-superiores:d-fsharp-a",
       cellIndex: 1,
       notation: "D-F#-A"
     });
@@ -69,6 +70,7 @@ describe("F257 realizacao de celulas de material perto do shape", () => {
     expect(gesture?.realizedCell).toMatchObject({
       materialIndex: 0,
       cellIndex: 0,
+      cellId: "arpeggio-maj-triades-superiores:c-e-g-b",
       notation: "C-E-G-B"
     });
     expect(gesture?.events.slice(0, 4).map(event => event.displayNote)).toEqual([
@@ -77,6 +79,32 @@ describe("F257 realizacao de celulas de material perto do shape", () => {
       "G",
       "B"
     ]);
+  });
+
+  it("prefere cellId estruturado quando a seleção por índice diverge", () => {
+    const gesture = realizeWriterMaterialCellNearShape({
+      chordRoot: "C",
+      chordNotes: ["C", "E", "G", "B"],
+      tuning,
+      selectedFrets: cmaj7Shape,
+      melodicMaterials: [
+        material("maj / tríades superiores", ["C-E-G-B", "D-F#-A", "F#->G"], 0)
+      ],
+      intent: "functional",
+      preferredSelection: {
+        materialIndex: 0,
+        cellIndex: 0,
+        cellId: "arpeggio-maj-triades-superiores:fsharp-g"
+      }
+    });
+
+    expect(gesture?.realizedCell).toMatchObject({
+      cellIndex: 2,
+      cellId: "arpeggio-maj-triades-superiores:fsharp-g",
+      notation: "F#->G"
+    });
+    expect(gesture?.events.map(event => event.displayNote)).toEqual(["F#", "G"]);
+    expect(gesture?.events.at(-1)?.role).toBe("return");
   });
 
   it("realiza a celula externa completa antes de voltar ao dominante", () => {

@@ -64,6 +64,7 @@ describe("F258 bloco visual da acao de material", () => {
         }
       ],
       realizedCell: {
+        cellId: "maj-triades-superiores:d-fsharp-a",
         materialLabel: "maj / tríades superiores",
         materialIndex: 0,
         cellIndex: 1,
