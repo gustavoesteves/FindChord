@@ -175,6 +175,41 @@ function alteredDominantMaterials(
   }];
 }
 
+function localOptionalAlteredDominantMaterials(
+  scale: MaterialSourceMap,
+  root: string,
+  quality: ChordQuality
+): ContextualMelodicMaterial[] {
+  if (scale.type !== "altered" || !NATURAL_DOMINANT_QUALITIES.has(quality)) return [];
+  const flatNine = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "2m")));
+  const sharpNine = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "2A")));
+  const third = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "3M")));
+  const sharpEleven = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "4A")));
+  const flatThirteen = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "6m")));
+  const flatSeven = displayNote(noteFromScaleByChroma(scale, transposePitchClass(root, "7m")));
+  const rootNote = displayNote(root);
+  const fifth = displayNote(transposePitchClass(root, "5P"));
+  const cells = [
+    [flatNine, sharpNine, third].filter(Boolean).join("-"),
+    [sharpEleven, flatThirteen, flatSeven].filter(Boolean).join("-"),
+    resolutionCell(flatNine, rootNote),
+    resolutionCell(flatThirteen, fifth)
+  ].filter(Boolean);
+
+  if (cells.length === 0) return [];
+
+  return [{
+    label: "alterada opcional / tensão local",
+    source: "chromatic-approach",
+    sourceScale: scale.name,
+    cells,
+    preferredCellIndex: 0,
+    tensionProfile: ["b9", "#9", "#11", "b13", "b7"],
+    resolutionTargets: [],
+    practiceHint: "Use como tensao breve sobre dominante natural e retorne para 3, 5 ou b7; nao trate como resolucao obrigatoria."
+  }];
+}
+
 function naturalDominantMaterials(
   scale: MaterialSourceMap,
   root: string,
@@ -987,6 +1022,7 @@ export function buildContextualMelodicMaterials(
     ...(includeLocalVampVocabulary ? localMajorSourceMaterials(scale, root, quality) : []),
     ...(includeLocalVampVocabulary ? localMinorSourceMaterials(scale, root, quality) : []),
     ...(includeLocalVampVocabulary ? localHalfDiminishedLocrianMaterials(scale, root, quality) : []),
-    ...(includeLocalVampVocabulary ? localDominantColorSourceMaterials(scale, root, quality) : [])
+    ...(includeLocalVampVocabulary ? localDominantColorSourceMaterials(scale, root, quality) : []),
+    ...(includeLocalVampVocabulary ? localOptionalAlteredDominantMaterials(scale, root, quality) : [])
   ];
 }

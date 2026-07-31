@@ -39,18 +39,22 @@ Linha atual:
 ```text
 Qualidades: 33
 Itens de paleta: 188
-Ideias tocaveis: 182
-Mapas de apoio: 6
+Ideias tocaveis: 186
+Mapas de apoio: 2
 ```
 
 Leitura musical:
 
 - toda qualidade possui ao menos uma ideia tocavel;
-- os 6 itens restantes continuam disponiveis como mapa de apoio no braco;
+- os 2 itens restantes continuam disponiveis como mapa de apoio no braco;
 - esses mapas nao geram botao de escuta nem celula falsa;
 - `chord tone core` nao aparece entre os mapas sem celula.
-- os mapas restantes sao deliberadamente cautelosos: `altered` sobre dominante
-  natural e `mixolydian` sobre dominante explicitamente alterado.
+- `altered` sobre dominante natural agora possui celulas de tensao local no
+  `Escrever`, porque em um vamp ela pode funcionar como cor opcional sem
+  promessa de resolucao funcional;
+- os mapas restantes sao deliberadamente cautelosos: `mixolydian` sobre
+  dominante explicitamente alterado, pois esse mapa omite a alteracao escrita e
+  nao deve virar pseudoideia principal.
 - o vocabulário novo entra apenas quando
   `buildContextualMelodicMaterials(..., { surface: "local-vamp" })` e chamado
   pelo `Escrever`; o caminho contextual do `Harmonizar` preserva as regras de
@@ -117,9 +121,22 @@ npx vitest run scripts/writer-playable-ideas-coverage.spec.ts \
 96 testes aprovados
 ```
 
+Quinto encaixe validado com:
+
+```text
+npx vitest run scripts/writer-playable-ideas-coverage.spec.ts \
+  scripts/contextual-material-candidate-behavior.spec.ts \
+  scripts/contextual-melodic-materials.spec.ts \
+  scripts/local-chord-vamp-materials.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+5 specs aprovadas
+96 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Decidir se os 6 mapas restantes devem continuar como mapas cautelosos ou
-  receber celulas mais claramente tensionais.
+- Decidir se os 2 mapas `mixolydian` restantes devem continuar como mapas
+  cautelosos ou desaparecer da paleta principal de acordes alterados.
 - Remover dependencias restantes de `preferredCellIndex` nos catalogos,
   preenchendo `preferredCellId` de forma gradual.
