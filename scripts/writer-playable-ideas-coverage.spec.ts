@@ -13,7 +13,7 @@ describe("F360.3 cobertura de ideias tocáveis do Writer", () => {
     expect(report.totalItems).toBeGreaterThan(0);
     expect(report.playableIdeas).toBeGreaterThan(0);
     expect(report.playableIdeas).toBeGreaterThanOrEqual(186);
-    expect(report.supportMaps).toBeLessThanOrEqual(2);
+    expect(report.supportMaps).toBe(0);
     expect(report.rows.every(row => row.playableIdeas > 0)).toBe(true);
     expect(report.rows.every(row => (
       row.totalItems === row.playableIdeas + row.supportMaps
@@ -24,13 +24,9 @@ describe("F360.3 cobertura de ideias tocáveis do Writer", () => {
     const report = auditWriterPlayableIdeas();
     const rowsWithSupportMaps = report.rows.filter(row => row.supportMaps > 0);
 
-    expect(rowsWithSupportMaps.length).toBeGreaterThan(0);
-    expect(rowsWithSupportMaps.every(row => row.supportMapSourceTypes.length === row.supportMaps)).toBe(true);
+    expect(rowsWithSupportMaps).toEqual([]);
     expect(report.rows.flatMap(row => row.supportMapSourceTypes)).not.toContain("chord tone core");
-    expect(report.rows.flatMap(row => row.supportMapSourceTypes).sort()).toEqual([
-      "mixolydian",
-      "mixolydian"
-    ]);
+    expect(report.rows.flatMap(row => row.supportMapSourceTypes)).toEqual([]);
   });
 
   it("renderiza um resumo rastreável para documentação", () => {

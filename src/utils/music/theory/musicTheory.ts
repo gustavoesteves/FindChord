@@ -65,8 +65,8 @@ const MATERIAL_SOURCE_MAP_TYPES: Partial<Record<ChordQuality, string[]>> = {
   dominant7sus4: ["mixolydian", "lydian dominant"],
   dominant7b5: ["altered", "lydian dominant", "half-whole diminished"],
   dominant7b9: ["phrygian dominant", "altered", "half-whole diminished"],
-  "dominant7#9": ["altered", "half-whole diminished", "mixolydian"],
-  "dominant7#11": ["lydian dominant", "altered", "mixolydian"],
+  "dominant7#9": ["altered", "half-whole diminished"],
+  "dominant7#11": ["lydian dominant", "altered"],
   dominant7b13: ["phrygian dominant", "altered", "half-whole diminished"],
 
   halfDiminished: ["locrian #2", "locrian"],

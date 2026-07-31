@@ -47,6 +47,11 @@ describe("F302 mapas-fonte de material por qualidade", () => {
     }
   });
 
+  it("nao oferece mixolidio natural quando a dominante traz alteracao escrita", () => {
+    expect(getMaterialSourceMapTypes("dominant7#9")).toEqual(["altered", "half-whole diminished"]);
+    expect(getMaterialSourceMapTypes("dominant7#11")).toEqual(["lydian dominant", "altered"]);
+  });
+
   it("preserva #11 escrito em acorde maior sem oferecer jonio generico", () => {
     const types = getMaterialSourceMaps(chord("major7#11")).map(source => source.type);
 
