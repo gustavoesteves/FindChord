@@ -31,6 +31,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - O painel ativo do `Escrever` tambem resolve a celula por `cellId` antes de
   aceitar `cellIndex`, mantendo a escuta abstrata alinhada com a mesma
   identidade usada no braco.
+- O card de ideias deixou de exibir `mapa de apoio` como categoria visual. O
+  estado sem celula permanece rastreavel pelo modelo e pela auditoria, mas nao
+  vira uma promessa musical para o compositor.
 
 ## Auditoria de cobertura
 
@@ -163,9 +166,20 @@ npx vitest run scripts/writer-active-material-panel.spec.ts \
 20 testes aprovados
 ```
 
+Oitavo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-idea-card-copy.spec.ts \
+  scripts/writer-material-palette.spec.ts \
+  scripts/writer-playable-ideas-coverage.spec.ts
+
+3 specs aprovadas
+8 testes aprovados
+```
+
 ## Proximo encaixe
 
 - Remover dependencias restantes de `preferredCellIndex` nos catalogos,
   preenchendo `preferredCellId` de forma gradual.
-- Auditar se a UI ainda usa linguagem de "mapa de apoio" em estados que agora
-  sao raros ou apenas defensivos.
+- Avaliar se o contrato `hasPlayableIdea` deve continuar publico para UI ou
+  ficar restrito aos auditores/servicos internos.

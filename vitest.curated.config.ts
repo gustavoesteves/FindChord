@@ -139,6 +139,7 @@ export default defineConfig({
       "scripts/writer-material-action.spec.ts",
       "scripts/writer-material-action-block.spec.ts",
       "scripts/writer-material-cell-realization.spec.ts",
+      "scripts/writer-material-idea-card-copy.spec.ts",
       "scripts/writer-material-improvisation-moves.spec.ts",
       "scripts/writer-chord-reading-analysis.spec.ts",
       "scripts/writer-chord-reading-presenter.spec.ts",
