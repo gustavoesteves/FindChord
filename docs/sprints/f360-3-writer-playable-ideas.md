@@ -24,6 +24,27 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - A linha teorica generica continua disponivel apenas quando nao ha celula
   curada.
 
+## Auditoria de cobertura
+
+O auditor `scripts/audit-writer-playable-ideas.ts` mede as 33 qualidades da DSL
+do `Escrever` usando o mesmo caminho da paleta real.
+
+Linha atual:
+
+```text
+Qualidades: 33
+Itens de paleta: 188
+Ideias tocaveis: 143
+Mapas de apoio: 45
+```
+
+Leitura musical:
+
+- toda qualidade possui ao menos uma ideia tocavel;
+- os 45 itens restantes continuam disponiveis como mapa de apoio no braco;
+- esses mapas nao geram botao de escuta nem celula falsa;
+- `chord tone core` nao aparece entre os mapas sem celula.
+
 ## Invariantes
 
 - Ideia tocavel precisa vir de celula ou linha curada.
@@ -47,10 +68,18 @@ npx vitest run scripts/writer-material-palette.spec.ts \
 41 testes aprovados
 ```
 
+Segundo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-playable-ideas-coverage.spec.ts
+
+1 spec aprovada
+3 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar quantos itens ainda entram como mapa sem celula.
-- Garantir que `routedMaterialPalette` distinga explicitamente ideia estruturada
-  de mapa disponivel.
+- Reduzir progressivamente os 45 mapas de apoio, comecando por fontes
+  musicalmente importantes que hoje so aparecem como colecao.
 - Remover dependencias restantes de `preferredCellIndex` no caminho do
   `Escrever`, usando `preferredCellId` quando disponivel.

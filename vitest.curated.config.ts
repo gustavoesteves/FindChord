@@ -152,6 +152,7 @@ export default defineConfig({
       "scripts/writer-material-playback-controller.spec.ts",
       "scripts/writer-material-routes.spec.ts",
       "scripts/writer-material-screen-model.spec.ts",
+      "scripts/writer-playable-ideas-coverage.spec.ts",
       "scripts/writer-fretboard-playback.spec.ts",
       "scripts/writer-musescore-payload.spec.ts",
       "scripts/writer-translation-layer-cleanup.spec.ts",
