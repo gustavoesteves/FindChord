@@ -37,6 +37,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - `hasPlayableIdea` continua existindo como sinal de auditoria/regressao, mas
   saiu da decisao visual do card: na superficie atual, card ativo e ideia
   tocavel no braco.
+- O catalogo local de vamp agora preenche `preferredCellId` para todo material
+  que ainda declara `preferredCellIndex`, usando o mesmo ID estavel das celulas
+  estruturadas. O indice permanece como ponte de compatibilidade.
 
 ## Auditoria de cobertura
 
@@ -191,9 +194,20 @@ npx vitest run scripts/writer-material-idea-card-copy.spec.ts \
 8 testes aprovados
 ```
 
+Decimo encaixe validado com:
+
+```text
+npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
+  scripts/local-chord-vamp-materials.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-active-material-panel.spec.ts
+
+4 specs aprovadas
+70 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Remover dependencias restantes de `preferredCellIndex` nos catalogos,
-  preenchendo `preferredCellId` de forma gradual.
-- Migrar gradualmente catalogos e materiais gerados para `preferredCellId`,
-  mantendo `preferredCellIndex` apenas como compatibilidade.
+- Repetir a migracao de `preferredCellId` nos materiais gerados por
+  `contextualMelodicMaterials.ts`, mantendo `preferredCellIndex` apenas como
+  compatibilidade.

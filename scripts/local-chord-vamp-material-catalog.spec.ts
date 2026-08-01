@@ -12,6 +12,7 @@ import {
 } from "../src/utils/music/constants/chordRegistry";
 import { Note } from "tonal";
 import { simplifyNote } from "../src/utils/music/core/pitch";
+import { structuredCellsForContextualMaterial } from "../src/utils/music/theory/melodicCellMaterialAdapter";
 
 function chord(partial: Partial<ChordCandidate> = {}): ChordCandidate {
   return {
@@ -221,6 +222,26 @@ describe("F325 catalogo versionavel de materiais locais", () => {
         .flatMap(cell => cell.split("-")) || [];
       expect(materialNotes.length, quality).toBeGreaterThan(0);
       expect(materialNotes.every(note => allowedNotes.has(note)), quality).toBe(true);
+    }
+  });
+
+  it("declara preferredCellId estavel para materiais que ainda usam indice legado", () => {
+    for (const quality of CHORD_QUALITY_CASES) {
+      const candidates = buildLocalChordVampSupplementalCandidates(chordForQuality(quality));
+
+      for (const candidate of candidates) {
+        for (const material of candidate.melodicMaterials) {
+          if (material.preferredCellIndex === undefined) continue;
+
+          const structuredCells = structuredCellsForContextualMaterial({
+            material,
+            intent: candidate.intent,
+            materialIdentity: candidate.materialIdentity
+          });
+
+          expect(material.preferredCellId, `${quality}:${material.label}`).toBe(structuredCells[material.preferredCellIndex]?.id);
+        }
+      }
     }
   });
 

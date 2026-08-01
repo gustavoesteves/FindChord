@@ -6,10 +6,15 @@ import {
 import type { ChordCandidate } from "../models/ChordCandidate";
 import { simplifyNote } from "../core/pitch";
 import { guideTonesFor } from "./contextualMaterialFunction";
-import type { ContextualMaterialIntent } from "./contextualMaterialTypes";
+import type {
+  ContextualMaterialIntent,
+  ContextualMelodicMaterial
+} from "./contextualMaterialTypes";
+import { contextualMelodicMaterialId } from "./melodicCellMaterialAdapter";
 import type { MaterialSourceMap } from "./musicTheory";
 import type { LocalChordVampMaterialCandidate } from "./localChordVampMaterials";
 import { materialChordIdentityFromChordCandidate } from "./materialChordIdentity";
+import { stableMelodicCellToken } from "../models/MelodicCell";
 
 export interface LocalChordVampMaterialCatalogEntry {
   id: string;
@@ -190,6 +195,16 @@ function directedCell(from: string | null, to: string | null): string {
   return `${simplifyNote(from)}->${simplifyNote(to)}`;
 }
 
+function withPreferredCellId(material: ContextualMelodicMaterial): ContextualMelodicMaterial {
+  if (material.preferredCellId || material.preferredCellIndex === undefined) return material;
+  const preferredNotation = material.cells[material.preferredCellIndex];
+  if (!preferredNotation) return material;
+  return {
+    ...material,
+    preferredCellId: `${contextualMelodicMaterialId(material)}:${stableMelodicCellToken(preferredNotation)}`
+  };
+}
+
 function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCandidate | null {
   const base = candidateBase(chord);
   const definition = CHORD_REGISTRY[base.materialIdentity.quality];
@@ -214,7 +229,7 @@ function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCa
     chordTones,
     intent: "inside",
     confidence: 0.9,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "núcleo de notas do acorde",
       source: "arpeggio",
       sourceScale: source.name,
@@ -224,7 +239,7 @@ function chordToneCoreCandidate(chord: ChordCandidate): LocalChordVampMaterialCa
       tensionProfile: [...definition.intervals],
       resolutionTargets: [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -252,7 +267,7 @@ function dominantDiminishedAxisCandidate(chord: ChordCandidate): LocalChordVampM
     ...candidateBase(chord),
     intent: "tension",
     confidence: 0.72,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "eixo diminuto / ii menores",
       source: "arpeggio",
       sourceScale: source.name,
@@ -260,7 +275,7 @@ function dominantDiminishedAxisCandidate(chord: ChordCandidate): LocalChordVampM
       tensionProfile: ["dominantes por terça menor", "ii menor relacionado", "outside controlado"],
       resolutionTargets: [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -287,7 +302,7 @@ function dominantSideSlipCandidate(chord: ChordCandidate): LocalChordVampMateria
     ...candidateBase(chord),
     intent: "outside",
     confidence: 0.58,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "side slip pentatônico",
       source: "pentatonic",
       sourceScale: source.name,
@@ -297,7 +312,7 @@ function dominantSideSlipCandidate(chord: ChordCandidate): LocalChordVampMateria
       tensionProfile: ["pentatônica interna", "meio tom abaixo", "meio tom acima"],
       resolutionTargets: [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -322,7 +337,7 @@ function minorDorianPentatonicStackCandidate(chord: ChordCandidate): LocalChordV
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.66,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "pilha pentatônica dórica",
       source: "pentatonic",
       sourceScale: source.name,
@@ -332,7 +347,7 @@ function minorDorianPentatonicStackCandidate(chord: ChordCandidate): LocalChordV
       tensionProfile: ["pentatônica menor da tônica", "pentatônica menor da quinta", "pentatônica menor do 2º grau"],
       resolutionTargets: [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -360,7 +375,7 @@ function minorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.77,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "m6/madd9 / cores resolvidas",
       source: "arpeggio",
       sourceScale: source.name,
@@ -373,7 +388,7 @@ function minorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
       ],
       resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -403,7 +418,7 @@ function minorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChord
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.76,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "m9/m13 / cores com b7",
       source: "arpeggio",
       sourceScale: source.name,
@@ -417,7 +432,7 @@ function minorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChord
       ],
       resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -448,7 +463,7 @@ function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMat
     ...candidateBase(chord),
     intent: "inside",
     confidence: 0.74,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "sus quartal / pentatônico",
       source: "pentatonic",
       sourceScale: source.name,
@@ -460,7 +475,7 @@ function susQuartalPentatonicCandidate(chord: ChordCandidate): LocalChordVampMat
         : ["4 suspensa", "4->5", ...(chord.quality === "dominant7sus4" ? ["b7 preservada"] : []), "sem terça"],
       resolutionTargets: uniqueNotes([root, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -492,7 +507,7 @@ function halfDiminishedUpperStructureCandidate(chord: ChordCandidate): LocalChor
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.7,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "ø7 / estruturas superiores",
       source: "arpeggio",
       sourceScale: source.name,
@@ -502,7 +517,7 @@ function halfDiminishedUpperStructureCandidate(chord: ChordCandidate): LocalChor
       tensionProfile: ["9 natural", "11", "b13", "retorno para b3/b5"],
       resolutionTargets: uniqueNotes([minorThird, flatFifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -539,7 +554,7 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
     ...candidateBase(chord),
     intent: "tension",
     confidence: 0.76,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: isDiminishedTriad
         ? "extensão dim7 opcional"
         : "ciclo diminuto por terças menores",
@@ -555,7 +570,7 @@ function diminishedSymmetricCycleCandidate(chord: ChordCandidate): LocalChordVam
         ? [cycleRoots[0]]
         : [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -592,7 +607,7 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
     ...candidateBase(chord),
     intent: "tension",
     confidence: 0.73,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "ciclo aumentado / tons inteiros",
       source: "arpeggio",
       sourceScale: source.name,
@@ -602,7 +617,7 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
       tensionProfile: ["tríade aumentada", "tríade um tom acima", "#11", "retorno para #5"],
       resolutionTargets: sharpFive ? [sharpFive] : [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -632,7 +647,7 @@ function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMa
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.69,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: isWrittenLydian ? "maj7 lídio / tríade do II" : "maj / tríades superiores",
       source: "arpeggio",
       sourceScale: source.name,
@@ -642,7 +657,7 @@ function majorUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVampMa
       tensionProfile: ["9", "#11", "13", "7M"],
       resolutionTargets: isWrittenLydian && fifth ? [fifth] : [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -671,7 +686,7 @@ function majorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.78,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "6/add9 / cores resolvidas",
       source: "arpeggio",
       sourceScale: source.name,
@@ -684,7 +699,7 @@ function majorAddedColorResolutionCandidate(chord: ChordCandidate): LocalChordVa
       ],
       resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -714,7 +729,7 @@ function majorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChord
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.76,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "maj9/maj13 / cores com 7M",
       source: "arpeggio",
       sourceScale: source.name,
@@ -728,7 +743,7 @@ function majorSeventhColorResolutionCandidate(chord: ChordCandidate): LocalChord
       ],
       resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -755,7 +770,7 @@ function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVam
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.68,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "7 / tríades superiores naturais",
       source: "arpeggio",
       sourceScale: source.name,
@@ -763,7 +778,7 @@ function dominantUpperTriadColorsCandidate(chord: ChordCandidate): LocalChordVam
       tensionProfile: ["9", "11", "13", "b7"],
       resolutionTargets: [],
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -795,7 +810,7 @@ function dominantNaturalExtensionResolutionCandidate(chord: ChordCandidate): Loc
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.77,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "9/11/13 dominante / retorno",
       source: "arpeggio",
       sourceScale: source.name,
@@ -810,7 +825,7 @@ function dominantNaturalExtensionResolutionCandidate(chord: ChordCandidate): Loc
       ],
       resolutionTargets: uniqueNotes([third, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -881,7 +896,7 @@ function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): Local
     ...candidateBase(chord),
     intent: "tension",
     confidence: 0.84,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "alteração escrita / resolução curta",
       source: "chromatic-approach",
       sourceScale: source.name,
@@ -891,7 +906,7 @@ function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): Local
       tensionProfile,
       resolutionTargets: uniqueNotes(resolutionTargets),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -921,7 +936,7 @@ function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVamp
     ...candidateBase(chord),
     intent: "functional",
     confidence: 0.67,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "m(maj7) / cores melódicas",
       source: "arpeggio",
       sourceScale: source.name,
@@ -931,7 +946,7 @@ function minorMajorMelodicColorsCandidate(chord: ChordCandidate): LocalChordVamp
       tensionProfile: ["b3 + 7M preservadas", "9->b3", "6->5"],
       resolutionTargets: uniqueNotes([minorThird, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
@@ -963,7 +978,7 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
     ...candidateBase(chord),
     intent: "inside",
     confidence: 0.75,
-    melodicMaterials: [{
+    melodicMaterials: [withPreferredCellId({
       label: "power / eixo pentatônico",
       source: "pentatonic",
       sourceScale: source.name,
@@ -973,7 +988,7 @@ function powerRiffPentatonicAxisCandidate(chord: ChordCandidate): LocalChordVamp
       tensionProfile: ["1 e 5 como eixo", "2->1", "4->5", "b7->1", "sem terca definida"],
       resolutionTargets: uniqueNotes([root, fifth].filter((note): note is string => !!note)),
       practiceHint
-    }],
+    })],
     practiceHint
   };
 }
