@@ -240,8 +240,9 @@ function playableLocalCellLine(input: WriterActiveMaterialPanelInput): WriterAct
     : -1;
   const selectedIndex = selectedCellIdIndex >= 0
     ? selectedCellIdIndex
-    : input.preferredCellSelection?.cellIndex
-      ?? (materialPreferredCellIndex >= 0 ? materialPreferredCellIndex : 0);
+    : materialPreferredCellIndex >= 0
+      ? materialPreferredCellIndex
+      : input.preferredCellSelection?.cellIndex ?? 0;
   const cell = structuredCells[selectedIndex] || structuredCells[0];
   if (!cell?.events.length) return undefined;
   const cellIndex = structuredCells.indexOf(cell);

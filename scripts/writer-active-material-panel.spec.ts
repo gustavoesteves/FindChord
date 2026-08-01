@@ -1,5 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { buildWriterActiveMaterialPanel } from "../src/domains/writer/services/writerActiveMaterialPanel";
+import type { ContextualMelodicMaterial } from "../src/utils/music/theory/contextualMaterialTypes";
+
+function structuredColorMaterial(overrides: Partial<ContextualMelodicMaterial> = {}): ContextualMelodicMaterial {
+  return {
+    label: "Cores estaveis",
+    source: "arpeggio",
+    cells: [],
+    cellsStructured: [
+      {
+        id: "core",
+        notation: "C-E-G",
+        events: [
+          { note: "C", intervalDegree: "R", harmonicRole: "support", gestureRole: "cell" },
+          { note: "E", intervalDegree: "3", harmonicRole: "support", gestureRole: "cell" },
+          { note: "G", intervalDegree: "5", harmonicRole: "support", gestureRole: "cell" }
+        ],
+        intent: "inside",
+        direction: "ascending",
+        contour: "ascending",
+        resolutionScope: "none",
+        localReturnDegrees: []
+      },
+      {
+        id: "color",
+        notation: "D-F#-A",
+        events: [
+          { note: "D", intervalDegree: "9", harmonicRole: "color", gestureRole: "cell" },
+          { note: "F#", intervalDegree: "#11", harmonicRole: "color", gestureRole: "cell" },
+          { note: "A", intervalDegree: "13", harmonicRole: "color", gestureRole: "cell" }
+        ],
+        intent: "functional",
+        direction: "ascending",
+        contour: "ascending",
+        resolutionScope: "none",
+        localReturnDegrees: []
+      }
+    ],
+    tensionProfile: ["9", "#11", "13"],
+    resolutionTargets: [],
+    practiceHint: "Escolha a cor pelo ID, nao pela posicao antiga.",
+    ...overrides
+  };
+}
 
 describe("F228 painel ativo de material do acorde", () => {
   it("reune materiais melodicos, celula tocavel e leitura teorica", () => {
@@ -107,47 +150,35 @@ describe("F228 painel ativo de material do acorde", () => {
       chordRoot: "C",
       candidate: {
         intent: "functional",
-        melodicMaterials: [{
-          label: "Cores estaveis",
-          source: "arpeggio",
-          cells: [],
-          cellsStructured: [
-            {
-              id: "core",
-              notation: "C-E-G",
-              events: [
-                { note: "C", intervalDegree: "R", harmonicRole: "support", gestureRole: "cell" },
-                { note: "E", intervalDegree: "3", harmonicRole: "support", gestureRole: "cell" },
-                { note: "G", intervalDegree: "5", harmonicRole: "support", gestureRole: "cell" }
-              ],
-              intent: "inside",
-              direction: "ascending",
-              contour: "ascending",
-              resolutionScope: "none",
-              localReturnDegrees: []
-            },
-            {
-              id: "color",
-              notation: "D-F#-A",
-              events: [
-                { note: "D", intervalDegree: "9", harmonicRole: "color", gestureRole: "cell" },
-                { note: "F#", intervalDegree: "#11", harmonicRole: "color", gestureRole: "cell" },
-                { note: "A", intervalDegree: "13", harmonicRole: "color", gestureRole: "cell" }
-              ],
-              intent: "functional",
-              direction: "ascending",
-              contour: "ascending",
-              resolutionScope: "none",
-              localReturnDegrees: []
-            }
-          ],
-          tensionProfile: ["9", "#11", "13"],
-          resolutionTargets: [],
-          practiceHint: "Escolha a cor pelo ID, nao pela posicao antiga."
-        }]
+        melodicMaterials: [structuredColorMaterial()]
       },
       preferredCellSelection: {
         cellId: "color",
+        cellIndex: 0,
+        materialIndex: 0
+      }
+    });
+
+    expect(panel.studyLine?.displayNotes).toEqual(["D", "F#", "A"]);
+    expect(panel.studyLine?.realizedCell).toMatchObject({
+      cellId: "color",
+      cellIndex: 1,
+      notation: "D-F#-A"
+    });
+  });
+
+  it("usa preferredCellId do material antes de cellIndex legado sem cellId", () => {
+    const panel = buildWriterActiveMaterialPanel({
+      sourceType: "lydian",
+      chordRoot: "C",
+      candidate: {
+        intent: "functional",
+        melodicMaterials: [structuredColorMaterial({
+          preferredCellId: "color",
+          preferredCellIndex: 1
+        })]
+      },
+      preferredCellSelection: {
         cellIndex: 0,
         materialIndex: 0
       }

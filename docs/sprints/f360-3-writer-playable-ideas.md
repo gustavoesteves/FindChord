@@ -43,6 +43,8 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - O construtor `buildContextualMelodicMaterials` aplica a mesma ponte de
   `preferredCellId` no retorno final, cobrindo tanto materiais contextuais
   quanto vocabulário `local-vamp` gerado dinamicamente.
+- O painel ativo do `Escrever` agora usa `preferredCellId` do material antes
+  de aceitar `cellIndex` legado quando a selecao nao traz `cellId` explicito.
 
 ## Auditoria de cobertura
 
@@ -222,7 +224,19 @@ npx vitest run scripts/contextual-melodic-materials.spec.ts \
 81 testes aprovados
 ```
 
+Decimo segundo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-active-material-panel.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts
+
+4 specs aprovadas
+52 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar os consumidores restantes de `preferredCellIndex` e remover leituras
-  diretas quando ja houver `preferredCellId` disponivel.
+- Auditar consumidores restantes de `cellIndex` como identificador de UI e
+  separar indice de exibicao de identidade persistente onde ainda fizer sentido.
