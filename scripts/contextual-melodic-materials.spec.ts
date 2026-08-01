@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildContextualMelodicMaterials } from "../src/utils/music/theory/contextualMelodicMaterials";
+import { structuredCellsForContextualMaterial } from "../src/utils/music/theory/melodicCellMaterialAdapter";
 
 describe("F201 materiais melódicos contextuais", () => {
   it("gera arpejos diminutos H/W para dominante diminuta", () => {
@@ -152,5 +153,61 @@ describe("F201 materiais melódicos contextuais", () => {
     });
     expect(materials[0]?.cells).toContain(cell);
     expect(materials[0]?.cells.join("-")).not.toMatch(/(^|-)E(b)?($|-)/);
+  });
+
+  it("declara preferredCellId estavel quando ainda informa indice legado", () => {
+    const materialSets = [
+      buildContextualMelodicMaterials(
+        {
+          name: "C power neutral pentatonic",
+          type: "power neutral pentatonic",
+          intervals: ["1P", "2M", "4P", "5P", "7m"],
+          notes: ["C", "D", "F", "G", "Bb"]
+        },
+        "C",
+        "power",
+        "color",
+        undefined,
+        undefined
+      ),
+      buildContextualMelodicMaterials(
+        {
+          name: "C major",
+          type: "major",
+          intervals: ["1P", "2M", "3M", "4P", "5P", "6M", "7M"],
+          notes: ["C", "D", "E", "F", "G", "A", "B"]
+        },
+        "C",
+        "major7th",
+        "color",
+        undefined,
+        undefined,
+        { surface: "local-vamp" }
+      ),
+      buildContextualMelodicMaterials(
+        {
+          name: "C altered",
+          type: "altered",
+          intervals: [],
+          notes: ["C", "Db", "Eb", "E", "Gb", "Ab", "Bb"]
+        },
+        "C",
+        "dominant7th",
+        "dominant",
+        undefined,
+        undefined,
+        { surface: "local-vamp" }
+      )
+    ];
+
+    const materials = materialSets.flat().filter(material => material.preferredCellIndex !== undefined);
+
+    expect(materials.length).toBeGreaterThan(0);
+    for (const material of materials) {
+      const preferredCellIndex = material.preferredCellIndex || 0;
+      const structuredCells = structuredCellsForContextualMaterial({ material });
+
+      expect(material.preferredCellId, material.label).toBe(structuredCells[preferredCellIndex]?.id);
+    }
   });
 });

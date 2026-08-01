@@ -40,6 +40,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - O catalogo local de vamp agora preenche `preferredCellId` para todo material
   que ainda declara `preferredCellIndex`, usando o mesmo ID estavel das celulas
   estruturadas. O indice permanece como ponte de compatibilidade.
+- O construtor `buildContextualMelodicMaterials` aplica a mesma ponte de
+  `preferredCellId` no retorno final, cobrindo tanto materiais contextuais
+  quanto vocabulário `local-vamp` gerado dinamicamente.
 
 ## Auditoria de cobertura
 
@@ -206,8 +209,20 @@ npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
 70 testes aprovados
 ```
 
+Decimo primeiro encaixe validado com:
+
+```text
+npx vitest run scripts/contextual-melodic-materials.spec.ts \
+  scripts/contextual-material-candidate-behavior.spec.ts \
+  scripts/local-chord-vamp-materials.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-active-material-panel.spec.ts
+
+5 specs aprovadas
+81 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Repetir a migracao de `preferredCellId` nos materiais gerados por
-  `contextualMelodicMaterials.ts`, mantendo `preferredCellIndex` apenas como
-  compatibilidade.
+- Auditar os consumidores restantes de `preferredCellIndex` e remover leituras
+  diretas quando ja houver `preferredCellId` disponivel.

@@ -7,6 +7,8 @@ import type {
   ContextualHarmonicFunction,
   ContextualMelodicMaterial
 } from "./contextualMaterialTypes";
+import { contextualMelodicMaterialId } from "./melodicCellMaterialAdapter";
+import { stableMelodicCellToken } from "../models/MelodicCell";
 
 function rootsEqual(left: string | undefined, right: string | undefined): boolean {
   return !!left && !!right && Note.pitchClass(left) === Note.pitchClass(right);
@@ -31,6 +33,16 @@ function noteFromScaleByChroma(scale: MaterialSourceMap, note: string | null): s
 
 function displayNote(note: string | null): string | null {
   return note ? simplifyNote(note) : null;
+}
+
+function withPreferredCellId(material: ContextualMelodicMaterial): ContextualMelodicMaterial {
+  if (material.preferredCellId || material.preferredCellIndex === undefined) return material;
+  const preferredNotation = material.cells[material.preferredCellIndex];
+  if (!preferredNotation) return material;
+  return {
+    ...material,
+    preferredCellId: `${contextualMelodicMaterialId(material)}:${stableMelodicCellToken(preferredNotation)}`
+  };
 }
 
 function majorSharpTwoCellFromScale(root: string, scale: MaterialSourceMap): string[] {
@@ -1024,5 +1036,5 @@ export function buildContextualMelodicMaterials(
     ...(includeLocalVampVocabulary ? localHalfDiminishedLocrianMaterials(scale, root, quality) : []),
     ...(includeLocalVampVocabulary ? localDominantColorSourceMaterials(scale, root, quality) : []),
     ...(includeLocalVampVocabulary ? localOptionalAlteredDominantMaterials(scale, root, quality) : [])
-  ];
+  ].map(withPreferredCellId);
 }
