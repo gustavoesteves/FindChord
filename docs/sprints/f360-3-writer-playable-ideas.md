@@ -34,6 +34,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - O card de ideias deixou de exibir `mapa de apoio` como categoria visual. O
   estado sem celula permanece rastreavel pelo modelo e pela auditoria, mas nao
   vira uma promessa musical para o compositor.
+- `hasPlayableIdea` continua existindo como sinal de auditoria/regressao, mas
+  saiu da decisao visual do card: na superficie atual, card ativo e ideia
+  tocavel no braco.
 
 ## Auditoria de cobertura
 
@@ -177,9 +180,20 @@ npx vitest run scripts/writer-material-idea-card-copy.spec.ts \
 8 testes aprovados
 ```
 
+Nono encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-idea-card-copy.spec.ts \
+  scripts/writer-material-palette.spec.ts \
+  scripts/writer-playable-ideas-coverage.spec.ts
+
+3 specs aprovadas
+8 testes aprovados
+```
+
 ## Proximo encaixe
 
 - Remover dependencias restantes de `preferredCellIndex` nos catalogos,
   preenchendo `preferredCellId` de forma gradual.
-- Avaliar se o contrato `hasPlayableIdea` deve continuar publico para UI ou
-  ficar restrito aos auditores/servicos internos.
+- Migrar gradualmente catalogos e materiais gerados para `preferredCellId`,
+  mantendo `preferredCellIndex` apenas como compatibilidade.

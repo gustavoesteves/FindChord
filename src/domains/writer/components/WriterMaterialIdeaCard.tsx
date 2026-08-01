@@ -69,7 +69,7 @@ export function WriterMaterialIdeaCard({
       {isActive && (
         <div className="mt-2 flex items-center justify-between gap-2 text-[8.5px] font-black uppercase tracking-wider text-zinc-600">
           <span className="truncate">Base: {item.source.name}</span>
-          {item.hasPlayableIdea && <span className="shrink-0">no braço</span>}
+          <span className="shrink-0">no braço</span>
         </div>
       )}
     </button>

@@ -7,5 +7,6 @@ describe("F360.3 copy dos cards de materiais do acorde", () => {
   it("nao expoe mapa de apoio como categoria musical no card de ideias", () => {
     expect(source).not.toContain("mapa de apoio");
     expect(source).not.toContain(' : "mapa"');
+    expect(source).not.toContain("hasPlayableIdea");
   });
 });
