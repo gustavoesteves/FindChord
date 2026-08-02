@@ -42,6 +42,7 @@ export interface WriterMaterialFretboardViewInput {
     position?: { stringIndex: number; fret: number };
     phraseRole?: WriterMaterialGestureRole;
     displayNote?: string;
+    cellId?: string;
   }>;
   activeStepIndex?: number | null;
   visibleCategories: Record<LocalMaterialNoteCategory, boolean>;
@@ -54,6 +55,7 @@ interface WriterMaterialSequenceVisit {
   stepIndex: number;
   phraseRole?: WriterMaterialGestureRole;
   displayNote?: string;
+  cellId?: string;
 }
 
 const PHRASE_ROLE_LABEL: Partial<Record<WriterMaterialGestureRole, string>> = {
@@ -101,7 +103,8 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
       {
         stepIndex,
         phraseRole: step.phraseRole,
-        displayNote: step.displayNote
+        displayNote: step.displayNote,
+        cellId: step.cellId
       }
     ]);
   });
@@ -117,6 +120,7 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
       if (!isFretVisibleInWindow(fret, fretWindow)) return [];
       const visits = sequenceVisits.get(`${stringIndex}:${fret}`) || [];
       const stepIndexes = visits.map(visit => visit.stepIndex);
+      const cellIds = [...new Set(visits.map(visit => visit.cellId).filter(Boolean))] as string[];
       const isSequencePosition = visits.length > 0;
       const isChordShapeTone = isSelectedShapeFret(input.selectedFrets, stringIndex, fret);
       const fretboardNote = buildLocalMaterialFretboardNote({
@@ -154,6 +158,8 @@ export function buildWriterMaterialFretboardView(input: WriterMaterialFretboardV
         color: fretboardNote.role.color,
         tooltip: fretboardNote.tooltip,
         isChordShapeTone,
+        cellIds,
+        activeCellId: activeVisit?.cellId,
         stepNumbers: stepIndexes.map(stepIndex => stepIndex + 1),
         activeStepNumber: activeVisit === undefined ? undefined : activeVisit.stepIndex + 1,
         isCurrentStep: activeVisit !== undefined,

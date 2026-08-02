@@ -19,6 +19,8 @@ export interface FretboardRenderedNote {
   isChordShapeTone?: boolean;
   strokeClassName?: string;
   glowRadius?: number;
+  cellIds?: string[];
+  activeCellId?: string;
   stepNumbers?: number[];
   activeStepNumber?: number;
   isCurrentStep?: boolean;

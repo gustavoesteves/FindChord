@@ -287,8 +287,28 @@ npx vitest run scripts/writer-material-action.spec.ts \
 28 testes aprovados
 ```
 
+Decimo sexto encaixe:
+
+- A representacao do braco agora preserva `cellId` nas visitas da sequencia.
+- Cada nota renderizada pela sequencia expoe os `cellIds` associados e o
+  `activeCellId` quando aquele ponto e o passo atual do playback.
+- O destaque visual continua guiado pelo passo real tocado, mas sem perder a
+  identidade musical da celula estruturada que originou o gesto.
+- Nenhum texto tecnico novo foi adicionado a UI; o ganho fica como contrato de
+  view model para futuras interacoes/inspecoes.
+
+Decimo sexto encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-fretboard-view.spec.ts \
+  scripts/writer-material-action.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts
+
+3 specs aprovadas
+21 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar a representacao visual do passo ativo para confirmar que o destaque
-  no braco acompanha `cellId`/evento tocado e nao reinterpreta a celula por
-  indice.
+- Auditar a passagem entre troca de gesto, loop e destaque ativo para garantir
+  que uma selecao nova sempre interrompe a identidade visual/auditiva anterior.

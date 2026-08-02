@@ -157,9 +157,24 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
       },
       selectedFrets: [3],
       sequenceSteps: [
-        { displayNote: "Gb", position: { stringIndex: 0, fret: 2 }, phraseRole: "outside" },
-        { displayNote: "G", position: { stringIndex: 0, fret: 3 }, phraseRole: "return" },
-        { displayNote: "Gb", position: { stringIndex: 0, fret: 2 }, phraseRole: "outside" }
+        {
+          displayNote: "Gb",
+          position: { stringIndex: 0, fret: 2 },
+          phraseRole: "outside",
+          cellId: "outside:gb-g"
+        },
+        {
+          displayNote: "G",
+          position: { stringIndex: 0, fret: 3 },
+          phraseRole: "return",
+          cellId: "inside:g"
+        },
+        {
+          displayNote: "Gb",
+          position: { stringIndex: 0, fret: 2 },
+          phraseRole: "outside",
+          cellId: "outside:gb-g"
+        }
       ],
       activeStepIndex: 2,
       visibleCategories: {
@@ -175,6 +190,8 @@ describe("F226 view model do fretboard de materiais do acorde", () => {
     expect(view.notes.find(note => note.fret === 2)).toMatchObject({
       noteName: "F#4",
       displayLabel: "Gb",
+      cellIds: ["outside:gb-g"],
+      activeCellId: "outside:gb-g",
       stepNumbers: [1, 3],
       activeStepNumber: 3,
       isCurrentStep: true,
