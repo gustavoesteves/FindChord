@@ -264,7 +264,31 @@ npx vitest run scripts/writer-material-action-block.spec.ts \
 38 testes aprovados
 ```
 
+Decimo quinto encaixe:
+
+- A identidade estavel da celula agora chega tambem aos eventos realizados
+  no braco e aos passos da acao tocavel.
+- `WriterMaterialGestureEvent` e `WriterMaterialActionStep` carregam `cellId`
+  quando a ideia vem de uma celula estruturada.
+- `cellIndex` permanece apenas como metadado de posicao/compatibilidade legada,
+  nao como identidade principal da selecao.
+- O retorno acrescentado automaticamente ao fim da frase tambem preserva o
+  `cellId`, mantendo a acao inteira ligada ao mesmo gesto musical.
+
+Decimo quinto encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-action.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-active-material-panel.spec.ts \
+  scripts/writer-material-playback-controller.spec.ts
+
+4 specs aprovadas
+28 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar a camada de audio/acao para garantir que `cellIndex` aparece apenas
-  como metadado de passo, nao como identidade de selecao.
+- Auditar a representacao visual do passo ativo para confirmar que o destaque
+  no braco acompanha `cellId`/evento tocado e nao reinterpreta a celula por
+  indice.

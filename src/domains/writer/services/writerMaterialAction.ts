@@ -30,6 +30,7 @@ export interface WriterMaterialActionStep {
   accent: boolean;
   position?: { stringIndex: number; fret: number };
   phraseRole?: WriterMaterialGestureRole;
+  cellId?: string;
   cellIndex?: number;
 }
 
@@ -49,6 +50,7 @@ function actionSteps(
   rhythm: WriterMaterialRhythmPlan,
   positions?: Array<{ stringIndex: number; fret: number }>,
   roles?: Array<WriterMaterialGestureRole | undefined>,
+  cellIds?: Array<string | undefined>,
   cellIndexes?: Array<number | undefined>
 ): WriterMaterialActionStep[] {
   return notes.map((note, index) => {
@@ -62,6 +64,7 @@ function actionSteps(
     };
     if (positions?.[index]) step.position = positions[index];
     if (roles?.[index]) step.phraseRole = roles[index];
+    if (cellIds?.[index]) step.cellId = cellIds[index];
     if (cellIndexes?.[index] !== undefined) step.cellIndex = cellIndexes[index];
     return step;
   });
@@ -77,6 +80,7 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
       ? events.map(event => ({ stringIndex: event.stringIndex, fret: event.fret }))
       : studyLine.positions;
     const roles = events?.map(event => event.role);
+    const cellIds = events?.map(event => event.cellId);
     const cellIndexes = events?.map(event => event.cellIndex);
     const realizedMaterial = studyLine.realizedCell
       ? input.activePanel.melodicMaterials[studyLine.realizedCell.materialIndex]
@@ -99,6 +103,7 @@ export function buildWriterMaterialAction(input: WriterMaterialActionInput): Wri
         rhythm,
         positions,
         roles,
+        cellIds,
         cellIndexes
       ),
       rhythm,

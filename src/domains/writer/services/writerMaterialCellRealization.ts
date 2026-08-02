@@ -23,6 +23,7 @@ export interface WriterMaterialGestureEvent {
   stringIndex: number;
   fret: number;
   role: WriterMaterialGestureRole;
+  cellId?: string;
   cellIndex?: number;
 }
 
@@ -394,6 +395,7 @@ export function realizeWriterMaterialCellNearShape(
             isChordTone,
             intent: input.intent
           }),
+      cellId: selected.cellId,
       cellIndex: selected.cellIndex
     };
   });
@@ -410,7 +412,8 @@ export function realizeWriterMaterialCellNearShape(
       displayNote: simplifyNote(landing.noteName).replace(/-?\d+$/, ""),
       stringIndex: landing.stringIndex,
       fret: landing.fret,
-      role: "return"
+      role: "return",
+      cellId: selected.cellId
     });
   } else if (events.length > 0 && chordPitchClasses.has(realizedPositions.at(-1)?.pitchClass ?? -1)) {
     events[events.length - 1] = {

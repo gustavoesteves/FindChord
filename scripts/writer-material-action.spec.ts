@@ -96,10 +96,10 @@ describe("F246 acao tocavel do material ativo", () => {
           displayNotes: ["C"],
           positions: [{ stringIndex: 0, fret: 8 }],
           events: [
-            { note: "D4", displayNote: "D", stringIndex: 3, fret: 12, role: "color", cellIndex: 1 },
-            { note: "F#4", displayNote: "F#", stringIndex: 2, fret: 11, role: "color", cellIndex: 1 },
-            { note: "A4", displayNote: "A", stringIndex: 1, fret: 10, role: "color", cellIndex: 1 },
-            { note: "G4", displayNote: "G", stringIndex: 1, fret: 8, role: "return" }
+            { note: "D4", displayNote: "D", stringIndex: 3, fret: 12, role: "color", cellId: "maj-triades-superiores:d-fsharp-a", cellIndex: 1 },
+            { note: "F#4", displayNote: "F#", stringIndex: 2, fret: 11, role: "color", cellId: "maj-triades-superiores:d-fsharp-a", cellIndex: 1 },
+            { note: "A4", displayNote: "A", stringIndex: 1, fret: 10, role: "color", cellId: "maj-triades-superiores:d-fsharp-a", cellIndex: 1 },
+            { note: "G4", displayNote: "G", stringIndex: 1, fret: 8, role: "return", cellId: "maj-triades-superiores:d-fsharp-a" }
           ],
           realizedCell: {
             cellId: "maj-triades-superiores:d-fsharp-a",
@@ -122,24 +122,28 @@ describe("F246 acao tocavel do material ativo", () => {
         displayNote: "D",
         position: { stringIndex: 3, fret: 12 },
         phraseRole: "color",
+        cellId: "maj-triades-superiores:d-fsharp-a",
         cellIndex: 1
       }),
       expect.objectContaining({
         displayNote: "F#",
         position: { stringIndex: 2, fret: 11 },
         phraseRole: "color",
+        cellId: "maj-triades-superiores:d-fsharp-a",
         cellIndex: 1
       }),
       expect.objectContaining({
         displayNote: "A",
         position: { stringIndex: 1, fret: 10 },
         phraseRole: "color",
+        cellId: "maj-triades-superiores:d-fsharp-a",
         cellIndex: 1
       }),
       expect.objectContaining({
         displayNote: "G",
         position: { stringIndex: 1, fret: 8 },
-        phraseRole: "return"
+        phraseRole: "return",
+        cellId: "maj-triades-superiores:d-fsharp-a"
       })
     ]);
   });
