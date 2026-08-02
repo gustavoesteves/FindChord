@@ -48,6 +48,8 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
 - Os movimentos de improviso do Writer agora emitem `id` baseado em `cellId`
   estavel. IDs antigos baseados em `materialIndex:cellIndex` continuam sendo
   aceitos apenas na resolucao de selecao legada.
+- O bloco visual dos gestos tambem reconhece `activeMoveId` legado para marcar
+  o botao ativo, mas continua emitindo o ID novo baseado em `cellId` nos cliques.
 
 ## Auditoria de cobertura
 
@@ -251,8 +253,18 @@ npx vitest run scripts/writer-material-improvisation-moves.spec.ts \
 44 testes aprovados
 ```
 
+Decimo quarto encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+3 specs aprovadas
+38 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar se `cellIndex` ainda aparece como identificador persistido em algum
-  estado da UI; manter `cellIndex` apenas para ordem/exibicao e ponte de
-  compatibilidade.
+- Auditar a camada de audio/acao para garantir que `cellIndex` aparece apenas
+  como metadado de passo, nao como identidade de selecao.

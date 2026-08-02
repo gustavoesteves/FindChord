@@ -39,6 +39,14 @@ const MOVE_STYLE_BY_KIND: Record<WriterMaterialImprovisationMoveKind, string> = 
   return: "border-violet-400/35 bg-violet-400/5 text-violet-100"
 };
 
+function legacyMoveId(move: WriterMaterialImprovisationMove): string {
+  return `${move.materialIndex}:${move.cellIndex}`;
+}
+
+function isActiveMove(move: WriterMaterialImprovisationMove, activeMoveId: string | null): boolean {
+  return move.id === activeMoveId || legacyMoveId(move) === activeMoveId;
+}
+
 export function WriterMaterialActionBlock({
   action,
   improvisationMoves = [],
@@ -91,7 +99,7 @@ export function WriterMaterialActionBlock({
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {improvisationMoves.map(move => {
-                  const isActive = move.id === activeMoveId;
+                  const isActive = isActiveMove(move, activeMoveId);
                   return (
                     <button
                       key={move.id}

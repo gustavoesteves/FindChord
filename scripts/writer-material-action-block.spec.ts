@@ -74,7 +74,7 @@ describe("F258 bloco visual da acao de material", () => {
     };
     const improvisationMoves: WriterMaterialImprovisationMove[] = [
       {
-        id: "0:1",
+        id: "0:maj-triades-superiores:d-fsharp-a",
         cellId: "maj-triades-superiores:d-fsharp-a",
         materialIndex: 0,
         cellIndex: 1,
@@ -89,7 +89,7 @@ describe("F258 bloco visual da acao de material", () => {
         isPreferred: true
       },
       {
-        id: "0:0",
+        id: "0:maj-triades-superiores:c-e-g-b",
         cellId: "maj-triades-superiores:c-e-g-b",
         materialIndex: 0,
         cellIndex: 0,
@@ -108,6 +108,7 @@ describe("F258 bloco visual da acao de material", () => {
     const html = renderToStaticMarkup(createElement(WriterMaterialActionBlock, {
       action,
       improvisationMoves,
+      // Compatibilidade com seleções gravadas antes dos IDs baseados em cellId.
       activeMoveId: "0:1",
       onSelectMove: () => undefined,
       onPlay: () => undefined,
