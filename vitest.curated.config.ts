@@ -151,6 +151,7 @@ export default defineConfig({
       "scripts/writer-material-focus.spec.ts",
       "scripts/writer-material-palette.spec.ts",
       "scripts/writer-material-playback-controller.spec.ts",
+      "scripts/writer-material-playback-identity.spec.ts",
       "scripts/writer-material-routes.spec.ts",
       "scripts/writer-material-screen-model.spec.ts",
       "scripts/writer-playable-ideas-coverage.spec.ts",

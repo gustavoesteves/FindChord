@@ -308,7 +308,37 @@ npx vitest run scripts/writer-material-fretboard-view.spec.ts \
 21 testes aprovados
 ```
 
+Decimo setimo encaixe:
+
+- A identidade de playback dos materiais saiu do componente e virou servico
+  testavel.
+- A identidade considera acorde, shape, afinacao, rota, material e gesto
+  selecionado.
+- O passo ativo so fica visivel quando a identidade em reproducao ainda e a
+  mesma identidade da tela corrente.
+- Isso protege troca de gesto/material/rota durante loop ou playback: qualquer
+  estado visual antigo fica oculto enquanto a nova selecao assume o painel.
+- O novo spec entrou na suite curada para impedir que essa protecao fique fora
+  da regressao principal.
+
+Decimo setimo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-playback-identity.spec.ts \
+  scripts/writer-material-playback-controller.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-action-block.spec.ts
+
+4 specs aprovadas
+39 testes aprovados
+
+npm run test:curated
+155 specs aprovadas, 2 ignoradas
+1036 testes aprovados, 6 ignorados
+```
+
 ## Proximo encaixe
 
-- Auditar a passagem entre troca de gesto, loop e destaque ativo para garantir
-  que uma selecao nova sempre interrompe a identidade visual/auditiva anterior.
+- Auditar o estado inicial da rota/gesto para garantir que a primeira opcao
+  musical da tela abre sempre coerente com o material em foco e com o shape
+  desenhado.

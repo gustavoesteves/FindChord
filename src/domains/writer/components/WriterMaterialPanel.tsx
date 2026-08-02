@@ -26,6 +26,10 @@ import {
   createWriterMaterialPlaybackController,
   type WriterMaterialPlaybackState
 } from "../services/writerMaterialPlaybackController";
+import {
+  visibleWriterMaterialActiveStepIndex,
+  writerMaterialPlaybackIdentity
+} from "../services/writerMaterialPlaybackIdentity";
 import { materialChordIdentityFromChordCandidate } from "../../../utils/music/theory/materialChordIdentity";
 
 export default function WriterMaterialPanel() {
@@ -67,14 +71,14 @@ export default function WriterMaterialPanel() {
     selectedImprovisationMove?.chordIdentity === materialChordIdentity
       ? selectedImprovisationMove.moveId
       : null;
-  const materialPlaybackIdentity = [
-    materialChordIdentity,
-    selectedFrets.map(fret => fret ?? "x").join(","),
-    tuning.join(","),
-    activeRouteId || "rota-automatica",
-    selectedMaterialSource?.name || "material-automatico",
-    selectedImprovisationMoveId || "gesto-automatico"
-  ].join("|");
+  const materialPlaybackIdentity = writerMaterialPlaybackIdentity({
+    chordIdentity: materialChordIdentity,
+    selectedFrets,
+    tuning,
+    routeId: activeRouteId,
+    materialName: selectedMaterialSource?.name,
+    moveId: selectedImprovisationMoveId
+  });
 
   const toggleCategoryVisibility = (category: LocalMaterialNoteCategory) => {
     setVisibleCategories(prev => ({
@@ -155,9 +159,11 @@ export default function WriterMaterialPanel() {
     materialScreen.effectiveRouteId,
     visibleCategories
   );
-  const visibleActiveStepIndex = activePlaybackIdentity === materialPlaybackIdentity
-    ? playbackState.stepIndex
-    : null;
+  const visibleActiveStepIndex = visibleWriterMaterialActiveStepIndex({
+    activePlaybackIdentity,
+    materialPlaybackIdentity,
+    playbackState
+  });
 
   return (
     <div className="w-full">
