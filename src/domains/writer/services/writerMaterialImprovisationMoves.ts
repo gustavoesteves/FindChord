@@ -52,6 +52,13 @@ const ACTION_LABEL_BY_KIND: Record<WriterMaterialImprovisationMoveKind, string> 
 
 export function writerMaterialImprovisationMoveId(
   materialIndex: number,
+  cellId: string
+): string {
+  return `${materialIndex}:${cellId}`;
+}
+
+function writerMaterialLegacyImprovisationMoveId(
+  materialIndex: number,
   cellIndex: number
 ): string {
   return `${materialIndex}:${cellIndex}`;
@@ -111,7 +118,7 @@ function preferredMoveId(
       ? validCells.find(cell => cell.cellId === preferredCellId)
       : null;
     if (explicitCell) {
-      return writerMaterialImprovisationMoveId(materialIndex, explicitCell.cellIndex);
+      return writerMaterialImprovisationMoveId(materialIndex, explicitCell.cellId);
     }
 
     const mostCharacteristicCell = [...validCells].sort((left, right) => {
@@ -123,7 +130,7 @@ function preferredMoveId(
       )).length;
       return rightColorCount - leftColorCount || left.cellIndex - right.cellIndex;
     })[0];
-    return writerMaterialImprovisationMoveId(materialIndex, mostCharacteristicCell.cellIndex);
+    return writerMaterialImprovisationMoveId(materialIndex, mostCharacteristicCell.cellId);
   }
 
   return null;
@@ -151,9 +158,10 @@ export function buildWriterMaterialImprovisationMoves(
         const notation = cell.notation;
         const notes = cell.events.map(event => event.note);
         const kind = moveKind(notation, notes, chordPitchClasses, input.materialIdentity, input.intent);
+        const id = writerMaterialImprovisationMoveId(materialIndex, cell.id);
 
         return {
-          id: writerMaterialImprovisationMoveId(materialIndex, cellIndex),
+          id,
           cellId: cell.id,
           materialIndex,
           cellIndex,
@@ -165,7 +173,7 @@ export function buildWriterMaterialImprovisationMoves(
           practiceHint: material.practiceHint,
           tensionProfile: [...material.tensionProfile],
           resolutionTargets: [...material.resolutionTargets],
-          isPreferred: writerMaterialImprovisationMoveId(materialIndex, cellIndex) === preferredId
+          isPreferred: id === preferredId
         };
       });
     })
@@ -180,5 +188,8 @@ export function resolveWriterMaterialImprovisationMove(
   moves: WriterMaterialImprovisationMove[],
   selectedMoveId?: string | null
 ): WriterMaterialImprovisationMove | null {
-  return moves.find(move => move.id === selectedMoveId) || moves[0] || null;
+  return moves.find(move => (
+    move.id === selectedMoveId
+    || writerMaterialLegacyImprovisationMoveId(move.materialIndex, move.cellIndex) === selectedMoveId
+  )) || moves[0] || null;
 }

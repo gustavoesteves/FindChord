@@ -45,6 +45,9 @@ ser apresentada como frase, gesto ou botao de escuta quando nao houver celula.
   quanto vocabulário `local-vamp` gerado dinamicamente.
 - O painel ativo do `Escrever` agora usa `preferredCellId` do material antes
   de aceitar `cellIndex` legado quando a selecao nao traz `cellId` explicito.
+- Os movimentos de improviso do Writer agora emitem `id` baseado em `cellId`
+  estavel. IDs antigos baseados em `materialIndex:cellIndex` continuam sendo
+  aceitos apenas na resolucao de selecao legada.
 
 ## Auditoria de cobertura
 
@@ -236,7 +239,20 @@ npx vitest run scripts/writer-active-material-panel.spec.ts \
 52 testes aprovados
 ```
 
+Decimo terceiro encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/melodic-cell-contract.spec.ts \
+  scripts/writer-material-action-block.spec.ts
+
+4 specs aprovadas
+44 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar consumidores restantes de `cellIndex` como identificador de UI e
-  separar indice de exibicao de identidade persistente onde ainda fizer sentido.
+- Auditar se `cellIndex` ainda aparece como identificador persistido em algum
+  estado da UI; manter `cellIndex` apenas para ordem/exibicao e ponte de
+  compatibilidade.

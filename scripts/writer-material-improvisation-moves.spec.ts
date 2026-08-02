@@ -36,10 +36,15 @@ describe("projeção de gestos de improvisação do Writer", () => {
       intent: "functional"
     });
 
-    expect(moves.map(move => move.id)).toEqual(["0:1", "0:0", "0:2", "1:0"]);
+    expect(moves.map(move => move.id)).toEqual([
+      "0:arpeggio-maj7-lidio-triade-do-ii:d-fsharp-a",
+      "0:arpeggio-maj7-lidio-triade-do-ii:c-e-g-b",
+      "0:arpeggio-maj7-lidio-triade-do-ii:fsharp-g",
+      "1:arpeggio-extensao-lidia:e-a-d"
+    ]);
     expect(moves).toHaveLength(4);
     expect(moves[0]).toMatchObject({
-      id: writerMaterialImprovisationMoveId(0, 1),
+      id: writerMaterialImprovisationMoveId(0, "arpeggio-maj7-lidio-triade-do-ii:d-fsharp-a"),
       materialIndex: 0,
       cellIndex: 1,
       materialLabel: "maj7 lídio / tríade do II",
@@ -72,7 +77,7 @@ describe("projeção de gestos de improvisação do Writer", () => {
       melodicMaterials: lydianMaterials,
       chordNotes: ["C", "E", "G", "B"],
       intent: "outside"
-    }).find(move => move.id === "0:2");
+    }).find(move => move.notation === "F#->G");
 
     expect(support).toMatchObject({
       kind: "support",
@@ -161,8 +166,9 @@ describe("projeção de gestos de improvisação do Writer", () => {
       intent: "functional"
     });
 
+    expect(resolveWriterMaterialImprovisationMove(moves, "1:arpeggio-extensao-lidia:e-a-d")?.notation).toBe("E-A-D");
     expect(resolveWriterMaterialImprovisationMove(moves, "1:0")?.notation).toBe("E-A-D");
-    expect(resolveWriterMaterialImprovisationMove(moves, "inexistente")?.id).toBe("0:1");
+    expect(resolveWriterMaterialImprovisationMove(moves, "inexistente")?.id).toBe("0:arpeggio-maj7-lidio-triade-do-ii:d-fsharp-a");
     expect(resolveWriterMaterialImprovisationMove([], "0:0")).toBeNull();
   });
 
@@ -177,7 +183,7 @@ describe("projeção de gestos de improvisação do Writer", () => {
     });
 
     expect(moves[0]).toMatchObject({
-      id: "0:1",
+      id: "0:arpeggio-maj7-lidio-triade-do-ii:d-fsharp-a",
       notation: "D-F#-A",
       isPreferred: true,
       kind: "color"

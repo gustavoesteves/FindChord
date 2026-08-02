@@ -861,9 +861,13 @@ describe("F253 modelo da tela de materiais do acorde", () => {
       selectedFrets: [8, 8, 9, 10, null, null]
     });
 
-    expect(model.improvisationMoves.map(move => move.id)).toEqual(["0:1", "0:0", "0:2"]);
+    expect(model.improvisationMoves.map(move => move.id)).toEqual([
+      "0:arpeggio-c-triades-superiores-maiores-maj-triades-superiores:d-fsharp-a",
+      "0:arpeggio-c-triades-superiores-maiores-maj-triades-superiores:c-e-g-b",
+      "0:arpeggio-c-triades-superiores-maiores-maj-triades-superiores:g-b-d"
+    ]);
     expect(model.focusedImprovisationMove).toMatchObject({
-      id: "0:0",
+      id: "0:arpeggio-c-triades-superiores-maiores-maj-triades-superiores:c-e-g-b",
       notation: "C-E-G-B"
     });
     expect(model.activeMaterialAction).toMatchObject({

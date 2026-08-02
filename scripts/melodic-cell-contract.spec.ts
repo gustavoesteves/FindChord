@@ -161,7 +161,7 @@ describe("F360.2 contrato de células melódicas", () => {
     });
 
     expect(moves[0]).toMatchObject({
-      id: "0:1",
+      id: "0:arpeggio-c-lydian-lidio-local:d-fsharp-a",
       cellId: "arpeggio-c-lydian-lidio-local:d-fsharp-a",
       isPreferred: true
     });
