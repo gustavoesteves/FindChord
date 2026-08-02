@@ -337,8 +337,29 @@ npm run test:curated
 1036 testes aprovados, 6 ignorados
 ```
 
+Decimo oitavo encaixe:
+
+- O foco inicial dos materiais agora valida a fonte escolhida por `name` e
+  `type`, evitando reaproveitar uma selecao antiga apenas por nome igual.
+- O modelo da tela ganhou uma protecao de ponta a ponta: primeiro gesto focado,
+  celula realizada no shape e passos da acao precisam compartilhar o mesmo
+  `cellId`.
+- Isso fecha a coerencia inicial entre rota, material em foco, gesto preferido
+  e desenho no braco.
+
+Decimo oitavo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-focus.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-cell-realization.spec.ts \
+  scripts/writer-material-action.spec.ts
+
+4 specs aprovadas
+47 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar o estado inicial da rota/gesto para garantir que a primeira opcao
-  musical da tela abre sempre coerente com o material em foco e com o shape
-  desenhado.
+- Auditar os textos de acao/rotulo dos gestos para garantir que o primeiro
+  comando lido pelo compositor descreve a intencao musical real da celula.

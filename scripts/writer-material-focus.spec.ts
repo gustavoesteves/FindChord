@@ -28,6 +28,12 @@ describe("F235 foco inicial dos materiais do acorde", () => {
     expect(resolveWriterMaterialFocus(selectedSource, palette)).toBe(firstSource);
   });
 
+  it("nao reaproveita fonte antiga apenas por nome igual", () => {
+    const staleSource = writerMaterialTestSource("C Lydian", { type: "legacy-lydian" });
+
+    expect(resolveWriterMaterialFocus(staleSource, palette)).toBe(firstSource);
+  });
+
   it("retorna nulo quando nao ha paleta", () => {
     expect(resolveWriterMaterialFocus(null, [])).toBeNull();
   });

@@ -840,6 +840,45 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.steps.every(step => step.position)).toBe(true);
   });
 
+  it("abre com o primeiro gesto coerente com a acao realizada no shape", () => {
+    const colorRoute = buildWriterMaterialScreenModel({
+      activeChord: cmaj7,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: null
+    });
+    const upperTriads = colorRoute.routedMaterialPalette.find(item => (
+      item.source.type === "major upper triad colors"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: cmaj7,
+      notationStyle: "International",
+      preferredRouteId: "color",
+      selectedMaterialSource: upperTriads?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 10, null, null]
+    });
+
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "D-F#-A",
+      cellId: "arpeggio-c-triades-superiores-maiores-maj-triades-superiores:d-fsharp-a",
+      isPreferred: true
+    });
+    expect(model.activeMaterialAction?.realizedCell).toMatchObject({
+      notation: model.focusedImprovisationMove?.notation,
+      cellId: model.focusedImprovisationMove?.cellId,
+      materialIndex: model.focusedImprovisationMove?.materialIndex,
+      cellIndex: model.focusedImprovisationMove?.cellIndex
+    });
+    expect(model.activeMaterialAction?.steps.map(step => step.cellId)).toEqual([
+      model.focusedImprovisationMove?.cellId,
+      model.focusedImprovisationMove?.cellId,
+      model.focusedImprovisationMove?.cellId,
+      model.focusedImprovisationMove?.cellId
+    ]);
+  });
+
   it("faz um move nao prioritario comandar a celula realizada no shape", () => {
     const colorRoute = buildWriterMaterialScreenModel({
       activeChord: cmaj7,
