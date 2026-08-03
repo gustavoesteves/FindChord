@@ -185,6 +185,16 @@ describe("projeção de gestos de improvisação do Writer", () => {
     });
   });
 
+  it("mantem rotulos de gestos curtos para o bloco visual", () => {
+    const moves = buildWriterMaterialImprovisationMoves({
+      melodicMaterials: lydianMaterials,
+      chordNotes: ["C", "E", "G", "B"],
+      intent: "functional"
+    });
+
+    expect(moves.every(move => move.actionLabel.length <= 18)).toBe(true);
+  });
+
   it("resolve a seleção por id e usa a primeira opção ordenada como fallback", () => {
     const moves = buildWriterMaterialImprovisationMoves({
       melodicMaterials: lydianMaterials,

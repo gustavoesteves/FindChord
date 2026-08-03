@@ -91,10 +91,7 @@ export function WriterMaterialActionBlock({
             <div className="mt-1 flex flex-col gap-1.5" aria-label="Gestos para experimentar">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[8px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                  Gestos para experimentar
-                </span>
-                <span className="text-[8.5px] font-semibold text-zinc-600">
-                  escolha uma célula; mapa e escuta acompanham
+                  Gestos
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">

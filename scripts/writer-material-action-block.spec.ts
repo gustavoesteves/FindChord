@@ -127,7 +127,8 @@ describe("F258 bloco visual da acao de material", () => {
     expect(html).toContain("Síncope curta");
     expect(html).toContain('aria-current="step"');
     expect(html).toContain('aria-pressed="true"');
-    expect(html).toContain("Gestos para experimentar");
+    expect(html).toContain("Gestos");
+    expect(html).not.toContain("escolha uma célula");
     expect(html).toContain("Abrir uma cor");
     expect(html).toContain("Apoiar o acorde");
     expect(html).toContain("C – E – G – B");

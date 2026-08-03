@@ -382,7 +382,27 @@ npx vitest run scripts/writer-material-improvisation-moves.spec.ts \
 47 testes aprovados
 ```
 
+Vigesimo encaixe:
+
+- O bloco de acao perdeu o texto instrucional auxiliar dos gestos.
+- A secao ficou reduzida a `Gestos`, rotulo musical e celula, mantendo a
+  progressao tocavel como leitura principal.
+- Os rotulos de gesto ganharam contrato de brevidade para proteger a densidade
+  visual do painel.
+
+Vigesimo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+3 specs aprovadas
+44 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar a densidade visual do bloco de acao para confirmar que os novos
-  rotulos continuam curtos, claros e sem empurrar a leitura musical principal.
+- Auditar se a lista de gestos precisa de priorizacao visual quando houver
+  muitas celulas para o mesmo material, mantendo o gesto ativo e o preferido
+  como leitura imediata.
