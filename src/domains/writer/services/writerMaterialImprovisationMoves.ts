@@ -50,6 +50,13 @@ const ACTION_LABEL_BY_KIND: Record<WriterMaterialImprovisationMoveKind, string> 
   return: "Voltar ao acorde"
 };
 
+const RETURN_ACTION_LABEL_BY_INTENT: Record<ContextualMaterialIntent, string> = {
+  inside: "Apoiar e voltar",
+  functional: "Colorir e voltar",
+  tension: "Tensionar e voltar",
+  outside: "Sair e voltar"
+};
+
 export function writerMaterialImprovisationMoveId(
   materialIndex: number,
   cellId: string
@@ -89,6 +96,14 @@ function moveKind(
   if (intent === "outside") return "outside";
   if (intent === "tension") return "tension";
   return "color";
+}
+
+function actionLabelForMove(
+  kind: WriterMaterialImprovisationMoveKind,
+  intent?: ContextualMaterialIntent
+): string {
+  if (kind === "return" && intent) return RETURN_ACTION_LABEL_BY_INTENT[intent];
+  return ACTION_LABEL_BY_KIND[kind];
 }
 
 function preferredMoveId(
@@ -166,7 +181,7 @@ export function buildWriterMaterialImprovisationMoves(
           materialIndex,
           cellIndex,
           kind,
-          actionLabel: ACTION_LABEL_BY_KIND[kind],
+          actionLabel: actionLabelForMove(kind, input.intent),
           materialLabel: material.label,
           notation,
           notes,

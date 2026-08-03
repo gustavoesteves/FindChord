@@ -211,7 +211,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->C",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Apoiar e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "power / eixo pentatônico",
@@ -255,7 +255,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->Eb",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "m(maj7) / cores melódicas",
@@ -322,7 +322,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D#->E",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Tensionar e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "alteração escrita / resolução curta",
@@ -369,7 +369,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->Eb",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "ø7 / estruturas superiores",
@@ -416,7 +416,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "A->C",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Tensionar e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "extensão dim7 opcional",
@@ -463,7 +463,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "F#->G#",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Tensionar e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "ciclo aumentado / tons inteiros",
@@ -505,7 +505,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "A->G",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "6/add9 / cores resolvidas",
@@ -547,7 +547,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->Eb",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "m6/madd9 / cores resolvidas",
@@ -589,7 +589,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->E",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "maj9/maj13 / cores com 7M",
@@ -631,7 +631,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "D->Eb",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "m9/m13 / cores com b7",
@@ -676,7 +676,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "A->B",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Colorir e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "9/11/13 dominante / retorno",
@@ -721,7 +721,7 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "C->D",
       kind: "return",
-      actionLabel: "Voltar ao acorde"
+      actionLabel: "Apoiar e voltar"
     });
     expect(model.activeMaterialAction).toMatchObject({
       name: "sus quartal / pentatônico",

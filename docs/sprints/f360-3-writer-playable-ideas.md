@@ -359,7 +359,30 @@ npx vitest run scripts/writer-material-focus.spec.ts \
 47 testes aprovados
 ```
 
+Decimo nono encaixe:
+
+- Os gestos de retorno deixaram de usar sempre o rotulo generico
+  `Voltar ao acorde`.
+- Retornos agora preservam a intencao musical da rota:
+  `Apoiar e voltar`, `Colorir e voltar`, `Tensionar e voltar` ou
+  `Sair e voltar`.
+- A classificacao interna continua sendo `return`, mas o primeiro comando lido
+  pelo compositor descreve melhor o que acontece antes da chegada.
+- O contrato cobre explicitamente os quatro rotulos de retorno por intencao.
+
+Decimo nono encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-palette.spec.ts
+
+4 specs aprovadas
+47 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar os textos de acao/rotulo dos gestos para garantir que o primeiro
-  comando lido pelo compositor descreve a intencao musical real da celula.
+- Auditar a densidade visual do bloco de acao para confirmar que os novos
+  rotulos continuam curtos, claros e sem empurrar a leitura musical principal.

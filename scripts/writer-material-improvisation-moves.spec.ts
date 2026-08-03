@@ -85,7 +85,7 @@ describe("projeção de gestos de improvisação do Writer", () => {
     });
     expect(returning).toMatchObject({
       kind: "return",
-      actionLabel: "Voltar ao acorde",
+      actionLabel: "Sair e voltar",
       notes: ["F#", "G"]
     });
   });
@@ -157,6 +157,32 @@ describe("projeção de gestos de improvisação do Writer", () => {
     });
 
     expect(move).toMatchObject({ kind, actionLabel });
+  });
+
+  it.each([
+    { intent: "inside" as const, actionLabel: "Apoiar e voltar" },
+    { intent: "functional" as const, actionLabel: "Colorir e voltar" },
+    { intent: "tension" as const, actionLabel: "Tensionar e voltar" },
+    { intent: "outside" as const, actionLabel: "Sair e voltar" }
+  ])("rotula retorno conforme a intenção musical $intent", ({ intent, actionLabel }) => {
+    const [move] = buildWriterMaterialImprovisationMoves({
+      melodicMaterials: [{
+        label: "Retorno contextual",
+        source: "chromatic-approach",
+        cells: ["F#->G"],
+        tensionProfile: ["#11"],
+        resolutionTargets: ["G"],
+        practiceHint: "Volte para o apoio."
+      }],
+      chordNotes: ["C", "E", "G", "B"],
+      intent
+    });
+
+    expect(move).toMatchObject({
+      kind: "return",
+      actionLabel,
+      notation: "F#->G"
+    });
   });
 
   it("resolve a seleção por id e usa a primeira opção ordenada como fallback", () => {
