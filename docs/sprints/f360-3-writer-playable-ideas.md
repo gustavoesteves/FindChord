@@ -401,8 +401,27 @@ npx vitest run scripts/writer-material-action-block.spec.ts \
 44 testes aprovados
 ```
 
+Vigesimo primeiro encaixe:
+
+- A lista visual de gestos agora prioriza o gesto ativo quando ha uma selecao
+  explicita do usuario.
+- Quando o ativo nao e o preferido, o preferido aparece logo em seguida,
+  preservando o restante na ordem musical original.
+- Isso evita que uma celula escolhida fique perdida no meio da lista quando o
+  material possuir muitas possibilidades.
+
+Vigesimo primeiro encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+3 specs aprovadas
+45 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar se a lista de gestos precisa de priorizacao visual quando houver
-  muitas celulas para o mesmo material, mantendo o gesto ativo e o preferido
-  como leitura imediata.
+- Auditar se devemos limitar ou agrupar gestos quando um material gerar muitas
+  celulas, sem esconder vocabulario util do compositor.

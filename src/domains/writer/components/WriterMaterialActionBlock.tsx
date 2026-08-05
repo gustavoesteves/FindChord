@@ -47,6 +47,17 @@ function isActiveMove(move: WriterMaterialImprovisationMove, activeMoveId: strin
   return move.id === activeMoveId || legacyMoveId(move) === activeMoveId;
 }
 
+export function prioritizeWriterMaterialActionMoves(
+  moves: WriterMaterialImprovisationMove[],
+  activeMoveId: string | null
+): WriterMaterialImprovisationMove[] {
+  return [...moves].sort((left, right) => (
+    Number(isActiveMove(right, activeMoveId)) - Number(isActiveMove(left, activeMoveId))
+    || Number(right.isPreferred) - Number(left.isPreferred)
+    || moves.indexOf(left) - moves.indexOf(right)
+  ));
+}
+
 export function WriterMaterialActionBlock({
   action,
   improvisationMoves = [],
@@ -60,6 +71,11 @@ export function WriterMaterialActionBlock({
   loopEnabled = false,
   playbackError
 }: WriterMaterialActionBlockProps) {
+  const visibleImprovisationMoves = prioritizeWriterMaterialActionMoves(
+    improvisationMoves,
+    activeMoveId
+  );
+
   return (
     <div className="rounded-2xl border border-sky-300/45 bg-sky-400/10 p-4 text-zinc-300 shadow-inner select-none animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-start">
@@ -95,7 +111,7 @@ export function WriterMaterialActionBlock({
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {improvisationMoves.map(move => {
+                {visibleImprovisationMoves.map(move => {
                   const isActive = isActiveMove(move, activeMoveId);
                   return (
                     <button

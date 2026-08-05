@@ -1,11 +1,54 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { WriterMaterialActionBlock } from "../src/domains/writer/components/WriterMaterialActionBlock";
+import {
+  prioritizeWriterMaterialActionMoves,
+  WriterMaterialActionBlock
+} from "../src/domains/writer/components/WriterMaterialActionBlock";
 import type { WriterMaterialAction } from "../src/domains/writer/services/writerMaterialAction";
 import type { WriterMaterialImprovisationMove } from "../src/domains/writer/services/writerMaterialImprovisationMoves";
 
 describe("F258 bloco visual da acao de material", () => {
+  function move(
+    id: string,
+    notation: string,
+    overrides: Partial<WriterMaterialImprovisationMove> = {}
+  ): WriterMaterialImprovisationMove {
+    const [materialIndex = "0"] = id.split(":");
+    return {
+      id,
+      cellId: id.split(":").slice(1).join(":") || id,
+      materialIndex: Number(materialIndex),
+      cellIndex: overrides.cellIndex ?? 0,
+      kind: "color",
+      actionLabel: "Colorir e voltar",
+      materialLabel: "Material",
+      notation,
+      notes: notation.split("-"),
+      practiceHint: "Toque a célula.",
+      tensionProfile: [],
+      resolutionTargets: [],
+      isPreferred: false,
+      ...overrides
+    };
+  }
+
+  it("prioriza gesto ativo e depois gesto preferido na renderizacao", () => {
+    const preferred = move("0:preferred", "D-F#-A", { isPreferred: true, cellIndex: 0 });
+    const neutral = move("0:neutral", "E-G-B", { cellIndex: 1 });
+    const active = move("0:active", "C-E-G", { cellIndex: 2 });
+
+    expect(prioritizeWriterMaterialActionMoves([
+      preferred,
+      neutral,
+      active
+    ], "0:2").map(item => item.id)).toEqual([
+      "0:active",
+      "0:preferred",
+      "0:neutral"
+    ]);
+  });
+
   it("mostra celula, caminho ordenado, posicao e passo ativo", () => {
     const action: WriterMaterialAction = {
       name: "maj / tríades superiores",
