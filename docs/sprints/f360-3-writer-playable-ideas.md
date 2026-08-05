@@ -485,7 +485,28 @@ npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
 84 testes aprovados
 ```
 
+Vigesimo quinto encaixe:
+
+- Dominantes `7b5` agora tambem entram na familia de alteracoes escritas com
+  resolucao curta.
+- Em `C7b5`, o material preferido passa a oferecer `Gb->E`, tratando a quinta
+  diminuta como tensao que retorna para a terca.
+- O arpejo do acorde (`C-E-Gb-Bb`) continua disponivel como apoio do material.
+- A tela preserva a mesma direcao musical dos demais dominantes alterados:
+  mostrar uma acao pequena e fraseavel, nao uma lista de escala alterada.
+
+Vigesimo quinto encaixe validado com:
+
+```text
+npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts
+
+3 specs aprovadas
+80 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Revisar dominantes alterados escritos para oferecer pares de resolucao
-  pequenos, sem transformar a tela em lista de escala alterada.
+- Auditar se os pares de resolucao dos dominantes alterados escritos precisam
+  de realizacoes no braco mais proximas do shape desenhado.

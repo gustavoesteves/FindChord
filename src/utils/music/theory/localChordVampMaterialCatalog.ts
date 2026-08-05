@@ -902,9 +902,10 @@ function writtenAlteredDominantResolutionCandidate(chord: ChordCandidate): Local
   }
 
   if (chord.quality === "dominant7b5") {
+    writtenAlterationCells.push(directedCell(flatFifth, third));
     writtenAlterationCells.push(noteCell([root, third, flatFifth, flatSeven]));
     writtenAlterationCells.push(noteCell([third, flatFifth, flatSeven, root]));
-    tensionProfile.push("b5");
+    tensionProfile.push("b5->3");
     if (third) resolutionTargets.push(third);
     if (flatSeven) resolutionTargets.push(flatSeven);
   }

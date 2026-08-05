@@ -333,6 +333,48 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["D#", "E"]);
   });
 
+  it("expõe dominante b5 escrita como resolução curta para a terça", () => {
+    const activeChord = cChord({
+      quality: "dominant7b5",
+      intervals: ["1P", "3M", "5d", "7m"],
+      notes: ["C", "E", "Gb", "Bb"],
+      drawnNotes: ["C", "E", "Gb", "Bb"],
+      notationInternational: "C7b5"
+    });
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: null
+    });
+    const writtenResolution = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "written altered dominant resolutions"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord,
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: writtenResolution?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [8, 8, 9, 8, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("written altered dominant resolutions");
+    expect(model.focusedImprovisationMove).toMatchObject({
+      notation: "Gb->E",
+      kind: "return",
+      actionLabel: "Tensionar e voltar"
+    });
+    expect(model.activeMaterialAction).toMatchObject({
+      name: "alteração escrita / resolução curta",
+      realizedCell: {
+        notation: "Gb->E"
+      }
+    });
+    expect(model.activeMaterialAction?.displayNotes.slice(0, 2)).toEqual(["Gb", "E"]);
+  });
+
   it("expõe meio-diminuto como cor breve que retorna ao núcleo do acorde", () => {
     const baseModel = buildWriterMaterialScreenModel({
       activeChord: cChord({

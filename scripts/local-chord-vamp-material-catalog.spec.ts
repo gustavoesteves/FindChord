@@ -169,6 +169,8 @@ describe("F325 catalogo versionavel de materiais locais", () => {
   });
 
   it("materializa dominantes alterados como gestos de resolucao curta", () => {
+    const flatFive = buildLocalChordVampSupplementalCandidates(chordForQuality("dominant7b5"))
+      .find(candidate => candidate.type === "written altered dominant resolutions");
     const sharpNine = buildLocalChordVampSupplementalCandidates(chordForQuality("dominant7#9"))
       .find(candidate => candidate.type === "written altered dominant resolutions");
     const sharpEleven = buildLocalChordVampSupplementalCandidates(chordForQuality("dominant7#11"))
@@ -176,6 +178,15 @@ describe("F325 catalogo versionavel de materiais locais", () => {
     const flatThirteen = buildLocalChordVampSupplementalCandidates(chordForQuality("dominant7b13"))
       .find(candidate => candidate.type === "written altered dominant resolutions");
 
+    expect(flatFive?.melodicMaterials[0]).toMatchObject({
+      preferredCellIndex: 1,
+      tensionProfile: ["b5->3"],
+      resolutionTargets: ["E", "Bb"]
+    });
+    expect(flatFive?.melodicMaterials[0].cells).toEqual(expect.arrayContaining([
+      "Gb->E",
+      "C-E-Gb-Bb"
+    ]));
     expect(sharpNine?.intent).toBe("tension");
     expect(sharpNine?.notes).toEqual(expect.arrayContaining(["D#", "E"]));
     expect(sharpNine?.melodicMaterials[0]).toMatchObject({
