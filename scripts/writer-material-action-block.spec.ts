@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   prioritizeWriterMaterialActionMoves,
+  splitWriterMaterialActionMoves,
   WriterMaterialActionBlock
 } from "../src/domains/writer/components/WriterMaterialActionBlock";
 import type { WriterMaterialAction } from "../src/domains/writer/services/writerMaterialAction";
@@ -47,6 +48,43 @@ describe("F258 bloco visual da acao de material", () => {
       "0:preferred",
       "0:neutral"
     ]);
+  });
+
+  it("agrupa apenas listas densas preservando ativo e preferido em destaque", () => {
+    const moves = [
+      move("0:preferred", "D-F#-A", { isPreferred: true, cellIndex: 0 }),
+      move("0:neutral-a", "E-G-B", { cellIndex: 1 }),
+      move("0:active", "C-E-G", { cellIndex: 2 }),
+      move("0:neutral-b", "F#-G", { cellIndex: 3 }),
+      move("0:neutral-c", "A-G", { cellIndex: 4 }),
+      move("0:neutral-d", "B-C", { cellIndex: 5 }),
+      move("0:neutral-e", "D-E", { cellIndex: 6 })
+    ];
+
+    const grouped = splitWriterMaterialActionMoves(moves, "0:2");
+
+    expect(grouped.primaryMoves.map(item => item.id)).toEqual([
+      "0:active",
+      "0:preferred",
+      "0:neutral-a",
+      "0:neutral-b"
+    ]);
+    expect(grouped.secondaryMoves.map(item => item.id)).toEqual([
+      "0:neutral-c",
+      "0:neutral-d",
+      "0:neutral-e"
+    ]);
+  });
+
+  it("mantem listas pequenas totalmente visiveis", () => {
+    const moves = Array.from({ length: 6 }, (_, index) => (
+      move(`0:${index}`, `C-${index}`, { cellIndex: index })
+    ));
+
+    const grouped = splitWriterMaterialActionMoves(moves, null);
+
+    expect(grouped.primaryMoves).toHaveLength(6);
+    expect(grouped.secondaryMoves).toHaveLength(0);
   });
 
   it("mostra celula, caminho ordenado, posicao e passo ativo", () => {
@@ -179,5 +217,48 @@ describe("F258 bloco visual da acao de material", () => {
     expect(html).toContain("3ª corda, casa 11");
     expect(html).toContain("Parar");
     expect(html).toContain('role="alert"');
+  });
+
+  it("recolhe gestos excedentes sem remover vocabulario do markup", () => {
+    const action: WriterMaterialAction = {
+      name: "dominante diminuta",
+      eyebrowLabel: "Tocar agora",
+      theoryDesc: "Recortes simétricos para dominante.",
+      notes: ["C4"],
+      displayNotes: ["C"],
+      rhythm: {
+        id: "straight",
+        label: "Direto",
+        description: "Ataques simples.",
+        cycleDurationMs: 400,
+        timings: [{ onsetMs: 0, durationMs: 260, accent: true }]
+      },
+      steps: [{
+        note: "C4",
+        displayNote: "C",
+        onsetMs: 0,
+        durationMs: 260,
+        accent: true
+      }],
+      buttonLabel: "Ouvir ideia"
+    };
+    const denseMoves = Array.from({ length: 7 }, (_, index) => (
+      move(`0:${index}`, `C-${index}`, {
+        cellIndex: index,
+        isPreferred: index === 0
+      })
+    ));
+
+    const html = renderToStaticMarkup(createElement(WriterMaterialActionBlock, {
+      action,
+      improvisationMoves: denseMoves,
+      activeMoveId: "0:6",
+      onSelectMove: () => undefined,
+      onPlay: () => undefined
+    }));
+
+    expect(html).toContain("+3 gestos");
+    expect(html).toContain("C – 6");
+    expect(html).toContain("C – 4");
   });
 });

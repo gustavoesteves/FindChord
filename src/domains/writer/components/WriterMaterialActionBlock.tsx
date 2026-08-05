@@ -39,6 +39,9 @@ const MOVE_STYLE_BY_KIND: Record<WriterMaterialImprovisationMoveKind, string> = 
   return: "border-violet-400/35 bg-violet-400/5 text-violet-100"
 };
 
+const MOVE_GROUP_THRESHOLD = 6;
+const PRIMARY_MOVE_LIMIT = 4;
+
 function legacyMoveId(move: WriterMaterialImprovisationMove): string {
   return `${move.materialIndex}:${move.cellIndex}`;
 }
@@ -58,6 +61,27 @@ export function prioritizeWriterMaterialActionMoves(
   ));
 }
 
+export function splitWriterMaterialActionMoves(
+  moves: WriterMaterialImprovisationMove[],
+  activeMoveId: string | null
+): {
+  primaryMoves: WriterMaterialImprovisationMove[];
+  secondaryMoves: WriterMaterialImprovisationMove[];
+} {
+  const prioritizedMoves = prioritizeWriterMaterialActionMoves(moves, activeMoveId);
+  if (prioritizedMoves.length <= MOVE_GROUP_THRESHOLD) {
+    return {
+      primaryMoves: prioritizedMoves,
+      secondaryMoves: []
+    };
+  }
+
+  return {
+    primaryMoves: prioritizedMoves.slice(0, PRIMARY_MOVE_LIMIT),
+    secondaryMoves: prioritizedMoves.slice(PRIMARY_MOVE_LIMIT)
+  };
+}
+
 export function WriterMaterialActionBlock({
   action,
   improvisationMoves = [],
@@ -71,10 +95,34 @@ export function WriterMaterialActionBlock({
   loopEnabled = false,
   playbackError
 }: WriterMaterialActionBlockProps) {
-  const visibleImprovisationMoves = prioritizeWriterMaterialActionMoves(
+  const { primaryMoves, secondaryMoves } = splitWriterMaterialActionMoves(
     improvisationMoves,
     activeMoveId
   );
+  const renderMoveButton = (move: WriterMaterialImprovisationMove) => {
+    const isActive = isActiveMove(move, activeMoveId);
+    return (
+      <button
+        key={move.id}
+        type="button"
+        aria-pressed={isActive}
+        onClick={() => onSelectMove?.(move.id)}
+        title={`${move.materialLabel}: ${move.practiceHint}`}
+        className={`flex min-w-[8.5rem] flex-col items-start rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer active:scale-[0.98] ${
+          isActive
+            ? "border-sky-200 bg-sky-300/20 text-zinc-50 shadow-[0_0_0_1px_rgba(186,230,253,0.18)]"
+            : `${MOVE_STYLE_BY_KIND[move.kind]} hover:border-current hover:bg-white/[0.06]`
+        }`}
+      >
+        <span className="text-[7.5px] font-black uppercase tracking-wide opacity-65">
+          {move.actionLabel}
+        </span>
+        <span className="text-[9px] font-black">
+          {displayCellNotation(move.notation)}
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div className="rounded-2xl border border-sky-300/45 bg-sky-400/10 p-4 text-zinc-300 shadow-inner select-none animate-fade-in">
@@ -111,31 +159,18 @@ export function WriterMaterialActionBlock({
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {visibleImprovisationMoves.map(move => {
-                  const isActive = isActiveMove(move, activeMoveId);
-                  return (
-                    <button
-                      key={move.id}
-                      type="button"
-                      aria-pressed={isActive}
-                      onClick={() => onSelectMove?.(move.id)}
-                      title={`${move.materialLabel}: ${move.practiceHint}`}
-                      className={`flex min-w-[8.5rem] flex-col items-start rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer active:scale-[0.98] ${
-                        isActive
-                          ? "border-sky-200 bg-sky-300/20 text-zinc-50 shadow-[0_0_0_1px_rgba(186,230,253,0.18)]"
-                          : `${MOVE_STYLE_BY_KIND[move.kind]} hover:border-current hover:bg-white/[0.06]`
-                      }`}
-                    >
-                      <span className="text-[7.5px] font-black uppercase tracking-wide opacity-65">
-                        {move.actionLabel}
-                      </span>
-                      <span className="text-[9px] font-black">
-                        {displayCellNotation(move.notation)}
-                      </span>
-                    </button>
-                  );
-                })}
+                {primaryMoves.map(renderMoveButton)}
               </div>
+              {secondaryMoves.length > 0 && (
+                <details className="group">
+                  <summary className="inline-flex cursor-pointer list-none items-center rounded-lg border border-zinc-800 bg-zinc-950/70 px-2.5 py-1 text-[8px] font-black uppercase tracking-wide text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-300">
+                    +{secondaryMoves.length} gestos
+                  </summary>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {secondaryMoves.map(renderMoveButton)}
+                  </div>
+                </details>
+              )}
             </div>
           )}
           <ol className="flex flex-wrap gap-1 mt-1" aria-label="Caminho da frase no braço">

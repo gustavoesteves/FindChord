@@ -421,7 +421,28 @@ npx vitest run scripts/writer-material-action-block.spec.ts \
 45 testes aprovados
 ```
 
+Vigesimo segundo encaixe:
+
+- Listas pequenas de gestos continuam inteiramente visiveis.
+- Materiais com mais de seis gestos agora exibem quatro gestos principais e
+  recolhem o restante em um grupo `+N gestos`.
+- O gesto ativo e o preferido continuam sempre na leitura imediata.
+- O vocabulario excedente permanece no markup e acessivel ao compositor, apenas
+  fora da primeira camada visual.
+
+Vigesimo segundo encaixe validado com:
+
+```text
+npx vitest run scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts \
+  scripts/writer-material-screen-model.spec.ts
+
+3 specs aprovadas
+48 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar se devemos limitar ou agrupar gestos quando um material gerar muitas
-  celulas, sem esconder vocabulario util do compositor.
+- Auditar se o bloco de acao ja esta suficientemente enxuto para voltarmos ao
+  conteudo musical dos materiais, especialmente dominantes diminutos,
+  alterados e aumentados.
