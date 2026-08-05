@@ -464,8 +464,28 @@ npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
 83 testes aprovados
 ```
 
+Vigesimo quarto encaixe:
+
+- O material aumentado de tons inteiros ganhou um retorno adicional `9->3`.
+- A celula preferida continua sendo `#11->#5`, preservando a primeira leitura
+  ja validada para acordes aumentados.
+- O tension profile agora explicita os dois apoios fraseaveis:
+  `9->3` e `#11->#5`.
+- Os alvos de resolucao do material aumentado passam a incluir terça e #5.
+
+Vigesimo quarto encaixe validado com:
+
+```text
+npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts
+
+4 specs aprovadas
+84 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Continuar o refinamento musical dos materiais tensos: revisar dominantes
-  alterados e aumentados para garantir que cada gesto novo seja fraseavel e
-  resolva para um apoio claro do acorde.
+- Revisar dominantes alterados escritos para oferecer pares de resolucao
+  pequenos, sem transformar a tela em lista de escala alterada.

@@ -222,6 +222,26 @@ describe("F325 catalogo versionavel de materiais locais", () => {
     ]));
   });
 
+  it("oferece aumentado com retorno para a terca sem trocar o retorno preferido para #5", () => {
+    const augmented = buildLocalChordVampSupplementalCandidates(chordForQuality("augmented"))
+      .find(candidate => candidate.type === "augmented whole tone cycle");
+
+    expect(augmented?.melodicMaterials[0]).toMatchObject({
+      label: "ciclo aumentado / tons inteiros",
+      preferredCellIndex: 3,
+      preferredRhythmArchetype: "space-response",
+      tensionProfile: ["tríade aumentada", "tríade um tom acima", "9->3", "#11->#5"],
+      resolutionTargets: ["E", "G#"]
+    });
+    expect(augmented?.melodicMaterials[0].cells).toEqual([
+      "C-E-G#",
+      "D-F#-Bb",
+      "D->E",
+      "F#->G#",
+      "C-D-E-F#-G#-Bb"
+    ]);
+  });
+
   it("materializa um nucleo exato e estruturado para todas as 33 qualidades", () => {
     expect(CHORD_QUALITY_CASES).toHaveLength(33);
 

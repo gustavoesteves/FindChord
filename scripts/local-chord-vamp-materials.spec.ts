@@ -491,14 +491,15 @@ describe("F304 vocabulario local de vamp", () => {
     });
     expect(cycle?.melodicMaterials[0]).toMatchObject({
       label: "ciclo aumentado / tons inteiros",
-      preferredCellIndex: 2,
+      preferredCellIndex: 3,
       preferredRhythmArchetype: "space-response",
-      tensionProfile: ["tríade aumentada", "tríade um tom acima", "#11", "retorno para #5"],
-      resolutionTargets: ["G#"]
+      tensionProfile: ["tríade aumentada", "tríade um tom acima", "9->3", "#11->#5"],
+      resolutionTargets: ["E", "G#"]
     });
     expect(cycle?.melodicMaterials[0]?.cells).toEqual([
       "C-E-G#",
       "D-F#-Bb",
+      "D->E",
       "F#->G#",
       "C-D-E-F#-G#-Bb"
     ]);

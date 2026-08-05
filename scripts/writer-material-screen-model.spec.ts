@@ -460,6 +460,10 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     });
 
     expect(model.focusedMaterialSource?.type).toBe("augmented whole tone cycle");
+    expect(model.improvisationMoves.map(move => move.notation)).toEqual(expect.arrayContaining([
+      "D->E",
+      "F#->G#"
+    ]));
     expect(model.focusedImprovisationMove).toMatchObject({
       notation: "F#->G#",
       kind: "return",

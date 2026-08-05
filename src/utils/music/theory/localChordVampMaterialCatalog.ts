@@ -613,6 +613,7 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
   const cells = [
     noteCell([root, third, sharpFive]),
     noteCell([ninth, sharpEleven, flatSeven]),
+    directedCell(ninth, third),
     directedCell(sharpEleven, sharpFive),
     noteCell([
       root,
@@ -638,10 +639,10 @@ function augmentedWholeToneCycleCandidate(chord: ChordCandidate): LocalChordVamp
       source: "arpeggio",
       sourceScale: source.name,
       cells,
-      preferredCellIndex: 2,
+      preferredCellIndex: 3,
       preferredRhythmArchetype: "space-response",
-      tensionProfile: ["tríade aumentada", "tríade um tom acima", "#11", "retorno para #5"],
-      resolutionTargets: sharpFive ? [sharpFive] : [],
+      tensionProfile: ["tríade aumentada", "tríade um tom acima", "9->3", "#11->#5"],
+      resolutionTargets: uniqueNotes([third, sharpFive].filter((note): note is string => !!note)),
       practiceHint
     })],
     practiceHint
