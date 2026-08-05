@@ -195,6 +195,33 @@ describe("F325 catalogo versionavel de materiais locais", () => {
     expect(flatThirteen?.melodicMaterials[0].cells).toEqual(expect.arrayContaining(["Ab->G"]));
   });
 
+  it("enriquece o eixo diminuto dominante com triades H/W com aproximacao cromatica da terca", () => {
+    const dominantAxis = buildLocalChordVampSupplementalCandidates(chordForQuality("dominant7th"))
+      .find(candidate => candidate.type === "dominant diminished axis");
+
+    expect(dominantAxis?.notes).toEqual(expect.arrayContaining([
+      "C", "Eb", "E", "G", "Gb", "A", "Bb", "Db"
+    ]));
+    expect(dominantAxis?.melodicMaterials).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        label: "eixo diminuto / ii menores",
+        cells: expect.arrayContaining(["G-Bb-D-F"])
+      }),
+      expect.objectContaining({
+        label: "dominante diminuta / tríades com #2",
+        preferredCellIndex: 0,
+        preferredRhythmArchetype: "syncopated",
+        cells: [
+          "C-Eb-E-G",
+          "Eb-Gb-G-Bb",
+          "Gb-A-Bb-Db",
+          "A-C-C#-E"
+        ],
+        tensionProfile: ["H/W diminished", "1-b3-3-5", "terça cromática"]
+      })
+    ]));
+  });
+
   it("materializa um nucleo exato e estruturado para todas as 33 qualidades", () => {
     expect(CHORD_QUALITY_CASES).toHaveLength(33);
 

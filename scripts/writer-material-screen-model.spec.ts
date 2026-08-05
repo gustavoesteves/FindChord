@@ -790,6 +790,38 @@ describe("F253 modelo da tela de materiais do acorde", () => {
     });
   });
 
+  it("mantem o eixo diminuto preferido mesmo apos adicionar vocabulario H/W extra", () => {
+    const baseModel = buildWriterMaterialScreenModel({
+      activeChord: g7,
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: null
+    });
+    const diminishedAxis = baseModel.routedMaterialPalette.find(item => (
+      item.source.type === "dominant diminished axis"
+    ));
+
+    const model = buildWriterMaterialScreenModel({
+      activeChord: g7,
+      notationStyle: "International",
+      preferredRouteId: "tension",
+      selectedMaterialSource: diminishedAxis?.source || null,
+      tuning: ["E4", "B3", "G3", "D3", "A2", "E2"],
+      selectedFrets: [3, 3, 4, 3, null, null]
+    });
+
+    expect(model.focusedMaterialSource?.type).toBe("dominant diminished axis");
+    expect(model.improvisationMoves.map(move => move.materialLabel)).toEqual(expect.arrayContaining([
+      "eixo diminuto / ii menores",
+      "dominante diminuta / tríades com #2"
+    ]));
+    expect(model.focusedImprovisationMove).toMatchObject({
+      materialLabel: "eixo diminuto / ii menores",
+      isPreferred: true
+    });
+    expect(model.activeMaterialAction?.realizedCell?.materialLabel).toBe("eixo diminuto / ii menores");
+  });
+
   it("usa o shape desenhado para criar a acao tocavel do material", () => {
     const model = buildWriterMaterialScreenModel({
       activeChord: cmaj7,

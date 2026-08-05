@@ -176,6 +176,15 @@ function minorSeventhCell(root: string): string {
   ].filter((note): note is string => !!note).join("-");
 }
 
+function majorChromaticThirdCell(root: string): string {
+  return [
+    simplifyNote(root),
+    pitch(root, "3m"),
+    pitch(root, "3M"),
+    pitch(root, "5P")
+  ].filter((note): note is string => !!note).join("-");
+}
+
 function minorPentatonicCell(root: string): string {
   return [
     simplifyNote(root),
@@ -257,25 +266,42 @@ function dominantDiminishedAxisCandidate(chord: ChordCandidate): LocalChordVampM
     .map(root => pitch(root, "5P"))
     .filter((note): note is string => !!note);
   const cells = relatedTwoRoots.map(root => minorSeventhCell(root));
-  if (cells.length === 0) return null;
+  const chromaticThirdCells = axisRoots.map(root => majorChromaticThirdCell(root));
+  if (cells.length === 0 && chromaticThirdCells.length === 0) return null;
 
-  const source = materialSource(`${chord.root} eixo diminuto dominante`, "dominant diminished axis", cells);
-  const practiceHint = `Use vocabulário menor em ${relatedTwoRoots.join(", ")} e volte para ${chord.root} quando quiser estabilizar.`;
+  const source = materialSource(`${chord.root} eixo diminuto dominante`, "dominant diminished axis", [
+    ...cells,
+    ...chromaticThirdCells
+  ]);
+  const practiceHint = `Use vocabulário menor em ${relatedTwoRoots.join(", ")} ou tríades com aproximação cromática da terça para colorir ${chord.notationInternational}.`;
 
   return {
     ...source,
     ...candidateBase(chord),
     intent: "tension",
     confidence: 0.72,
-    melodicMaterials: [withPreferredCellId({
-      label: "eixo diminuto / ii menores",
-      source: "arpeggio",
-      sourceScale: source.name,
-      cells,
-      tensionProfile: ["dominantes por terça menor", "ii menor relacionado", "outside controlado"],
-      resolutionTargets: [],
-      practiceHint
-    })],
+    melodicMaterials: [
+      withPreferredCellId({
+        label: "eixo diminuto / ii menores",
+        source: "arpeggio",
+        sourceScale: source.name,
+        cells,
+        tensionProfile: ["dominantes por terça menor", "ii menor relacionado", "outside controlado"],
+        resolutionTargets: [],
+        practiceHint
+      }),
+      withPreferredCellId({
+        label: "dominante diminuta / tríades com #2",
+        source: "arpeggio",
+        sourceScale: source.name,
+        cells: chromaticThirdCells,
+        preferredCellIndex: 0,
+        preferredRhythmArchetype: "syncopated",
+        tensionProfile: ["H/W diminished", "1-b3-3-5", "terça cromática"],
+        resolutionTargets: [],
+        practiceHint: `Use cada nota de ${axisRoots.join(", ")} como raiz de uma tríade maior com b3 cromática antes da terça.`
+      })
+    ],
     practiceHint
   };
 }

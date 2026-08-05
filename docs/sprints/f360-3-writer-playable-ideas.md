@@ -441,8 +441,31 @@ npx vitest run scripts/writer-material-action-block.spec.ts \
 48 testes aprovados
 ```
 
+Vigesimo terceiro encaixe:
+
+- O bloco de acao foi considerado suficientemente enxuto para voltarmos ao
+  conteudo musical dos materiais.
+- O eixo diminuto dominante ganhou um segundo material: triades H/W com
+  aproximacao cromatica da terca (`1-b3-3-5`) sobre as quatro raizes simetricas.
+- O material anterior de `ii menores` permanece como gesto preferido inicial,
+  evitando trocar a primeira leitura da tela.
+- O novo vocabulario fica disponivel como gesto adicional e se beneficia do
+  agrupamento visual criado no encaixe anterior.
+
+Vigesimo terceiro encaixe validado com:
+
+```text
+npx vitest run scripts/local-chord-vamp-material-catalog.spec.ts \
+  scripts/writer-material-screen-model.spec.ts \
+  scripts/writer-material-action-block.spec.ts \
+  scripts/writer-material-improvisation-moves.spec.ts
+
+4 specs aprovadas
+83 testes aprovados
+```
+
 ## Proximo encaixe
 
-- Auditar se o bloco de acao ja esta suficientemente enxuto para voltarmos ao
-  conteudo musical dos materiais, especialmente dominantes diminutos,
-  alterados e aumentados.
+- Continuar o refinamento musical dos materiais tensos: revisar dominantes
+  alterados e aumentados para garantir que cada gesto novo seja fraseavel e
+  resolva para um apoio claro do acorde.
